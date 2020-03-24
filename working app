@@ -31,6 +31,7 @@ def heighwidth(file):
     ymax = max(np.array(node_df[1])) + 0.5
     return xmax, ymax
 #fileinput = 'bldg-1-5-chronology.dot' 
+fileinput = "fig-12-sequence.dot"
 def imagefunc(fileinput):
    file = read_dot(fileinput)
  ####code to get colours####
@@ -69,6 +70,7 @@ def imgrender(file):
    outp = Image.open('testdag.png')
    return outp
 
+
 currentgraph = imagefunc("fig-12-sequence.dot")
 
 
@@ -79,6 +81,7 @@ class MainFrame(tk.Tk):
         self.edge_nodes = []
         self.edges_del = []
         self.temp = []
+        self.x1 = 1
         self.canvas = tk.Canvas(self, bg = "#b3dcf2",  bd = 0, highlightthickness=0)  
         self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
         self.littlecanvas= tk.Canvas(self.canvas, bg = 'white', bd = 0, highlightthickness=0)
@@ -114,10 +117,65 @@ class MainFrame(tk.Tk):
         self.R2 = tk.Radiobutton(self, text="Edge Delete", command = self.option2, variable = self.radVar, value = 2, bg = "white", font = ("Arial", 14))
         self.R2.place(relx=0.6, rely=0.8, relwidth=0.3, relheight=0.1)
         ####################################
-        self.entry1 = tk.Entry(self.littlecanvas) 
-#canvas1.create_window(200, 140, window=entry1)      
+        
+        def addnode ():
+            self.x1 = self.entry1.get()
+            currentgraph.add_node(self.x1, shape = "box", fontsize = "30.0", fontname = "Helvetica", penwidth = "1.0") 
+            self.graph = currentgraph        
+            self.neww = int(self.canvas.winfo_width()*0.4)
+            self.newh = int(self.canvas.winfo_height()*0.9)
+            imgrender(self.graph)
+            img = Image.open('testdag.png').resize(
+                (self.neww, self.newh), Image.ANTIALIAS
+            )        
+            self.img = ImageTk.PhotoImage(img)
+            self.littlecanvas.itemconfig(self.littlecanvas_img, image = self.img)
+            #print(self.x1)
 
+        def addedge ():
+            self.x1 = self.entry1.get()
+            self.x2 = self.entry2.get()
+            currentgraph.add_edge(self.x1, self.x2) 
+            self.graph = currentgraph        
+            self.neww = int(self.canvas.winfo_width()*0.4)
+            self.newh = int(self.canvas.winfo_height()*0.9)
+            imgrender(self.graph)
+            img = Image.open('testdag.png').resize(
+                (self.neww, self.newh), Image.ANTIALIAS
+            )        
+            self.img = ImageTk.PhotoImage(img)
+            self.littlecanvas.itemconfig(self.littlecanvas_img, image = self.img)
+           # print(self.x1)            
+
+        #canvas to hold buttons    
+        self.canvas1 = tk.Canvas(self.canvas, bg = "white")
+        self.canvas1.place(relx = 0.55, rely=0.45, relwidth = 0.4, relheight = 0.20)   
+        
+        #making node add section
+        self.entry1 = tk.Entry(self.canvas)         
+        self.button1 = tk.Button(text='Add Node 1', command=addnode,  bg = "#b3dcf2", font = ("Arial", 12))
+        self.label1 = tk.Label(self.canvas,text= 'Node 1', bg = 'white', font = ("Arial", 12))
+        #self.label1.bind("<Configure>", self.resize)
+        #self.button1.bind("<Configure>", self.resize)
+        #self.entry1.bind("<Configure>", self.resize)
+        #self.canvas1.bind("<Configure>", self.resize)
+        self.canvas1.create_window(70, 45, window=self.entry1, width = 50) 
+        self.canvas1.create_window(70,20, window=self.label1)
+        self.canvas1.create_window(70, 80, window=self.button1)
+        
+        #making edge add function
+        self.entry2 = tk.Entry(self.canvas)        
+        self.button2 = tk.Button(text='Add Node 2', command=addedge,  bg = "#b3dcf2", font = ("Arial", 12))
+        self.label2 = tk.Label(self.canvas,text= 'Node 2', bg = 'white', font = ("Arial", 12))
+        #self.label1.bind("<Configure>", self.resize)
+        #self.button1.bind("<Configure>", self.resize)
+        self.canvas1.create_window(190, 45, window=self.entry2, width = 50)  
+        self.canvas1.create_window(190,20, window=self.label2)
+        self.canvas1.create_window(190, 80, window=self.button2)
     
+    
+
+ 
     def option1(self):
         self.mode = "node_delete"
         self.radSel = self.radVar.get()
