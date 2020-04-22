@@ -6,6 +6,7 @@ Created on Mon Mar  9 12:35:28 2020
 @author: bryony
 """
 import tkinter as tk
+from tkinter import ttk
 from PIL import Image, ImageTk
 from networkx.drawing.nx_pydot import read_dot, write_dot
 import networkx as nx
@@ -14,15 +15,9 @@ import numpy as np
 import pandas as pd
 
 
-def getorigin(eventorigin):
-  global x,y, node
-  x = eventorigin.x 
-  y = eventorigin.y  
-  print(x,y)
+
   
   
-    
-#fileinput= "fig-12-sequence.dot"
 
 def heighwidth(file):
     pos_dag = nx.drawing.nx_pydot.graphviz_layout(file, prog='dot')
@@ -30,18 +25,21 @@ def heighwidth(file):
     xmax = max(np.array(node_df[0])) + 0.5
     ymax = max(np.array(node_df[1])) + 0.5
     return xmax, ymax
-#fileinput = 'bldg-1-5-chronology.dot' 
-fileinput = "fig-12-sequence.dot"
+
+fileinput = 'bldg-1-5-chronology.dot' 
+#fileinput = "fig-12-sequence.dot"
+
 def imagefunc(fileinput):
    file = read_dot(fileinput)
  ####code to get colours####
    f=open(str(fileinput), "r")
    dotstr = f.read()
-#   dotstr = dotstr.replace(";<", "@<")
+   dotstr = dotstr.replace(";<", "@<")
+   dotstr = dotstr.replace("14.0", "50.0")
 #change any ';>' to '@>' then back again after
    x = dotstr.rsplit(";")
-#   for i in range(len(x)):
-#       x[i] = x[i].replace("@<", ";<")       
+   for i in range(len(x)):
+      x[i] = x[i].replace("@<", ";<")       
    node_list = list(file.nodes)
    node_info = list() 
  #  j = x[15]
@@ -50,8 +48,11 @@ def imagefunc(fileinput):
        for j in x:
             if i in j and '->' not in j:
                tset = j[(j.index('[')+1):(len(j)-1)]
-               atr_new = tset.replace('] [', ',\'')
-               atr_new = atr_new.replace('=', '\': ')
+               atr_new = tset.replace('] [', '\',\'')
+               atr_new = atr_new.replace('=', '\':\' ')
+               atr_new = atr_new.replace('\' \"', '\"')
+               atr_new = atr_new.replace('\"\'', '\"')
+               atr_new = atr_new.replace('\' ', '\'')
                atr_newer = str('{\''+atr_new+'}')
                dicc = eval(atr_newer)
                node_info.append(dicc)
@@ -68,32 +69,63 @@ def imgrender(file):
    (graph,) = pydot.graph_from_dot_file('fi_new')
    graph.write_png('testdag.png')
    outp = Image.open('testdag.png')
+ #  print(outp.size)
    return outp
 
 
-currentgraph = imagefunc("fig-12-sequence.dot")
+currentgraph = imagefunc(fileinput)
 
 
 class MainFrame(tk.Tk):    
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        ##### intial values for all the functions
         self.delnodes = []
         self.edge_nodes = []
         self.edges_del = []
         self.temp = []
         self.x1 = 1
+
+        #forming and placing canvas and little canvas
         self.canvas = tk.Canvas(self, bg = "#b3dcf2",  bd = 0, highlightthickness=0)  
         self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.canvas.update() 
         self.littlecanvas= tk.Canvas(self.canvas, bg = 'white', bd = 0, highlightthickness=0)
-        self.littlecanvas.bind("<Button 3>", getorigin)
-        self.littlecanvas.bind("<Button 1>", self.nodes)
         self.littlecanvas.place(relx=0.05, rely=0.05, relwidth=0.4, relheight=0.9)
+        self.littlecanvas.update()
+        #### bind comands to canvas and little canvas ######
         self.littlecanvas.bind("<Configure>", self.resize)
+        #self.littlecanvas.bind("<Button 1>", self.getorigin)
+        self.littlecanvas.bind("<Button 1>", self.nodes)
         self.canvas.bind("<Configure>", self.resize)
+        self.littlecanvas.bind("<MouseWheel>", self.wheel)
+        self.littlecanvas.bind('<Button-4>',   self.wheel)  # only with Linux, wheel scroll down
+        self.littlecanvas.bind('<Button-5>',   self.wheel)
+        self.littlecanvas.bind('<Button-3>', self.move_from)
+        self.littlecanvas.bind("<B3-Motion>", self.move_to)
+        
+        #placing image on littlecanvas from graph
+        self.littlecanvas.rowconfigure(0, weight=1)
+        self.littlecanvas.columnconfigure(0, weight=1)
         self.graph = currentgraph
-        self.littlecanvas.img = ImageTk.PhotoImage(imgrender(self.graph)
+  #      self.image = imgrender(self.graph).resize(self.littlecanvas.canvasx(self.littlecanvas.winfo_width()), int(self.littlecanvas.winfo_height()*0.9)), Image.ANTIALIAS
+   #     )
+        #print(self.canvas.winfo_width())
+        self.image = imgrender(self.graph).resize((int(2000*0.4), int(1000*0.9)), Image.ANTIALIAS
+        ) 
+        #print(self.image.size)
+        self.littlecanvas.img = ImageTk.PhotoImage(self.image
         )
-        self.littlecanvas_img = self.littlecanvas.create_image(0, 0, anchor = "nw", image=self.littlecanvas.img)
+        self.littlecanvas_img = self.littlecanvas.create_image(0, 0, anchor = "nw", image=self.littlecanvas.img)     
+        #print(self.littlecanvas.winfo_width())
+        #print(self.littlecanvas.winfo_height())      
+        self.width, self.height = self.image.size
+       # print(self.image.size)
+        self.imscale = 1.0  # scale for the canvaas image
+        self.delta = 1.1  # zoom magnitude
+        # Put image into container rectangle and use it to set proper coordinates to the image
+        self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
+
         #########deleted nodes##################
         self.nodescanvas= tk.Canvas(self.canvas, bg = 'white', bd = 0, highlightthickness=0)
         self.nodescanvas.place(relx=0.6, rely=0.1, relwidth=0.3, relheight=0.14)
@@ -116,8 +148,9 @@ class MainFrame(tk.Tk):
         self.R1.place(relx=0.6, rely=0.7, relwidth=0.3, relheight=0.1)
         self.R2 = tk.Radiobutton(self, text="Edge Delete", command = self.option2, variable = self.radVar, value = 2, bg = "white", font = ("Arial", 14))
         self.R2.place(relx=0.6, rely=0.8, relwidth=0.3, relheight=0.1)
-        ####################################
-        
+        ############zoom fuction#########################
+       
+
         def addnode ():
             self.x1 = self.entry1.get()
             currentgraph.add_node(self.x1, shape = "box", fontsize = "30.0", fontname = "Helvetica", penwidth = "1.0") 
@@ -125,11 +158,13 @@ class MainFrame(tk.Tk):
             self.neww = int(self.canvas.winfo_width()*0.4)
             self.newh = int(self.canvas.winfo_height()*0.9)
             imgrender(self.graph)
-            img = Image.open('testdag.png').resize(
+            self.image = Image.open('testdag.png').resize(
                 (self.neww, self.newh), Image.ANTIALIAS
             )        
-            self.img = ImageTk.PhotoImage(img)
-            self.littlecanvas.itemconfig(self.littlecanvas_img, image = self.img)
+           # self.image = ImageTk.PhotoImage(img)
+            ##TRY AND MAKE SHOW IMAGE WORK AS ITEMCONFIG
+            self.show_image()
+            #self.littlecanvas.itemconfig(self.littlecanvas_img, image = self.img)
             #print(self.x1)
 
         def addedge ():
@@ -140,11 +175,12 @@ class MainFrame(tk.Tk):
             self.neww = int(self.canvas.winfo_width()*0.4)
             self.newh = int(self.canvas.winfo_height()*0.9)
             imgrender(self.graph)
-            img = Image.open('testdag.png').resize(
+            self.image = Image.open('testdag.png').resize(
                 (self.neww, self.newh), Image.ANTIALIAS
             )        
-            self.img = ImageTk.PhotoImage(img)
-            self.littlecanvas.itemconfig(self.littlecanvas_img, image = self.img)
+           # self.image = ImageTk.PhotoImage(img)
+            #self.littlecanvas.itemconfig(self.littlecanvas_img, image = self.img)
+            self.show_image()
            # print(self.x1)            
 
         #canvas to hold buttons    
@@ -160,7 +196,7 @@ class MainFrame(tk.Tk):
         #self.entry1.bind("<Configure>", self.resize)
         #self.canvas1.bind("<Configure>", self.resize)
         self.canvas1.create_window(70, 45, window=self.entry1, width = 50) 
-        self.canvas1.create_window(70,20, window=self.label1)
+        self.canvas1.create_window(70, 20, window=self.label1)
         self.canvas1.create_window(70, 80, window=self.button1)
         
         #making edge add function
@@ -172,28 +208,39 @@ class MainFrame(tk.Tk):
         self.canvas1.create_window(190, 45, window=self.entry2, width = 50)  
         self.canvas1.create_window(190,20, window=self.label2)
         self.canvas1.create_window(190, 80, window=self.button2)
-    
-    
 
- 
+    def getorigin(self, eventorigin):
+        global x,y, node
+        bbox = self.littlecanvas.bbox(self.container)  # get image area
+        print(bbox)  
+        x = eventorigin.x 
+        y = eventorigin.y  
+        print(x,y)
+
     def option1(self):
         self.mode = "node_delete"
         self.radSel = self.radVar.get()
-        print(self.radSel)        
+        #print(self.radSel)        
 
     def option2(self):
         self.mode = "edge_delete"
         self.radSel = self.radVar.get()
-        print(self.radSel)
+        #print(self.radSel)
         
+    
     def nodecheck(self, x, y):
         global currentgraph, pos_dag, node_df
         node_inside = "no node" 
-        pos_dag = nx.drawing.nx_pydot.graphviz_layout(self.graph, prog='dot')
-        node_df = pd.DataFrame.from_dict(pos_dag, orient = 'index')
-        y_dist = min(np.array(node_df[1])) - 0.5
+       # graph = imagefunc(fileinput)
+       # pos_dag = nx.drawing.nx_pydot.graphviz_layout(graph, prog='dot') #get coords in dot format, not scaled yet
+       
+        pos_dag = nx.drawing.nx_pydot.graphviz_layout(self.graph, prog='dot') #get coords in dot format, not scaled yet
+        print(pos_dag)
+        node_df = pd.DataFrame.from_dict(pos_dag, orient = 'index') #forms a dataframe from the dicitonary of coords
+        y_dist = min(np.array(node_df[1])) - 0.5 #wprks out how large the node is 
         x_dist = min(np.array(node_df[0])) - 0.5
-        x_lower = np.array(node_df[0]) - x_dist
+        #givens upper and lower bounds for checking each node
+        x_lower = np.array(node_df[0]) - x_dist 
         x_upper = np.array(node_df[0]) + x_dist
         y_lower = np.array(node_df[1]) - y_dist
         y_upper = np.array(node_df[1]) + y_dist      
@@ -206,16 +253,32 @@ class MainFrame(tk.Tk):
 
         xscale = (x-(self.canvas.winfo_width()/40)) * (max(x_upper)+0.5)/cavx
         yscale = (cany-y+(self.canvas.winfo_height()*(9/160))) * (max(y_upper)+0.5)/cany
+        print(xscale, self.canvas.winfo_width())
+        print(yscale, self.canvas.winfo_height())
 
+        
         for n in range(len(node_df)):
             if (node_df.iloc[n].x_lower < xscale < node_df.iloc[n].x_upper) and (node_df.iloc[n].y_lower < yscale < node_df.iloc[n].y_upper):
                 node_inside = node_df.iloc[n].name 
         return node_inside
 
+
+    def scroll_y(self, *args, **kwargs):
+    #''' Scroll canvas vertically and redraw the image '''
+        self.canvas.yview(*args, **kwargs)  # scroll vertically
+        self.show_image()  # redraw the image
+
+    def scroll_x(self, *args, **kwargs):
+    #''' Scroll canvas horizontally and redraw the image '''
+        self.canvas.xview(*args, **kwargs)  # scroll horizontally
+        self.show_image()  # redraw the image
+
     def nodes(self, eventorigin):
         global node, x, y, currentgraph, radSel
-        x = eventorigin.x
-        y = eventorigin.y
+        bbox = self.littlecanvas.bbox(self.container)  # get image area               
+        x = (eventorigin.x*int(2000*0.4))/bbox[2]
+        y = (eventorigin.y*int(1000*0.9))/bbox[3]
+
         node = self.nodecheck(x, y)            
         if self.radSel == 1:
             if node == "no node":            
@@ -223,9 +286,9 @@ class MainFrame(tk.Tk):
             else: 
                  currentgraph.remove_node(node)
                  self.delnodes = np.append(self.delnodes, node)
-            print('node delete')
+      #      print('node delete')
         if self.radSel == 2:
-            print(self.edge_nodes)
+           # print(self.edge_nodes)
             self.edge_nodes = np.append(self.edge_nodes, node)
             if len(self.edge_nodes) == 2:
                  try:
@@ -260,19 +323,20 @@ class MainFrame(tk.Tk):
                      except Exception:
                          tk.messagebox.showinfo('Error','An edge doesnt exist between those nodes')
                          self.edge_nodes = []
-            print('edge delete')
-            print(self.edges_del)
+
             
 
         self.graph = currentgraph        
         self.neww = int(self.canvas.winfo_width()*0.4)
         self.newh = int(self.canvas.winfo_height()*0.9)
         imgrender(self.graph)
-        img = Image.open('testdag.png').resize(
+        self.image = Image.open('testdag.png').resize(
                 (self.neww, self.newh), Image.ANTIALIAS
         )        
-        self.img = ImageTk.PhotoImage(img)
-        self.littlecanvas.itemconfig(self.littlecanvas_img, image = self.img)
+      #  self.image = ImageTk.PhotoImage(img)
+      #  self.littlecanvas.delete(self.image)
+        self.show_image() 
+      #  self.littlecanvas.itemconfig(self.littlecanvas_img, image = self.img)
         
         
         self.text = tk.Text(self.nodescanvas, font = ("Arial", 14), width=120, height=40)
@@ -282,9 +346,80 @@ class MainFrame(tk.Tk):
         self.text.insert('end','Deleted Contexts:\n' + str(self.newnodes)[1:-1])   
         self.text.configure(state='disabled')
         
+    def move_from(self, event):
+        ''' Remember previous coordinates for scrolling with the mouse '''
+        self.littlecanvas.scan_mark(event.x, event.y)
+
+    def move_to(self, event):
+        ''' Drag (move) canvas to the new position '''
+        self.littlecanvas.scan_dragto(event.x, event.y, gain=1)
+        self.show_image()  # redraw the image
+
+    def wheel(self, event):
+        ''' Zoom with mouse wheel '''
+        x = self.littlecanvas.canvasx(event.x)
+        y = self.littlecanvas.canvasy(event.y)
+        bbox = self.littlecanvas.bbox(self.container)  # get image area
+        print(bbox)
+        if bbox[0] < x < bbox[2] and bbox[1] < y < bbox[3]: pass  # Ok! Inside the image
+        else: return  # zoom only inside image area
+        scale = 1.0
+        # Respond to Linux (event.num) or Windows (event.delta) wheel event
+        if event.num == 5 or event.delta == -120:  # scroll down
+            i = min(self.width, self.height)
+            if int(i * self.imscale) < 30: return  # image is less than 30 pixels
+            self.imscale /= self.delta
+            scale        /= self.delta
+        if event.num == 4 or event.delta == 120:  # scroll up
+            i = min(self.littlecanvas.winfo_width(), self.littlecanvas.winfo_height())
+            if i < self.imscale: return  # 1 pixel is bigger than the visible area
+            self.imscale *= self.delta
+            scale        *= self.delta
+        self.littlecanvas.scale('all', 0, 0, scale, scale)  # rescale all canvas objects
+        self.show_image()
+
+    def show_image(self, event=None):
+        ''' Show image on the Canvas '''
+        bbox1 = self.littlecanvas.bbox(self.container)  # get image area
+        # Remove 1 pixel shift at the sides of the bbox1
+        bbox1 = (bbox1[0] + 1, bbox1[1] + 1, bbox1[2] - 1, bbox1[3] - 1)
+      #  print(self.littlecanvas.winfo_width())
+        bbox2 = (self.littlecanvas.canvasx(0),  # get visible area of the canvas
+                 self.littlecanvas.canvasy(0),
+                 self.littlecanvas.canvasx(self.littlecanvas.winfo_width()),
+                 self.littlecanvas.canvasy(self.littlecanvas.winfo_height()))
+        bbox = [min(bbox1[0], bbox2[0]), min(bbox1[1], bbox2[1]),  # get scroll region box
+                max(bbox1[2], bbox2[2]), max(bbox1[3], bbox2[3])]
+        bbox1 = self.littlecanvas.bbox(self.container)  # get image area
+     #   print('bbox1')
+      #  print(bbox1)
+       # print(bbox2)#WHY IS BBOX NOT SIZE OF CANVAS
+        if bbox[0] == bbox2[0] and bbox[2] == bbox2[2]:  # whole image in the visible area
+            bbox[0] = bbox1[0]
+            bbox[2] = bbox1[2]
+        if bbox[1] == bbox2[1] and bbox[3] == bbox2[3]:  # whole image in the visible area
+            bbox[1] = bbox1[1]
+            bbox[3] = bbox1[3]
+        self.littlecanvas.configure(scrollregion=bbox)  # set scroll region
+        x1 = max(bbox2[0] - bbox1[0], 0)  # get coordinates (x1,y1,x2,y2) of the image tile
+        y1 = max(bbox2[1] - bbox1[1], 0)
+        x2 = min(bbox2[2], bbox1[2]) - bbox1[0]
+        y2 = min(bbox2[3], bbox1[3]) - bbox1[1]
+        #print(x1,x2,y1,y2)
+        if int(x2 - x1) > 0 and int(y2 - y1) > 0:  # show image if it in the visible area
+            x = min(int(x2 / self.imscale), self.width)   # sometimes it is larger on 1 pixel...
+            y = min(int(y2 / self.imscale), self.height)  # ...and sometimes not
+            image = self.image.crop((int(x1 / self.imscale), int(y1 / self.imscale), x, y))
+            self.imagetk = ImageTk.PhotoImage(image.resize((int(x2 - x1), int(y2 - y1))))
+           # self.littlecanvas.itemconfig(self.littlecanvas_img, image = imagetk)
+            self.littlecanvas.delete(self.littlecanvas_img)
+            self.imageid = self.littlecanvas.create_image(max(bbox2[0], bbox1[0]), max(bbox2[1], bbox1[1]),
+                                              anchor='nw', image=self.imagetk)
+            #self.littlecanvas.lower(self.imageid)  # set image into background
+            self.littlecanvas.imagetk = self.imagetk  # keep an extra reference to prevent garbage-collection
+          #  self.canvas.itemconfig(self.canvas_img, image=imagetk)
+
         
-
-
 
     def resize(self, event):
         img = Image.open('testdag.png').resize(
@@ -293,10 +428,10 @@ class MainFrame(tk.Tk):
         self.img = ImageTk.PhotoImage(img)
         self.w = event.width
         self.h = event.height
-        print ('width  = {}, height = {}'.format(int(self.w/16), int(self.h/16)))
-        print ('totwidth  = {}, totheight = {}'.format(self.w, self.h))
+     #   print ('width  = {}, height = {}'.format(int(self.w/16), int(self.h/16)))
+      #  print ('totwidth  = {}, totheight = {}'.format(self.w, self.h))
         self.littlecanvas.itemconfig(self.littlecanvas_img, image=self.img)
 
 main_frame = MainFrame()
-main_frame.geometry("800x500")
+main_frame.geometry("2000x1000")
 main_frame.mainloop()     
