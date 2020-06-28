@@ -32,8 +32,8 @@ def heighwidth(file):
     ymax = max(np.array(node_df[1])) + 0.5
     return xmax, ymax
 
-fileinput = 'bldg-1-5-chronology_copy.dot' 
-#fileinput = "fig-12-sequence.dot"
+#fileinput = 'bldg-1-5-chronology_copy.dot' 
+fileinput = "fig-12-sequence.dot"
 #fileinput = "fig-12-polygon-1.dot"
 def imagefunc(fileinput):
    file = read_dot(fileinput)
@@ -72,7 +72,7 @@ def imagefunc(fileinput):
    for k in range(len(node_list)): 
         node_info[k].update({"dates":"test", "finds":"empty", "phase":"phase1"})              
       #  print(node_info[k])  
-          
+ #  node_info[1].update({"pos":""10,10""})          
    individ_attrs = zip(node_list, node_info)  
          # node_info.append({"dates":"test", "finds":"empty"})           
    attrs = dict(individ_attrs) #add the dictionary of attributed to a node
@@ -117,7 +117,7 @@ class MainFrame(tk.Tk):
         self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
         self.canvas.update() 
         self.littlecanvas= tk.Canvas(self.canvas, bg = 'black', bd = 0, selectborderwidth = 0, highlightthickness=0, insertwidth = 0)
-        print(self.littlecanvas.config())
+        #print(self.littlecanvas.config())
         self.littlecanvas.place(relx=0.05, rely=0.05, relwidth=0.4, relheight=0.9)
         self.littlecanvas.update()
         #### bind comands to canvas and little canvas ######
@@ -152,7 +152,7 @@ class MainFrame(tk.Tk):
         self.delta = 1.1  # zoom magnitude
         # Put image into container rectangle and use it to set proper coordinates to the image
         self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
-        print(self.width, self.height)
+        #print(self.width, self.height)
 
         #########deleted nodes##################
         self.nodescanvas= tk.Canvas(self.canvas, bg = 'white', bd = 0, highlightthickness=0)
@@ -290,10 +290,10 @@ class MainFrame(tk.Tk):
     def getorigin(self, eventorigin):
         global x,y, node
         bbox = self.littlecanvas.bbox(self.container)  # get image area
-        print(bbox)  
+        #print(bbox)  
         x = eventorigin.x 
         y = eventorigin.y  
-        print(x,y)
+        #print(x,y)
 
     def option1(self):
         self.mode = "node_delete"
@@ -342,7 +342,7 @@ class MainFrame(tk.Tk):
         # print(xscale, self.canvas.winfo_width(), self.canvas.winfo_width()/40*(max(x_upper)+0.5)/cavx)
        # print(yscale, self.canvas.winfo_height(), self.canvas.winfo_height()*(9/160)*(max(y_upper)+0.5)/cany)
        # print(xscale, self.canvas.winfo_width(), self.canvas.winfo_width()/40*(max(x_upper)+0.5)/cavx)
-        print(x, y, node_df, self.canvas.winfo_height())
+       # print(x, y, node_df, self.canvas.winfo_height())
 
  
         
@@ -453,18 +453,24 @@ class MainFrame(tk.Tk):
     def move_from(self, event):
         ''' Remember previous coordinates for scrolling with the mouse '''
         self.littlecanvas.scan_mark(event.x, event.y)
+        print(event.x, event.y)
+        
 
     def move_to(self, event):
         ''' Drag (move) canvas to the new position '''
         self.littlecanvas.scan_dragto(event.x, event.y, gain=1)
-        self.show_image()  # redraw the image
+        self.show_image() 
+        bbox = self.littlecanvas.bbox(self.container)  # get image area
+        print(bbox)
+        print(self.littlecanvas.coords(self.imagetk))
+        # redraw the image
 
     def wheel(self, event):
         ''' Zoom with mouse wheel '''
         x = self.littlecanvas.canvasx(event.x)
         y = self.littlecanvas.canvasy(event.y)
         bbox = self.littlecanvas.bbox(self.container)  # get image area
-        print(bbox)
+        #print(bbox)
         if bbox[0] < x < bbox[2] and bbox[1] < y < bbox[3]: pass  # Ok! Inside the image
         else: return  # zoom only inside image area
         scale = 1.0
@@ -509,7 +515,7 @@ class MainFrame(tk.Tk):
         y1 = max(bbox2[1] - bbox1[1], 0)
         x2 = min(bbox2[2], bbox1[2]) - bbox1[0]
         y2 = min(bbox2[3], bbox1[3]) - bbox1[1]
-        #print(x1,x2,y1,y2)
+#        print(x1,x2,y1,y2, bbox2[0] - bbox1[0], bbox2[2], bbox1[1])
         if int(x2 - x1) > 0 and int(y2 - y1) > 0:  # show image if it in the visible area
             x = min(int(x2 / self.imscale), self.width)   # sometimes it is larger on 1 pixel...
             y = min(int(y2 / self.imscale), self.height)  # ...and sometimes not
@@ -573,12 +579,12 @@ class MainFrame(tk.Tk):
             if str(self.entry3.get()) in self.rellist[i]:
                  if str(self.entry3.get()) == self.rellist[i][0]:
                      self.below = np.append(self.below, self.rellist[i][1])
-                     print("below")
-                     print(self.below)
+                     #print("below")
+                     #print(self.below)
                  if str(self.entry3.get()) == self.rellist[i][1]:
                      self.above = np.append(self.above, self.rellist[i][0])
-                     print("above")
-                     print(self.above)
+                     #print("above")
+                     #print(self.above)
         self.abovebelowtext = tk.Text(self.abovebelowcanvas, font = ("Arial", 14), width=120, height=40)
         self.abovebelowcanvas.create_window((0, 0), window=self.abovebelowtext, anchor='nw')
         self.abovebelowtext.insert('end','Direct stratigraphic relationships:\n Contexts above: ' + str(self.above) + '\n' + 'Contexts below:' + str(self.below))                                        
