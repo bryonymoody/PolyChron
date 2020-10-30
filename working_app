@@ -1,0 +1,647 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Mar  9 12:35:28 2020
+
+@author: bryony
+"""
+import tkinter as tk
+import re
+import ast
+from PIL import Image, ImageTk, ImageChops
+from networkx.drawing.nx_pydot import read_dot, write_dot
+import networkx as nx
+import pydot
+import numpy as np
+import pandas as pd
+
+def trim(im_trim):
+    """Trims images down"""
+    bg_trim = Image.new(im_trim.mode, im_trim.size, im_trim.getpixel((0, 0)))
+    diff = ImageChops.difference(im_trim, bg_trim)
+    diff = ImageChops.add(diff, diff, 2.0, -100)
+    bbox = diff.getbbox()
+  #  if bbox:
+    return im_trim.crop(bbox)
+
+def node_coords_fromjson(file_ext):
+    """Gets coordinates of each node"""
+    my_file = open(file_ext)
+    file_content = my_file.read()
+    graphs = pydot.graph_from_dot_data(file_content)
+    svg_string = str(graphs[0].create_svg("json"))
+    coords_x = re.findall(r'me(.*?)"na', svg_string)
+    json_nodelist = []
+    json_nodecoord = []
+    for i in enumerate(coords_x):
+        if "pos" in coords_x[i[0]]:
+            x_temp = re.findall(r'\": "(.*?)",\\n', coords_x[i[0]])
+            cord_temp = re.findall(r'pos\": "(.*?)",\\n', coords_x[i[0]])
+            json_nodelist.append(x_temp[0])
+            json_nodecoord.append(ast.literal_eval(cord_temp[0]))
+    new_pos = dict(zip(json_nodelist, json_nodecoord))
+    return new_pos
+#FILE_INPUT = 'bldg-1-5-chronology_copy.dot'
+FILE_INPUT = "fig-12-sequence.dot"
+#FILE_INPUT = "fig-12-polygon-1.dot"
+
+def all_node_info(node_list, x_image, node_info):
+    """obtains node attributes from original dot file"""
+    for i in node_list:
+        for j in x_image:
+            b_string = re.search("\"(.*)\" ", j)
+            if b_string is not None:
+                if i == b_string.group(1):
+                    if i in j and '->' not in j:
+                        tset = j[(j.index('[')+1):(len(j)-1)]
+                        atr_new = tset.replace('] [', '\',\'')
+                        atr_new = atr_new.replace('=', '\':\' ')
+                        atr_new = atr_new.replace('\' \"', '\"')
+                        atr_new = atr_new.replace('\"\'', '\"')
+                        atr_new = atr_new.replace('\' ', '\'')
+                        atr_newer = str('{\''+atr_new+'}')
+                        dicc = ast.literal_eval(atr_newer)
+                        node_info.append(dicc)
+    return node_info
+
+
+def imagefunc(dotfile):
+    """Sets note attributes to a dot string"""
+    file = read_dot(dotfile)
+ ####code to get colours####
+    f_string = open(str(dotfile), "r")
+    dotstr = f_string.read()
+    dotstr = dotstr.replace(";<", "@<")
+    dotstr = dotstr.replace("14.0", "50.0")
+#change any ';>' to '@>' then back again after
+    x_image = dotstr.rsplit(";")
+    for i in enumerate(x_image):
+        x_image[i[0]] = x_image[i[0]].replace("@<", ";<")
+    node_list = list(file.nodes)
+    node_info_init = list()
+ #  j = x[15]
+    node_info = all_node_info(node_list, x_image, node_info_init)
+    for k in enumerate(node_list):
+        node_info[k[0]].update({"dates":"test", "finds":"empty", "phase":"phase1"})
+    individ_attrs = zip(node_list, node_info)
+    attrs = dict(individ_attrs)#add the dictionary of attributed to a node
+    nx.set_node_attributes(file, attrs)
+    return file
+
+def imgrender(file):
+    """renders png from dotfile"""
+    write_dot(file, 'fi_new')
+    (graph,) = pydot.graph_from_dot_file('fi_new')
+    graph.write_png('test.png')
+    inp = Image.open("test.png")
+    inp = trim(inp)
+    inp.save("testdag.png")
+    outp = Image.open("testdag.png")
+    return outp
+
+def edge_of_phase(test1, pset, node_list, node_info):
+    """find nodes on edge of each phase"""
+    x_l = []
+    y_l = []
+    mydict = {}
+    for i in enumerate(pset):
+        temp_nodes_list = []
+        for j in enumerate(node_list):
+            if node_info[j[0]]["fillcolor"] == pset[i[0]]:
+                temp_nodes_list.append(node_list[j[0]])
+                p_phase = "Phase " + str(pset[i[0]][pset[i[0]].rfind("/")+1:len(pset[i[0]])])
+                node_info[j[0]].update({"phase":p_phase})
+                mydict[str(pset[i[0]][pset[i[0]].rfind("/")+1:len(pset[i[0]])])] = temp_nodes_list
+    for i in enumerate(test1):
+        for key in mydict:
+            if test1[i[0]][1] in mydict[key] and test1[i[0]][0] not in mydict[key]:
+                x_l.append(test1[i[0]][1])
+                y_l.append(key)
+                phase_lst = [list(mydict.values()).index(j) for j in list(mydict.values()) if
+                             test1[i[0]][0] in j]
+                key_1 = (list(mydict.keys())[phase_lst[0]]) #trying to find phase of other value
+                x_l.append(test1[i[0]][0])
+                y_l.append(str(key_1 + "_below"))
+    return x_l, y_l
+
+def phase_info_func(file_graph):
+    """returns a dictionary of phases and nodes in each phase"""
+    phase = nx.get_node_attributes(file_graph, "fillcolor")
+ ####code to get colours####
+    f_str = open(str(FILE_INPUT), "r")
+    dotstr = f_str.read()
+    dotstr = dotstr.replace(";<", "@<")
+    dotstr = dotstr.replace("14.0", "50.0")
+#change any ';>' to '@>' then back again after
+    x_phaseinf = dotstr.rsplit(";")
+    for i in enumerate(x_phaseinf):
+        x_phaseinf[i[0]] = x_phaseinf[i[0]].replace("@<", ";<")
+    node_list = list(file_graph.nodes)
+    node_info = all_node_info(node_list, x_phaseinf, list())
+    res = []
+    for key in phase.keys():
+        res.append(phase[key])
+    x_l, y_l = edge_of_phase(list(nx.line_graph(file_graph)), list(set(res)), node_list, node_info)
+    testdic = dict(zip(x_l, y_l))
+    reversed_dict = {}
+    for key, value in testdic.items():
+        reversed_dict.setdefault(value, [])
+        reversed_dict[value].append(key)
+    return reversed_dict
+
+def rank_func(tes, file_content):
+    """adds strings into dot string to make nodes of the same phase the same rank"""
+    rank_same = []
+    for key in tes.keys():
+        x_rank = tes[key]
+        y_1 = str(x_rank)
+        y_2 = y_1.replace("[", "")
+        y_3 = y_2.replace("]", "")
+        y_4 = y_3.replace("'", "")
+        y_5 = y_4.replace(",", ";")
+        x_2 = "{rank = same; "+y_5+";}\n"
+        rank_same.append(x_2)
+    rank_string = ''.join(rank_same)[:-1]
+    new_string = file_content[:-2] + rank_string + file_content[-2]
+    return new_string
+
+def imgrender_phase(file):
+    """Renders image from dot file with all nodes of the same phase collected together"""
+    write_dot(file, 'fi_new.txt')
+    my_file = open("fi_new.txt")
+    file_content = my_file.read()
+    new_string = rank_func(phase_info_func(file), file_content)
+ #  new_string = file_content[:-2] + "{rank = same; 452; 486;}\n" + file_content[-2]
+    textfile = open('fi_new.txt', 'w')
+    textfile.write(new_string)
+    textfile.close()
+    (graph,) = pydot.graph_from_dot_file('fi_new.txt')
+    graph.write_png('test.png')
+         #  img = Image.open('test.png')
+         #  out = img.resize((500, 800), Image.ANTIALIAS)
+          # out.save("testdag.png")
+    inp = Image.open("test.png")
+    inp = trim(inp)
+    inp.save("testdag.png")
+    outp = Image.open("testdag.png")
+    return outp
+
+
+CURRENT_GRAPH = imagefunc(FILE_INPUT)
+
+class MainFrame(tk.Tk):
+    """ Main frame for tkinter app"""
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        #define all variables that are used
+        self.phase_true = 0
+        self.h_1 = 0
+        self.w_1 = 0
+        self.meta1 = ""
+        self.metatext = ""
+        self.rad_sel = ""
+        self.mode = ""
+        ##### intial values for all the functions
+        self.delnodes = []
+        self.edge_nodes = []
+        self.edges_del = []
+        self.temp = []
+        self.x_1 = 1
+        #forming and placing canvas and little canvas
+        self.canvas = tk.Canvas(self, bg="#b3dcf2", bd=0, highlightthickness=0)
+        self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.canvas.update()
+        self.littlecanvas = tk.Canvas(self.canvas, bg='black', bd=0,
+                                      selectborderwidth=0, highlightthickness=0, insertwidth=0)
+        #print(self.littlecanvas.config())
+        self.littlecanvas.place(relx=0.05, rely=0.05, relwidth=0.4, relheight=0.9)
+        self.littlecanvas.update()
+        #### bind comands to canvas and little canvas ######
+        self.littlecanvas.bind("<Configure>", self.resize)
+        #self.littlecanvas.bind("<Button 1>", self.getorigin)
+        self.littlecanvas.bind("<Button 1>", self.nodes)
+        self.canvas.bind("<Configure>", self.resize)
+        self.littlecanvas.bind("<MouseWheel>", self.wheel)
+        self.littlecanvas.bind('<Button-4>', self.wheel)# only with Linux, wheel scroll down
+        self.littlecanvas.bind('<Button-5>', self.wheel)
+        self.littlecanvas.bind('<Button-3>', self.move_from)
+        self.littlecanvas.bind("<B3-Motion>", self.move_to)
+        #placing image on littlecanvas from graph
+        self.littlecanvas.rowconfigure(0, weight=1)
+        self.littlecanvas.columnconfigure(0, weight=1)
+        self.graph = CURRENT_GRAPH
+        #print(self.canvas.winfo_width())
+        if self.phase_true == 1:
+            self.image = imgrender_phase(self.graph).resize((int(2000*0.4),
+                                                             int(1000*0.9)), Image.ANTIALIAS)
+        else:
+            self.image = imgrender(self.graph).resize((int(2000*0.4),
+                                                       int(1000*0.9)), Image.ANTIALIAS)
+        #print(self.image.size)
+        self.littlecanvas.img = ImageTk.PhotoImage(self.image)
+        self.img = self.littlecanvas.img
+        self.littlecanvas_img = self.littlecanvas.create_image(0, 0, anchor="nw",
+                                                               image=self.littlecanvas.img)
+        #print(self.littlecanvas.winfo_width())
+        #print(self.littlecanvas.winfo_height())
+        self.width, self.height = self.image.size
+       # print(self.image.size)
+        self.imscale = 1.0  # scale for the canvaas image
+        self.delta = 1.1  # zoom magnitude
+        # Put image into container rectangle and use it to set proper coordinates to the image
+        self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
+        #print(self.width, self.height)
+
+        #########deleted nodes##################
+        self.nodescanvas = tk.Canvas(self.canvas, bg='white', bd=0, highlightthickness=0)
+        self.nodescanvas.place(relx=0.5, rely=0.05, relwidth=0.45, relheight=0.14)
+        self.nodescanvas.bind("<Configure>", self.resize)
+        self.text = tk.Text(self.nodescanvas, font=("Arial", 14), width=120, height=40)
+        self.nodescanvas.create_window((0, 0), window=self.text, anchor='nw')
+        self.text.insert('end', 'Deleted Contexts:\n' + str(self.delnodes)[1:-1])
+        self.text.configure(state='disabled')
+        ###########deleted edges###############################
+        self.edgescanvas = tk.Canvas(self.canvas, bg='white', bd=0, highlightthickness=0)
+        self.edgescanvas.place(relx=0.5, rely=0.15, relwidth=0.45, relheight=0.14)
+        self.edgescanvas.bind("<Configure>", self.resize)
+        self.text = tk.Text(self.edgescanvas, font=("Arial", 14), width=120, height=40)
+        self.edgescanvas.create_window((0, 0), window=self.text, anchor='nw')
+        self.text.insert('end', 'Deleted Edges:\n') #+ str(self.edges_del[1:-1]))
+        self.text.configure(state='disabled')
+        ##########radiobutton for edge delete node delete##########
+        self.rad_v = tk.IntVar()
+        self.radio_1 = tk.Radiobutton(self, text="Node Delete", command=self.option1,
+                                      variable=self.rad_v, value=1, bg="white", font=("Arial", 14))
+        self.radio_1.place(relx=0.5, rely=0.65, relwidth=0.15, relheight=0.08)
+        self.radio_2 = tk.Radiobutton(self, text="Edge Delete", command=self.option2,
+                                      variable=self.rad_v, value=2, bg="white", font=("Arial", 14))
+        self.radio_2.place(relx=0.5, rely=0.75, relwidth=0.15, relheight=0.08)
+        self.radio_3 = tk.Radiobutton(self, text="Metadata", command=self.option3,
+                                      variable=self.rad_v, value=3, bg="white", font=("Arial", 14))
+        self.radio_3.place(relx=0.5, rely=0.85, relwidth=0.15, relheight=0.08)
+
+        def addnode():
+            self.x_1 = self.entry1.get()
+            CURRENT_GRAPH.add_node(self.x_1, shape="box", fontsize="30.0",
+                                   fontname="Helvetica", penwidth="1.0")
+            self.graph = CURRENT_GRAPH
+            neww = int(self.canvas.winfo_width()*0.4)
+            newh = int(self.canvas.winfo_height()*0.9)
+            if self.phase_true == 1:
+                imgrender_phase(self.graph)
+            else:
+                imgrender(self.graph)
+            self.image = Image.open('testdag.png').resize(
+                (neww, newh), Image.ANTIALIAS)
+           # self.image = ImageTk.PhotoImage(img)
+            ##TRY AND MAKE SHOW IMAGE WORK AS ITEMCONFIG
+            self.show_image()
+            #self.littlecanvas.itemconfig(self.littlecanvas_img, image = self.img)
+            #print(self.x1)
+
+        def addedge():
+            x_1 = self.entry1.get()
+            x_2 = self.entry2.get()
+            CURRENT_GRAPH.add_edge(x_1, x_2)
+            self.graph = CURRENT_GRAPH
+            neww = int(self.canvas.winfo_width()*0.4)
+            newh = int(self.canvas.winfo_height()*0.9)
+            if self.phase_true == 1:
+                imgrender_phase(self.graph)
+            else:
+                imgrender(self.graph)
+            self.image = Image.open('testdag.png').resize(
+                (neww, newh), Image.ANTIALIAS)
+           # self.image = ImageTk.PhotoImage(img)
+            #self.littlecanvas.itemconfig(self.littlecanvas_img, image = self.img)
+            self.show_image()
+
+
+        #canvas to hold buttons
+        self.canvas1 = tk.Canvas(self.canvas, bg="white")
+        self.canvas1.place(relx=0.50, rely=0.35, relwidth=0.25, relheight=0.15)
+        #canvas to hold metadata input
+        self.canvas2 = tk.Canvas(self.canvas, bg="white")
+        self.canvas2.place(relx=0.50, rely=0.5, relwidth=0.25, relheight=0.15)
+        #canvas to hold the metadata
+        self.metacanvas = tk.Canvas(self.canvas, bg="white")
+        self.metacanvas.place(relx=0.75, rely=0.35, relwidth=0.15, relheight=0.2)
+        self.abovebelowcanvas = tk.Canvas(self.canvas, bg="white")
+        self.abovebelowcanvas.place(relx=0.75, rely=0.6, relwidth=0.15, relheight=0.2)
+        #making node add section
+        self.entry1 = tk.Entry(self.canvas)
+        self.button1 = tk.Button(text='Add Node 1', command=addnode, bg="#b3dcf2",
+                                 font=("Arial", 12))
+        self.label1 = tk.Label(self.canvas, text='Node 1', bg='white', font=("Arial", 12))
+        #self.label1.bind("<Configure>", self.resize)
+        #self.button1.bind("<Configure>", self.resize)
+        #self.entry1.bind("<Configure>", self.resize)
+        #self.canvas1.bind("<Configure>", self.resize)
+        self.canvas1.create_window(70, 45, window=self.entry1, width=50)
+        self.canvas1.create_window(70, 20, window=self.label1)
+        self.canvas1.create_window(70, 80, window=self.button1)
+        #making edge add function
+        self.entry2 = tk.Entry(self.canvas)
+        self.button2 = tk.Button(text='Add Edge', command=addedge, bg="#b3dcf2", font=("Arial", 12))
+        self.label2 = tk.Label(self.canvas, text='Node 2', bg='white', font=("Arial", 12))
+        #self.label1.bind("<Configure>", self.resize)
+        #self.button1.bind("<Configure>", self.resize)
+        self.canvas1.create_window(190, 45, window=self.entry2, width=50)
+        self.canvas1.create_window(190, 20, window=self.label2)
+        self.canvas1.create_window(190, 80, window=self.button2)
+        #entry box for adding metadata
+        self.entry3 = tk.Entry(self.canvas)
+        self.button3 = tk.Button(text='Add Metadata to node', bg="#b3dcf2",
+                                 font=("Arial", 12), command=self.testcom)#need to add command
+        self.button4 = tk.Button(text='Phasing', bg="#b3dcf2",
+                                 font=("Arial", 12), command=self.phasing)
+        self.label3 = tk.Label(self.canvas, text='Node', bg='white', font=("Arial", 12))
+        self.canvas2.create_window(70, 45, window=self.entry3, width=50)
+        self.canvas2.create_window(70, 20, window=self.label3)
+        self.canvas2.create_window(140, 100, window=self.button3)
+        self.canvas2.create_window(300, 100, window=self.button4)
+        self.dict = {'Finds': ['Find1', 'Find2', 'Find3'],
+                     'Dates': ['Dates1', 'Dates2', 'Dates3'],
+                     'Phase': ['Phase1', 'Phase2', 'Phase3']}
+
+        self.variable_a = tk.StringVar(self.canvas2)
+        self.variable_b = tk.StringVar(self.canvas2)
+        self.variable_a.trace('w', self.update_options)
+        self.optionmenu_a = tk.OptionMenu(self.canvas2, self.variable_a, *self.dict.keys())
+        self.optionmenu_b = tk.OptionMenu(self.canvas2, self.variable_b, '')
+        self.variable_a.set('Finds')
+        self.optionmenu_a.place(relx=0.30, rely=0.25)
+        self.optionmenu_b.place(relx=0.550, rely=0.25)
+#    def getorigin(self, eventorigin):
+#        global x,y, node
+#        bbox = self.littlecanvas.bbox(self.container)  # get image area
+#        #print(bbox)
+#        x = eventorigin.x
+#        y = eventorigin.y
+#        #print(x,y)
+
+    def option1(self):
+        """ node delete option"""
+        self.mode = "node_delete"
+        self.rad_sel = self.rad_v.get()
+
+    def option2(self):
+        "edge delete option"""
+        self.mode = "edge_delete"
+        self.rad_sel = self.rad_v.get()
+
+    def option3(self):
+        """option to get metedata"""
+        self.mode = "get_metadata"
+        self.rad_sel = self.rad_v.get()
+
+    def nodecheck(self, x_current, y_current):
+        """ returns the node that corresponds to the mouse cooridinates"""
+        node_inside = "no node"
+        if self.phase_true == 1:
+            pos_dag = node_coords_fromjson('fi_new.txt')
+        else:
+            pos_dag = nx.drawing.nx_pydot.graphviz_layout(self.graph, prog='dot')
+            #get coords in dot format, not scaled yet
+
+        node_df = pd.DataFrame.from_dict(pos_dag, orient='index')
+        #forms a dataframe from the dicitonary of coords
+    #    y_dist = min(np.array(node_df[1])) - 0.5 #wprks out how large the node is
+     #   x_dist = min(np.array(node_df[0])) - 0.5
+        #givens upper and lower bounds for checking each node
+        x_lower = np.array(node_df[0]) - min(np.array(node_df[0])) - 0.5
+        x_upper = np.array(node_df[0]) + min(np.array(node_df[0])) - 0.5
+        y_lower = np.array(node_df[1]) - min(np.array(node_df[1])) - 0.5
+        y_upper = np.array(node_df[1]) + min(np.array(node_df[1])) - 0.5
+        cavx = self.canvas.winfo_width()*(0.4)
+        cany = self.canvas.winfo_height()*(0.9)
+        node_df["x_lower"] = x_lower
+        node_df["x_upper"] = x_upper
+        node_df["y_lower"] = y_lower
+        node_df["y_upper"] = y_upper
+        xscale = (x_current)* (max(x_upper)+0.5)/cavx
+        yscale = (cany-y_current) * (max(y_upper)+0.5)/cany
+        print(type(node_df))
+        for n_ind in range(node_df.shape[0]):
+            if ((node_df.iloc[n_ind].x_lower < xscale < node_df.iloc[n_ind].x_upper) and
+                    (node_df.iloc[n_ind].y_lower < yscale < node_df.iloc[n_ind].y_upper)):
+                node_inside = node_df.iloc[n_ind].name
+        return node_inside
+
+
+    def scroll_y(self, *args, **kwargs):
+        """ Scroll canvas vertically and redraw the image"""
+        self.canvas.yview(*args, **kwargs)  # scroll vertically
+        self.show_image()  # redraw the image
+
+    def scroll_x(self, *args, **kwargs):
+        """Scroll canvas horizontally and redraw the image"""
+        self.canvas.xview(*args, **kwargs)  # scroll horizontally
+        self.show_image()  # redraw the image
+
+    def edge_render(self):
+        """renders string for deleted edges"""
+        self.edges_del = self.edge_nodes
+        edgetext = tk.Text(self.edgescanvas, font=("Arial", 14),
+                           width=120, height=40)
+        self.edgescanvas.create_window((0, 0), window=edgetext, anchor='nw')
+        ednodes = str(self.edges_del[0]) + ' above '+ str(self.edges_del[1])
+        self.temp = str(self.temp).replace('[', '')
+        self.temp = str(self.temp).replace(']', '')
+        self.temp = self.temp + '\n' + str(ednodes.replace("'", ""))
+        edgetext.insert('end', 'Deleted Edges:' + str(self.temp))
+        edgetext.configure(state='disabled')
+        self.edge_nodes = []
+
+    def nodes(self, eventorigin):
+        """deletes the node and redraws the graph"""
+        bbox = self.littlecanvas.bbox(self.container) #areaimage
+        x_scal = (eventorigin.x*int(2000*0.4))/bbox[2]
+        y_scal = (eventorigin.y*int(1000*0.9))/bbox[3]
+        node = self.nodecheck(x_scal, y_scal)
+        if self.rad_sel == 1:
+            if node != "no node":
+                CURRENT_GRAPH.remove_node(node)
+                self.delnodes = np.append(self.delnodes, node)
+        if self.rad_sel == 2:
+            self.edge_nodes = np.append(self.edge_nodes, node)
+            if len(self.edge_nodes) == 2:
+                try:
+                    CURRENT_GRAPH.remove_edge(self.edge_nodes[0], self.edge_nodes[1])
+                    self.edge_render()
+                except (KeyError, nx.exception.NetworkXError):
+                    try:
+                        CURRENT_GRAPH.remove_edge(self.edge_nodes[1], self.edge_nodes[0])
+                        self.edge_render()
+                    except (KeyError, nx.exception.NetworkXError):
+                        tk.messagebox.showinfo('Error', 'An edge doesnt exist between those nodes')
+                        self.edge_nodes = []
+        if self.rad_sel == 3:
+            self.metatext = tk.Text(self.metacanvas, font=("Arial", 14), width=120, height=40)
+            self.metacanvas.create_window((0, 0), window=self.metatext, anchor='nw')
+           # self.meta = str(CURRENT_GRAPH.nodes()[str(node)])
+            self.meta1 = pd.DataFrame.from_dict(CURRENT_GRAPH.nodes()[str(node)], orient='index')
+            self.meta1 = self.meta1.loc["dates":"phase",]
+            metastr = str(self.meta.replace("'", ""))[1:-1]
+            metastr = metastr.replace(",", "\n")
+            self.metatext.insert('end', 'Metadata of node ' + str(node) + ':\n' + str(self.meta1))
+            self.metatext.configure(state='disabled')
+        self.graph = CURRENT_GRAPH
+        neww = int(self.canvas.winfo_width()*0.4)
+        newh = int(self.canvas.winfo_height()*0.9)
+        if self.phase_true == 1:
+            imgrender_phase(self.graph)
+        else:
+            imgrender(self.graph)
+        self.image = Image.open('testdag.png').resize((neww, newh), Image.ANTIALIAS)
+        self.show_image()
+        self.text = tk.Text(self.nodescanvas, font=("Arial", 14), width=120, height=40)
+        self.nodescanvas.create_window((0, 0), window=self.text, anchor='nw')
+        nbnodes = str(self.delnodes)
+        self.text.insert('end', 'Deleted Contexts:\n' + str(nbnodes.replace("'", ""))[1:-1])
+        self.text.configure(state='disabled')
+
+    def move_from(self, event):
+        """Remembers previous coordinates for scrolling with the mouse"""
+        self.littlecanvas.scan_mark(event.x, event.y)
+        print(event.x, event.y)
+
+    def move_to(self, event):
+        """Drag (move) canvas to the new position"""
+        self.littlecanvas.scan_dragto(event.x, event.y, gain=1)
+        self.show_image()
+        bbox = self.littlecanvas.bbox(self.container)  # get image area
+        print(bbox)
+        print(self.littlecanvas.coords(self.imagetk))
+        # redraw the image
+
+    def wheel(self, event):
+        """Zoom with mouse wheel"""
+        x_zoom = self.littlecanvas.canvasx(event.x)
+        y_zoom = self.littlecanvas.canvasy(event.y)
+        bbox = self.littlecanvas.bbox(self.container)  # get image area
+        #print(bbox)
+        if bbox[0] < x_zoom < bbox[2] and bbox[1] < y_zoom < bbox[3]:
+            pass  # Ok! Inside the image
+        else: return  # zoom only inside image area
+        scale = 1.0
+        # Respond to Linux (event.num) or Windows (event.delta) wheel event
+        if event.num == 5 or event.delta == -120:  # scroll down
+            i = min(self.width, self.height)
+            if int(i * self.imscale) < 30:
+                return  # image is less than 30 pixels
+            self.imscale /= self.delta
+            scale /= self.delta
+        if event.num == 4 or event.delta == 120:  # scroll up
+            i = min(self.littlecanvas.winfo_width(), self.littlecanvas.winfo_height())
+            if i < self.imscale:
+                return  # 1 pixel is bigger than the visible area
+            self.imscale *= self.delta
+            scale *= self.delta
+        self.littlecanvas.scale('all', 0, 0, scale, scale)  # rescale all canvas objects
+        self.show_image()
+
+    def show_image(self):
+        """Show image on the Canvas"""
+        bbox1 = self.littlecanvas.bbox(self.container)  # get image area
+        # Remove 1 pixel shift at the sides of the bbox1
+        bbox1 = (bbox1[0] + 1, bbox1[1] + 1, bbox1[2] - 1, bbox1[3] - 1)
+        bbox2 = (self.littlecanvas.canvasx(0),  # get visible area of the canvas
+                 self.littlecanvas.canvasy(0),
+                 self.littlecanvas.canvasx(self.littlecanvas.winfo_width()),
+                 self.littlecanvas.canvasy(self.littlecanvas.winfo_height()))
+        bbox = [min(bbox1[0], bbox2[0]), min(bbox1[1], bbox2[1]),  # get scroll region box
+                max(bbox1[2], bbox2[2]), max(bbox1[3], bbox2[3])]
+        bbox1 = self.littlecanvas.bbox(self.container)  # get image area
+        if bbox[0] == bbox2[0] and bbox[2] == bbox2[2]:  # whole image in the visible area
+            bbox[0] = bbox1[0]
+            bbox[2] = bbox1[2]
+        if bbox[1] == bbox2[1] and bbox[3] == bbox2[3]:  # whole image in the visible area
+            bbox[1] = bbox1[1]
+            bbox[3] = bbox1[3]
+        self.littlecanvas.configure(scrollregion=bbox)  # set scroll region
+        x_1 = max(bbox2[0] - bbox1[0], 0)  # get coordinates (x1,y1,x2,y2) of the image tile
+        y_1 = max(bbox2[1] - bbox1[1], 0)
+        x_2 = min(bbox2[2], bbox1[2]) - bbox1[0]
+        y_2 = min(bbox2[3], bbox1[3]) - bbox1[1]
+        if int(x_2 - x_1) > 0 and int(y_2 - y_1) > 0:  # show image if it in the visible area
+            x_img = min(int(x_2 / self.imscale), self.width)   # sometimes it is larger on 1 pixel
+            y_img = min(int(y_2 / self.imscale), self.height)  # ...and sometimes not
+            image = self.image.crop((int(x_1 / self.imscale), int(y_1 / self.imscale),
+                                     x_img, y_img))
+            self.imagetk = ImageTk.PhotoImage(image.resize((int(x_2 - x_1), int(y_2 - y_1))))
+            self.littlecanvas.delete(self.littlecanvas_img)
+            self.imageid = self.littlecanvas.create_image(max(bbox2[0], bbox1[0]),
+                                                          max(bbox2[1], bbox1[1]), anchor='nw',
+                                                          image=self.imagetk)
+            #self.littlecanvas.lower(self.imageid)  # set image into background
+            self.littlecanvas.imagetk = self.imagetk
+
+    def update_options(self, *args):
+        """updates metadata drop down menu 1"""
+        meta_data = self.dict[self.variable_a.get()]
+        self.variable_b.set(meta_data[0])
+        menu = self.optionmenu_b['menu']
+        menu.delete(0, 'end')
+        for meta in meta_data:
+            menu.add_command(label=meta,
+                             command=lambda nation=meta: self.variable_b.set(nation))
+
+    def phasing(self):
+        """runs image render function with phases on seperate levels"""
+        neww_1 = int(self.canvas.winfo_width()*0.4)
+        newh_1 = int(self.canvas.winfo_height()*0.9)
+        self.graph = CURRENT_GRAPH
+        imgrender_phase(self.graph)
+        self.image = Image.open('testdag.png').resize(
+            (neww_1, newh_1), Image.ANTIALIAS
+        )
+        self.phase_true = 1
+        self.show_image()
+
+    def testcom(self):
+        """metadata menu 2 update"""
+        if self.variable_a.get() == "Phase":
+            CURRENT_GRAPH.nodes()[str(self.entry3.get())].update({"phase":self.variable_b.get()})
+        elif self.variable_a.get() == "Dates":
+            CURRENT_GRAPH.nodes()[str(self.entry3.get())].update({"phase":self.variable_b.get()})
+        elif self.variable_a.get() == "Finds":
+            CURRENT_GRAPH.nodes()[str(self.entry3.get())].update({"phase":self.variable_b.get()})
+        self.metatext = tk.Text(self.metacanvas, font=("Arial", 14), width=120, height=40)
+        self.metacanvas.create_window((0, 0), window=self.metatext, anchor='nw')
+        self.meta1 = pd.DataFrame.from_dict(CURRENT_GRAPH.nodes()[str(self.entry3.get())],
+                                            orient='index')
+        self.meta1 = self.meta1.loc["dates":"phase",]
+        self.metatext.insert('end', 'Metadata of node ' +
+                             str(self.entry3.get()) + ':\n' + str(self.meta1))
+        self.metatext.configure(state='disabled')
+        rellist = list(nx.line_graph(CURRENT_GRAPH))
+        above = ()
+        below = ()
+        for i in enumerate(rellist):
+            if str(self.entry3.get()) in rellist[i[0]]:
+                if str(self.entry3.get()) == rellist[i[0]][0]:
+                    below = np.append(below, rellist[i[0]][1])
+                elif str(self.entry3.get()) == rellist[i[0]][1]:
+                    above = np.append(above, rellist[i[0]][0])
+        abovebelowtext = tk.Text(self.abovebelowcanvas, font=("Arial", 14),
+                                 width=120, height=40)
+        self.abovebelowcanvas.create_window((0, 0), window=abovebelowtext, anchor='nw')
+        abovebelowtext.insert('end', 'Direct stratigraphic relationships:\n Contexts above: ' +
+                              str(above) + '\n' + 'Contexts below:' + str(below))
+        #print(self.rellist)
+
+    def resize(self, event):
+        """resizes image on canvas"""
+        img = Image.open('testdag.png').resize((event.width, event.height), Image.ANTIALIAS)
+        self.img = ImageTk.PhotoImage(img)
+        self.w_1 = event.width
+        self.h_1 = event.height
+     #   print ('width  = {}, height = {}'.format(int(self.w/16), int(self.h/16)))
+      #  print ('totwidth  = {}, totheight = {}'.format(self.w, self.h))
+        self.littlecanvas.itemconfig(self.littlecanvas_img, image=self.img)
+
+MAIN_FRAME = MainFrame()
+MAIN_FRAME.geometry("2000x1000")
+MAIN_FRAME.mainloop()
+ 
