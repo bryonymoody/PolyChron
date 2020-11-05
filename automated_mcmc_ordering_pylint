@@ -185,6 +185,25 @@ def dict_update(test_dict_2, post_t, post_p, inter, inter2):
             count = count + 1
     return test_dict_2
 
+def phase_bd_init_func(key_reff, phi_reff, theta_initt, prev_phases):
+    """GIVES A LIST OF INITAL PHASE BOUNDARY VALUES FOR MCMCM"""
+    PHASE_INITS = [] 
+    KEY_REF_1 = np.array(key_reff)
+    PHASE_INITS.append(np.random.uniform(max([theta_initt[i] for i in np.where(KEY_REF_1 == phi_reff[0])[0].tolist()]), P))
+    for j in range(1, len(key_reff)-1):
+        a_temp = np.random.uniform(max([theta_initt[i] for i in np.where(KEY_REF_1 == phi_reff[j])[0].tolist()]),
+                                             min([theta_initt[i] for i in np.where(KEY_REF_1 == phi_reff[j-1])[0].tolist()]))
+        if prev_phases[j] != "abuting":
+            print("TS")
+            a_temp = [a_temp, (np.random.uniform(max([theta_initt[i] for i in np.where(KEY_REF_1 == phi_reff[j])[0].tolist()]),
+                                 min([theta_initt[i] for i in np.where(KEY_REF_1 == phi_reff[j-1])[0].tolist()])))]
+            a_temp = sorted(a_temp, reverse = True)
+        else:
+            a_temp = [a_temp]
+        [PHASE_INITS.append(ref_ind) for ref_ind in a_temp]
+    PHASE_INITS.append(np.random.uniform(min([theta_initt[i] for i in np.where(KEY_REF_1 == phi_reff[-1])[0].tolist()]), A))
+    return PHASE_INITS
+
 #sampling functions
 def upp_samp_1(theta_samp, phis_samp, m_samp):
     """ upper sample 1"""
@@ -505,8 +524,6 @@ P = 950
 STRAT_VEC = [[[], []], [[], []], [[], []], [[], []], [[], []], [[], []], [[], []]]
 RCD_EST = [660, 630, 646, 670, 537, 600, 580]
 RCD_ERR = [46, 35, 47, 47, 44, 50, 47]
-THETA_INITS = [925, 875, 825, 775, 725, 675, 625]
-PHASE_BOUNDARY_INITS = [950, 900, 800, 750, 700, 650, 600]
 KEY_REF = [6, 5, 5, 4, 3, 2, 1]
 PHI_REF = [6, 5, 4, 3, 2, 1]
 CONTEXT_NO = [7771, 2589, 7755, 7756, 7757, 7761, 7758]
@@ -596,6 +613,11 @@ POST_PHASE = ["abuting", "abuting", "abuting", "abuting", "abuting", "end"]
 RCD_S = [list(x) for x in zip(RCD_EST, RCD_ERR)]
 RESULT_VEC = [likelihood_func(date[0], date[1], A, P) for date in RCD_S]
 
+THETA_INITS = sorted([np.random.choice(i[0], p=i[1]).item() for i in RESULT_VEC], reverse = True)
+PHASE_BOUNDARY_INITS = phase_bd_init_func(KEY_REF, PHI_REF, THETA_INITS, PREV_PHASE)
+ 
+#THETA_INITS = [925, 875, 825, 775, 725, 675, 625]
+#PHASE_BOUNDARY_INITS = [950, 900, 800, 750, 700, 650, 600]
 #initiating the inital dict
 NEW_LST = [list(x) for x in zip(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC)]
 KEYS_LST = [list(x) for x in zip(KEY_REF, NEW_LST)]
