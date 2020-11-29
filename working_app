@@ -10,6 +10,7 @@ import sys
 import re
 import ast
 import time
+import threading
 from PIL import Image, ImageTk, ImageChops
 from networkx.drawing.nx_pydot import read_dot, write_dot
 import networkx as nx
@@ -18,14 +19,25 @@ import numpy as np
 import pandas as pd
 from tkinter.filedialog import askopenfile
 from graphviz import render
-
+from networkx.readwrite import json_graph
 
 phase_true = 0
 
+def background(func, *args):
+    th = threading.Thread(target=func, *args)
+    th.daemon = True 
+    th.start()
+    
+def print_numbers(end): #  no capitals for functions in python
+    for i in range(end):
+        print(i)
+        time.sleep(1)
+#    
+    
 def trim(im_trim):
     t0 = time.time()
     """Trims images down"""
-    bg_trim = Image.new(im_trim.mode, im_trim.size)#, im_trim.getpixel((0, 0)))
+    bg_trim = Image.new(im_trim.mode, im_trim.size)
     diff = ImageChops.difference(im_trim, bg_trim)
     diff = ImageChops.add(diff, diff, 2.0, -100)
     bbox = diff.getbbox()
@@ -38,19 +50,24 @@ def node_coords_fromjson(file_ext):
     my_file = open(file_ext)
  #   my_file = open("fi_new")
     file_content = my_file.read()
+    t1 = time.time() - t0
     graphs = pydot.graph_from_dot_data(file_content)
+    
     svg_string = str(graphs[0].create_svg("json"))
     coords_x = re.findall(r'"name(.*?)"style', svg_string)
     json_nodelist = []
     json_nodecoord = []
+
     for i in enumerate(coords_x):
         if "pos" in coords_x[i[0]]:
             x_temp = re.findall(r'\": "(.*?)",\\n', coords_x[i[0]])
             cord_temp = re.findall(r'pos\": "(.*?)",\\n', coords_x[i[0]])
             json_nodelist.append(x_temp[0])
-           # print(x_temp[0], cord_temp)
             json_nodecoord.append(ast.literal_eval(cord_temp[0]))
     new_pos = dict(zip(json_nodelist, json_nodecoord))
+    t2 = time.time() - t1 - t0
+    print(t1)
+    print(t2)
 #    print((sys._getframe().f_code.co_name), str(time.time() - t0))
     return new_pos
 
@@ -103,12 +120,7 @@ def imgrender(file):
     t0 = time.time()
     """renders png from dotfile"""
     write_dot(file, 'fi_new')
- #   print("timehalf_1 ", time.time() - t0)
-    #(graph,) = pydot.graph_from_dot_file('fi_new')
     render('dot', 'png', 'fi_new')
-    #print(type(graph))
- #   print("timehalf ", time.time() - t0)
-  # # graph.write_png('test.png')
     inp = Image.open("fi_new.png")
     inp = trim(inp)
     inp.save("testdag.png")
@@ -221,6 +233,8 @@ class MainFrame(tk.Tk):
         #define all variables that are used
         self.h_1 = 0
         self.w_1 = 0
+        self.transx = 0
+        self.transy = 0
         self.meta1 = ""
         self.metatext = ""
         self.rad_sel = ""
@@ -228,9 +242,11 @@ class MainFrame(tk.Tk):
         ##### intial values for all the functions
         self.delnodes = []
         self.edge_nodes = []
+        self.comb_nodes = []
         self.edges_del = []
         self.temp = []
         self.x_1 = 1
+        self.image = "noimage"
         #forming and placing canvas and little canvas
         self.canvas = tk.Canvas(self, bg="#b3dcf2", bd=0, highlightthickness=0)
         self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
@@ -238,24 +254,18 @@ class MainFrame(tk.Tk):
         self.littlecanvas = tk.Canvas(self.canvas, bg='white', bd=0,
                                       selectborderwidth=0, highlightthickness=0, insertwidth=0)
         self.littlecanvas.place(relx=0.05, rely=0.05, relwidth=0.4, relheight=0.9)
-  #      self.littlecanvas.bind("<Button 1>", self.nodes)
         self.littlecanvas.bind("<MouseWheel>", self.wheel)
         self.littlecanvas.bind('<Button-4>', self.wheel)# only with Linux, wheel scroll down
         self.littlecanvas.bind('<Button-5>', self.wheel)
-      #  self.littlecanvas.bind('<Button-3>', self.move_from)
-      #  self.littlecanvas.bind("<B3-Motion>", self.move_to)
-     #   self.littlecanvas.bind("<Left>", left)
-     #   self.littlecanvas.bind("<Right>", right)
-     #   self.littlecanvas.bind("<Up>", up)
-     #   self.littlecanvas.bind("<Dowm>", down)
-        self.littlecanvas.bind('<ButtonPress-1>', self.move_from)
-        self.littlecanvas.bind('<B1-Motion>',     self.move_to)
+        self.littlecanvas.bind('<Button-1>', self.move_from)
+        self.littlecanvas.bind('<B1-Motion>', self.move_to)
+    #    self.show_image.after(0, print("test"))
         #placing image on littlecanvas from graph
         self.littlecanvas.rowconfigure(0, weight=1)
         self.littlecanvas.columnconfigure(0, weight=1)
         self.littlecanvas.update()
         #### bind comands to canvas and little canvas ######
-        self.dotbutton = tk.Button(self.canvas, text ='Open dot file', command = lambda:open_file1())
+        self.dotbutton = tk.Button(self.canvas, text ='Open dot file',  font=("Arial", 14),  command = lambda:open_file1())
         self.dotbutton.place(relx=0.05, rely=0.01, relwidth=0.1, relheight=0.03)
         self.stratbutton = tk.Button(self.canvas, text ='Open strat text file', command = lambda:open_file2())
         self.stratbutton.place(relx=0.17, rely=0.01, relwidth=0.1, relheight=0.03)
@@ -279,79 +289,59 @@ class MainFrame(tk.Tk):
         self.text.insert('end', 'Deleted Edges:\n') #+ str(self.edges_del[1:-1]))
         self.text.configure(state='disabled')
         ##########radiobutton for edge delete node delete##########
-        self.rad_v = tk.IntVar()
-        self.radio_1 = tk.Radiobutton(self, text="Node Delete", command=self.option1,
-                                      variable=self.rad_v, value=1, bg="white", font=("Arial", 14))
-        self.radio_1.place(relx=0.5, rely=0.65, relwidth=0.15, relheight=0.08)
-        self.radio_2 = tk.Radiobutton(self, text="Edge Delete", command=self.option2,
-                                      variable=self.rad_v, value=2, bg="white", font=("Arial", 14))
-        self.radio_2.place(relx=0.5, rely=0.75, relwidth=0.15, relheight=0.08)
-        self.radio_3 = tk.Radiobutton(self, text="Metadata", command=self.option3,
-                                      variable=self.rad_v, value=3, bg="white", font=("Arial", 14))
-        self.radio_3.place(relx=0.5, rely=0.85, relwidth=0.15, relheight=0.08)
 
-    #       self.radio_4 = tk.Radiobutton(self, text="Stop Editing Graph", command=self.option4,
- #                                     variable=self.rad_v, value=4, bg="white", font=("Arial", 14))
-  
-#      self.radio_4.place(relx=0.5, rely=0.45, relwidth=0.15, relheight=0.08)
-#        def left(event):
-#            x = -10
-#            y = 0
-#            self.lit
-        OptionList = [
-            "Node Delete",
-            "Edge Delete",
-            "Metadata"
+        self.OptionList = [
+            "Delete Node",
+            "Delete Edge",
+            "Get Metadata",
+            "Combine Node"
             ] 
-        variable = tk.StringVar(self.littlecanvas)
-        variable.set(OptionList[0])
+        self.variable = tk.StringVar(self.littlecanvas)
+        self.variable.set("Node Action")
+        self.testmenu = tk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)
         
         def destroy():
-            onRight.menu.place_forget()
-        #
+            self.testmenu.place_forget()
         #    # This is the function that removes the selected item when the label is clicked.
 
-         #   onRight.menu.bind("<Button-1>", delete)
         def delete(*args):
-            print(variable.get())
+           # print(self.variable.get())
             destroy()  
+            self.testmenu.place_forget()
+            self.variable.set("Node Action")
         
         
         def onRight(*args):
+            self.littlecanvas.unbind("Button-1>")
+            self.littlecanvas.bind("<Button-1>", lambda: [onLeft, threading.Thread(target = self.pos_update().start())])
             # Here we fetch our X and Y coordinates of the cursor RELATIVE to the window
-            cursorx = int(self.littlecanvas.winfo_pointerx() - self.littlecanvas.winfo_rootx())
-            cursory = int(self.littlecanvas.winfo_pointery() - self.littlecanvas.winfo_rooty())
+            self.cursorx = int(self.littlecanvas.winfo_pointerx() - self.littlecanvas.winfo_rootx())
+            self.cursory = int(self.littlecanvas.winfo_pointery() - self.littlecanvas.winfo_rooty())
         
             # Now we define our right click menu canvas
-           # onRight.menu = tk.Canvas(self.littlecanvas, width=150, height=50, highlightbackground="gray", highlightthickness=1)
             # And here is where we use our X and Y variables, to place the menu where our cursor is,
-            # That's how right click menus should be placed.
-
-            onRight.menu = tk.OptionMenu(self.littlecanvas, variable, *OptionList, command = delete)
-            onRight.menu.place(x=cursorx, y=cursory)
+            # That's how right click menus should be placed.           
+            self.testmenu.place(x=self.cursorx, y=self.cursory)
             # This is for packing our options onto the canvas, to prevent the canvas from resizing.
             # This is extremely useful if you split your program into multiple canvases or frames
             # and the pack method is forcing them to resize.
-            onRight.menu.pack_propagate(0)
+            self.testmenu.pack_propagate(0)
             # Here is our label on the right click menu for deleting a row, notice the cursor
             # value, which will give us a pointy finger when you hover over the option.
-         #   delLabel = tk.Label(onRight.menu, text="Node option", cursor="hand2", anchor="w")
-            onRight.menu.config(width=10, font=('Helvetica', 10))
-          #  delLabel.pack(side="top", padx=1, pady=1, fill="x")
-        
+            self.testmenu.config(width=10, bg="#b3dcf2", font=('Arial', 14))        
             # This function is for removing the canvas when an option is clicked.
   
         def preClick(*args):
             try:
-                onRight.menu.place_forget()
+                self.testmenu.place_forget()
                 onRight()
             except Exception:
                 onRight()
-        
+    
         # Hide menu when left clicking
         def onLeft(*args):
             try:
-                onRight.menu.place_forget()
+                self.testmenu.place_forget()
             except Exception:
                 pass
 
@@ -360,7 +350,7 @@ class MainFrame(tk.Tk):
             t0 = time.time()
             self.x_1 = self.entry1.get()
             self.graph.add_node(self.x_1, shape="box", fontsize="30.0",
-                                   fontname="Helvetica", penwidth="1.0")
+                                   fontname="Arial", penwidth="1.0")
             if phase_true == 1:
                 imgrender_phase(self.graph)
             else:
@@ -390,9 +380,9 @@ class MainFrame(tk.Tk):
             global node_df
             t0 = time.time()
             global FILE_INPUT
-            file = askopenfile(mode ='r', filetypes =[('Python Files', '*.dot')]) 
+            file = askopenfile(mode ='r', filetypes =[('Python Files', '*.dot')])             
             FILE_INPUT = file.name
-            self.graph = imagefunc(file.name)
+            self.graph = nx.DiGraph(imagefunc(file.name))
             if phase_true == 1:
                     self.image = imgrender_phase(self.graph)
             else:
@@ -431,7 +421,6 @@ class MainFrame(tk.Tk):
           #  print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
         self.littlecanvas.bind("<Button-3>", preClick)
-        self.littlecanvas.bind("<Button-1>", onLeft)
         #canvas to hold buttons
         self.canvas1 = tk.Canvas(self.canvas, bg="white")
         self.canvas1.place(relx=0.50, rely=0.35, relwidth=0.25, relheight=0.15)
@@ -482,40 +471,6 @@ class MainFrame(tk.Tk):
         self.optionmenu_a.place(relx=0.30, rely=0.25)
         self.optionmenu_b.place(relx=0.550, rely=0.25)
 
-    def option1(self):
-        t0 = time.time()
-        """ node delete option"""
-        self.mode = "node_delete"
-        self.rad_sel = self.rad_v.get()
-        self.littlecanvas.bind("<Button 1>", self.nodes)
-#        print((sys._getframe().f_code.co_name), str(time.time() - t0))
-
-    def option2(self):
-        t0 = time.time()
-        "edge delete option"""
-        self.mode = "edge_delete"
-        self.rad_sel = self.rad_v.get()
-        self.littlecanvas.bind("<Button 1>", self.nodes)
-#        print((sys._getframe().f_code.co_name), str(time.time() - t0))
-
-    def option3(self):
-        t0 = time.time()
-        """option to get metedata"""
-        self.mode = "get_metadata"
-        self.rad_sel = self.rad_v.get()
-        print((sys._getframe().f_code.co_name), str(time.time() - t0))
-        self.littlecanvas.bind("<Button 1>", self.nodes)
-    
-    def option4(self):
-        t0 = time.time()
-        """option to stop editing graph"""
-        self.mode = "stop_edit"
-        self.rad_sel = self.rad_v.get()
-        self.littlecanvas.bind('<ButtonPress-1>', self.move_from)
-        self.littlecanvas.bind('<B1-Motion>',     self.move_to)
-        print((sys._getframe().f_code.co_name), str(time.time() - t0))
-
-
     def nodecheck(self, x_current, y_current):
         t0 = time.time()
         """ returns the node that corresponds to the mouse cooridinates"""
@@ -546,6 +501,7 @@ class MainFrame(tk.Tk):
         t0 = time.time()
         """ Scroll canvas vertically and redraw the image"""
         self.canvas.yview(*args, **kwargs)  # scroll vertically
+        
         self.show_image()
         print((sys._getframe().f_code.co_name), str(time.time() - t0))
         # redraw the image
@@ -570,81 +526,138 @@ class MainFrame(tk.Tk):
         self.temp = self.temp + '\n' + str(ednodes.replace("'", ""))
         edgetext.insert('end', 'Deleted Edges:' + str(self.temp))
         edgetext.configure()
-        self.edge_nodes = []
+       # self.edge_nodes = []
 #        print((sys._getframe().f_code.co_name), str(time.time() - t0))
+#
 
     def nodes(self, eventorigin):
         """deletes the node and redraws the graph"""
         t0 = time.time()
-        x_scal = (eventorigin.x)
-        y_scal = (eventorigin.y)
-        node = self.nodecheck(x_scal, y_scal)
-      #  print(self.rad_sel)
-        if self.rad_sel == 1:
-            if node != "no node":
-                self.graph.remove_node(node)
-                self.delnodes = np.append(self.delnodes, node)
-        if self.rad_sel == 2:
-            self.edge_nodes = np.append(self.edge_nodes, node)
-            if len(self.edge_nodes) == 2:
-                try:
-                    self.graph.remove_edge(self.edge_nodes[0], self.edge_nodes[1])
-                    self.edge_render()
-                except (KeyError, nx.exception.NetworkXError):
+        self.testmenu.place_forget()
+        if self.image != "noimage":
+            x_scal = self.cursorx + self.transx
+            y_scal = self.cursory + self.transy
+            node = self.nodecheck(x_scal, y_scal)
+            if self.variable.get() == "Delete Node":
+                if node != "no node":
+                    self.graph.remove_node(node)
+                    self.delnodes = np.append(self.delnodes, node)
+                           
+            if len(self.edge_nodes) == 1:       
+                if self.variable.get() == "Delete Edge with "+ str(self.edge_nodes[0]):
+                    self.edge_nodes = np.append(self.edge_nodes, node)
+               #     print(self.edge_nodes)
                     try:
-                        self.graph.remove_edge(self.edge_nodes[1], self.edge_nodes[0])
+                        self.graph.remove_edge(self.edge_nodes[0], self.edge_nodes[1])
                         self.edge_render()
                     except (KeyError, nx.exception.NetworkXError):
-                        tk.messagebox.showinfo('Error', 'An edge doesnt exist between those nodes')
-                        self.edge_nodes = []
-        if self.rad_sel == 3:
-            self.metatext = tk.Text(self.metacanvas, font=("Arial", 14), width=120, height=40)
-            self.metacanvas.create_window((0, 0), window=self.metatext, anchor='nw')
-            self.meta1 = pd.DataFrame.from_dict(self.graph.nodes()[str(node)], orient='index')
-            self.meta1 = self.meta1.loc["dates":"phase",]
-            metastr = str(self.meta1.replace("'", ""))[1:-1]
-            metastr = metastr.replace(",", "\n")
-            self.metatext.insert('end', 'Metadata of node ' + str(node) + ':\n' + str(self.meta1))
-            self.metatext.configure()
-        if phase_true == 1:
-            imgrender_phase(self.graph)
-        else:
-            imgrender(self.graph)
-        self.image = Image.open('testdag.png')
-        self.width, self.height = self.image.size
-        self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)    
-        print("TEST", self.image.size[0], self.image.size[1])
-        self.pos_update()
-        self.show_image()
-        self.text = tk.Text(self.nodescanvas, font=("Arial", 14), width=120, height=40)
-        self.nodescanvas.create_window((0, 0), window=self.text, anchor='nw')
-        nbnodes = str(self.delnodes)
-        self.text.insert('end', 'Deleted Contexts:\n' + str(nbnodes.replace("'", ""))[1:-1])
-        self.text.configure(state='normal')
-#        print((sys._getframe().f_code.co_name), str(time.time() - t0))
+                        try:
+                            self.graph.remove_edge(self.edge_nodes[1], self.edge_nodes[0])
+                            self.edge_render()
+                        except (KeyError, nx.exception.NetworkXError):
+                            tk.messagebox.showinfo('Error', 'An edge doesnt exist between those nodes')
+                    
+                    self.OptionList.remove("Delete Edge with "+ str(self.edge_nodes[0]))
+                    self.testmenu = tk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)
+                    self.edge_nodes = []
+                    
+            if self.variable.get() == "Delete Edge":
+          #      print("test1")
+                if len(self.edge_nodes) == 1:
+                    self.OptionList.remove("Delete Edge with "+ str(self.edge_nodes[0]))
+                    self.testmenu = tk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)
+                    self.edge_nodes = []                    
+                self.edge_nodes = np.append(self.edge_nodes, node)                
+                self.OptionList.append("Delete Edge with "+ str(self.edge_nodes[0]))
+                self.testmenu = tk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)
 
+            if len(self.comb_nodes) == 1:       
+                if self.variable.get() == "Combine Node with "+ str(self.comb_nodes[0]):
+                    self.comb_nodes = np.append(self.comb_nodes, node)
+                    self.graph = nx.contracted_nodes(self.graph, self.comb_nodes[0], self.comb_nodes[1])
+                    x_nod = list(self.graph) 
+                    newnode = str(self.comb_nodes[0]) + " = " + str(self.comb_nodes[1])
+                    y_nod = [newnode if i==self.comb_nodes[0] else i for i in x_nod]
+            #        print(y_nod)
+                    mapping = dict(zip(x_nod, y_nod))
+                    self.graph = nx.relabel_nodes(self.graph, mapping)
+              #      print(list(self.graph))
+                    self.OptionList.remove("Combine Node with "+ str(self.comb_nodes[0]))
+                    self.testmenu = tk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)
+                    self.comb_nodes = []
+                    
+            if self.variable.get() == "Combine Node":
+                if len(self.comb_nodes) == 1:
+                    self.OptionList.remove("Combine Node with "+ str(self.comb_nodes[0]))
+                    self.testmenu = tk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)
+                    self.comb_nodes = []                    
+                self.comb_nodes = np.append(self.comb_nodes, node)                
+                self.OptionList.append("Combine Node with "+ str(self.comb_nodes[0]))
+                self.testmenu = tk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)                       
+            
+                            
+            if self.variable.get() == "Get Metadata":
+                self.metatext = tk.Text(self.metacanvas, font=("Arial", 14), width=120, height=40)
+                self.metacanvas.create_window((0, 0), window=self.metatext, anchor='nw')
+                self.meta1 = pd.DataFrame.from_dict(self.graph.nodes()[str(node)], orient='index')
+                self.meta1 = self.meta1.loc["dates":"phase",]
+                metastr = str(self.meta1.replace("'", ""))[1:-1]
+                metastr = metastr.replace(",", "\n")
+                self.metatext.insert('end', 'Metadata of node ' + str(node) + ':\n' + str(self.meta1))
+                self.metatext.configure()
+                
+                
+                
+            if phase_true == 1:
+                imgrender_phase(self.graph)
+            else:
+                imgrender(self.graph)
+            self.image = Image.open('testdag.png')
+            self.width, self.height = self.image.size
+            self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
+            self.show_image()
+            self.text = tk.Text(self.nodescanvas, font=("Arial", 14), width=120, height=40)
+            self.nodescanvas.create_window((0, 0), window=self.text, anchor='nw')
+            nbnodes = str(self.delnodes)
+            self.text.insert('end', 'Deleted Contexts:\n' + str(nbnodes.replace("'", ""))[1:-1])
+            self.text.configure(state='normal')
+            self.variable.set("Node Action")
+            self.littlecanvas.unbind('<Button-1>')
+            self.littlecanvas.bind('<Button-1>', self.move_from)
+            self.littlecanvas.bind("<MouseWheel>", self.wheel)
+            print(time.time() - t0)
+        #    background(self.pos_update())
+      #      background(print_numbers(50))
+          #  self.text.after(10000, print("hi"))
+            print(time.time() - t0)
+        print((sys._getframe().f_code.co_name), str(time.time() - t0)) 
 
     def pos_update(self):
         t0 = time.time()
         global node_df
-        pos_dag = nx.drawing.nx_pydot.graphviz_layout(self.graph, prog='dot')
-        node_df = pd.DataFrame.from_dict(pos_dag, orient='index')      
+        if phase_true == 1:
+            pos_dag = node_coords_fromjson("fi_new.txt")
+        else: 
+            pos_dag = nx.drawing.nx_pydot.graphviz_layout(self.graph, prog='dot')
+        node_df = pd.DataFrame.from_dict(pos_dag, orient='index')  
+        print("tester")
     #    print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
 
     def move_from(self, event):
         t0 = time.time()
         """Remembers previous coordinates for scrolling with the mouse"""
-        self.littlecanvas.scan_mark(event.x, event.y)
+        if self.image != "noimage":
+            self.littlecanvas.scan_mark(event.x, event.y)
   #      print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
     def move_to(self, event):
         t0 = time.time()
         """Drag (move) canvas to the new position"""
-        self.littlecanvas.scan_dragto(event.x, event.y, gain=1)
-        self.show_image()
-        bbox = self.littlecanvas.bbox(self.container)  # get image area
-   #     print((sys._getframe().f_code.co_name), str(time.time() - t0))
+        if self.image != "noimage":
+            self.littlecanvas.scan_dragto(event.x, event.y, gain=1)
+            self.show_image()
+            bbox = self.littlecanvas.bbox(self.container)
         # redraw the image
 
     def wheel(self, event):
@@ -653,7 +666,6 @@ class MainFrame(tk.Tk):
         x_zoom = self.littlecanvas.canvasx(event.x)
         y_zoom = self.littlecanvas.canvasy(event.y)
         bbox = self.littlecanvas.bbox(self.container)  # get image area 
-     #   print("zoom bbox", bbox)
         if bbox[0] < x_zoom < bbox[2] and bbox[1] < y_zoom < bbox[3]:
             pass  # Ok! Inside the image
         else: return  # zoom only inside image area
@@ -670,15 +682,13 @@ class MainFrame(tk.Tk):
             if i < self.imscale:
                 return  # 1 pixel is bigger than the visible area
             self.imscale *= self.delta
-            scale *= self.delta
-    #    print(scale, self.delta)    
+            scale *= self.delta  
         self.littlecanvas.scale('all', 0, 0, scale, scale)  # rescale all canvas objects
         self.show_image()
 #        print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
     def show_image(self):
         """Show image on the Canvas"""
-      #  bbox1 = self.littlecanvas.bbox(self.container)  # get image area
         bbox1 = [0, 0, int(self.image.size[0]*self.imscale), int(self.image.size[1]*self.imscale)]
         # Remove 1 pixel shift at the sides of the bbox1
         bbox1 = (bbox1[0] + 1, bbox1[1] + 1, bbox1[2] - 1, bbox1[3] - 1)
@@ -710,7 +720,9 @@ class MainFrame(tk.Tk):
             self.imageid = self.littlecanvas.create_image(max(bbox2[0], bbox1[0]),
                                                           max(bbox2[1], bbox1[1]), anchor='nw',
                                                           image=self.imagetk)
+            self.transx, self.transy = bbox2[0], bbox2[1]
             self.littlecanvas.imagetk = self.imagetk
+            
 
     def update_options(self, *args):
         global pos_dag
@@ -756,7 +768,6 @@ class MainFrame(tk.Tk):
                              str(self.entry3.get()) + ':\n' + str(self.meta1))
         self.metatext.configure(state='disabled')
         rellist = list(nx.line_graph(self.graph))
-    #    print(rellist)
         above = ()
         below = ()
         for i in enumerate(rellist):
