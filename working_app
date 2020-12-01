@@ -19,57 +19,53 @@ import numpy as np
 import pandas as pd
 from tkinter.filedialog import askopenfile
 from graphviz import render
-from networkx.readwrite import json_graph
+#from networkx.readwrite import json_graph
 
 phase_true = 0
-
-def background(func, *args):
-    th = threading.Thread(target=func, *args)
-    th.daemon = True 
-    th.start()
-    
-def print_numbers(end): #  no capitals for functions in python
-    for i in range(end):
-        print(i)
-        time.sleep(1)
-#    
     
 def trim(im_trim):
     t0 = time.time()
     """Trims images down"""
     bg_trim = Image.new(im_trim.mode, im_trim.size)
     diff = ImageChops.difference(im_trim, bg_trim)
+#    print(im_trim.size, im_trim.mode)
     diff = ImageChops.add(diff, diff, 2.0, -100)
+ #   print(diff)
     bbox = diff.getbbox()
+    
  #   print("trim", str(time.time() - t0))
     return im_trim.crop(bbox)
 
-def node_coords_fromjson(file_ext):
+def polygonfunc(i):
+    x = re.findall(r'points="(.*?)"', i)[0].replace(' ', ',')
+    a = x.split(",")
+    coords_converted = [float(a[2]), float(a[6]), -1*float(a[7]), -1*float(a[3])]
+    return(coords_converted)
+
+def ellipsefunc(i):
+    x = re.findall(r'cx=(.*?)/>', i)[0].replace(' ', ',')
+    x = x.replace('cy=', '').replace('rx=', '').replace('ry=','').replace('"', '')
+    a = x.split(",")
+    coords_converted = [float(a[0]) - float(a[2]), float(a[0]) + float(a[2]), -1*float(a[1]) - float(a[3]), -1*float(a[1]) + float(a[3])]
+    return(coords_converted)
+
+
+def node_coords_fromjson(graph):
     t0 = time.time()
     """Gets coordinates of each node"""
-    my_file = open(file_ext)
- #   my_file = open("fi_new")
-    file_content = my_file.read()
-    t1 = time.time() - t0
-    graphs = pydot.graph_from_dot_data(file_content)
-    
-    svg_string = str(graphs[0].create_svg("json"))
-    coords_x = re.findall(r'"name(.*?)"style', svg_string)
-    json_nodelist = []
-    json_nodecoord = []
-
-    for i in enumerate(coords_x):
-        if "pos" in coords_x[i[0]]:
-            x_temp = re.findall(r'\": "(.*?)",\\n', coords_x[i[0]])
-            cord_temp = re.findall(r'pos\": "(.*?)",\\n', coords_x[i[0]])
-            json_nodelist.append(x_temp[0])
-            json_nodecoord.append(ast.literal_eval(cord_temp[0]))
-    new_pos = dict(zip(json_nodelist, json_nodecoord))
-    t2 = time.time() - t1 - t0
-    print(t1)
-    print(t2)
-#    print((sys._getframe().f_code.co_name), str(time.time() - t0))
-    return new_pos
+    graphs = nx.nx_pydot.to_pydot(graph)    
+    svg_string = str(graphs.create_svg())
+    scale_info = re.search('points=(.*?)/>', svg_string).group(1).replace(' ', ',')
+    scale_info = scale_info.split(",")
+    scale = [float(scale_info[4]), -1*float(scale_info[3])]
+    coords_x = re.findall(r'id="node(.*?)</text>', svg_string)      
+    coords_temp = [polygonfunc(i) if "points" in i else ellipsefunc(i) for i in coords_x]
+    node_test = re.findall(r'node">\\n<title>(.*?)</title>', svg_string)
+    node_list = [i.replace('&#45;', '-') for i in node_test]
+    new_pos = dict(zip(node_list, coords_temp))
+    df = pd.DataFrame.from_dict(new_pos, orient='index', columns=['x_lower', 'x_upper', 'y_lower', 'y_upper'])
+    print((sys._getframe().f_code.co_name), str(time.time() - t0))
+    return df, scale
 
 def all_node_info(node_list, x_image, node_info):
     t0 = time.time()
@@ -125,7 +121,7 @@ def imgrender(file):
     inp = trim(inp)
     inp.save("testdag.png")
     outp = Image.open("testdag.png")
-#    print((sys._getframe().f_code.co_name), str(time.time() - t0))
+    print((sys._getframe().f_code.co_name), str(time.time() - t0))
     return outp
 
 def edge_of_phase(test1, pset, node_list, node_info):
@@ -218,7 +214,8 @@ def imgrender_phase(file):
     outp = Image.open("testdag.png")
   #  print((sys._getframe().f_code.co_name), str(time.time() - t0))
     return outp
-
+def test_print():
+    print("testing threading")
 
 # This is to prevent infinite right click menus; it sees if there is an existing menu
 # and removes it, bringing it out in a new position.
@@ -300,6 +297,7 @@ class MainFrame(tk.Tk):
         self.variable.set("Node Action")
         self.testmenu = tk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)
         
+        
         def destroy():
             self.testmenu.place_forget()
         #    # This is the function that removes the selected item when the label is clicked.
@@ -313,7 +311,7 @@ class MainFrame(tk.Tk):
         
         def onRight(*args):
             self.littlecanvas.unbind("Button-1>")
-            self.littlecanvas.bind("<Button-1>", lambda: [onLeft, threading.Thread(target = self.pos_update().start())])
+            self.littlecanvas.bind("<Button-1>", onLeft)
             # Here we fetch our X and Y coordinates of the cursor RELATIVE to the window
             self.cursorx = int(self.littlecanvas.winfo_pointerx() - self.littlecanvas.winfo_rootx())
             self.cursory = int(self.littlecanvas.winfo_pointery() - self.littlecanvas.winfo_rooty())
@@ -357,8 +355,8 @@ class MainFrame(tk.Tk):
                 imgrender(self.graph)
             self.image = Image.open('testdag.png')
             self.show_image()
-            pos_dag = nx.drawing.nx_pydot.graphviz_layout(self.graph, prog='dot')
-            node_df = pd.DataFrame.from_dict(pos_dag, orient='index')
+      #      pos_dag = nx.drawing.nx_pydot.graphviz_layout(self.graph, prog='dot')
+      #      node_df = pd.DataFrame.from_dict(pos_dag, orient='index')
 
         def addedge():
             global node_df
@@ -372,8 +370,8 @@ class MainFrame(tk.Tk):
                 imgrender(self.graph)
             self.image = Image.open('testdag.png')
             self.show_image()
-            pos_dag = nx.drawing.nx_pydot.graphviz_layout(self.graph, prog='dot')
-            node_df = pd.DataFrame.from_dict(pos_dag, orient='index')
+        #    pos_dag = nx.drawing.nx_pydot.graphviz_layout(self.graph, prog='dot')
+        #    node_df = pd.DataFrame.from_dict(pos_dag, orient='index')
        #     print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
         def open_file1(): 
@@ -400,8 +398,9 @@ class MainFrame(tk.Tk):
             self.littlecanvas.bind("<Configure>", self.resize)
             self.nodescanvas.bind("<Configure>", self.resize)
             self.edgescanvas.bind("<Configure>", self.resize)
-            pos_dag = nx.drawing.nx_pydot.graphviz_layout(self.graph, prog='dot')
-            node_df = pd.DataFrame.from_dict(pos_dag, orient='index')
+      #      node_df = node_coords_fromjson(self.graph)
+     #      pos_dag = nx.drawing.nx_pydot.graphviz_layout(self.graph, prog='dot')
+   #         node_df = pd.DataFrame.from_dict(pos_dag, orient='index')
        #     print(node_df)
             self.delnodes = []
             self.text.delete("1.0", "end")
@@ -469,27 +468,33 @@ class MainFrame(tk.Tk):
         self.optionmenu_b = tk.OptionMenu(self.canvas2, self.variable_b, '')
         self.variable_a.set('Finds')
         self.optionmenu_a.place(relx=0.30, rely=0.25)
-        self.optionmenu_b.place(relx=0.550, rely=0.25)
-
+        self.optionmenu_b.place(relx=0.550, rely=0.25)     
+        
     def nodecheck(self, x_current, y_current):
         t0 = time.time()
         """ returns the node that corresponds to the mouse cooridinates"""
         node_inside = "no node"
+        node_df_con = node_coords_fromjson(self.graph)
+        node_df = node_df_con[0]
+        xmax, ymax = node_df_con[1]
         #forms a dataframe from the dicitonary of coords
-        #givens upper and lower bounds for checking each node
-        x_lower = np.array(node_df[0]) - min(np.array(node_df[0])) - 0.5
-        x_upper = np.array(node_df[0]) + min(np.array(node_df[0])) - 0.5
-        y_lower = np.array(node_df[1]) - min(np.array(node_df[1])) - 0.5
-        y_upper = np.array(node_df[1]) + min(np.array(node_df[1])) - 0.5      
+#     #   givens upper and lower bounds for checking each node
+#        x_lower = np.array(node_df[0]) - min(np.array(node_df[0])) - 0.5
+#        x_upper = np.array(node_df[0]) + min(np.array(node_df[0])) - 0.5
+#        y_lower = np.array(node_df[1]) - min(np.array(node_df[1])) - 0.5
+#        y_upper = np.array(node_df[1]) + min(np.array(node_df[1])) - 0.5      
         x, y = self.image.size 
         cavx = x*self.imscale
         cany = y*self.imscale
-        node_df["x_lower"] = x_lower
-        node_df["x_upper"] = x_upper
-        node_df["y_lower"] = y_lower
-        node_df["y_upper"] = y_upper
-        xscale = (x_current)* (max(x_upper)+0.5)/cavx
-        yscale = (cany-y_current) * (max(y_upper)+0.5)/cany
+#        node_df["x_lower"] = x_lower
+#        node_df["x_upper"] = x_upper
+#        node_df["y_lower"] = y_lower
+#        node_df["y_upper"] = y_upper
+ #       print(type(node_df))
+        xscale = (x_current)*(xmax)/cavx
+        yscale = (cany-y_current)*(ymax)/cany
+        print(xscale, yscale)
+      #  print(xscale, yscale)
         for n_ind in range(node_df.shape[0]):
             if ((node_df.iloc[n_ind].x_lower < xscale < node_df.iloc[n_ind].x_upper) and
                     (node_df.iloc[n_ind].y_lower < yscale < node_df.iloc[n_ind].y_upper)):
@@ -530,7 +535,7 @@ class MainFrame(tk.Tk):
 #        print((sys._getframe().f_code.co_name), str(time.time() - t0))
 #
 
-    def nodes(self, eventorigin):
+    def nodes(self, currentevent):
         """deletes the node and redraws the graph"""
         t0 = time.time()
         self.testmenu.place_forget()
@@ -558,7 +563,7 @@ class MainFrame(tk.Tk):
                             tk.messagebox.showinfo('Error', 'An edge doesnt exist between those nodes')
                     
                     self.OptionList.remove("Delete Edge with "+ str(self.edge_nodes[0]))
-                    self.testmenu = tk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)
+                    self.testmenu = tk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command=self.nodes)
                     self.edge_nodes = []
                     
             if self.variable.get() == "Delete Edge":
@@ -606,12 +611,13 @@ class MainFrame(tk.Tk):
                 self.metatext.insert('end', 'Metadata of node ' + str(node) + ':\n' + str(self.meta1))
                 self.metatext.configure()
                 
-                
+               
                 
             if phase_true == 1:
                 imgrender_phase(self.graph)
             else:
                 imgrender(self.graph)
+            print("halfway", time.time()-t0) 
             self.image = Image.open('testdag.png')
             self.width, self.height = self.image.size
             self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
@@ -625,22 +631,22 @@ class MainFrame(tk.Tk):
             self.littlecanvas.unbind('<Button-1>')
             self.littlecanvas.bind('<Button-1>', self.move_from)
             self.littlecanvas.bind("<MouseWheel>", self.wheel)
-            print(time.time() - t0)
-        #    background(self.pos_update())
+     #       print(time.time() - t0)
+           # self.pos_update()
       #      background(print_numbers(50))
           #  self.text.after(10000, print("hi"))
-            print(time.time() - t0)
+        #    print(time.time() - t0)
         print((sys._getframe().f_code.co_name), str(time.time() - t0)) 
 
     def pos_update(self):
         t0 = time.time()
         global node_df
-        if phase_true == 1:
-            pos_dag = node_coords_fromjson("fi_new.txt")
-        else: 
-            pos_dag = nx.drawing.nx_pydot.graphviz_layout(self.graph, prog='dot')
-        node_df = pd.DataFrame.from_dict(pos_dag, orient='index')  
-        print("tester")
+        #if phase_true == 1:
+           # pos_dag = node_coords_fromjson(self.graph)
+        #else: 
+          #  pos_dag = nx.drawing.nx_pydot.graphviz_layout(self.graph, prog='dot')
+        node_df = node_coords_fromjson(self.graph) 
+      #  print("tester")
     #    print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
 
@@ -745,8 +751,8 @@ class MainFrame(tk.Tk):
         self.image = Image.open('testdag.png')
         phase_true = 1
         self.show_image()
-        pos_dag = node_coords_fromjson("fi_new.txt")
-        node_df = pd.DataFrame.from_dict(pos_dag, orient='index')
+        node_df = node_coords_fromjson("fi_new.txt")
+    #    node_df = pd.DataFrame.from_dict(pos_dag, orient='index')
  #       print((sys._getframe().f_code.co_name), str(time.time() - t0))
         return node_df
 
