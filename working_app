@@ -221,7 +221,91 @@ def test_print():
 # and removes it, bringing it out in a new position.
 
 
+class popupWindow(object):
+    def __init__(self,master):
+        top=self.top=tk.Toplevel(master)
+        self.l=tk.Label(top,text="Hello World")
+        self.l.pack()
+        self.e=tk.Entry(top)
+        self.e.pack()
+        self.b=tk.Button(top,text='Ok',command=self.cleanup)
+        self.b.pack()
+    def cleanup(self):
+        self.value=self.e.get()
+        self.top.destroy()
 
+class popupWindow2(object):
+    def __init__(self,master, graph, canvas):
+        top=tk.Toplevel(master)
+        top.geometry("300x300")
+        self.graph = graph
+        self.metacanvas = canvas
+        self.canvas2 = tk.Canvas(top, bg="white")
+        self.canvas2.place(relx=0, rely=0, relwidth=1, relheight=1)
+        #canvas to hold the metadata
+
+#        #making node add section
+#        #entry box for adding metadata
+        self.entry3 = tk.Entry(self.canvas2)
+        self.button3 = tk.Button(top, text='Add Metadata to node', bg="#b3dcf2",
+                                 font=("Arial", 14), command=self.testcom)#need to add command
+  #      self.button4 = tk.Button(text='Phasing', bg="#b3dcf2",
+  #                               font=("Arial", 12), command=self.phasing)
+        self.label3 = tk.Label(self.canvas2, text='Node', bg='white', font=("Arial", 14))
+        self.canvas2.create_window(40, 60, window=self.entry3, width=50)
+        self.canvas2.create_window(40, 35, window=self.label3)
+   #     self.canvas2.create_window(140, 100, window=self.button3)
+  #      self.canvas2.create_window(300, 100, window=self.button4)
+        self.dict = {'Finds': ['Find1', 'Find2', 'Find3'],
+                     'Dates': ['Dates1', 'Dates2', 'Dates3'],
+                     'Phase': ['Phase1', 'Phase2', 'Phase3']}
+#
+        self.variable_a = tk.StringVar(top)
+        self.variable_b = tk.StringVar(top)
+        self.variable_a.trace('w', self.update_options)
+        self.optionmenu_a = tk.OptionMenu(top, self.variable_a, *self.dict.keys())
+        self.optionmenu_b = tk.OptionMenu(top, self.variable_b, '')
+        self.variable_a.set('Finds')
+        self.optionmenu_a.place(relx=0.3, rely=0.15)
+        self.optionmenu_b.place(relx=0.6, rely=0.15)    
+  #      self.b=tk.Button(top,text='Ok',command=self.cleanup)
+        self.button3.place(relx = 0.1, rely = 0.7)
+        
+    def testcom(self):
+        t0 = time.time()
+        """metadata menu 2 update"""
+        if self.variable_a.get() == "Phase":
+             self.graph.nodes()[str(self.entry3.get())].update({"phase":self.variable_b.get()})
+        elif self.variable_a.get() == "Dates":
+            self.graph.nodes()[str(self.entry3.get())].update({"phase":self.variable_b.get()})
+        elif self.variable_a.get() == "Finds":
+            self.graph.nodes()[str(self.entry3.get())].update({"phase":self.variable_b.get()})
+        self.metatext = tk.Text(self.metacanvas, font=("Arial", 14), width=120, height=40)
+        self.metacanvas.create_window((0, 0), window=self.metatext, anchor='nw')
+        self.meta1 = pd.DataFrame.from_dict(self.graph.nodes()[str(self.entry3.get())],
+                                            orient='index')
+        self.meta1 = self.meta1.loc["dates":"phase",]
+        self.metatext.insert('end', 'Metadata of node ' +
+                             str(self.entry3.get()) + ':\n' + str(self.meta1))
+        self.metatext.configure(state='disabled')
+  #      print((sys._getframe().f_code.co_name), str(time.time() - t0))
+    def update_options(self, *args):
+    #    global pos_dag
+        t0 = time.time()
+        """updates metadata drop down menu 1"""
+        meta_data = self.dict[self.variable_a.get()]
+        self.variable_b.set(meta_data[0])
+        menu = self.optionmenu_b['menu']
+        menu.delete(0, 'end')
+        for meta in meta_data:
+            menu.add_command(label=meta,
+                             command=lambda nation=meta: self.variable_b.set(nation))
+#        print((sys._getframe().f_code.co_name), str(time.time() - t0))
+
+                
+    def cleanup(self):
+        self.value=self.canvas2.get()
+        self.top.destroy()
 
 class MainFrame(tk.Tk):
     """ Main frame for tkinter app"""
@@ -250,7 +334,10 @@ class MainFrame(tk.Tk):
         self.canvas.update()
         self.littlecanvas = tk.Canvas(self.canvas, bg='white', bd=0,
                                       selectborderwidth=0, highlightthickness=0, insertwidth=0)
-        self.littlecanvas.place(relx=0.05, rely=0.05, relwidth=0.4, relheight=0.9)
+        self.littlecanvas.place(relx=0.02, rely=0.05, relwidth=0.35, relheight=0.9)
+        self.littlecanvas2 = tk.Canvas(self.canvas, bg='white', bd=0,
+                                      selectborderwidth=0, highlightthickness=0, insertwidth=0)
+        self.littlecanvas2.place(relx=0.39, rely=0.05, relwidth=0.35, relheight=0.9)        
         self.littlecanvas.bind("<MouseWheel>", self.wheel)
         self.littlecanvas.bind('<Button-4>', self.wheel)# only with Linux, wheel scroll down
         self.littlecanvas.bind('<Button-5>', self.wheel)
@@ -269,18 +356,18 @@ class MainFrame(tk.Tk):
         self.datebutton = tk.Button(self.canvas, text ='Open date file', command = lambda:open_file2())
         self.datebutton.place(relx=0.29, rely=0.01, relwidth=0.1, relheight=0.03)
         self.phasebutton = tk.Button(self.canvas, text ='Open phase file', command = lambda:open_file2())
-        self.phasebutton.place(relx=0.41, rely=0.01, relwidth=0.1, relheight=0.03)          
+        self.phasebutton.place(relx=0.41, rely=0.01, relwidth=0.1, relheight=0.03)        
 
         #########deleted nodes##################
         self.nodescanvas = tk.Canvas(self.canvas, bg='white', bd=0, highlightthickness=0)
-        self.nodescanvas.place(relx=0.5, rely=0.05, relwidth=0.45, relheight=0.14)
+        self.nodescanvas.place(relx=0.75, rely=0.05, relwidth=0.15, relheight=0.2)
         self.text = tk.Text(self.nodescanvas, font=("Arial", 14), width=120, height=40)
         self.nodescanvas.create_window((0, 0), window=self.text, anchor='nw')
         self.text.insert('end', 'Deleted Contexts:\n' + str(self.delnodes)[1:-1])
         self.text.configure(state='normal')
         ###########deleted edges###############################
         self.edgescanvas = tk.Canvas(self.canvas, bg='white', bd=0, highlightthickness=0)
-        self.edgescanvas.place(relx=0.5, rely=0.15, relwidth=0.45, relheight=0.14)
+        self.edgescanvas.place(relx=0.75, rely=0.27, relwidth=0.15, relheight=0.2)
         self.text = tk.Text(self.edgescanvas, font=("Arial", 14), width=120, height=40)
         self.edgescanvas.create_window((0, 0), window=self.text, anchor='nw')
         self.text.insert('end', 'Deleted Edges:\n') #+ str(self.edges_del[1:-1]))
@@ -291,8 +378,11 @@ class MainFrame(tk.Tk):
             "Delete Node",
             "Delete Edge",
             "Get Metadata",
-            "Combine Node"
-            ] 
+            "Combine Node",
+            "Place Above Other Context",
+            "Add Nodes",
+            "Metadata Menu"
+            ]
         self.variable = tk.StringVar(self.littlecanvas)
         self.variable.set("Node Action")
         self.testmenu = tk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)
@@ -301,7 +391,6 @@ class MainFrame(tk.Tk):
         def destroy():
             self.testmenu.place_forget()
         #    # This is the function that removes the selected item when the label is clicked.
-
         def delete(*args):
            # print(self.variable.get())
             destroy()  
@@ -342,37 +431,6 @@ class MainFrame(tk.Tk):
                 self.testmenu.place_forget()
             except Exception:
                 pass
-
-        def addnode():
-            global node_df
-            t0 = time.time()
-            self.x_1 = self.entry1.get()
-            self.graph.add_node(self.x_1, shape="box", fontsize="30.0",
-                                   fontname="Arial", penwidth="1.0")
-            if phase_true == 1:
-                imgrender_phase(self.graph)
-            else:
-                imgrender(self.graph)
-            self.image = Image.open('testdag.png')
-            self.show_image()
-      #      pos_dag = nx.drawing.nx_pydot.graphviz_layout(self.graph, prog='dot')
-      #      node_df = pd.DataFrame.from_dict(pos_dag, orient='index')
-
-        def addedge():
-            global node_df
-            t0 = time.time()
-            x_1 = self.entry1.get()
-            x_2 = self.entry2.get()
-            self.graph.add_edge(x_1, x_2)
-            if phase_true == 1:
-                imgrender_phase(self.graph)
-            else:
-                imgrender(self.graph)
-            self.image = Image.open('testdag.png')
-            self.show_image()
-        #    pos_dag = nx.drawing.nx_pydot.graphviz_layout(self.graph, prog='dot')
-        #    node_df = pd.DataFrame.from_dict(pos_dag, orient='index')
-       #     print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
         def open_file1(): 
             global node_df
@@ -418,58 +476,78 @@ class MainFrame(tk.Tk):
                 content = read_dot(file) 
                 return(content) 
           #  print((sys._getframe().f_code.co_name), str(time.time() - t0))
-
+#        self.b=tk.Button(self ,text="click me!", command=self.popup)
+#        self.b.pack() 
         self.littlecanvas.bind("<Button-3>", preClick)
         #canvas to hold buttons
-        self.canvas1 = tk.Canvas(self.canvas, bg="white")
-        self.canvas1.place(relx=0.50, rely=0.35, relwidth=0.25, relheight=0.15)
+#        self.canvas1 = tk.Canvas(self.canvas, bg="white")
+#        self.canvas1.place(relx=0.50, rely=0.35, relwidth=0.25, relheight=0.15)
         #canvas to hold metadata input
-        self.canvas2 = tk.Canvas(self.canvas, bg="white")
-        self.canvas2.place(relx=0.50, rely=0.5, relwidth=0.25, relheight=0.15)
-        #canvas to hold the metadata
+#        self.canvas2 = tk.Canvas(self.canvas, bg="white")
+#        self.canvas2.place(relx=0.50, rely=0.5, relwidth=0.25, relheight=0.15)
+#        #canvas to hold the metadata
         self.metacanvas = tk.Canvas(self.canvas, bg="white")
-        self.metacanvas.place(relx=0.75, rely=0.35, relwidth=0.15, relheight=0.2)
+        self.metacanvas.place(relx=0.75, rely=0.52, relwidth=0.15, relheight=0.2)
         self.abovebelowcanvas = tk.Canvas(self.canvas, bg="white")
-        self.abovebelowcanvas.place(relx=0.75, rely=0.6, relwidth=0.15, relheight=0.2)
-        #making node add section
-        self.entry1 = tk.Entry(self.canvas)
-        self.button1 = tk.Button(text='Add Node 1', command=addnode, bg="#b3dcf2",
-                                 font=("Arial", 12))
-        self.label1 = tk.Label(self.canvas, text='Node 1', bg='white', font=("Arial", 12))
-        self.canvas1.create_window(70, 45, window=self.entry1, width=50)
-        self.canvas1.create_window(70, 20, window=self.label1)
-        self.canvas1.create_window(70, 80, window=self.button1)
-        #making edge add function
-        self.entry2 = tk.Entry(self.canvas)
-        self.button2 = tk.Button(text='Add Edge', command=addedge, bg="#b3dcf2", font=("Arial", 12))
-        self.label2 = tk.Label(self.canvas, text='Node 2', bg='white', font=("Arial", 12))
-        self.canvas1.create_window(190, 45, window=self.entry2, width=50)
-        self.canvas1.create_window(190, 20, window=self.label2)
-        self.canvas1.create_window(190, 80, window=self.button2)
-        #entry box for adding metadata
-        self.entry3 = tk.Entry(self.canvas)
-        self.button3 = tk.Button(text='Add Metadata to node', bg="#b3dcf2",
-                                 font=("Arial", 12), command=self.testcom)#need to add command
-        self.button4 = tk.Button(text='Phasing', bg="#b3dcf2",
-                                 font=("Arial", 12), command=self.phasing)
-        self.label3 = tk.Label(self.canvas, text='Node', bg='white', font=("Arial", 12))
-        self.canvas2.create_window(70, 45, window=self.entry3, width=50)
-        self.canvas2.create_window(70, 20, window=self.label3)
-        self.canvas2.create_window(140, 100, window=self.button3)
-        self.canvas2.create_window(300, 100, window=self.button4)
-        self.dict = {'Finds': ['Find1', 'Find2', 'Find3'],
-                     'Dates': ['Dates1', 'Dates2', 'Dates3'],
-                     'Phase': ['Phase1', 'Phase2', 'Phase3']}
-
-        self.variable_a = tk.StringVar(self.canvas2)
-        self.variable_b = tk.StringVar(self.canvas2)
-        self.variable_a.trace('w', self.update_options)
-        self.optionmenu_a = tk.OptionMenu(self.canvas2, self.variable_a, *self.dict.keys())
-        self.optionmenu_b = tk.OptionMenu(self.canvas2, self.variable_b, '')
-        self.variable_a.set('Finds')
-        self.optionmenu_a.place(relx=0.30, rely=0.25)
-        self.optionmenu_b.place(relx=0.550, rely=0.25)     
+        self.abovebelowcanvas.place(relx=0.75, rely=0.75, relwidth=0.15, relheight=0.2)
+#        #making node add section
+#        #entry box for adding metadata
+#        self.entry3 = tk.Entry(self.canvas)
+#        self.button3 = tk.Button(text='Add Metadata to node', bg="#b3dcf2",
+#                                 font=("Arial", 12), command=self.testcom)#need to add command
+#        self.button4 = tk.Button(text='Phasing', bg="#b3dcf2",
+#                                 font=("Arial", 12), command=self.phasing)
+#        self.label3 = tk.Label(self.canvas, text='Node', bg='white', font=("Arial", 12))
+#        self.canvas2.create_window(70, 45, window=self.entry3, width=50)
+#        self.canvas2.create_window(70, 20, window=self.label3)
+#        self.canvas2.create_window(140, 100, window=self.button3)
+#        self.canvas2.create_window(300, 100, window=self.button4)
+#        self.dict = {'Finds': ['Find1', 'Find2', 'Find3'],
+#                     'Dates': ['Dates1', 'Dates2', 'Dates3'],
+#                     'Phase': ['Phase1', 'Phase2', 'Phase3']}
+#
+#        self.variable_a = tk.StringVar(self.canvas2)
+#        self.variable_b = tk.StringVar(self.canvas2)
+#        self.variable_a.trace('w', self.update_options)
+#        self.optionmenu_a = tk.OptionMenu(self.canvas2, self.variable_a, *self.dict.keys())
+#        self.optionmenu_b = tk.OptionMenu(self.canvas2, self.variable_b, '')
+#        self.variable_a.set('Finds')
+#        self.optionmenu_a.place(relx=0.30, rely=0.25)
+#        self.optionmenu_b.place(relx=0.550, rely=0.25)    
+      
+#    def popup(self):
+#        self.w=popupWindow(self)
+#      #  self.b["state"] = "disabled" 
+#        self.wait_window(self.w.top)
+#      #  self.b["state"] = "normal"
+    def addedge(self, edgevec):
+        global node_df
+        x_1 = edgevec[0]
+        x_2 = edgevec[1]
+        self.graph.add_edge(x_1, x_2)
+        if phase_true == 1:
+            imgrender_phase(self.graph)
+        else:
+            imgrender(self.graph)
+        self.image = Image.open('testdag.png')
+        self.show_image()           
         
+    def stratfunc(self):
+        rellist = list(nx.line_graph(self.graph))
+        above = ()
+        below = ()
+        for i in enumerate(rellist):
+            if str(self.entry3.get()) in rellist[i[0]]:
+                if str(self.entry3.get()) == rellist[i[0]][0]:
+                    below = np.append(below, rellist[i[0]][1])
+                elif str(self.entry3.get()) == rellist[i[0]][1]:
+                    above = np.append(above, rellist[i[0]][0])
+        abovebelowtext = tk.Text(self.abovebelowcanvas, font=("Arial", 14),
+                                 width=120, height=40)
+        self.abovebelowcanvas.create_window((0, 0), window=abovebelowtext, anchor='nw')
+        abovebelowtext.insert('end', 'Direct stratigraphic relationships:\n Contexts above: ' +
+                              str(above) + '\n' + 'Contexts below:' + str(below))
+
     def nodecheck(self, x_current, y_current):
         t0 = time.time()
         """ returns the node that corresponds to the mouse cooridinates"""
@@ -511,6 +589,7 @@ class MainFrame(tk.Tk):
         print((sys._getframe().f_code.co_name), str(time.time() - t0))
         # redraw the image
 
+
     def scroll_x(self, *args, **kwargs):
         t0 = time.time()
         """Scroll canvas horizontally and redraw the image"""
@@ -547,7 +626,18 @@ class MainFrame(tk.Tk):
                 if node != "no node":
                     self.graph.remove_node(node)
                     self.delnodes = np.append(self.delnodes, node)
+            
+            if self.variable.get() == "Add Nodes":
+                self.w=popupWindow(self)
+      #  self.b["state"] = "disabled" 
+                self.wait_window(self.w.top)
+                node = self.w.value 
+                print(node)
+                self.graph.add_node(node, shape="box", fontsize="30.0",
+                                   fontname="Arial", penwidth="1.0")                   
                            
+            if self.variable.get() == "Metadata Menu":
+                self.w=popupWindow2(self, self.graph, self.metacanvas)    
             if len(self.edge_nodes) == 1:       
                 if self.variable.get() == "Delete Edge with "+ str(self.edge_nodes[0]):
                     self.edge_nodes = np.append(self.edge_nodes, node)
@@ -565,6 +655,15 @@ class MainFrame(tk.Tk):
                     self.OptionList.remove("Delete Edge with "+ str(self.edge_nodes[0]))
                     self.testmenu = tk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command=self.nodes)
                     self.edge_nodes = []
+
+                if self.variable.get() == ("Place "+ str(self.edge_nodes[0]) + " Above"):
+                    self.edge_nodes = np.append(self.edge_nodes, node)
+               #     print(self.edge_nodes)
+    
+                    self.addedge(self.edge_nodes)
+                    self.OptionList.remove("Place "+ str(self.edge_nodes[0]) + " Above")
+                    self.testmenu = tk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command=self.nodes)
+                    self.edge_nodes = []      
                     
             if self.variable.get() == "Delete Edge":
           #      print("test1")
@@ -598,8 +697,7 @@ class MainFrame(tk.Tk):
                     self.comb_nodes = []                    
                 self.comb_nodes = np.append(self.comb_nodes, node)                
                 self.OptionList.append("Combine Node with "+ str(self.comb_nodes[0]))
-                self.testmenu = tk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)                       
-            
+                self.testmenu = tk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)       
                             
             if self.variable.get() == "Get Metadata":
                 self.metatext = tk.Text(self.metacanvas, font=("Arial", 14), width=120, height=40)
@@ -610,8 +708,17 @@ class MainFrame(tk.Tk):
                 metastr = metastr.replace(",", "\n")
                 self.metatext.insert('end', 'Metadata of node ' + str(node) + ':\n' + str(self.meta1))
                 self.metatext.configure()
-                
-               
+                    
+            if self.variable.get() == "Place Above Other Context":
+          #      print("test1")
+                if len(self.edge_nodes) == 1:
+                    "tester"
+                    self.OptionList.remove("Place "+ str(self.edge_nodes[0]) + " Above")
+                    self.testmenu = tk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)
+                    self.edge_nodes = []                    
+                self.edge_nodes = np.append(self.edge_nodes, node)                
+                self.OptionList.append("Place "+ str(self.edge_nodes[0]) + " Above")
+                self.testmenu = tk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)
                 
             if phase_true == 1:
                 imgrender_phase(self.graph)
@@ -730,18 +837,6 @@ class MainFrame(tk.Tk):
             self.littlecanvas.imagetk = self.imagetk
             
 
-    def update_options(self, *args):
-        global pos_dag
-        t0 = time.time()
-        """updates metadata drop down menu 1"""
-        meta_data = self.dict[self.variable_a.get()]
-        self.variable_b.set(meta_data[0])
-        menu = self.optionmenu_b['menu']
-        menu.delete(0, 'end')
-        for meta in meta_data:
-            menu.add_command(label=meta,
-                             command=lambda nation=meta: self.variable_b.set(nation))
-#        print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
     def phasing(self):
         global phase_true, node_df
@@ -756,39 +851,7 @@ class MainFrame(tk.Tk):
  #       print((sys._getframe().f_code.co_name), str(time.time() - t0))
         return node_df
 
-    def testcom(self):
-        t0 = time.time()
-        """metadata menu 2 update"""
-        if self.variable_a.get() == "Phase":
-             self.graph.nodes()[str(self.entry3.get())].update({"phase":self.variable_b.get()})
-        elif self.variable_a.get() == "Dates":
-            self.graph.nodes()[str(self.entry3.get())].update({"phase":self.variable_b.get()})
-        elif self.variable_a.get() == "Finds":
-            self.graph.nodes()[str(self.entry3.get())].update({"phase":self.variable_b.get()})
-        self.metatext = tk.Text(self.metacanvas, font=("Arial", 14), width=120, height=40)
-        self.metacanvas.create_window((0, 0), window=self.metatext, anchor='nw')
-        self.meta1 = pd.DataFrame.from_dict(self.graph.nodes()[str(self.entry3.get())],
-                                            orient='index')
-        self.meta1 = self.meta1.loc["dates":"phase",]
-        self.metatext.insert('end', 'Metadata of node ' +
-                             str(self.entry3.get()) + ':\n' + str(self.meta1))
-        self.metatext.configure(state='disabled')
-        rellist = list(nx.line_graph(self.graph))
-        above = ()
-        below = ()
-        for i in enumerate(rellist):
-            if str(self.entry3.get()) in rellist[i[0]]:
-                if str(self.entry3.get()) == rellist[i[0]][0]:
-                    below = np.append(below, rellist[i[0]][1])
-                elif str(self.entry3.get()) == rellist[i[0]][1]:
-                    above = np.append(above, rellist[i[0]][0])
-        abovebelowtext = tk.Text(self.abovebelowcanvas, font=("Arial", 14),
-                                 width=120, height=40)
-        self.abovebelowcanvas.create_window((0, 0), window=abovebelowtext, anchor='nw')
-        abovebelowtext.insert('end', 'Direct stratigraphic relationships:\n Contexts above: ' +
-                              str(above) + '\n' + 'Contexts below:' + str(below))
-  #      print((sys._getframe().f_code.co_name), str(time.time() - t0))
-        
+
     def resize(self, event):
         t0 = time.time()
         """resizes image on canvas"""
