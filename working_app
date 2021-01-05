@@ -6,6 +6,9 @@ Created on Mon Mar  9 12:35:28 2020
 @author: bryony
 """
 import tkinter as tk
+from tkinter import ttk
+import tabulate
+from tabulate import tabulate
 import sys
 import re
 import ast
@@ -105,7 +108,7 @@ def imagefunc(dotfile):
     node_info_init = list()
     node_info = all_node_info(node_list, x_image, node_info_init)
     for k in enumerate(node_list):
-        node_info[k[0]].update({"dates":"test", "finds":"empty", "phase":node_info[k[0]]['fillcolor']})
+        node_info[k[0]].update({"Date":"None", "Find_Type":"None", "Phase":node_info[k[0]]['fillcolor']})
     individ_attrs = zip(node_list, node_info)
     attrs = dict(individ_attrs)#add the dictionary of attributed to a node
     nx.set_node_attributes(file, attrs)
@@ -222,7 +225,7 @@ def edge_of_phase(test1, pset, node_list, node_info):
             if node_info[j[0]]["fillcolor"] == pset[i[0]]:
                 temp_nodes_list.append(node_list[j[0]])
                 p_phase = "Phase " + str(pset[i[0]][pset[i[0]].rfind("/")+1:len(pset[i[0]])])
-                node_info[j[0]].update({"phase":p_phase})
+                node_info[j[0]].update({"Phase":p_phase})
                 mydict[str(pset[i[0]][pset[i[0]].rfind("/")+1:len(pset[i[0]])])] = temp_nodes_list
     for i in enumerate(test1):
         for key in mydict:
@@ -347,7 +350,7 @@ def test_print():
 class popupWindow(object):
     def __init__(self,master):
         top=self.top=tk.Toplevel(master)
-        self.l=tk.Label(top,text="Hello World")
+        self.l=tk.Label(top,text="Context Number")
         self.l.pack()
         self.e=tk.Entry(top)
         self.e.pack()
@@ -371,7 +374,7 @@ class popupWindow2(object):
 #        #entry box for adding metadata
         self.entry3 = tk.Entry(self.canvas2)
         self.button3 = tk.Button(top, text='Add Metadata to node', bg="#b3dcf2",
-                                 font=("Arial", 14), command=self.testcom)#need to add command
+                                 font=("Arial", 14), command=lambda:self.testcom())#need to add command
   #      self.button4 = tk.Button(text='Phasing', bg="#b3dcf2",
   #                               font=("Arial", 12), command=self.phasing)
         self.label3 = tk.Label(self.canvas2, text='Node', bg='white', font=("Arial", 14))
@@ -379,37 +382,89 @@ class popupWindow2(object):
         self.canvas2.create_window(40, 35, window=self.label3)
    #     self.canvas2.create_window(140, 100, window=self.button3)
   #      self.canvas2.create_window(300, 100, window=self.button4)
-        self.dict = {'Finds': ['Find1', 'Find2', 'Find3'],
-                     'Dates': ['Dates1', 'Dates2', 'Dates3'],
-                     'Phase': ['Phase1', 'Phase2', 'Phase3']}
-#
+        self.dict = {'Find_Type': ['Find1', 'Find2', 'Find3'],
+                     'Date': ['None', 'Input date'],
+                     'Phase': ['None', 'Input phase']}
+#               
         self.variable_a = tk.StringVar(top)
         self.variable_b = tk.StringVar(top)
+        self.variable_c = tk.StringVar(top)
+        self.variable_d = tk.StringVar(top)
         self.variable_a.trace('w', self.update_options)
+        self.variable_b.trace('w', self.testdate_input)
+        self.variable_c.trace('w', self.update_options)
+        self.variable_d.trace('w', self.update_options)
         self.optionmenu_a = tk.OptionMenu(top, self.variable_a, *self.dict.keys())
-        self.optionmenu_b = tk.OptionMenu(top, self.variable_b, '')
-        self.variable_a.set('Finds')
+        self.optionmenu_b = tk.OptionMenu(top, self.variable_b, 'None')
+        self.variable_a.set('Date')
         self.optionmenu_a.place(relx=0.3, rely=0.15)
         self.optionmenu_b.place(relx=0.6, rely=0.15)    
   #      self.b=tk.Button(top,text='Ok',command=self.cleanup)
         self.button3.place(relx = 0.1, rely = 0.7)
+    def testdate_input(self, *args):
+        print("test1")
+        if self.variable_b.get() == "Input date":
+           # print(type(self.label6))
+#            self.label6.destroy()
+#            self.entry6.destroy()            
+            self.label4 = tk.Label(self.canvas2, text='Radiocarbon Date', bg='white', font=("Arial", 14))
+            self.entry4 = tk.Entry(self.canvas2)
+            self.canvas2.create_window(90, 130, window=self.entry4, width=50)
+            self.canvas2.create_window(90, 90, window=self.label4)
+            self.label5 = tk.Label(self.canvas2, text='Error', bg='white', font=("Arial", 14))
+            self.entry5 = tk.Entry(self.canvas2)
+            self.canvas2.create_window(200, 130, window=self.entry5, width=50)
+            self.canvas2.create_window(200, 90, window=self.label5)
+        if self.variable_b.get() == "Input phase":          
+            self.label6 = tk.Label(self.canvas2, text='Phase', bg='white', font=("Arial", 14))
+            self.entry6 = tk.Entry(self.canvas2)
+            self.canvas2.create_window(90, 130, window=self.entry6, width=50)
+            self.canvas2.create_window(90, 90, window=self.label6)
+     
         
     def testcom(self):
         t0 = time.time()
         """metadata menu 2 update"""
-        if self.variable_a.get() == "Phase":
-             self.graph.nodes()[str(self.entry3.get())].update({"phase":self.variable_b.get()})
-        elif self.variable_a.get() == "Dates":
-            self.graph.nodes()[str(self.entry3.get())].update({"phase":self.variable_b.get()})
-        elif self.variable_a.get() == "Finds":
-            self.graph.nodes()[str(self.entry3.get())].update({"phase":self.variable_b.get()})
+        if self.variable_a.get() == "Phase":  
+            if self.variable_b.get() == "Input phase":
+                self.graph.nodes()[str(self.entry3.get())].update({"Phase":self.entry6.get()})
+                self.label6.destroy()
+                self.entry6.destroy()
+            else:
+                self.graph.nodes()[str(self.entry3.get())].update({"Phase":self.variable_b.get()})
+        elif self.variable_a.get() == "Date":
+            if self.variable_b.get() == "Input date":
+                self.graph.nodes()[str(self.entry3.get())].update({"Date": [self.entry4.get(), self.entry5.get()]})
+                self.label4.destroy()
+                self.entry4.destroy()
+                self.label5.destroy()
+                self.entry5.destroy()  
+            else:
+                self.graph.nodes()[str(self.entry3.get())].update({"Date":self.variable_b.get()})
+        elif self.variable_a.get() == "Find_Type":
+            self.graph.nodes()[str(self.entry3.get())].update({"Find_Type":self.variable_b.get()})
         self.metatext = tk.Text(self.metacanvas, font=("Arial", 14), width=120, height=40)
         self.metacanvas.create_window((0, 0), window=self.metatext, anchor='nw')
         self.meta1 = pd.DataFrame.from_dict(self.graph.nodes()[str(self.entry3.get())],
                                             orient='index')
-        self.meta1 = self.meta1.loc["dates":"phase",]
+        self.meta2 = self.meta1.loc["Date":"Phase",]
+        self.meta2.columns = ["Data"]
+        #if self.meta2.loc["Date"] != "None":
+        if self.meta2.loc["Date"][0] != "None":
+           self.meta2.loc["Date"][0] = str(self.meta2.loc["Date"][0][0]) + " +- " + str(self.meta2.loc["Date"][0][1]) + " Carbon BP"
+       # self.nice_meta2 = tabulate(self.meta2, headers='keys', tablefmt='psql')
         self.metatext.insert('end', 'Metadata of node ' +
-                             str(self.entry3.get()) + ':\n' + str(self.meta1))
+                             str(self.entry3.get()) + ':\n')
+        cols = list(self.meta2.columns)
+        tree = ttk.Treeview(self.metacanvas)
+        tree["columns"] = cols
+        tree.place(relx=0, rely=0.25)
+        tree.column("Data", anchor="w")
+        tree.heading("Data", text="Data", anchor='w')        
+        for index, row in self.meta2.iterrows():
+            tree.insert("",0,text=index,values=list(row))
+
+
         self.metatext.configure(state='disabled')
   #      print((sys._getframe().f_code.co_name), str(time.time() - t0))
     def update_options(self, *args):
@@ -422,7 +477,7 @@ class popupWindow2(object):
         menu.delete(0, 'end')
         for meta in meta_data:
             menu.add_command(label=meta,
-                             command=lambda nation=meta: self.variable_b.set(nation))
+                             command=lambda nation=meta: self.variable_b.set(nation))   
 #        print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
                 
@@ -482,22 +537,22 @@ class MainFrame(tk.Tk):
         self.dotbutton.place(relx=0.05, rely=0.01, relwidth=0.1, relheight=0.03)
         self.stratbutton = tk.Button(self.canvas, text ='Open strat text file', command = lambda:open_file2())
         self.stratbutton.place(relx=0.17, rely=0.01, relwidth=0.1, relheight=0.03)
-        self.datebutton = tk.Button(self.canvas, text ='Open date file', command = lambda:open_file2())
+        self.datebutton = tk.Button(self.canvas, text ='Open date file', command = lambda:open_file3())
         self.datebutton.place(relx=0.29, rely=0.01, relwidth=0.1, relheight=0.03)
-        self.phasebutton = tk.Button(self.canvas, text ='Open phase file', command = lambda:open_file2())
+        self.phasebutton = tk.Button(self.canvas, text ='Open phase file', command = lambda:open_file4())
         self.phasebutton.place(relx=0.41, rely=0.01, relwidth=0.1, relheight=0.03)
          
 
         #########deleted nodes##################
         self.nodescanvas = tk.Canvas(self.canvas, bg='white', bd=0, highlightthickness=0)
-        self.nodescanvas.place(relx=0.75, rely=0.05, relwidth=0.15, relheight=0.2)
+        self.nodescanvas.place(relx=0.75, rely=0.05, relwidth=0.35, relheight=0.2)
         self.text = tk.Text(self.nodescanvas, font=("Arial", 14), width=120, height=40)
         self.nodescanvas.create_window((0, 0), window=self.text, anchor='nw')
         self.text.insert('end', 'Deleted Contexts:\n' + str(self.delnodes)[1:-1])
         self.text.configure(state='normal')
         ###########deleted edges###############################
         self.edgescanvas = tk.Canvas(self.canvas, bg='white', bd=0, highlightthickness=0)
-        self.edgescanvas.place(relx=0.75, rely=0.27, relwidth=0.15, relheight=0.2)
+        self.edgescanvas.place(relx=0.75, rely=0.27, relwidth=0.35, relheight=0.2)
         self.text = tk.Text(self.edgescanvas, font=("Arial", 14), width=120, height=40)
         self.edgescanvas.create_window((0, 0), window=self.text, anchor='nw')
         self.text.insert('end', 'Deleted Edges:\n') #+ str(self.edges_del[1:-1]))
@@ -603,10 +658,34 @@ class MainFrame(tk.Tk):
                 
         def open_file2(): 
             t0 = time.time()
-            file = askopenfile(mode ='r', filetypes =[('Python Files', '*.txt')]) 
+            file = askopenfile(mode ='r', filetypes =[('Python Files', '*.csv')]) 
             if file is not None: 
-                content = read_dot(file) 
-                return(content) 
+                self.stratfile = pd.read_csv(file) 
+               # return(content)
+        
+        def open_file3(): 
+            t0 = time.time()
+            file = askopenfile(mode ='r', filetypes =[('Python Files', '*.csv')]) 
+            if file is not None: 
+                self.datefile = pd.read_csv(file)
+                for i, j in enumerate(self.datefile["context"]):
+                   # print(self.graph.nodes()[str(j)])
+                    #print(j, [self.datefile["date"][i], self.datefile["error"][i]])
+                    self.graph.nodes()[str(j)].update({"Date":[self.datefile["date"][i], self.datefile["error"][i]]})
+            #    print(self.datefile)
+              #  return(content)
+                
+        def open_file4(): 
+            t0 = time.time()
+            file = askopenfile(mode ='r', filetypes =[('Python Files', '*.csv')]) 
+            if file is not None: 
+                self.phasefile = pd.read_csv(file) 
+                for i, j in enumerate(self.phasefile["context"]):
+                   # print(self.graph.nodes()[str(j)])
+                    #print(j, [self.datefile["date"][i], self.datefile["error"][i]])
+                    self.graph.nodes()[str(j)].update({"Phase":self.phasefile["phase"][i]})
+         
+              #  return(content) 
           #  print((sys._getframe().f_code.co_name), str(time.time() - t0))
 #        self.b=tk.Button(self ,text="click me!", command=self.popup)
 #        self.b.pack() 
@@ -619,9 +698,9 @@ class MainFrame(tk.Tk):
 #        self.canvas2.place(relx=0.50, rely=0.5, relwidth=0.25, relheight=0.15)
 #        #canvas to hold the metadata
         self.metacanvas = tk.Canvas(self.canvas, bg="white")
-        self.metacanvas.place(relx=0.75, rely=0.52, relwidth=0.15, relheight=0.2)
+        self.metacanvas.place(relx=0.75, rely=0.52, relwidth=0.35, relheight=0.2)
         self.abovebelowcanvas = tk.Canvas(self.canvas, bg="white")
-        self.abovebelowcanvas.place(relx=0.75, rely=0.75, relwidth=0.15, relheight=0.2)
+        self.abovebelowcanvas.place(relx=0.75, rely=0.75, relwidth=0.35, relheight=0.2)
 #        #making node add section
 #        #entry box for adding metadata
 #        self.entry3 = tk.Entry(self.canvas)
@@ -850,10 +929,22 @@ class MainFrame(tk.Tk):
                 self.metatext = tk.Text(self.metacanvas, font=("Arial", 14), width=120, height=40)
                 self.metacanvas.create_window((0, 0), window=self.metatext, anchor='nw')
                 self.meta1 = pd.DataFrame.from_dict(self.graph.nodes()[str(node)], orient='index')
-                self.meta1 = self.meta1.loc["dates":"phase",]
-                metastr = str(self.meta1.replace("'", ""))[1:-1]
-                metastr = metastr.replace(",", "\n")
-                self.metatext.insert('end', 'Metadata of node ' + str(node) + ':\n' + str(self.meta1))
+                self.meta2 = self.meta1.loc["Date":"Phase",]
+                self.meta2.columns = ["Data"]
+                #if self.meta2.loc["Date"] != "None":
+                if self.meta2.loc["Date"][0] != "None":
+                   self.meta2.loc["Date"][0] = str(self.meta2.loc["Date"][0][0]) + " +- " + str(self.meta2.loc["Date"][0][1]) + " Carbon BP"
+               # self.nice_meta2 = tabulate(self.meta2, headers='keys', tablefmt='psql')
+                self.metatext.insert('end', 'Metadata of node ' +
+                                     str(node) + ':\n')
+                cols = list(self.meta2.columns)
+                tree = ttk.Treeview(self.metacanvas)
+                tree["columns"] = cols
+                tree.place(relx=0, rely=0.25)
+                tree.column("Data", anchor="w")
+                tree.heading("Data", text="Data", anchor='w')        
+                for index, row in self.meta2.iterrows():
+                    tree.insert("",0,text=index,values=list(row))
                 self.metatext.configure()
                     
             if self.variable.get() == "Place Above Other Context":
