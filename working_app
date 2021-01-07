@@ -8,6 +8,7 @@ Created on Mon Mar  9 12:35:28 2020
 import tkinter as tk
 from tkinter import ttk
 import tabulate
+import copy
 from tabulate import tabulate
 import sys
 import re
@@ -139,6 +140,7 @@ def chrono_edge_remov(file_graph):
     #figure out floating nodes
 
     phase_list = graph_data[1][2]
+  #  phase_nodes = []
     for node in list(phase_list):
         alp_beta_node_add(node, file_graph)
         
@@ -148,40 +150,60 @@ def chrono_edge_remov(file_graph):
 
         
     for i, j in enumerate(elist):
-        file_graph.add_edge("a_" + str(j), evenlist[i], arrows=False)    
+        file_graph.add_edge("b_" + str(j), evenlist[i], arrows=False)    
     for i, j in enumerate(olist):
-        file_graph.add_edge(oddlist[i], "b_" + str(j.replace("_below", "")), arrows=False)
+        file_graph.add_edge(oddlist[i], "a_" + str(j.replace("_below", "")), arrows=False)
     return graph_data, [xs, ys]
 
 
 
-def chrono_edge_add(file_graph, graph_data, xs_ys):
+def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
     xs = xs_ys[0]
     ys = xs_ys[1]
     #phase_norm = [phase[ph][phase[ph].rfind("/")+1:len(phase[ph])] for ph in phase]
-    phase_norm, node_list, phase_trck = graph_data[1][0], graph_data[1][1], graph_data[1][3]
+    phase_norm, node_list = graph_data[1][0], graph_data[1][1]
     all_node_phase = dict(zip(node_list, phase_norm))     
     for i in node_list:
         if (i in xs) == False:
             if (i in ys) == False:
-                file_graph.add_edge("a_" + str(all_node_phase[i]), i, arrows=False)
-                file_graph.add_edge(i, "b_" + str(all_node_phase[i]), arrows=False)
+                file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrows=False)
+                file_graph.add_edge(i, "a_" + str(all_node_phase[i]), arrows=False)
             else:
-                file_graph.add_edge(i, "b_" + str(all_node_phase[i]), arrows=False)
+                file_graph.add_edge(i, "a_" + str(all_node_phase[i]), arrows=False)
         elif (i in xs) == True:
             if (i in ys) == False:
-                print(i)
-                file_graph.add_edge("a_" + str(all_node_phase[i]), i, arrows=False)
+                #print(i)
+                file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrows=False)
     
     for p in list(set(phase_trck)):
-        file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[0]))
-    
-    file_graph_temp = nx.transitive_reduction(file_graph)    
-    a = set(file_graph.edges())
-    b = set(file_graph_temp.edges())
-    rem = list(a-b)[0]
-    file_graph.remove_edge(rem[0], rem[1])
-
+        relation = phasedict[p]
+        if relation == 'gap':
+            file_graph.add_edge("a_" + str(p[0]), "b_" + str(p[1]))
+        if relation == 'overlap':
+            file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[0]))
+        if relation == "abuting":
+            x_bef = list(file_graph)
+            print("x_bef ", x_bef)
+            file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
+            x_nod = list(file_graph) 
+            print("x_nod ", x_nod)
+            newnode = str("a_" + str(p[0]) + " = " +"b_" + str(p[1]))
+            y_nod = [newnode if i=="a_" + str(p[0]) else i for i in x_nod]
+            print("y_nod ", y_nod)
+            mapping = dict(zip(x_nod, y_nod))
+            file_graph = nx.relabel_nodes(file_graph, mapping)
+    #print(phase_trck)
+    graph = nx.DiGraph()
+    graph.add_edges_from(phase_trck)
+ #   print(phase_trck)
+   # imgrender(graph)
+    graph_temp = nx.transitive_reduction(graph)    
+    a = set(graph.edges())
+    b = set(graph_temp.edges())
+    if len(list(a-b)) != 0:
+        rem = list(a-b)[0]
+        file_graph.remove_edge(rem[0], rem[1])
+    return(file_graph)
 
 
 
@@ -237,7 +259,7 @@ def edge_of_phase(test1, pset, node_list, node_info):
                 key_1 = (list(mydict.keys())[phase_lst[0]]) #trying to find phase of other value
                 x_l.append(test1[i[0]][0])
                 y_l.append(str(key_1 + "_below"))
-                phase_tracker.append((key, key_1))
+                phase_tracker.append((key_1, key))
 #    print((sys._getframe().f_code.co_name), str(time.time() - t0))
     return x_l, y_l, mydict.keys(), phase_tracker
 
@@ -302,6 +324,7 @@ def alp_beta_node_add(x, graph):
                                    fontname="Arial", penwidth="1.0")
     graph.add_node("b_" + str(x), shape="diamond", fontsize="20.0",
                                    fontname="Arial", penwidth="1.0")
+  #  return(["a_" + str(x), "b_" + str(x)])
 
 
 def rank_func(tes, file_content):
@@ -359,7 +382,21 @@ class popupWindow(object):
     def cleanup(self):
         self.value=self.e.get()
         self.top.destroy()
-
+        
+class popupWindow(object):
+    def __init__(self,master):
+        top=self.top=tk.Toplevel(master)
+        self.l=tk.Label(top,text="Phase")
+        self.l.pack()
+        self.e=tk.Entry(top)
+        self.e.pack()
+        self.b=tk.Button(top,text='Ok',command=self.cleanup)
+        self.b.pack()
+    def cleanup(self):
+        self.value=self.e.get()
+        self.top.destroy()
+        
+        
 class popupWindow2(object):
     def __init__(self,master, graph, canvas):
         top=tk.Toplevel(master)
@@ -401,6 +438,9 @@ class popupWindow2(object):
         self.optionmenu_b.place(relx=0.6, rely=0.15)    
   #      self.b=tk.Button(top,text='Ok',command=self.cleanup)
         self.button3.place(relx = 0.1, rely = 0.7)
+        
+  #      self.b=tk.Button(top,text='Ok',command=self.cleanup)
+    #    self.button3.place(relx = 0.1, rely = 0.7)
     def testdate_input(self, *args):
         print("test1")
         if self.variable_b.get() == "Input date":
@@ -484,7 +524,94 @@ class popupWindow2(object):
     def cleanup(self):
         self.value=self.canvas2.get()
         self.top.destroy()
+        
+        
+class popupWindow3(object):
+    def __init__(self, master, graph, canvas):
+        self.littlecanvas2 = canvas
+        self.top=tk.Toplevel(master)
+        self.top.geometry("1000x400")
+        self.variable_1 = tk.StringVar(self.top)
+        self.variable_2 = tk.StringVar(self.top)
+        self.button_a = tk.Button(self.top, text='Add Phase Relationship', bg="#b3dcf2",
+                                 font=("Arial", 14), command=lambda:self.phase_rel_func())
+        
+        self.button_b = tk.Button(self.top, text='Render Chronological graph', bg="#b3dcf2",
+                         font=("Arial", 14), command=lambda:self.full_chronograph_func())         
+  #      self.variable_1.trace('w', self.update_options1)
+       # self.variable_2.trace('w')
+        self.graph = graph
+        self.graphcopy = copy.deepcopy(self.graph)
+        self.step_1 = chrono_edge_remov(self.graphcopy)
+        graphedges = self.step_1[0][1][3]
+        #print(graphedges)        
+        graph = nx.DiGraph()
+        graph.add_edges_from(graphedges)
+        graph_new = nx.transitive_reduction(graph)
+        self.phases = list(graph_new.edges())
+        self.menu_list1 = []
+        self.menudict = {}
+        self.menu_list2 = ["abuting", "gap", "overlap"]
+      #  self.dict = {}
+        for i in self.phases:
+            self.menu_list1.append("Relationship between start of phase " + str(i[0]) + " and end of phase " + str(i[1]))    
+        #    self.menu_track.append([str(i[0]), str(i[1])])
+        #menu_list2 = ["abuting", "gap", "overlap"]
 
+      #  self.dict = dict(menu_list1)
+      #  print(self.dict)        
+        self.optionmenu_a = tk.OptionMenu(self.top, self.variable_1, *self.menu_list1)
+        self.optionmenu_b = tk.OptionMenu(self.top, self.variable_2, *self.menu_list2)
+        #self.variable_a.set('Date')
+        self.optionmenu_a.place(relx=0.1, rely=0.15)
+        self.optionmenu_b.place(relx=0.6, rely=0.15)
+        self.button_a.place(relx=0.7, rely=0.15)
+        self.button_b.place(relx=0.4, rely=0.55)
+       # print(step_1[0], step_1[1])
+   #     chrono_edge_add(self.graphcopy, step_1[0], step_1[1])
+        
+
+    def phase_rel_func(self):
+        n = re.search('start of phase (.+?) and end', self.variable_1.get()).group(1)
+        m = re.search('and end of phase (.+?)', self.variable_1.get()).group(1)
+        self.menudict[(n, m)] = self.variable_2.get()
+        print(self.variable_2.get())
+        self.menu_list1.remove(self.variable_1.get())
+     #   self.optionmenu_a = tk.OptionMenu(self.top, self.variable_1, *self.menu_list1)
+        self.optionmenu_a['menu'].delete(self.variable_1.get())
+       # print(self.menu_list1[0])
+        if len(self.menu_list1) > 0:
+            self.variable_1.set(self.menu_list1[0])
+        else:
+            self.variable_1.set("No Phases Left")
+        print(self.menudict)
+        
+    def full_chronograph_func(self):
+        self.graphcopy = chrono_edge_add(self.graphcopy, self.step_1[0], self.step_1[1], self.menudict, self.phases)
+        print(list(self.graphcopy))
+        self.image2 = imgrender2(self.graphcopy)
+        self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
+        self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
+                                                               image=self.littlecanvas2.img)
+#
+        self.width2, self.height2 = self.image2.size
+        self.imscale2 = 1.0  # scale for the canvaas image
+        self.delta2 = 1.1  # zoom magnitude
+        # Put image into container rectangle and use it to set proper coordinates to the image
+        self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
+        self.littlecanvas2.bind("<Configure>", self.resize2)   
+#    def update_options1(self, *args):
+#    #    global pos_dag
+#        t0 = time.time()
+#        """updates metadata drop down menu 1"""
+#        meta_data = self.dict[self.variable_1.get()]
+#     #   self.variable_1.set(meta_data[0])
+#        menu = self.optionmenu_b['menu']
+#        menu.delete(0, 'end')
+#        for meta in meta_data:
+#            menu.add_command(label=meta,
+#                             command=lambda nation=meta: self.variable_2.set(nation)) 
+            
 class MainFrame(tk.Tk):
     """ Main frame for tkinter app"""
     def __init__(self, *args, **kwargs):
@@ -527,6 +654,12 @@ class MainFrame(tk.Tk):
         self.littlecanvas2.bind('<Button-5>', self.wheel2)
         self.littlecanvas2.bind('<Button-1>', self.move_from)
         self.littlecanvas2.bind('<B1-Motion>', self.move_to)
+#        self.width2, self.height2 = self.image2.size
+#        self.imscale2 = 1.0  # scale for the canvaas image
+#        self.delta2 = 1.1  # zoom magnitude
+#        # Put image into container rectangle and use it to set proper coordinates to the image
+#        self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
+#        self.littlecanvas2.bind("<Configure>", self.resize2)  
     #    self.show_image.after(0, print("test"))
         #placing image on littlecanvas from graph
         self.littlecanvas.rowconfigure(0, weight=1)
@@ -651,8 +784,8 @@ class MainFrame(tk.Tk):
             self.nodescanvas.create_window((0, 0), window=self.text, anchor='nw')
             self.text.insert('end', 'Deleted Contexts:\n' + str(self.delnodes)[1:-1])
             self.text.configure(state='normal')
-            self.testbutton = tk.Button(self.canvas, text ='test', command = lambda:self.full_chronograph_func())
-            self.testbutton.place(relx=0.61, rely=0.01, relwidth=0.1, relheight=0.03) 
+            self.testbutton = tk.Button(self.canvas, text ='Render Chronological DAG', command = lambda:popupWindow3(self, self.graph, self.littlecanvas2))
+            self.testbutton.place(relx=0.61, rely=0.01, relwidth=0.2, relheight=0.03) 
         #    print((sys._getframe().f_code.co_name), str(time.time() - t0))
             #FILE_INPUT = fileFstt
                 
@@ -743,20 +876,36 @@ class MainFrame(tk.Tk):
         self.image = Image.open('testdag.png')
         self.show_image()  
 
-    def full_chronograph_func(self):
-        step_1 = chrono_edge_remov(self.graph)
-        chrono_edge_add(self.graph, step_1[0], step_1[1])
-        self.image2 = imgrender2(self.graph)
-        self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
-        self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
-                                                               image=self.littlecanvas2.img)
-
-        self.width2, self.height2 = self.image2.size
-        self.imscale2 = 1.0  # scale for the canvaas image
-        self.delta2 = 1.1  # zoom magnitude
-        # Put image into container rectangle and use it to set proper coordinates to the image
-        self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
-        self.littlecanvas2.bind("<Configure>", self.resize2)         
+#    def full_chronograph_func(self):
+#        #pt1
+##        self.graphcopy = copy.deepcopy(self.graph)
+##        step_1 = chrono_edge_remov(self.graphcopy)
+##        graphedges = step_1[0][1][3]
+##        #print(graphedges)        
+##        graph = nx.DiGraph()
+##        graph.add_edges_from(graphedges)
+##        graph_new = nx.transitive_reduction(graph)
+##        phases = list(graph_new.edges())
+##        menu_list1 = []
+##        menu_list_track = []
+##        for i in phases:
+##            menu_list1.append("Relationship between start of phase " + str(i[0]) + " and end of phase " + str(i[1]))
+##            menu_list_track.append((str(i[0]), str(i[1])))
+##        menu_list2 = ["abuting", "gap", "overlap"]
+##        #pt2
+##        
+#        chrono_edge_add(self.graphcopy, self.step_1[0], self.step_1[1], self.menudict)
+#        self.image2 = imgrender2(self.graphcopy)
+#        self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
+#        self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
+#                                                               image=self.littlecanvas2.img)
+#
+#        self.width2, self.height2 = self.image2.size
+#        self.imscale2 = 1.0  # scale for the canvaas image
+#        self.delta2 = 1.1  # zoom magnitude
+#        # Put image into container rectangle and use it to set proper coordinates to the image
+#        self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
+#        self.littlecanvas2.bind("<Configure>", self.resize2)         
         
     def stratfunc(self):
         rellist = list(nx.line_graph(self.graph))
@@ -797,7 +946,7 @@ class MainFrame(tk.Tk):
  #       print(type(node_df))
         xscale = (x_current)*(xmax)/cavx
         yscale = (cany-y_current)*(ymax)/cany
-        print(xscale, yscale)
+       # print(xscale, yscale)
       #  print(xscale, yscale)
         for n_ind in range(node_df.shape[0]):
             if ((node_df.iloc[n_ind].x_lower < xscale < node_df.iloc[n_ind].x_upper) and
