@@ -195,7 +195,8 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
     #print(phase_trck)
     graph = nx.DiGraph()
     graph.add_edges_from(phase_trck)
- #   print(phase_trck)
+    print(phase_trck)
+    PHI_REF = list(reversed(list(nx.topological_sort(graph))))
    # imgrender(graph)
     graph_temp = nx.transitive_reduction(graph)    
     a = set(graph.edges())
@@ -203,7 +204,7 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
     if len(list(a-b)) != 0:
         rem = list(a-b)[0]
         file_graph.remove_edge(rem[0], rem[1])
-    return(file_graph)
+    return(file_graph, PHI_REF)
 
 
 
@@ -551,6 +552,8 @@ class popupWindow3(object):
         self.phases = list(graph_new.edges())
         self.menu_list1 = []
         self.menudict = {}
+        self.prev_dict = {}
+        self.post_dict = {}
         self.menu_list2 = ["abuting", "gap", "overlap"]
       #  self.dict = {}
         for i in self.phases:
@@ -567,7 +570,7 @@ class popupWindow3(object):
         self.optionmenu_b.place(relx=0.6, rely=0.15)
         self.button_a.place(relx=0.7, rely=0.15)
         self.button_b.place(relx=0.4, rely=0.55)
-        
+        master.wait_window(self.top)
        # print(step_1[0], step_1[1])
    #     chrono_edge_add(self.graphcopy, step_1[0], step_1[1])
         
@@ -575,7 +578,10 @@ class popupWindow3(object):
     def phase_rel_func(self):
         n = re.search('start of phase (.+?) and end', self.variable_1.get()).group(1)
         m = re.search('and end of phase (.+?)', self.variable_1.get()).group(1)
+        
         self.menudict[(n, m)] = self.variable_2.get()
+        self.prev_dict[n] = self.variable_2.get()
+        self.post_dict[m] = self.variable_2.get()
         print(self.variable_2.get())
         self.menu_list1.remove(self.variable_1.get())
      #   self.optionmenu_a = tk.OptionMenu(self.top, self.variable_1, *self.menu_list1)
@@ -585,11 +591,26 @@ class popupWindow3(object):
             self.variable_1.set(self.menu_list1[0])
         else:
             self.variable_1.set("No Phases Left")
-        print(self.menudict)
+        print("prev dict", self.prev_dict,  "post_dict", self.post_dict)
         
     def full_chronograph_func(self):
-        self.graphcopy = chrono_edge_add(self.graphcopy, self.step_1[0], self.step_1[1], self.menudict, self.phases)
-        self.value = "yes"
+        self.graphcopy, PHI_REF = chrono_edge_add(self.graphcopy, self.step_1[0], self.step_1[1], self.menudict, self.phases)
+        PREV_PHASE = ["start"]
+        POST_PHASE = []
+        print(PHI_REF[0])
+        print(list(self.post_dict.keys())[1])
+        POST_PHASE.append(self.post_dict[PHI_REF[0]])
+        for i in range(1,len(PHI_REF)-1):
+                PREV_PHASE.append(self.prev_dict[PHI_REF[i]])
+                POST_PHASE.append(self.post_dict[PHI_REF[i]])
+        PREV_PHASE.append(self.prev_dict[PHI_REF[len(PHI_REF)-1]]) 
+        POST_PHASE.append("end")
+        print(PREV_PHASE, POST_PHASE)
+                
+            
+                
+    #    self.wait_window(self.top)
+        #self.value = "yes"
         write_dot(self.graphcopy, 'fi_new_chrono')
         self.top.destroy()
 
@@ -798,7 +819,10 @@ class MainFrame(tk.Tk):
                    # print(self.graph.nodes()[str(j)])
                     #print(j, [self.datefile["date"][i], self.datefile["error"][i]])
                     self.graph.nodes()[str(j)].update({"Date":[self.datefile["date"][i], self.datefile["error"][i]]})
-            #    print(self.datefile)
+                RCD_EST = list(self.datefile['date'])
+                RCD_ERR = list(self.datefile['error'])
+                self.context_no = list(self.datefile['context'])
+                print(self.datefile, RCD_EST, RCD_ERR, self.context_no)
               #  return(content)
                 
         def open_file4(): 
@@ -810,6 +834,8 @@ class MainFrame(tk.Tk):
                    # print(self.graph.nodes()[str(j)])
                     #print(j, [self.datefile["date"][i], self.datefile["error"][i]])
                     self.graph.nodes()[str(j)].update({"Phase":self.phasefile["phase"][i]})
+                self.KEY_REF = [list(self.phasefile["phase"])[list(self.phasefile["context"]).index(i)] for i in self.context_no]
+                print(self.KEY_REF)
          
               #  return(content) 
           #  print((sys._getframe().f_code.co_name), str(time.time() - t0))
@@ -886,8 +912,8 @@ class MainFrame(tk.Tk):
 ##            menu_list_track.append((str(i[0]), str(i[1])))
 ##        menu_list2 = ["abuting", "gap", "overlap"]
 ##        #pt2
-    def chronograph_render(self):         
-        self.tester = popupWindow3(self, self.graph, self.littlecanvas2)
+    def chronograph_render(self):
+        popupWindow3(self, self.graph, self.littlecanvas2)
         self.image2 = imgrender2()
         self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
         self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
