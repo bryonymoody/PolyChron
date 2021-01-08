@@ -20,8 +20,8 @@ import matplotlib.pyplot as plt
 #import the calibration curve
 CALIBRATION = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True)
 CALIBRATION_DATA = CALIBRATION.to_dict()
-np.random.seed(9001)
-random.seed(9001)
+#np.random.seed(9001)
+#random.seed(9001)
 
 def sampling_vec(post_phase_vec, prev_phase_vec):
     """ gives vectors to sample between"""
@@ -202,8 +202,28 @@ def phase_bd_init_func(key_reff, phi_reff, theta_initt, prev_phases):
             a_temp = [a_temp]
         [PHASE_INITS.append(ref_ind) for ref_ind in a_temp]
     PHASE_INITS.append(np.random.uniform(min([theta_initt[i] for i in np.where(KEY_REF_1 == phi_reff[-1])[0].tolist()]), A))
-    return PHASE_INITS
+    PHASE_INITS1 = sorted(PHASE_INITS, reverse=True)
+    return PHASE_INITS1
 
+def theta_init_func(KEY_REF1, PHI_REF1, RESULT_VEC1):
+    """GIVES A LIST OF INITAL THETA VALUES FOR MCMCM"""
+    out_vec = [0]*len(KEY_REF1)
+    uplimref = np.where(np.array(KEY_REF1) == PHI_REF1[0])[0].tolist()
+    up_lim_vec = [np.random.choice(RESULT_VEC1[date][0], p=RESULT_VEC1[date][1]).item() for date in uplimref]
+    for i, a in enumerate(uplimref):
+        out_vec[a] = up_lim_vec[i]
+    prev_min = min(up_lim_vec)
+    for date in range(1, len(PHI_REF1)):
+        ref_vec = np.where(np.array(KEY_REF1) == PHI_REF1[date])[0].tolist()
+        print(ref_vec)
+        theta, prob = RESULT_VEC1[date][0], RESULT_VEC1[date][1]
+        theta_vals = [np.random.choice(theta[theta < prev_min], 
+                                       p=prob[theta < prev_min]/sum(prob[theta < prev_min])) for date in ref_vec]
+        print(theta_vals)
+        prev_min = min(theta_vals)
+        for i, a in enumerate(ref_vec):
+            out_vec[a] = theta_vals[i]
+    return(out_vec)    
 #sampling functions
 def upp_samp_1(theta_samp, phis_samp, m_samp):
     """ upper sample 1"""
@@ -516,20 +536,35 @@ PROB_FUNC_DICT = {
 #PREV_PHASE = ["start", "abuting", "abuting", "abuting", "abuting", "abuting", "abuting", "abuting"]
 #POST_PHASE = ["abuting", "abuting", "abuting", "abuting", "abuting", "abuting", "abuting", "end"]
 #########SHAG RIVER MOUTH
+#np.random.seed(99999)
 A = 450
 P = 950
 
 #RCD_EST = [580, 600, 537, 670, 646, 630, 660]
 #RCD_ERR = [47, 50, 44, 47, 47, 35, 46]
-STRAT_VEC = [[[], []], [[], []], [[], []], [[], []], [[], []], [[], []], [[], []]]
+STRAT_VEC = [[[], ["2589"]], [["7771"], []], [[], []], [[], []], [[], []], [[], []], [[], []]]
+STRAT_VEC.reverse()
 RCD_EST = [660, 630, 646, 670, 537, 600, 580]
+RCD_EST.reverse()
 RCD_ERR = [46, 35, 47, 47, 44, 50, 47]
-KEY_REF = [6, 5, 5, 4, 3, 2, 1]
-PHI_REF = [6, 5, 4, 3, 2, 1]
-CONTEXT_NO = [7771, 2589, 7755, 7756, 7757, 7761, 7758]
+RCD_ERR.reverse()
+KEY_REF = ["6", "5", "5", "4", "3", "2", "1"]
+KEY_REF.reverse()
+CONTEXT_NO = ["7771", "2589", "7755", "7756", "7757", "7761", "7758"]
+CONTEXT_NO.reverse()
+PHI_REF = ["6", "5", "4", "3", "2", "1"]
 PREV_PHASE = ["start", "abuting", "abuting", "abuting", "abuting", "abuting"]
 POST_PHASE = ["abuting", "abuting", "abuting", "abuting", "abuting", "end"]
 
+x_min = min(RCD_EST)
+s = max(RCD_ERR)
+x_max = max(RCD_EST)
+mydict = CALIBRATION_DATA['Carbon_year']
+a = list(mydict.values())
+p = min(range(len(a)), key=lambda i: abs(a[i]-x_min))
+l = min(range(len(a)), key=lambda i: abs(a[i]-x_max))
+A = p - 3*s
+P = l + 3*s
 ##betta simulated data
 #A = 7000
 #P = 13000
@@ -612,10 +647,10 @@ POST_PHASE = ["abuting", "abuting", "abuting", "abuting", "abuting", "end"]
 ##initiating  likelihoods
 RCD_S = [list(x) for x in zip(RCD_EST, RCD_ERR)]
 RESULT_VEC = [likelihood_func(date[0], date[1], A, P) for date in RCD_S]
+THETA_INITS = theta_init_func(KEY_REF, PHI_REF, RESULT_VEC)
 
-THETA_INITS = sorted([np.random.choice(i[0], p=i[1]).item() for i in RESULT_VEC], reverse = True)
 PHASE_BOUNDARY_INITS = phase_bd_init_func(KEY_REF, PHI_REF, THETA_INITS, PREV_PHASE)
- 
+
 #THETA_INITS = [925, 875, 825, 775, 725, 675, 625]
 #PHASE_BOUNDARY_INITS = [950, 900, 800, 750, 700, 650, 600]
 #initiating the inital dict
@@ -906,16 +941,16 @@ k, BINS, PATCHES = plt.hist(POST_S[100:], bins="auto", color='#0504aa',
 #                      alpha=0.7, rwidth=0.85, density = True )
 #k, bins, patches = plt.hist(phi_accept[0], bins='auto', color='#0504aa',
 #                      alpha=0.7, rwidth=0.85, density = True )
-#PLOT_INDEX = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-#FIGURE, AXES = plt.subplots(nrows=10, ncols=1, sharex=True, sharey=True, figsize=[14, 6])
-#plt.xlim(4000, 3000)
-#plt.ylim(0, 0.1)
-##for j in range(len(axes.ravel())):
-#for i, j in zip(PLOT_INDEX, range(len(AXES.ravel()))):
-#    AXES[j].hist(ACCEPT[i], bins='auto', color='#0504aa',
-#                 alpha=0.7, rwidth=0.85, density=True)
+PLOT_INDEX = [0, 1, 2, 3, 4, 5, 6] #, 7, 8, 9]
+FIGURE, AXES = plt.subplots(nrows=7, ncols=1, sharex=True, sharey=True, figsize=[14, 6])
+plt.xlim(600, 500)
+plt.ylim(0, 0.5)
+#for j in range(len(axes.ravel())):
+for i, j in zip(PLOT_INDEX, range(len(AXES.ravel()))):
+    AXES[j].hist(ACCEPT[i], bins='auto', color='#0504aa',
+                 alpha=0.7, rwidth=0.85, density=True)
 #for i in range(len(THETAS)):
 #    print(pm3.stats.hpd(np.array(ACCEPT[i])))
-#plt.title('Theta Histograms')
-#plt.xlabel('Calendar years')
-#plt.ylabel('Probability density')
+plt.title('Theta Histograms')
+plt.xlabel('Calendar years')
+plt.ylabel('Probability density')
