@@ -221,10 +221,10 @@ def imgrender(file):
 
 
 
-def imgrender2(file):
+def imgrender2():
     t0 = time.time()
     """renders png from dotfile"""
-    write_dot(file, 'fi_new_chrono')
+    #write_dot(file, 'fi_new_chrono')
     render('dot', 'png', 'fi_new_chrono')
     inp = Image.open("fi_new_chrono.png")
     inp = trim(inp)
@@ -383,18 +383,18 @@ class popupWindow(object):
         self.value=self.e.get()
         self.top.destroy()
         
-class popupWindow(object):
-    def __init__(self,master):
-        top=self.top=tk.Toplevel(master)
-        self.l=tk.Label(top,text="Phase")
-        self.l.pack()
-        self.e=tk.Entry(top)
-        self.e.pack()
-        self.b=tk.Button(top,text='Ok',command=self.cleanup)
-        self.b.pack()
-    def cleanup(self):
-        self.value=self.e.get()
-        self.top.destroy()
+#class popupWindow(object):
+#    def __init__(self,master):
+#        top=self.top=tk.Toplevel(master)
+#        self.l=tk.Label(top,text="Phase")
+#        self.l.pack()
+#        self.e=tk.Entry(top)
+#        self.e.pack()
+#        self.b=tk.Button(top,text='Ok',command=self.cleanup)
+#        self.b.pack()
+#    def cleanup(self):
+#        self.value=self.e.get()
+#        self.top.destroy()
         
         
 class popupWindow2(object):
@@ -567,6 +567,7 @@ class popupWindow3(object):
         self.optionmenu_b.place(relx=0.6, rely=0.15)
         self.button_a.place(relx=0.7, rely=0.15)
         self.button_b.place(relx=0.4, rely=0.55)
+        
        # print(step_1[0], step_1[1])
    #     chrono_edge_add(self.graphcopy, step_1[0], step_1[1])
         
@@ -588,18 +589,10 @@ class popupWindow3(object):
         
     def full_chronograph_func(self):
         self.graphcopy = chrono_edge_add(self.graphcopy, self.step_1[0], self.step_1[1], self.menudict, self.phases)
-        print(list(self.graphcopy))
-        self.image2 = imgrender2(self.graphcopy)
-        self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
-        self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
-                                                               image=self.littlecanvas2.img)
-#
-        self.width2, self.height2 = self.image2.size
-        self.imscale2 = 1.0  # scale for the canvaas image
-        self.delta2 = 1.1  # zoom magnitude
-        # Put image into container rectangle and use it to set proper coordinates to the image
-        self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
-        self.littlecanvas2.bind("<Configure>", self.resize2)   
+        self.value = "yes"
+        write_dot(self.graphcopy, 'fi_new_chrono')
+        self.top.destroy()
+
 #    def update_options1(self, *args):
 #    #    global pos_dag
 #        t0 = time.time()
@@ -784,7 +777,7 @@ class MainFrame(tk.Tk):
             self.nodescanvas.create_window((0, 0), window=self.text, anchor='nw')
             self.text.insert('end', 'Deleted Contexts:\n' + str(self.delnodes)[1:-1])
             self.text.configure(state='normal')
-            self.testbutton = tk.Button(self.canvas, text ='Render Chronological DAG', command = lambda:popupWindow3(self, self.graph, self.littlecanvas2))
+            self.testbutton = tk.Button(self.canvas, text ='Render Chronological DAG', command = lambda:self.chronograph_render()) #popupWindow3(self, self.graph, self.littlecanvas2))
             self.testbutton.place(relx=0.61, rely=0.01, relwidth=0.2, relheight=0.03) 
         #    print((sys._getframe().f_code.co_name), str(time.time() - t0))
             #FILE_INPUT = fileFstt
@@ -893,19 +886,19 @@ class MainFrame(tk.Tk):
 ##            menu_list_track.append((str(i[0]), str(i[1])))
 ##        menu_list2 = ["abuting", "gap", "overlap"]
 ##        #pt2
-##        
-#        chrono_edge_add(self.graphcopy, self.step_1[0], self.step_1[1], self.menudict)
-#        self.image2 = imgrender2(self.graphcopy)
-#        self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
-#        self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
-#                                                               image=self.littlecanvas2.img)
-#
-#        self.width2, self.height2 = self.image2.size
-#        self.imscale2 = 1.0  # scale for the canvaas image
-#        self.delta2 = 1.1  # zoom magnitude
-#        # Put image into container rectangle and use it to set proper coordinates to the image
-#        self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
-#        self.littlecanvas2.bind("<Configure>", self.resize2)         
+    def chronograph_render(self):         
+        self.tester = popupWindow3(self, self.graph, self.littlecanvas2)
+        self.image2 = imgrender2()
+        self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
+        self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
+                                                               image=self.littlecanvas2.img)
+
+        self.width2, self.height2 = self.image2.size
+        self.imscale2 = 1.0  # scale for the canvaas image
+        self.delta2 = 1.1  # zoom magnitude
+        # Put image into container rectangle and use it to set proper coordinates to the image
+        self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
+        self.littlecanvas2.bind("<Configure>", self.resize2)         
         
     def stratfunc(self):
         rellist = list(nx.line_graph(self.graph))
