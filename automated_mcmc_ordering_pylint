@@ -133,8 +133,9 @@ def dict_seek_ordered(i_seek, key, site_dict):
         res = min(enumerate(v_seek), key=lambda x: abs(site_dict[key]["dates"][i_seek][0] - x[1]))
         c_ind = np.where(like1 == res[1])
         x_temp = llhood[1:][0][c_ind[0]][0]
+       # print(np.sum(temp_vec_2) == np.sum(temp_vec))
     #print(phase_len)
-    x_len = x_temp*(np.sum(temp_vec)/(phase_len*np.sum(temp_vec_2)))
+    x_len = (x_temp/phase_len)*(np.sum(temp_vec)/np.sum(temp_vec_2))
    # print("phase_len ", phase_len)
   #  print(np.sum(temp_vec) == np.sum(temp_vec_2))
     return x_temp, x_len
@@ -225,29 +226,29 @@ def theta_init_func(KEY_REF1, PHI_REF1, RESULT_VEC1):
             out_vec[a] = theta_vals[i]
     return(out_vec)    
 #sampling functions
-def upp_samp_1(theta_samp, phis_samp, m_samp):
+def upp_samp_1(theta_samp, phis_samp, m):
     """ upper sample 1"""
     limits = [max([theta_samp[i] for i, j in enumerate(KEY_REF) if
-                   j == PHI_REF[SAMP_VEC_TRACK[m_samp]]]), P]
+                   j == PHI_REF[SAMP_VEC_TRACK[m]]]), P]
     _ = phis_samp
     return limits
 
-def upp_samp_2(theta_samp, phis_samp, m_samp):
+def upp_samp_2(theta_samp, phis_samp, m):
     """ upper sample 2"""
     in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
                       j == PHI_REF[SAMP_VEC_TRACK[m]]]
     in_phase_dates.append(phis_samp[m+2])
     limits = [max(in_phase_dates), P]
-    _ = phis_samp, m_samp
+    _ = phis_samp
     return limits
 
-def upp_samp_3(theta_samp, phis_samp, m_samp):
+def upp_samp_3(theta_samp, phis_samp, m):
     """ upper sample 3"""
     limits = [max([theta_samp[i] for i, j in enumerate(KEY_REF) if
                    j == PHI_REF[SAMP_VEC_TRACK[m]]]),
               min([theta_samp[i] for i, j in enumerate(KEY_REF)
                    if j == PHI_REF[SAMP_VEC_TRACK[m-1]]])]
-    _ = phis_samp, m_samp
+    _ = phis_samp
     return limits
 
 def upp_samp_4(theta_samp, phis_samp, m_samp):
@@ -261,50 +262,46 @@ def upp_samp_4(theta_samp, phis_samp, m_samp):
     _ = m_samp
     return limits
 
-def upp_samp_5(theta_samp, phis_samp, m_samp):
+def upp_samp_5(theta_samp, phis_samp, m):
     """ upper sample 5"""
     in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
                       j == PHI_REF[SAMP_VEC_TRACK[m]]]
     in_phase_dates.append(phis_samp[m-1])
     limits = [max(in_phase_dates), phis_samp[m-2]]
-    _ = m_samp
     return limits
 
-def upp_samp_6(theta_samp, phis_samp, m_samp):
+def upp_samp_6(theta_samp, phis_samp, m):
     """ upper sample 6"""
     limits = [max([theta_samp[i] for i, j in enumerate(KEY_REF) if
                    j == PHI_REF[SAMP_VEC_TRACK[m]]]), phis_samp[m-1]]
-    _ = m_samp
     return limits
 
-def upp_samp_7(theta_samp, phis_samp, m_samp):
+def upp_samp_7(theta_samp, phis_samp, m):
     """ upper sample 7"""
     in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
                       j == PHI_REF[SAMP_VEC_TRACK[m]]]
     in_phase_dates.append(phis_samp[m+2])
     limits = [max(in_phase_dates), phis_samp[m-1]]
-    _ = m_samp
     return limits
 
-def upp_samp_8(theta_samp, phis_samp, m_samp):
+def upp_samp_8(theta_samp, phis_samp, m):
     """ upper sample 8"""
     in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
                       j == PHI_REF[SAMP_VEC_TRACK[m]]]
     in_phase_dates.append(phis_samp[m-1])
     limits = [max(in_phase_dates), phis_samp[m-3]]
-    _ = m_samp
     return limits
 
-def low_samp_1(theta_samp, phis_samp, m_samp):
+def low_samp_1(theta_samp, phis_samp, m):
     """lower sample 1"""
     limits = [max([theta_samp[i] for i, j in enumerate(KEY_REF) if
                    j == PHI_REF[SAMP_VEC_TRACK[m+1]]]),
               min([theta_samp[i] for i, j in enumerate(KEY_REF) if j
                    == PHI_REF[SAMP_VEC_TRACK[m]]])]
-    _ = phis_samp, m_samp
+    _ = phis_samp
     return limits
 
-def low_samp_2(theta_samp, phis_samp, m_samp):
+def low_samp_2(theta_samp, phis_samp, m):
     """lower sample 2"""
     in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
                       j == PHI_REF[SAMP_VEC_TRACK[m]]]
@@ -312,67 +309,60 @@ def low_samp_2(theta_samp, phis_samp, m_samp):
     limits = [max([theta_samp[i] for i, j in enumerate(KEY_REF) if
                    j == PHI_REF[SAMP_VEC_TRACK[m+1]]]),
               min(in_phase_dates)]
-    _ = m_samp
     return limits
 
-def low_samp_3(theta_samp, phis_samp, m_samp):
+def low_samp_3(theta_samp, phis_samp, m):
     """lower sample 3"""
     in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
                       j == PHI_REF[SAMP_VEC_TRACK[m]]]
     in_phase_dates.append(phis_samp[m+1])
     limits = [phis_samp[m+2], min(in_phase_dates)]
-    _ = m_samp
     return limits
 
-def low_samp_4(theta_samp, phis_samp, m_samp):
+def low_samp_4(theta_samp, phis_samp, m):
     """lower sample 4"""
     limits = [phis_samp[m+1],
               min([theta_samp[i] for i, j in enumerate(KEY_REF) if
                    j == PHI_REF[SAMP_VEC_TRACK[m]]])]
-    _ = m_samp
     return limits
 
-def low_samp_5(theta_samp, phis_samp, m_samp):
+def low_samp_5(theta_samp, phis_samp, m):
     """lower sample 5"""
     in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
                       j == PHI_REF[SAMP_VEC_TRACK[m]]]
     in_phase_dates.append(phis_samp[m-2])
     limits = [phis_samp[m+1], min(in_phase_dates)]
-    _ = m_samp
     return limits
 
-def low_samp_6(theta_samp, phis_samp, m_samp):
+def low_samp_6(theta_samp, phis_samp, m):
     """lower sample 6"""
     limits = [A, min([theta_samp[i] for i, j in enumerate(KEY_REF) if
                       j == PHI_REF[SAMP_VEC_TRACK[m]]])]
-    _ = phis_samp, m_samp
+    _ = phis_samp
     return limits
 
-def low_samp_7(theta_samp, phis_samp, m_samp):
+def low_samp_7(theta_samp, phis_samp, m):
     """lower sample 7"""
     in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
                       j == PHI_REF[SAMP_VEC_TRACK[m]]]
     in_phase_dates.append(phis_samp[m-2])
     limits = [A, min(in_phase_dates)]
-    _ = m_samp
     return limits
 
-def overlap_samp_1(theta_samp, phis_samp, m_samp):
+def overlap_samp_1(theta_samp, phis_samp, m):
     """overlap sample 1"""
     in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
                       j == PHI_REF[SAMP_VEC_TRACK[m]]]
     in_phase_dates.append(phis_samp[m-1])
     limits = [max(in_phase_dates), phis_samp[m-3]]
-    _ = m_samp
     return limits
 
-def overlap_samp_2(theta_samp, phis_samp, m_samp):
+def overlap_samp_2(theta_samp, phis_samp, m):
     """overlap sample 2"""
     in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
                       j == PHI_REF[SAMP_VEC_TRACK[m]]]
     in_phase_dates.append(phis_samp[m+1])
     limits = [phis_samp[m+3], min(in_phase_dates)]
-    _ = m_samp
     return limits
 
 #sampling dictionary
@@ -537,21 +527,21 @@ PROB_FUNC_DICT = {
 #POST_PHASE = ["abuting", "abuting", "abuting", "abuting", "abuting", "abuting", "abuting", "end"]
 #########SHAG RIVER MOUTH
 #np.random.seed(99999)
-A = 450
-P = 950
+#A = 450
+#P = 950
 
 #RCD_EST = [580, 600, 537, 670, 646, 630, 660]
 #RCD_ERR = [47, 50, 44, 47, 47, 35, 46]
-STRAT_VEC = [[[], ["2589"]], [["7771"], []], [[], []], [[], []], [[], []], [[], []], [[], []]]
-STRAT_VEC.reverse()
+STRAT_VEC = [[[], []], [[], []], [[], []], [[], []], [[], []], [[], []], [[], []]]
+#STRAT_VEC.reverse()
 RCD_EST = [660, 630, 646, 670, 537, 600, 580]
-RCD_EST.reverse()
+#RCD_EST.reverse()
 RCD_ERR = [46, 35, 47, 47, 44, 50, 47]
-RCD_ERR.reverse()
+#RCD_ERR.reverse()
 KEY_REF = ["6", "5", "5", "4", "3", "2", "1"]
-KEY_REF.reverse()
+#KEY_REF.reverse()
 CONTEXT_NO = ["7771", "2589", "7755", "7756", "7757", "7761", "7758"]
-CONTEXT_NO.reverse()
+#CONTEXT_NO.reverse()
 PHI_REF = ["6", "5", "4", "3", "2", "1"]
 PREV_PHASE = ["start", "abuting", "abuting", "abuting", "abuting", "abuting"]
 POST_PHASE = ["abuting", "abuting", "abuting", "abuting", "abuting", "end"]
@@ -655,8 +645,6 @@ PHASE_BOUNDARY_INITS = phase_bd_init_func(KEY_REF, PHI_REF, THETA_INITS, PREV_PH
 #PHASE_BOUNDARY_INITS = [950, 900, 800, 750, 700, 650, 600]
 #initiating the inital dict
 NEW_LST = [list(x) for x in zip(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC)]
-KEYS_LST = [list(x) for x in zip(KEY_REF, NEW_LST)]
-KEYS_LIST = list(set(KEY_REF))
 CV_B = phase_limits(PHASE_BOUNDARY_INITS)
 PHIS_VEC = PHASE_BOUNDARY_INITS
 THETAS = THETA_INITS
@@ -685,7 +673,7 @@ SITE_DICT_TEST_5 = TEST_DICT_1
 ###########################
 K = len(THETAS)
 M = len(PHIS_VEC)
-S = 90 #max(s_1, s_2, s_3, s_4, s_5, s_6, s_7)
+S = s
 R = P - A
 POST_S = []
 STEP_1 = sampling_vec(POST_PHASE, PREV_PHASE)[0]
@@ -941,16 +929,16 @@ k, BINS, PATCHES = plt.hist(POST_S[100:], bins="auto", color='#0504aa',
 #                      alpha=0.7, rwidth=0.85, density = True )
 #k, bins, patches = plt.hist(phi_accept[0], bins='auto', color='#0504aa',
 #                      alpha=0.7, rwidth=0.85, density = True )
-PLOT_INDEX = [0, 1, 2, 3, 4, 5, 6] #, 7, 8, 9]
-FIGURE, AXES = plt.subplots(nrows=7, ncols=1, sharex=True, sharey=True, figsize=[14, 6])
-plt.xlim(600, 500)
-plt.ylim(0, 0.5)
-#for j in range(len(axes.ravel())):
-for i, j in zip(PLOT_INDEX, range(len(AXES.ravel()))):
-    AXES[j].hist(ACCEPT[i], bins='auto', color='#0504aa',
-                 alpha=0.7, rwidth=0.85, density=True)
-#for i in range(len(THETAS)):
-#    print(pm3.stats.hpd(np.array(ACCEPT[i])))
-plt.title('Theta Histograms')
-plt.xlabel('Calendar years')
-plt.ylabel('Probability density')
+#PLOT_INDEX = [0, 1, 2, 3, 4, 5, 6] #, 7, 8, 9]
+#FIGURE, AXES = plt.subplots(nrows=7, ncols=1, sharex=True, sharey=True, figsize=[14, 6])
+#plt.xlim(600, 500)
+#plt.ylim(0, 0.5)
+##for j in range(len(axes.ravel())):
+#for i, j in zip(PLOT_INDEX, range(len(AXES.ravel()))):
+#    AXES[j].hist(ACCEPT[i], bins='auto', color='#0504aa',
+#                 alpha=0.7, rwidth=0.85, density=True)
+##for i in range(len(THETAS)):
+##    print(pm3.stats.hpd(np.array(ACCEPT[i])))
+#plt.title('Theta Histograms')
+#plt.xlabel('Calendar years')
+#plt.ylabel('Probability density')
