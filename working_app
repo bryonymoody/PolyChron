@@ -124,37 +124,69 @@ def chrono_edge_remov(file_graph):
         xs.append(x)
         ys.append(y)
     graph_data = phase_info_func(file_graph)
-    x_l, y_l = graph_data[2][0], graph_data[2][1]        
-    evenlist, oddlist, elist, olist = [], [], [], []
-    for i in range(len(x_l)): 
-      if (i % 2 == 0): 
-         evenlist.append(x_l[i])
-         elist.append(y_l[i]) 
-      else: 
-         oddlist.append(x_l[i])
-         olist.append(y_l[i])
-         
-    for j in range(len(evenlist)):     
-         file_graph.remove_edge(oddlist[j], evenlist[j])     
-    #add boundary nodes
-    #add dges between nodes using y_l as reference
-    #figure out top and bottom nodes
-    #figure out floating nodes
-
-    phase_list = graph_data[1][2]
+    phase_list = list(graph_data[1][2])
+   # print(graph_data)
+    if len(graph_data[1][3]) != 0:
+        print("vers 1")
+        x_l, y_l = graph_data[2][0], graph_data[2][1]        
+        evenlist, oddlist, elist, olist = [], [], [], []
+        for i in range(len(x_l)): 
+          if (i % 2 == 0): 
+             evenlist.append(x_l[i])
+             elist.append(y_l[i]) 
+          else: 
+             oddlist.append(x_l[i])
+             olist.append(y_l[i])
+             
+        for j in range(len(evenlist)):     
+             file_graph.remove_edge(oddlist[j], evenlist[j])
+             
+        for node in phase_list:
+            alp_beta_node_add(node, file_graph)
+            
+        for i, j in enumerate(elist):
+            file_graph.add_edge("b_" + str(j), evenlist[i], arrows=False)    
+        for i, j in enumerate(olist):
+            file_graph.add_edge(oddlist[i], "a_" + str(j.replace("_below", "")), arrows=False)
+        #add boundary nodes
+        #add dges between nodes using y_l as reference
+        #figure out top and bottom nodes
+        #figure out floating nodes
+    elif len(graph_data[1][3]) == 0 :
+        print("vers 2")
+        evenlist = []
+        oddlist = []
+        for nd in graph_data[1][1]:
+            if len(list(file_graph.predecessors(nd))) == 0:
+                evenlist.append(nd)
+            if len(list(file_graph.edges(nd))) == 0:
+                oddlist.append(nd)
+        for node in list(phase_list):
+            alp_beta_node_add(node, file_graph)
+        
   #  phase_nodes = []
-    for node in list(phase_list):
-        alp_beta_node_add(node, file_graph)
+        for node in list(phase_list):
+            alp_beta_node_add(node, file_graph)
+        phase_lab = phase_list[0]   
+        for z in evenlist:
+            file_graph.add_edge("b_" + str(phase_lab), z, arrows=False)
+                
+        for m in oddlist:
+            file_graph.add_edge(m, "a_" + str(phase_lab), arrows=False)
         
     #for i, j in enumerate(elist):
     #    file_graph.add_edge("a_" + str(j), evenlist[i])
-
-
         
-    for i, j in enumerate(elist):
-        file_graph.add_edge("b_" + str(j), evenlist[i], arrows=False)    
-    for i, j in enumerate(olist):
-        file_graph.add_edge(oddlist[i], "a_" + str(j.replace("_below", "")), arrows=False)
+
+#    else:
+#        for node in list(phase_list):
+#            alp_beta_node_add(node, file_graph)
+#        phase_lab = phase_list[0]
+#        for i in graph_data[1][1]:
+#            file_graph.add_edge("b_" + str(phase_lab), i, arrows=False)
+#            file_graph.add_edge(i, "a_" + str(phase_lab), arrows=False)
+            
+            
     return graph_data, [xs, ys]
 
 
@@ -164,7 +196,8 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
     ys = xs_ys[1]
     #phase_norm = [phase[ph][phase[ph].rfind("/")+1:len(phase[ph])] for ph in phase]
     phase_norm, node_list = graph_data[1][0], graph_data[1][1]
-    all_node_phase = dict(zip(node_list, phase_norm))     
+    all_node_phase = dict(zip(node_list, phase_norm))
+    print(node_list, phase_norm)     
     for i in node_list:
         if (i in xs) == False:
             if (i in ys) == False:
@@ -176,36 +209,37 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
             if (i in ys) == False:
                 #print(i)
                 file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrows=False)
-    
-    for p in list(set(phase_trck)):
-        relation = phasedict[p]
-        if relation == 'gap':
-            file_graph.add_edge("a_" + str(p[0]), "b_" + str(p[1]))
-        if relation == 'overlap':
-            file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[0]))
-        if relation == "abuting":
-            x_bef = list(file_graph)
-            print("x_bef ", x_bef)
-            file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
-            x_nod = list(file_graph) 
-            print("x_nod ", x_nod)
-            newnode = str("a_" + str(p[0]) + " = " +"b_" + str(p[1]))
-            y_nod = [newnode if i=="a_" + str(p[0]) else i for i in x_nod]
-            print("y_nod ", y_nod)
-            mapping = dict(zip(x_nod, y_nod))
-            file_graph = nx.relabel_nodes(file_graph, mapping)
-    #print(phase_trck)
-    graph = nx.DiGraph()
-    graph.add_edges_from(phase_trck)
+    if phasedict != None:
+        for p in list(set(phase_trck)):
+            relation = phasedict[p]
+            if relation == 'gap':
+                file_graph.add_edge("a_" + str(p[0]), "b_" + str(p[1]))
+            if relation == 'overlap':
+                file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[0]))
+            if relation == "abuting":
+                x_bef = list(file_graph)
+                print("x_bef ", x_bef)
+                file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
+                x_nod = list(file_graph) 
+            #    print("x_nod ", x_nod)
+                newnode = str("a_" + str(p[0]) + " = " +"b_" + str(p[1]))
+                y_nod = [newnode if i=="a_" + str(p[0]) else i for i in x_nod]
+    #            print("y_nod ", y_nod)
+                mapping = dict(zip(x_nod, y_nod))
+                file_graph = nx.relabel_nodes(file_graph, mapping)
     print(phase_trck)
-    phi_ref = list(reversed(list(nx.topological_sort(graph))))
-   # imgrender(graph)
-    graph_temp = nx.transitive_reduction(graph)    
-    a = set(graph.edges())
-    b = set(graph_temp.edges())
-    if len(list(a-b)) != 0:
-        rem = list(a-b)[0]
-        file_graph.remove_edge(rem[0], rem[1])
+    graph = nx.DiGraph()
+    if len(phase_trck) != 0:
+        graph.add_edges_from(phase_trck)
+        print(phase_trck)
+        phi_ref = list(reversed(list(nx.topological_sort(graph))))
+       # imgrender(graph)
+        graph_temp = nx.transitive_reduction(graph)    
+        a = set(graph.edges())
+        b = set(graph_temp.edges())
+        if len(list(a-b)) != 0:
+            rem = list(a-b)[0]
+            file_graph.remove_edge(rem[0], rem[1])
     return(file_graph, phi_ref)
 
 
@@ -243,6 +277,55 @@ def edge_of_phase(test1, pset, node_list, node_info):
     x_l = []
     y_l = []
     mydict = {}
+#    mydict1 = {}
+    phase_tracker = []
+    if FILE_INPUT != None:
+        for i in enumerate(pset):
+            temp_nodes_list = []
+            for j in enumerate(node_list):
+                if node_info[j[0]]["fillcolor"] == pset[i[0]]:
+                    temp_nodes_list.append(node_list[j[0]])
+                    p_phase = str(pset[i[0]][pset[i[0]].rfind("/")+1:len(pset[i[0]])])
+                    node_info[j[0]].update({"Phase":p_phase})
+                mydict[str(pset[i[0]][pset[i[0]].rfind("/")+1:len(pset[i[0]])])] = temp_nodes_list
+    else:
+    #    phase = nx.get_node_attributes(file_graph, "Phase")
+        for i in enumerate(pset):
+         #   print("pset1", pset1)
+            temp_nodes_list = []
+            for j in enumerate(node_list):
+                if node_info[j[0]]["Phase"] == pset[i[0]]:
+                    temp_nodes_list.append(node_list[j[0]])
+                  #  p_phase = str(pset[i[0]][pset[i[0]].rfind("/")+1:len(pset[i[0]])])
+                 #   node_info[j[0]].update({"Phase":p_phase})
+                mydict[pset[i[0]]] = temp_nodes_list
+    print(mydict)    
+
+    for i in enumerate(test1):
+        for key in mydict:
+            if test1[i[0]][1] in mydict[key] and test1[i[0]][0] not in mydict[key]:
+                x_l.append(test1[i[0]][1])
+                y_l.append(key)
+                phase_lst = [list(mydict.values()).index(j) for j in list(mydict.values()) if
+                             test1[i[0]][0] in j]
+                key_1 = (list(mydict.keys())[phase_lst[0]]) #trying to find phase of other value
+                x_l.append(test1[i[0]][0])
+                y_l.append(str(key_1 + "_below"))
+                phase_tracker.append((key_1, key))
+#    print((sys._getframe().f_code.co_name), str(time.time() - t0))
+    print("start")
+    print(x_l, y_l, mydict.keys(), "phase tracker",phase_tracker)
+    print("end")
+    return x_l, y_l, mydict.keys(), phase_tracker
+
+
+
+def edge_of_phase_new(test1, pset, node_list, node_info):
+#    t0 = time.time()
+    """find nodes on edge of each phase"""
+    x_l = []
+    y_l = []
+    mydict = {}
     phase_tracker = []
     for i in enumerate(pset):
         temp_nodes_list = []
@@ -265,7 +348,6 @@ def edge_of_phase(test1, pset, node_list, node_info):
                 phase_tracker.append((key_1, key))
 #    print((sys._getframe().f_code.co_name), str(time.time() - t0))
     return x_l, y_l, mydict.keys(), phase_tracker
-
 #def phase_info_func(file_graph):
 #    t0 = time.time()
 #    """returns a dictionary of phases and nodes in each phase"""
@@ -296,29 +378,47 @@ def edge_of_phase(test1, pset, node_list, node_info):
 def phase_info_func(file_graph):
    # t0 = time.time()
     """returns a dictionary of phases and nodes in each phase"""
-    phase = nx.get_node_attributes(file_graph, "fillcolor")
-    phase_norm = [phase[ph][phase[ph].rfind("/")+1:len(phase[ph])] for ph in phase]
-# ####code to get colours####
-    f_str = open(str(FILE_INPUT), "r")
-    dotstr = f_str.read()
-    dotstr = dotstr.replace(";<", "@<")
-    dotstr = dotstr.replace("14.0", "50.0")
-##change any ';>' to '@>' then back again after
-    x_phaseinf = dotstr.rsplit(";")
-    for i in enumerate(x_phaseinf):
-        x_phaseinf[i[0]] = x_phaseinf[i[0]].replace("@<", ";<")
-    node_list = list(file_graph.nodes)
-    node_info = all_node_info(node_list, x_phaseinf, list())
+    
     res = []
-    for key in phase.keys():
-        res.append(phase[key])
+    node_list = list(file_graph.nodes)
+    nd = dict(file_graph.nodes(data = True))   
+    node_info = [nd[i] for i in node_list]    
+#    node_info = all_node_info(node_list, x_phaseinf, list())    
+   # print("phase", phase1)
+    print(FILE_INPUT)
+    if FILE_INPUT != None:
+        phase = nx.get_node_attributes(file_graph, "fillcolor")
+        phase_norm = [phase[ph][phase[ph].rfind("/")+1:len(phase[ph])] for ph in phase]
+# ####code to get colours####
+        f_str = open(str(FILE_INPUT), "r")
+        dotstr = f_str.read()
+        dotstr = dotstr.replace(";<", "@<")
+        dotstr = dotstr.replace("14.0", "50.0")
+##change any ';>' to '@>' then back again after
+        x_phaseinf = dotstr.rsplit(";")
+        for i in enumerate(x_phaseinf):
+            x_phaseinf[i[0]] = x_phaseinf[i[0]].replace("@<", ";<")
+
+      #  node_info = all_node_info(node_list, x_phaseinf, list())
+        for key in phase.keys():
+            res.append(phase[key])
+    else:        
+        phase1 =  nx.get_node_attributes(file_graph, "Phase")
+        for key in phase1.keys():
+            res.append(phase1[key])
+        phase_norm = res
+            
     x_l, y_l, phase_list, phase_trck = edge_of_phase(list(nx.line_graph(file_graph)), list(set(res)), node_list, node_info)
-    testdic = dict(zip(x_l, y_l))
     reversed_dict = {}
-    for key, value in testdic.items():
-        reversed_dict.setdefault(value, [])
-        reversed_dict[value].append(key)
-        
+    if len(phase_list) > 1:
+        testdic = dict(zip(x_l, y_l))
+        for key, value in testdic.items():
+            reversed_dict.setdefault(value, [])
+            reversed_dict[value].append(key)
+    elif len(phase_list) == 1:
+        print("only one phase!!")
+
+    print(reversed_dict, [phase_norm, node_list, phase_list, "phase_trck", phase_trck], [x_l, y_l])   
   #  print((sys._getframe().f_code.co_name), str(time.time() - t0))    
     return reversed_dict, [phase_norm, node_list, phase_list, phase_trck], [x_l, y_l]
 
@@ -421,7 +521,7 @@ class popupWindow2(object):
         self.canvas2.create_window(40, 60, window=self.entry3, width=50)
         self.canvas2.create_window(40, 35, window=self.label3)
    #     self.canvas2.create_window(140, 100, window=self.button3)
-  #      self.canvas2.create_window(300, 100, window=self.button4)
+  #      self.canvas2.create_window(30, 100, window=self.button4)
         self.dict = {'Find_Type': ['Find1', 'Find2', 'Find3'],
                      'Date': ['None', 'Input date'],
                      'Phase': ['None', 'Input phase']}
@@ -531,13 +631,20 @@ class popupWindow2(object):
         
 class popupWindow3(object):
     def __init__(self, master, graph, canvas, phase_rels):
+        print(phase_rels)
         self.littlecanvas2 = canvas
         self.top=tk.Toplevel(master)
         self.top.geometry("1000x400")
         self.variable_1 = tk.StringVar(self.top)
         self.variable_2 = tk.StringVar(self.top)
-        self.button_a = tk.Button(self.top, text='Add Phase Relationship', bg="#b3dcf2",
-                                 font=("Arial", 14), command=lambda:self.phase_rel_func())
+        self.phases = phase_rels
+        
+        self.menu_list1 = []
+        self.menudict = {}
+        self.prev_dict = {}
+        self.post_dict = {}
+        self.menu_list2 = ["abuting", "gap", "overlap"]            
+
         
         self.button_b = tk.Button(self.top, text='Render Chronological graph', bg="#b3dcf2",
                          font=("Arial", 14), command=lambda:self.full_chronograph_func())         
@@ -546,33 +653,40 @@ class popupWindow3(object):
         self.graph = graph
         self.graphcopy = copy.deepcopy(self.graph)
         self.step_1 = chrono_edge_remov(self.graphcopy)
+        print("\n self_step1", self.step_1, "\n")
+        self.button_b.place(relx=0.4, rely=0.55) 
+
+
+        #self.variable_a.set('Date')
+
+
   #      graphedges = self.step_1[0][1][3]
         #print(graphedges)        
  #       graph = nx.DiGraph()
  #       graph.add_edges_from(graphedges)
     #    graph_new = nx.transitive_reduction(graph)
-        self.phases = phase_rels
+
      #   self.phases = list(graph_new.edges())
-        self.menu_list1 = []
-        self.menudict = {}
-        self.prev_dict = {}
-        self.post_dict = {}
-        self.menu_list2 = ["abuting", "gap", "overlap"]
+
       #  self.dict = {}
-        for i in self.phases:
-            self.menu_list1.append("Relationship between start of phase " + str(i[0]) + " and end of phase " + str(i[1]))    
-        #    self.menu_track.append([str(i[0]), str(i[1])])
+        if self.phases != None: 
+            for i in self.phases:
+                self.menu_list1.append("Relationship between start of phase " + str(i[0]) + " and end of phase " + str(i[1]))    
+            self.button_a = tk.Button(self.top, text='Add Phase Relationship', bg="#b3dcf2",
+                font=("Arial", 14), command=lambda:self.phase_rel_func())
+            self.optionmenu_b = tk.OptionMenu(self.top, self.variable_2, *self.menu_list2)
+            self.optionmenu_a = tk.OptionMenu(self.top, self.variable_1, *self.menu_list1)
+            self.optionmenu_a.place(relx=0.1, rely=0.15)
+            self.optionmenu_b.place(relx=0.6, rely=0.15)
+            self.button_a.place(relx=0.7, rely=0.15)
+            #    self.menu_track.append([str(i[0]), str(i[1])])
         #menu_list2 = ["abuting", "gap", "overlap"]
 
       #  self.dict = dict(menu_list1)
       #  print(self.dict)        
-        self.optionmenu_a = tk.OptionMenu(self.top, self.variable_1, *self.menu_list1)
-        self.optionmenu_b = tk.OptionMenu(self.top, self.variable_2, *self.menu_list2)
-        #self.variable_a.set('Date')
-        self.optionmenu_a.place(relx=0.1, rely=0.15)
-        self.optionmenu_b.place(relx=0.6, rely=0.15)
-        self.button_a.place(relx=0.7, rely=0.15)
-        self.button_b.place(relx=0.4, rely=0.55)
+
+        else: 
+            self.menudict = None
         master.wait_window(self.top)
        # print(step_1[0], step_1[1])
    #     chrono_edge_add(self.graphcopy, step_1[0], step_1[1])
@@ -598,15 +712,16 @@ class popupWindow3(object):
         
     def full_chronograph_func(self):
         #print(self.menudict)
-        self.graphcopy, self.phi_ref = chrono_edge_add(self.graphcopy, self.step_1[0], self.step_1[1], self.menudict, self.phases)
         self.prev_phase = ["start"]
         self.post_phase = []
-        #print(list(self.post_dict.keys())[1])
-        self.post_phase.append(self.post_dict[self.phi_ref[0]])
-        for i in range(1,len(self.phi_ref)-1):
-                self.prev_phase.append(self.prev_dict[self.phi_ref[i]])
-                self.post_phase.append(self.post_dict[self.phi_ref[i]])
-        self.prev_phase.append(self.prev_dict[self.phi_ref[len(self.phi_ref)-1]]) 
+        if len(self.step_1[0][1][3]) != 0:
+            self.graphcopy, self.phi_ref = chrono_edge_add(self.graphcopy, self.step_1[0], self.step_1[1], self.menudict, self.phases)
+            #print(list(self.post_dict.keys())[1])
+            self.post_phase.append(self.post_dict[self.phi_ref[0]])
+            for i in range(1,len(self.phi_ref)-1):
+                    self.prev_phase.append(self.prev_dict[self.phi_ref[i]])
+                    self.post_phase.append(self.post_dict[self.phi_ref[i]])
+            self.prev_phase.append(self.prev_dict[self.phi_ref[len(self.phi_ref)-1]]) 
         self.post_phase.append("end")
         #print(prev_phase, post_phase)
                 
@@ -650,6 +765,7 @@ class MainFrame(tk.Tk):
         self.temp = []
         self.x_1 = 1
         self.image = "noimage"
+        self.phase_rels = None 
         #forming and placing canvas and little canvas
         self.canvas = tk.Canvas(self, bg="#b3dcf2", bd=0, highlightthickness=0)
         self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
@@ -669,8 +785,8 @@ class MainFrame(tk.Tk):
         self.littlecanvas2.bind("<MouseWheel>", self.wheel2)
         self.littlecanvas2.bind('<Button-4>', self.wheel2)# only with Linux, wheel scroll down
         self.littlecanvas2.bind('<Button-5>', self.wheel2)
-        self.littlecanvas2.bind('<Button-1>', self.move_from)
-        self.littlecanvas2.bind('<B1-Motion>', self.move_to)
+        self.littlecanvas2.bind('<Button-1>', self.move_from2)
+        self.littlecanvas2.bind('<B1-Motion>', self.move_to2)
 #        self.width2, self.height2 = self.image2.size
 #        self.imscale2 = 1.0  # scale for the canvaas image
 #        self.delta2 = 1.1  # zoom magnitude
@@ -688,11 +804,14 @@ class MainFrame(tk.Tk):
         self.stratbutton = tk.Button(self.canvas, text ='Open strat text file', command = lambda:open_file2())
         self.stratbutton.place(relx=0.15, rely=0.01, relwidth=0.1, relheight=0.03)
         self.datebutton = tk.Button(self.canvas, text ='Open date file', command = lambda:open_file3())
-        self.datebutton.place(relx=0.26, rely=0.01, relwidth=0.1, relheight=0.03)
+        self.datebutton.place(relx=0.25, rely=0.01, relwidth=0.1, relheight=0.03)
         self.phasebutton = tk.Button(self.canvas, text ='Open phase file', command = lambda:open_file4())
-        self.phasebutton.place(relx=0.37, rely=0.01, relwidth=0.1, relheight=0.03)
+        self.phasebutton.place(relx=0.35, rely=0.01, relwidth=0.1, relheight=0.03)
         self.phaserelbutton = tk.Button(self.canvas, text ='Open phase rel file', command = lambda:open_file5())
-        self.phaserelbutton.place(relx=0.48, rely=0.01, relwidth=0.1, relheight=0.03)
+        self.phaserelbutton.place(relx=0.45, rely=0.01, relwidth=0.1, relheight=0.03)
+        self.eqrelbutton = tk.Button(self.canvas, text ='Open equality file', command = lambda:open_file6())
+        self.eqrelbutton.place(relx=0.55, rely=0.01, relwidth=0.1, relheight=0.03)
+               
         self.mcmcbutton = tk.Button(self.canvas, text ='Run MCMC', command = lambda:self.MCMC_func())
         self.mcmcbutton.place(relx=0.88, rely=0.01, relwidth=0.1, relheight=0.03)        
          
@@ -806,15 +925,57 @@ class MainFrame(tk.Tk):
             self.text.insert('end', 'Deleted Contexts:\n' + str(self.delnodes)[1:-1])
             self.text.configure(state='normal')
             self.testbutton = tk.Button(self.canvas, text ='Render Chronological DAG', command = lambda:self.chronograph_render()) #popupWindow3(self, self.graph, self.littlecanvas2))
-            self.testbutton.place(relx=0.61, rely=0.01, relwidth=0.2, relheight=0.03) 
+            self.testbutton.place(relx=0.75, rely=0.01, relwidth=0.15, relheight=0.03) 
         #    print((sys._getframe().f_code.co_name), str(time.time() - t0))
             #FILE_INPUT = fileFstt
                 
         def open_file2(): 
        #     t0 = time.time()
+            global FILE_INPUT
             file = askopenfile(mode ='r', filetypes =[('Python Files', '*.csv')]) 
             if file is not None: 
-                self.stratfile = pd.read_csv(file) 
+                FILE_INPUT = None
+                self.stratfile = pd.read_csv(file, dtype = str)
+                G = nx.DiGraph()
+                for i in set(self.stratfile.iloc[:,0]):
+                    G.add_node(i, shape="box", fontname="Helvetica", fontsize="30.0", penwidth="1.0")
+                edges = []
+                for i in range(len(self.stratfile)):
+                    a = tuple(self.stratfile.iloc[i,:])
+                    if pd.isna(a[1]) == False:
+                        edges.append(a)                
+                G.add_edges_from(edges, arrowhead="none")
+                self.graph = G
+                if phase_true == 1:
+                    self.image = imgrender_phase(self.graph)
+                else:
+                    self.image = imgrender(self.graph)
+                    self.littlecanvas.img = ImageTk.PhotoImage(self.image)
+                    self.littlecanvas_img = self.littlecanvas.create_image(0, 0, anchor="nw",
+                                                                           image=self.littlecanvas.img)
+        
+                    self.width, self.height = self.image.size
+                    self.imscale = 1.0  # scale for the canvaas image
+                    self.delta = 1.1  # zoom magnitude
+                    # Put image into container rectangle and use it to set proper coordinates to the image
+                    self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
+                    self.canvas.bind("<Configure>", self.resize)
+                    self.littlecanvas.bind("<Configure>", self.resize)
+                    self.nodescanvas.bind("<Configure>", self.resize)
+                    self.edgescanvas.bind("<Configure>", self.resize)
+              #      node_df = node_coords_fromjson(self.graph)
+             #      pos_dag = nx.drawing.nx_pydot.graphviz_layout(self.graph, prog='dot')
+           #         node_df = pd.DataFrame.from_dict(pos_dag, orient='index')
+               #     print(node_df)
+                    self.delnodes = []
+                    self.text.delete("1.0", "end")
+                    self.text = tk.Text(self.nodescanvas, font=("Arial", 14), width=120, height=40)
+                    self.nodescanvas.create_window((0, 0), window=self.text, anchor='nw')
+                    self.text.insert('end', 'Deleted Contexts:\n' + str(self.delnodes)[1:-1])
+                    self.text.configure(state='normal')
+                    self.testbutton = tk.Button(self.canvas, text ='Render Chronological DAG', command = lambda:self.chronograph_render()) #popupWindow3(self, self.graph, self.littlecanvas2))
+                    self.testbutton.place(relx=0.75, rely=0.01, relwidth=0.15, relheight=0.03) 
+         
                # return(content)
         
         def open_file3(): 
@@ -828,9 +989,9 @@ class MainFrame(tk.Tk):
                     #print(j, [self.datefile["date"][i], self.datefile["error"][i]])
                     self.graph.nodes()[str(j)].update({"Date":[self.datefile["date"][i], self.datefile["error"][i]]})
                 self.context_no = list(self.graph.nodes())    
-                self.RCD_EST = [int(list(self.datefile["date"])[list(self.datefile["context"]).index(i)]) for i in self.context_no]
-                self.RCD_ERR = [int(list(self.datefile["error"])[list(self.datefile["context"]).index(i)]) for i in self.context_no]
-                print(type(self.RCD_EST[0]))
+               # self.RCD_EST = [int(list(self.datefile["date"])[list(self.datefile["context"]).index(i)]) for i in self.context_no]
+               # self.RCD_ERR = [int(list(self.datefile["error"])[list(self.datefile["context"]).index(i)]) for i in self.context_no]
+         #       print(type(self.RCD_EST[0]))
                 self.context_no = list(self.graph.nodes())
            #     print(self.datefile, RCD_EST, RCD_ERR, self.context_no)
               #  return(content)
@@ -845,8 +1006,10 @@ class MainFrame(tk.Tk):
                    # print(self.graph.nodes()[str(j)])
                     #print(j, [self.datefile["date"][i], self.datefile["error"][i]])
                     self.graph.nodes()[str(j)].update({"Phase":self.phasefile["phase"][i]})
-                self.key_ref = [list(self.phasefile["phase"])[list(self.phasefile["context"]).index(i)] for i in self.context_no]
-                print(self.key_ref)
+                self.phase_list = set(self.phasefile["phase"])
+                #print(self.phases)
+               # self.key_ref = [list(self.phasefile["phase"])[list(self.phasefile["context"]).index(i)] for i in self.context_no]
+           #     print(self.key_ref)
     
         def open_file5(): 
        #     t0 = time.time()
@@ -856,6 +1019,33 @@ class MainFrame(tk.Tk):
                 self.phase_rels = [(str(phase_rel_df['above'][i]), str(phase_rel_df['below'][i])) for i in range(len(phase_rel_df))] 
          
               #  return(content) 
+        def open_file6(): 
+       #     t0 = time.time()
+            file = askopenfile(mode ='r', filetypes =[('Python Files', '*.csv')]) 
+            if file is not None: 
+                equal_rel_df = pd.read_csv(file)
+                self.equal_rel_df = equal_rel_df.applymap(str)
+                context_1 = list(self.equal_rel_df.iloc[:,0])
+                context_2 = list(self.equal_rel_df.iloc[:,1])
+                for k, j in enumerate(context_1):
+                    self.graph = nx.contracted_nodes(self.graph, j, context_2[k])
+                    x_nod = list(self.graph) 
+                    newnode = str(j) + " = " + str(context_2[k])
+                    y_nod = [newnode if i==j else i for i in x_nod]
+            #        print(y_nod)
+                    mapping = dict(zip(x_nod, y_nod))
+                    self.graph = nx.relabel_nodes(self.graph, mapping)
+                if phase_true == 1:
+                    imgrender_phase(self.graph)
+                else:
+                    imgrender(self.graph) 
+                self.image = Image.open('testdag.png')
+                self.width, self.height = self.image.size
+                self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
+                self.show_image()
+             
+              #  return(cont              
+              
           #  print((sys._getframe().f_code.co_name), str(time.time() - t0))
 #        self.b=tk.Button(self ,text="click me!", command=self.popup)
 #        self.b.pack() 
@@ -917,8 +1107,7 @@ class MainFrame(tk.Tk):
 #        #pt1
 ##        self.graphcopy = copy.deepcopy(self.graph)
 ##        step_1 = chrono_edge_remov(self.graphcopy)
-##        graphedges = step_1[0][1][3]
-##        #print(graphedges)        
+##        graphedges = step_1[0][1][3]        
 ##        graph = nx.DiGraph()
 ##        graph.add_edges_from(graphedges)
 ##        graph_new = nx.transitive_reduction(graph)
@@ -967,11 +1156,17 @@ class MainFrame(tk.Tk):
      #   self.popup3.post_phase
      #   self.popup3.prev_phase
         context_no = list(self.graph.nodes())
+        self.key_ref = [list(self.phasefile["phase"])[list(self.phasefile["context"]).index(i)] for i in context_no]
         strat_vec = [[list(self.graph.predecessors(i)), list(self.graph.successors(i))] for i in context_no]
+        self.RCD_EST = [int(list(self.datefile["date"])[list(self.datefile["context"]).index(i)]) for i in context_no]
+        self.RCD_ERR = [int(list(self.datefile["error"])[list(self.datefile["context"]).index(i)]) for i in context_no]        
         rcd_est = self.RCD_EST
         rcd_err = self.RCD_ERR
-        mcmc.run_MCMC(calibrate, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.popup3.phi_ref, self.popup3.prev_phase, self.popup3.post_phase)
-
+        print(calibrate, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.popup3.phi_ref, self.popup3.prev_phase, self.popup3.post_phase)
+        TOPO_SORT = list(nx.topological_sort(self.graph))
+        TOPO_SORT.reverse()
+        mcmc.run_MCMC(calibrate, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.popup3.phi_ref, self.popup3.prev_phase, self.popup3.post_phase, TOPO_SORT)
+        
 
         
         
@@ -1210,9 +1405,25 @@ class MainFrame(tk.Tk):
         if self.image != "noimage":
             self.littlecanvas.scan_dragto(event.x, event.y, gain=1)
             self.show_image()
-            bbox = self.littlecanvas.bbox(self.container)
+      #      bbox = self.littlecanvas.bbox(self.container)
+            
         # redraw the image
+    def move_from2(self, event):
+#        t0 = time.time()
+        """Remembers previous coordinates for scrolling with the mouse"""
+        if self.image != "noimage":
+            self.littlecanvas2.scan_mark(event.x, event.y)
+  #      print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
+    def move_to2(self, event):
+ #       t0 = time.time()
+        """Drag (move) canvas to the new position"""
+        if self.image != "noimage":
+            self.littlecanvas2.scan_dragto(event.x, event.y, gain=1)
+            self.show_image()
+     #       bbox2 = self.littlecanvas2.bbox(self.container)
+            
+            
     def wheel(self, event):
   #      t0 = time.time()
         """Zoom with mouse wheel"""
