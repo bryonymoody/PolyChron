@@ -1,3 +1,4 @@
+ 
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
@@ -11,6 +12,8 @@ import math
 from statistics import mean
 import numpy as np
 import matplotlib.pyplot as plt
+import pymc3 as pc  
+import pandas as pd
 #import pymc3 as pm3
 ############### TO DO LIST #######
 # automate checking of thetas and phis
@@ -114,10 +117,13 @@ def dict_seek_ordered(i_seek, key, site_dict, THETAS, CONTEXT_NO):
     llhood = site_dict[key]["dates"][i_seek][1]
     phase_len = site_dict[key]["boundaries"][1] - site_dict[key]["boundaries"][0] #phase length
     like1 = llhood[0:][0]
+    alpha = site_dict[key]["boundaries"][1]
+    beta = site_dict[key]["boundaries"][0]
     temp_vec = llhood[1:][0][(like1 <= site_dict[key]["boundaries"][1]) &
                              (like1 > site_dict[key]["boundaries"][0])]
-    temp_vec_2 = llhood[1:][0][(like1 <= strat_rel(site_dict, key, i_seek, THETAS, CONTEXT_NO)[0]) &
-                               (like1 > strat_rel(site_dict, key, i_seek, THETAS, CONTEXT_NO)[1])]
+    temp_vec_2 = llhood[1:][0][(like1 <= min(strat_rel(site_dict, key, i_seek, THETAS, CONTEXT_NO)[0], alpha)) &
+                               (like1 > max(strat_rel(site_dict, key, i_seek, THETAS, CONTEXT_NO)[1], beta))]
+   # print(strat_rel(site_dict, key, i_seek, THETAS, CONTEXT_NO)[0], strat_rel(site_dict, key, i_seek, THETAS, CONTEXT_NO)[1], i_seek, key)
    # print(site_dict[key]["boundaries"][1] == strat_rel(site_dict, key, i_seek)[1])
    # print(site_dict[key]["boundaries"][0] == strat_rel(site_dict, key, i_seek)[0])
     search = np.where(like1 == int(site_dict[key]["dates"][i_seek][0]))
@@ -131,6 +137,7 @@ def dict_seek_ordered(i_seek, key, site_dict, THETAS, CONTEXT_NO):
         x_temp = llhood[1:][0][c_ind[0]][0]
     #print(phase_len)
     x_len = (x_temp/phase_len)*(np.sum(temp_vec)/np.sum(temp_vec_2))
+  #  print(np.sum(temp_vec_2), np.sum(temp_vec))
    # print("phase_len ", phase_len)
   #  print(np.sum(temp_vec) == np.sum(temp_vec_2))
     return x_temp, x_len
@@ -142,11 +149,13 @@ def post_h(site_dict, THETAS, CONTEXT_NO):
              for j in enumerate(site_dict[i]["dates"])]
     hh_1 = [i[0] for i in h_vec]
     hh_2 = [i[1] for i in h_vec]
+  #  print(hh_1, hh_2)
     return hh_1, hh_2
 
 def dict_seek_4(i_dict, key, site_dict):
     """ finds probabilities for all paramters in sample"""
  #    print(i)
+
  #    print(key)
     phase_len = site_dict[key]["boundaries"][0] - site_dict[key]["boundaries"][1]
     theta = site_dict[key]["dates"][i_dict][0]
@@ -190,14 +199,14 @@ def phase_bd_init_func(key_reff, phi_reff, theta_initt, prev_phases, A, P):
         a_temp = np.random.uniform(max([theta_initt[i] for i in np.where(KEY_REF_1 == phi_reff[j])[0].tolist()]),
                                              min([theta_initt[i] for i in np.where(KEY_REF_1 == phi_reff[j-1])[0].tolist()]))
         if prev_phases[j] != "abuting":
-            print("TS")
+           # print("TS")
             a_temp = [a_temp, (np.random.uniform(max([theta_initt[i] for i in np.where(KEY_REF_1 == phi_reff[j])[0].tolist()]),
                                  min([theta_initt[i] for i in np.where(KEY_REF_1 == phi_reff[j-1])[0].tolist()])))]
             a_temp = sorted(a_temp, reverse = True)
         else:
             a_temp = [a_temp]
         [PHASE_INITS.append(ref_ind) for ref_ind in a_temp]
-        print(PHASE_INITS)
+        #print(PHASE_INITS)
     PHASE_INITS.append(np.random.uniform(min([theta_initt[i] for i in np.where(KEY_REF_1 == phi_reff[-1])[0].tolist()]), A))
     PHASE_INITS1 = sorted(PHASE_INITS, reverse=True)
     return PHASE_INITS1
@@ -212,15 +221,56 @@ def theta_init_func(KEY_REF1, PHI_REF1, RESULT_VEC1):
     prev_min = min(up_lim_vec)
     for date in range(1, len(PHI_REF1)):
         ref_vec = np.where(np.array(KEY_REF1) == PHI_REF1[date])[0].tolist()
-        print(ref_vec)
+      #  print(ref_vec)
         theta, prob = RESULT_VEC1[date][0], RESULT_VEC1[date][1]
         theta_vals = [np.random.choice(theta[theta < prev_min], 
                                        p=prob[theta < prev_min]/sum(prob[theta < prev_min])) for date in ref_vec]
-        print(theta_vals)
+  #      print(theta_vals)
         prev_min = min(theta_vals)
         for i, a in enumerate(ref_vec):
+         #   print(theta_vals[i])
+         #   print(out_vec[a])
             out_vec[a] = theta_vals[i]
-    return(out_vec)    
+    return(out_vec)   
+    
+def theta_init_func_n(KEY_REF1, PHI_REF1, RESULT_VEC1, STRAT_VEC, P, CONTEXT_NO, TOPO_SORT):
+    """GIVES A LIST OF INITAL THETA VALUES FOR MCMCM"""
+    out_vec = [0]*len(KEY_REF1)       
+    prev_min = P
+    for date in range(0, len(PHI_REF1)):
+       # print(date)
+      #  print("date", date)
+        #print(PHI_REF1[date])
+        ref_vec = np.where(np.array(KEY_REF1) == PHI_REF1[date])[0].tolist()    
+        phase = [CONTEXT_NO[i] for i in ref_vec]        
+        phase_topo = [i for i in TOPO_SORT if i in phase]   
+        print(phase_topo)
+        print("prevmin")
+        print(prev_min)
+      #  print(phase_topo)
+        for i in phase_topo:
+            a = np.where(np.array(CONTEXT_NO) == i)[0][0].item()
+            low = STRAT_VEC[a][1]
+           # print(a, low)
+            if len(low) == 0:
+                SAMPLE_VEC = RESULT_VEC1[a][0][RESULT_VEC1[a][0] < prev_min]
+                SAMPLE_VEC_PROB = RESULT_VEC1[a][1][RESULT_VEC1[a][0] < prev_min]                
+                out_vec[a] = np.random.choice(SAMPLE_VEC, p=SAMPLE_VEC_PROB/sum(SAMPLE_VEC_PROB))
+             #   print(phase_topo)
+             #   print(out_vec[a])                
+            else:
+                minstrat = min([out_vec[np.where(np.array(CONTEXT_NO) == j)[0][0].item()] for j in low])
+               # print(minstrat)
+                SAMPLE_VEC = RESULT_VEC1[a][0][RESULT_VEC1[a][0] < min(minstrat, prev_min)]
+                SAMPLE_VEC_PROB = RESULT_VEC1[a][1][RESULT_VEC1[a][0] < min(minstrat, prev_min)]
+                out_vec[a] = np.random.choice(SAMPLE_VEC, p=SAMPLE_VEC_PROB/sum(SAMPLE_VEC_PROB))
+            print(out_vec[a])
+            #    print(phase_topo)
+           #     print(out_vec[a])
+                #set result vec to cut off at the min of samples dates in contexts above it ??
+        prev_min = min([d for d in out_vec if d != 0])
+     #   print(prev_min)
+    return(out_vec) 
 #sampling functions
 def upp_samp_1(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF):
     """ upper sample 1"""
@@ -390,26 +440,10 @@ def overlap_samp_2(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_
 #POST_PHASE = ["abuting", "abuting", "abuting", "abuting", "abuting", "abuting", "abuting", "end"]
 #########SHAG RIVER MOUTH
 #np.random.seed(99999)
-#A = 450
-#P = 950
 
-#RCD_EST = [580, 600, 537, 670, 646, 630, 660]
-#RCD_ERR = [47, 50, 44, 47, 47, 35, 46]
-#STRAT_VEC = [[[], ["2589"]], [["7771"], []], [[], []], [[], []], [[], []], [[], []], [[], []]]
-##STRAT_VEC.reverse()
-#RCD_EST = [660, 630, 646, 670, 537, 600, 580]
-##RCD_EST.reverse()
-#RCD_ERR = [46, 35, 47, 47, 44, 50, 47]
-##RCD_ERR.reverse()
-#KEY_REF = ["6", "5", "5", "4", "3", "2", "1"]
-##KEY_REF.reverse()
-#CONTEXT_NO = ["7771", "2589", "7755", "7756", "7757", "7761", "7758"]
-##CONTEXT_NO.reverse()
-#PHI_REF = ["6", "5", "4", "3", "2", "1"]
-#PREV_PHASE = ["start", "abuting", "abuting", "abuting", "abuting", "abuting"]
-#POST_PHASE = ["abuting", "abuting", "abuting", "abuting", "abuting", "end"]
 
-def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_REF, PREV_PHASE, POST_PHASE):
+def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_REF, PREV_PHASE, POST_PHASE, TOPO_SORT):
+    t0 = time.perf_counter()
     PHI_SAMP_DICT = {
             'upper' : {
                 'start':{
@@ -561,232 +595,267 @@ def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_
     ##initiating  likelihoods
     RCD_S = [list(x) for x in zip(RCD_EST, RCD_ERR)]
     RESULT_VEC = [likelihood_func(date[0], date[1], A, P, CALIBRATION_DATA) for date in RCD_S]
-    THETA_INITS = theta_init_func(KEY_REF, PHI_REF, RESULT_VEC)
-    PHASE_BOUNDARY_INITS = phase_bd_init_func(KEY_REF, PHI_REF, THETA_INITS, PREV_PHASE, A, P)
-    
-    #initiating the inital dict
-    NEW_LST = [list(x) for x in zip(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC)]
-    CV_B = phase_limits(PHASE_BOUNDARY_INITS, POST_PHASE)
-    PHIS_VEC = PHASE_BOUNDARY_INITS
-    THETAS = THETA_INITS
-    TRACK_VEC = []
-    KEYS_TRACK = []
-    for d in PHI_REF:
-        ind = [index for index, element in enumerate(KEY_REF) if element == d]
-        test_lst = [NEW_LST[d] for d in ind]
-        bound = CV_B[PHI_REF.index(d)]
-        TRACK_VEC.append({'dates': test_lst,
-                          'boundaries': bound,
-                          'prev_phase_rel': PREV_PHASE[PHI_REF.index(d)],
-                          'post_phase_rel': POST_PHASE[PHI_REF.index(d)]})
-        KEYS_TRACK.append(d)
-    
-    TEST_DICT_1 = dict(zip(KEYS_TRACK, TRACK_VEC))
-    SITE_DICT_TEST_1 = TEST_DICT_1
-    SITE_DICT_TEST_2 = TEST_DICT_1
-    SITE_DICT_TEST_3 = TEST_DICT_1
-    SITE_DICT_TEST_4 = TEST_DICT_1
-    SITE_DICT_TEST_5 = TEST_DICT_1
-    
-    ###########################
-    K = len(THETAS)
-    M = len(PHIS_VEC)
-    S = s
-    R = P - A
-    POST_S = []
-    STEP_1 = sampling_vec(POST_PHASE, PREV_PHASE)[0]
-    SAMP_VEC_TRACK = sampling_vec(POST_PHASE, PREV_PHASE)[1]
-    STEP_2 = [PREV_PHASE[i] for i in SAMP_VEC_TRACK]
-    STEP_3 = [POST_PHASE[i] for i in SAMP_VEC_TRACK]
-    
-    ########################################
-    
-    #set up empty post vectors
-    ACCEPT = [[] for _ in range(len(THETAS))]
-    PHI_ACCEPT = [[] for _ in range(len(PHIS_VEC))]
-    POST_THETAS = [[] for _ in range(len(THETAS))]
-    POST_PHIS = [[] for _ in range(len(PHIS_VEC))]
-    for p, a in enumerate(THETA_INITS):
-        POST_THETAS[p].append(a)
-    for j, b in enumerate(PHASE_BOUNDARY_INITS):
-        POST_PHIS[j].append(b)
-    PREV_PROB_TEST = post_h(SITE_DICT_TEST_1, THETAS, CONTEXT_NO)[1]
-    
-    
-    ###START OF MCMC ALGORITHM###############
-    for l in np.linspace(0, 30000, 10001):
-        t0 = time.perf_counter()
-        i = int(l)
-        print("i " + str(i) + "\n")
-        SITE_DICT_TEST_1 = dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF)
-       #step 1 #####################
-        k = int(random.sample(range(0, K), 1)[0])
-        oldtheta = THETAS[k]
-        THETAS[k] = np.random.uniform(SITE_DICT_TEST_1[KEY_REF[k]]["boundaries"][1],
-                                      SITE_DICT_TEST_1[KEY_REF[k]]["boundaries"][0])
-    
-        for g_1 in enumerate(THETAS):
-            POST_THETAS[g_1[0]].append(THETAS[g_1[0]])
-        SITE_DICT_TEST_2 = dict_update(SITE_DICT_TEST_2, POST_THETAS, POST_PHIS, i+1, i, POST_PHASE, PHI_REF)
-        prob_1_test = post_h(SITE_DICT_TEST_2, THETAS, CONTEXT_NO)[1]
-    
-        c_test = []
-        for j_1, a_1 in enumerate(prob_1_test):
-            c_test.append(a_1/PREV_PROB_TEST[j_1])
-        h_1 = np.prod(c_test)
-        if h_1 >= 1:
-            ACCEPT[k].append(THETAS[k])
-        else:
-            u = np.random.uniform(0, 1)
-            if h_1 > u:
-                ACCEPT[k].append(THETAS[k])
-            else:
-                THETAS[k] = oldtheta
-                for g2 in range(len(THETAS)):
-                    POST_THETAS[g2][i+1] = POST_THETAS[g2][i]
-                prob_1_test = PREV_PROB_TEST
-        #step 2 #############################
-    
-        m = int(random.sample(range(0, M), 1)[0])
-        s1 = max(PHIS_VEC) - min(PHIS_VEC)
-        f_phi1 = (s1**(1-M))/(R-s1)
-        oldphi = PHIS_VEC[m]
-        lims = PHI_SAMP_DICT[STEP_1[m]][STEP_2[m]][STEP_3[m]](THETAS, PHIS_VEC, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF)
-        PHIS_VEC[m] = np.random.uniform(lims[0], lims[1])
-        for v1, a_2 in enumerate(PHIS_VEC):
-            POST_PHIS[v1].append(a_2)
-        s2 = max(PHIS_VEC) - min(PHIS_VEC)
-        f_phi2 = (s2**(1-M))/(R-s2)
-        SITE_DICT_TEST_3 = dict_update(SITE_DICT_TEST_3, POST_THETAS, POST_PHIS, i+1, i+1, POST_PHASE, PHI_REF)
-        step_2_prob = post_h(SITE_DICT_TEST_3, THETAS, CONTEXT_NO)
-        prob_2_test = step_2_prob[1]
-        backup_b_test = step_2_prob[0]
-        c_test = []
-        for k_2, b_2 in enumerate(prob_2_test):
-            c_test.append(b_2/prob_1_test[k_2])
-        h_2 = np.prod(c_test)*(f_phi2/f_phi1)
-        if h_2 >= 1:
-            PHI_ACCEPT[m].append(PHIS_VEC[m])
-            if m == M-1:
-                POST_S.append(max(PHIS_VEC) - PHIS_VEC[m])
-            elif m == 0:
-                POST_S.append(PHIS_VEC[m]-min(PHIS_VEC))
-        else:
-            u = np.random.uniform(0, 1)
-            if h_2 > u:
-                PHI_ACCEPT[m].append(PHIS_VEC[m])
-                if m == M-1:
-                    POST_S.append(max(PHIS_VEC) - PHIS_VEC[m])
-                elif m == 0:
-                    POST_S.append(PHIS_VEC[m]- min(PHIS_VEC))
-            else:
-                for v2 in enumerate(PHIS_VEC):
-                    POST_PHIS[v2[0]][i+1] = POST_PHIS[v2[0]][i]
-                PHIS_VEC[m] = oldphi
-                prob_2_test = prob_1_test
-    
-    ###DONT NEED ANYTHING FROM HERE FOR DIFFERENT MODELS SINCE IT'S JUST A SCALE AND SHIFT #
-      # step3 ################
-        step = np.random.uniform(-1*S, S)
-        THETAS = [x + step for x in THETAS]
-        PHIS_VEC = [x + step for x in PHIS_VEC]
-        for g2, a_3 in enumerate(THETAS):
-            POST_THETAS[g2].append(a_3)
-        for v2, b_3 in enumerate(PHIS_VEC):
-            POST_PHIS[v2].append(b_3)
-        SITE_DICT_TEST_4 = dict_update(SITE_DICT_TEST_4, POST_THETAS, POST_PHIS, i+2, i+2, POST_PHASE, PHI_REF)
-        temp = post_h(SITE_DICT_TEST_4, THETAS, CONTEXT_NO)
-        prob_3_test = temp[1]
-        b_test = temp[0]
-        c_test = []
-        for f, c_3 in enumerate(prob_3_test):
-            c_test.append(c_3/prob_2_test[f])
-        h_3 = np.prod(c_test)
-        if h_3 >= 1:
-            for j_3, d_3 in enumerate(PHIS_VEC):
-                PHI_ACCEPT[j_3].append(d_3)
-            for k_3, e_3 in enumerate(THETAS):
-                ACCEPT[k_3].append(e_3)
-            POST_S.append(max(PHIS_VEC) - min(PHIS_VEC))
-        else:
-            u = np.random.uniform(0, 1)
-            if h_3 > u:
-                for j_3, f_3 in enumerate(PHIS_VEC):
-                    PHI_ACCEPT[j_3].append(f_3)
-                for k_3, i_3 in enumerate(THETAS):
-                    ACCEPT[k_3].append(i_3)
-                POST_S.append(max(PHIS_VEC) - min(PHIS_VEC))
-            else:
-                for g_3 in enumerate(THETAS):
-                    POST_THETAS[g_3[0]][i+2] = POST_THETAS[g_3[0]][i+1]
-                for v_3 in enumerate(PHIS_VEC):
-                    POST_PHIS[v_3[0]][i+2] = POST_PHIS[v_3[0]][i+1]
-                THETAS = [x - step for x in THETAS]
-                PHIS_VEC = [x - step for x in PHIS_VEC]
-                prob_3_test = prob_2_test  
-                b_test = backup_b_test
-    
-    ##step 4 #########
-      #  print("step4")
-        rho = np.random.uniform(2/3, 3/2)
-        constant = (rho-1)*mean(np.concatenate([PHIS_VEC, THETAS])).item()
-        THETAS = [x*rho - constant for x in THETAS]
-        PHIS_VEC = [x*rho - constant for x in PHIS_VEC]
-        for s_4, a_4 in enumerate(THETAS):
-            POST_THETAS[s_4].append(a_4)
-        for e_4, b_4 in enumerate(PHIS_VEC):
-            POST_PHIS[e_4].append(b_4)
-        SITE_DICT_TEST_5 = dict_update(SITE_DICT_TEST_5, POST_THETAS, POST_PHIS, i+3, i+3, POST_PHASE, PHI_REF)
-        s = max(PHIS_VEC) - min(PHIS_VEC)
-        const = (R - s)/((R-(rho*s))*rho)
-        temp_2 = post_h(SITE_DICT_TEST_5, THETAS, CONTEXT_NO)
-        a_test = temp_2[0]
-        PREV_PROB_TEST = temp_2[1]
-        c_test = []
-        for q_4, k_4 in enumerate(a_test):
-            c_test.append(k_4/b_test[q_4])
-        h_temp_test = np.prod(c_test)
-        h_4 = h_temp_test*const
-        if h_4 >= 1:
-            for j_4, c_4 in enumerate(PHIS_VEC):
-                PHI_ACCEPT[j_4].append(c_4)
-            for k_4, f_4 in enumerate(THETAS):
-                ACCEPT[k_4].append(f_4)
-            POST_S.append(max(PHIS_VEC) - min(PHIS_VEC))
-        else:
-            u = np.random.uniform(0, 1)
-            if h_4 > u:
-                for j_4, g_4 in enumerate(PHIS_VEC):
-                    PHI_ACCEPT[j_4].append(g_4)
-                for k_4, i_4 in enumerate(THETAS):
-                    ACCEPT[k_4].append(i_4)
-                POST_S.append(max(PHIS_VEC) - min(PHIS_VEC))
-            else:
-                for g_4 in range(len(THETAS)):
-                    POST_THETAS[g_4][i+3] = POST_THETAS[g_4][i+2]
-                for v_4 in range(len(PHIS_VEC)):
-                    POST_PHIS[v_4][i+3] = POST_PHIS[v_4][i+2]
-                THETAS = [(x + constant)/rho for x in THETAS]
-                PHIS_VEC = [(x + constant)/rho for x in PHIS_VEC]
-                PREV_PROB_TEST = prob_3_test
-        tot = time.perf_counter() - t0
-        print("tot " + str(tot))
+    acept_prob = 1
+    while acept_prob > 0:
+        THETA_INITS = theta_init_func_n(KEY_REF, PHI_REF, RESULT_VEC, STRAT_VEC, P, CONTEXT_NO, TOPO_SORT)
+        PHASE_BOUNDARY_INITS = phase_bd_init_func(KEY_REF, PHI_REF, THETA_INITS, PREV_PHASE, A, P)
+        
+        #initiating the inital dict
+        NEW_LST = [list(x) for x in zip(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC)]
+        CV_B = phase_limits(PHASE_BOUNDARY_INITS, POST_PHASE)
+        PHIS_VEC = PHASE_BOUNDARY_INITS
+        THETAS = THETA_INITS
+        TRACK_VEC = []
+        KEYS_TRACK = []
+        for d in PHI_REF:
+            ind = [index for index, element in enumerate(KEY_REF) if element == d]
+            test_lst = [NEW_LST[d] for d in ind]
+            bound = CV_B[PHI_REF.index(d)]
+            TRACK_VEC.append({'dates': test_lst,
+                              'boundaries': bound,
+                              'prev_phase_rel': PREV_PHASE[PHI_REF.index(d)],
+                              'post_phase_rel': POST_PHASE[PHI_REF.index(d)]})
+            KEYS_TRACK.append(d)
+        
+        TEST_DICT_1 = dict(zip(KEYS_TRACK, TRACK_VEC))
+        SITE_DICT_TEST_1 = TEST_DICT_1
+        SITE_DICT_TEST_2 = TEST_DICT_1
+        SITE_DICT_TEST_3 = TEST_DICT_1
+        SITE_DICT_TEST_4 = TEST_DICT_1
+        SITE_DICT_TEST_5 = TEST_DICT_1
+        
+        ###########################
+        K = len(THETAS)
+        M = len(PHIS_VEC)
+        S = s
+        R = P - A
+        POST_S = []
+        STEP_1 = sampling_vec(POST_PHASE, PREV_PHASE)[0]
+        SAMP_VEC_TRACK = sampling_vec(POST_PHASE, PREV_PHASE)[1]
+        STEP_2 = [PREV_PHASE[i] for i in SAMP_VEC_TRACK]
+        STEP_3 = [POST_PHASE[i] for i in SAMP_VEC_TRACK]
+        
+        ########################################
+        
+        #set up empty post vectors
+        ACCEPT = [[] for _ in range(len(THETAS))]
+        PHI_ACCEPT = [[] for _ in range(len(PHIS_VEC))]
+        POST_THETAS = [[] for _ in range(len(THETAS))]
+        POST_PHIS = [[] for _ in range(len(PHIS_VEC))]
+        for p, a in enumerate(THETA_INITS):
+            POST_THETAS[p].append(a)
+        for j, b in enumerate(PHASE_BOUNDARY_INITS):
+            POST_PHIS[j].append(b)
+        PREV_PROB_TEST = post_h(SITE_DICT_TEST_1, THETAS, CONTEXT_NO)[1]
+        
+        i = 0
+        ###START OF MCMC ALGORITHM###############
+        while min([len(i) for i in ACCEPT]) < 50000:
+            for l in np.linspace(0, 10002, 3335):
+                t0 = time.perf_counter()
+             #   print("l" + str(l))
+              #  print("i " + str(i) + "\n")
+                SITE_DICT_TEST_1 = dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF)
+               #step 1 #####################
+                k = int(random.sample(range(0, K), 1)[0])
+                oldtheta = THETAS[k]
+                key = KEY_REF[k]
+                a = [CONTEXT_NO[k] in i for i in SITE_DICT_TEST_1[key]["dates"]].index(True)
+                strat_single = strat_rel(SITE_DICT_TEST_1, key, a, THETAS, CONTEXT_NO)
+                THETAS[k] = np.random.uniform(max(SITE_DICT_TEST_1[key]["boundaries"][0], strat_single[1]),
+                                              min(SITE_DICT_TEST_1[key]["boundaries"][1], strat_single[0]))
+            
+                for g_1 in enumerate(THETAS):
+                    POST_THETAS[g_1[0]].append(THETAS[g_1[0]])
+                SITE_DICT_TEST_2 = dict_update(SITE_DICT_TEST_2, POST_THETAS, POST_PHIS, i+1, i, POST_PHASE, PHI_REF)
+                prob_1_test = post_h(SITE_DICT_TEST_2, THETAS, CONTEXT_NO)[1]
+            
+                c_test = []
+                for j_1, a_1 in enumerate(prob_1_test):
+                    c_test.append(a_1/PREV_PROB_TEST[j_1])
+                h_1 = np.prod(c_test)
+                if h_1 >= 1:
+                    ACCEPT[k].append(THETAS[k])
+                   # print("step 1 accept")
+                else:
+                    u = np.random.uniform(0, 1)
+                    if h_1 > u:
+                        ACCEPT[k].append(THETAS[k])
+                    #    print("step 1 accept")
+                    else:
+                        THETAS[k] = oldtheta
+                        for g2 in range(len(THETAS)):
+                            POST_THETAS[g2][i+1] = POST_THETAS[g2][i]
+                        prob_1_test = PREV_PROB_TEST
+                #step 2 #############################
+            
+                m = int(random.sample(range(0, M), 1)[0])
+                s1 = max(PHIS_VEC) - min(PHIS_VEC)
+                f_phi1 = (s1**(1-M))/(R-s1)
+                oldphi = PHIS_VEC[m]
+                lims = PHI_SAMP_DICT[STEP_1[m]][STEP_2[m]][STEP_3[m]](THETAS, PHIS_VEC, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF)
+                PHIS_VEC[m] = np.random.uniform(lims[0], lims[1])
+                for v1, a_2 in enumerate(PHIS_VEC):
+                    POST_PHIS[v1].append(a_2)
+                s2 = max(PHIS_VEC) - min(PHIS_VEC)
+                f_phi2 = (s2**(1-M))/(R-s2)
+                SITE_DICT_TEST_3 = dict_update(SITE_DICT_TEST_3, POST_THETAS, POST_PHIS, i+1, i+1, POST_PHASE, PHI_REF)
+                step_2_prob = post_h(SITE_DICT_TEST_3, THETAS, CONTEXT_NO)
+                prob_2_test = step_2_prob[1]
+                backup_b_test = step_2_prob[0]
+                c_test = []
+                for k_2, b_2 in enumerate(prob_2_test):
+                    c_test.append(b_2/prob_1_test[k_2])
+                h_2 = np.prod(c_test)*(f_phi2/f_phi1)
+                if h_2 >= 1:
+                    PHI_ACCEPT[m].append(PHIS_VEC[m])
+                    #print("step 2 accept")
+                    if m == M-1:
+                        POST_S.append(max(PHIS_VEC) - PHIS_VEC[m])
+                    elif m == 0:
+                        POST_S.append(PHIS_VEC[m]-min(PHIS_VEC))
+                else:
+                    u = np.random.uniform(0, 1)
+                    if h_2 > u:
+                     #   print("step 2 accept")
+                        PHI_ACCEPT[m].append(PHIS_VEC[m])
+                        if m == M-1:
+                            POST_S.append(max(PHIS_VEC) - PHIS_VEC[m])
+                        elif m == 0:
+                            POST_S.append(PHIS_VEC[m]- min(PHIS_VEC))
+                    else:
+                        for v2 in enumerate(PHIS_VEC):
+                            POST_PHIS[v2[0]][i+1] = POST_PHIS[v2[0]][i]
+                        PHIS_VEC[m] = oldphi
+                        prob_2_test = prob_1_test
+            
+            ###DONT NEED ANYTHING FROM HERE FOR DIFFERENT MODELS SINCE IT'S JUST A SCALE AND SHIFT #
+              # step3 ################
+                step = np.random.uniform(-1*S, S)
+                THETAS = [x + step for x in THETAS]
+                PHIS_VEC = [x + step for x in PHIS_VEC]
+                for g2, a_3 in enumerate(THETAS):
+                    POST_THETAS[g2].append(a_3)
+                for v2, b_3 in enumerate(PHIS_VEC):
+                    POST_PHIS[v2].append(b_3)
+                SITE_DICT_TEST_4 = dict_update(SITE_DICT_TEST_4, POST_THETAS, POST_PHIS, i+2, i+2, POST_PHASE, PHI_REF)
+                temp = post_h(SITE_DICT_TEST_4, THETAS, CONTEXT_NO)
+                prob_3_test = temp[1]
+                b_test = temp[0]
+                c_test = []
+                for f, c_3 in enumerate(prob_3_test):
+                    c_test.append(c_3/prob_2_test[f])
+                h_3 = np.prod(c_test)
+                if h_3 >= 1:
+                    #print("step 3 accept")
+                    for j_3, d_3 in enumerate(PHIS_VEC):
+                        PHI_ACCEPT[j_3].append(d_3)
+                    for k_3, e_3 in enumerate(THETAS):
+                        ACCEPT[k_3].append(e_3)
+                    POST_S.append(max(PHIS_VEC) - min(PHIS_VEC))
+                else:
+                    u = np.random.uniform(0, 1)
+                    if h_3 > u:
+                     #   print("step 3 accept")
+                        for j_3, f_3 in enumerate(PHIS_VEC):
+                            PHI_ACCEPT[j_3].append(f_3)
+                        for k_3, i_3 in enumerate(THETAS):
+                            ACCEPT[k_3].append(i_3)
+                        POST_S.append(max(PHIS_VEC) - min(PHIS_VEC))
+                    else:
+                        for g_3 in enumerate(THETAS):
+                            POST_THETAS[g_3[0]][i+2] = POST_THETAS[g_3[0]][i+1]
+                        for v_3 in enumerate(PHIS_VEC):
+                            POST_PHIS[v_3[0]][i+2] = POST_PHIS[v_3[0]][i+1]
+                        THETAS = [x - step for x in THETAS]
+                        PHIS_VEC = [x - step for x in PHIS_VEC]
+                        prob_3_test = prob_2_test  
+                        b_test = backup_b_test
+            
+            ##step 4 #########
+              #  print("step4")
+                rho = np.random.uniform(0.8, 1.2)
+                constant = (rho-1)*mean(np.concatenate([PHIS_VEC, THETAS])).item()
+                THETAS = [x*rho - constant for x in THETAS]
+                PHIS_VEC = [x*rho - constant for x in PHIS_VEC]
+                for s_4, a_4 in enumerate(THETAS):
+                    POST_THETAS[s_4].append(a_4)
+                for e_4, b_4 in enumerate(PHIS_VEC):
+                    POST_PHIS[e_4].append(b_4)
+                SITE_DICT_TEST_5 = dict_update(SITE_DICT_TEST_5, POST_THETAS, POST_PHIS, i+3, i+3, POST_PHASE, PHI_REF)
+                s = max(PHIS_VEC) - min(PHIS_VEC)
+                const = (R - s)/((R-(rho*s))*rho)
+                temp_2 = post_h(SITE_DICT_TEST_5, THETAS, CONTEXT_NO)
+                a_test = temp_2[0]
+                PREV_PROB_TEST = temp_2[1]
+                c_test = []
+                for q_4, k_4 in enumerate(a_test):
+                    c_test.append(k_4/b_test[q_4])
+                h_temp_test = np.prod(c_test)
+                h_4 = h_temp_test*const
+                if h_4 >= 1:
+                  #  print("step 4 accept")
+                    for j_4, c_4 in enumerate(PHIS_VEC):
+                        PHI_ACCEPT[j_4].append(c_4)
+                    for k_4, f_4 in enumerate(THETAS):
+                        ACCEPT[k_4].append(f_4)
+                    POST_S.append(max(PHIS_VEC) - min(PHIS_VEC))
+                else:
+                    u = np.random.uniform(0, 1)
+                    if h_4 > u:
+                   #     print("step 4 accept")
+                        for j_4, g_4 in enumerate(PHIS_VEC):
+                            PHI_ACCEPT[j_4].append(g_4)
+                        for k_4, i_4 in enumerate(THETAS):
+                            ACCEPT[k_4].append(i_4)
+                        POST_S.append(max(PHIS_VEC) - min(PHIS_VEC))
+                    else:
+                        for g_4 in range(len(THETAS)):
+                            POST_THETAS[g_4][i+3] = POST_THETAS[g_4][i+2]
+                        for v_4 in range(len(PHIS_VEC)):
+                            POST_PHIS[v_4][i+3] = POST_PHIS[v_4][i+2]
+                        THETAS = [(x + constant)/rho for x in THETAS]
+                        PHIS_VEC = [(x + constant)/rho for x in PHIS_VEC]
+                        PREV_PROB_TEST = prob_3_test
+                i = i + 3
+            CHECK_ACCEPT = accept_prob(ACCEPT, PHI_ACCEPT)
+            acept_prob = len(CHECK_ACCEPT[(CHECK_ACCEPT <= 0.2) | (CHECK_ACCEPT >= 0.7)])
+            print(acept_prob)
+            if acept_prob > 0:
+                print("oh no")
+                break
+            
+      #  print("tot " + str(tot))
     
     #plot code
     CHECK_ACCEPT = accept_prob(ACCEPT, PHI_ACCEPT)
-    print(len(CHECK_ACCEPT[(CHECK_ACCEPT <= 0.4) & (CHECK_ACCEPT >= 0.4)]))
+    print(len(CHECK_ACCEPT[(CHECK_ACCEPT <= 0.2) | (CHECK_ACCEPT >= 0.7)]))
     
     k, BINS, PATCHES = plt.hist(POST_S[100:], bins="auto", color='#0504aa',
                                 alpha=0.7, rwidth=0.85, density=True)
-    plt.title('Simulated data using the Alpha-beta \'squeezing\' model')
+    plt.title('Shag River Mouth data using the Alpha-beta \'squeezing\' model')
     plt.xlabel('Phase length (calendar years)')
     plt.ylabel('Frequency')
     #plt.ylim(0,0.0043)
-    #plt.xlim(0, 2000)
+#    #plt.xlim(0, 2000)
     plt.savefig("hist_sim_4.png")
-    #plt.plot(POST_PHIS[0])
-    #plt.savefig("trace_sim_4.png")
+    plt.plot(POST_S)
+    plt.show()
+    hpd_dict = {}
+    for i, j in enumerate(CONTEXT_NO):
+        hpd_dict[j] = list(pc.stats.hpd(np.array(ACCEPT[i])))
+    hpd_df = pd.DataFrame.from_dict(hpd_dict, orient='index')
+    hpd_df.to_csv("hpd_intervals")    
+        
+    print(pc.stats.hpd(np.array(POST_S)))
+    plt.savefig("trace_sim_4.png")
+    tot = time.perf_counter() - t0
+    print(tot)
     
+    for i in ACCEPT:
+        plt.plot(i)
+        
+        
     #k, bins, patches = plt.hist(accept[11], bins='auto', color='#0504aa',
     #                      alpha=0.7, rwidth=0.85, density = True )
     #k, bins, patches = plt.hist(accept[10], bins='auto', color='#0504aa',
@@ -825,16 +894,27 @@ def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_
     #                      alpha=0.7, rwidth=0.85, density = True )
     #k, bins, patches = plt.hist(phi_accept[0], bins='auto', color='#0504aa',
     #                      alpha=0.7, rwidth=0.85, density = True )
-#    PLOT_INDEX = [0, 1, 2, 3, 4, 5, 6] #, 7, 8, 9]
-#    FIGURE, AXES = plt.subplots(nrows=7, ncols=1, sharex=True, sharey=True, figsize=[14, 6])
-#    plt.xlim(600, 500)
-#    plt.ylim(0, 0.5)
+#    print(len(ACCEPT))
+#    PLOT_INDEX = [i for i in range(len(ACCEPT))]
+#    type(PLOT_INDEX)
+#    FIGURE, AXES = plt.subplots(nrows=4, ncols=int(K/4), sharex=True, sharey=True, figsize=[14, 6])
+#    plotcoords = []
+#    for i in range(AXES.shape[1]):
+#        for j in range(AXES.shape[0]):
+#            plotcoords.append((j, i))
+#            
+# #   plt.xlim(700, 1300)
+#    plt.ylim(0, 0.15)
 #    #for j in range(len(axes.ravel())):
-#    for i, j in zip(PLOT_INDEX, range(len(AXES.ravel()))):
+#    for i, j in zip(PLOT_INDEX, plotcoords):
 #        AXES[j].hist(ACCEPT[i], bins='auto', color='#0504aa',
 #                     alpha=0.7, rwidth=0.85, density=True)
-#    #for i in range(len(THETAS)):
-#    #    print(pm3.stats.hpd(np.array(ACCEPT[i])))
+#        AXES[j].set_xlabel(str(CONTEXT_NO[i]))
+#    
+#    #plt.xlabel(CONTEXT_NO[i])
+##    #for i in range(len(THETAS)):
+##    #    print(pm3.stats.hpd(np.array(ACCEPT[i])))
 #    plt.title('Theta Histograms')
-#    plt.xlabel('Calendar years')
+#    
 #    plt.ylabel('Probability density')
+#    plt.savefig("hist_thetas.png")
