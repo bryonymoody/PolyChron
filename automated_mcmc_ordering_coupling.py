@@ -12,13 +12,153 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pymc3 as pc  
 import pandas as pd
+
+
+
+
+def HPD_interval(x_temp, probs = 0):
+    if probs == 0:
+        x_temp = np.array(x_temp)
+        n = math.ceil((x_temp.max() - x_temp.min()))
+        probs, x_temp, _ = plt.hist(x_temp, bins = n, density= 1)
+    df = pd.DataFrame({'Theta':x_temp[1:], 'Posterior':probs})     
+    hpd_vec = []
+    theta_vec = []
+    y = df.sort_values(by = ['Posterior'], ascending = False)
+    posterior_x = np.array(y['Posterior'])    
+    posterior_theta = np.array(y['Theta'])
+    i = 0
+    while sum(hpd_vec) <= 0.95:
+        hpd_vec.append(posterior_x[i])
+        theta_vec.append(posterior_theta[i])
+        i = i + 1    
+    theta_vec.sort()
+    rangevec = []
+    rangevec.append(min(theta_vec))
+    for i in range(len(theta_vec)-1):
+        if theta_vec[i+1] - theta_vec[i] > 15:
+            rangevec.extend([theta_vec[i], theta_vec[i+1]])
+    rangevec.append(max(theta_vec))
+    return rangevec
+
 #import pymc3 as pm3
 ############### TO DO LIST #######
 # automate checking of thetas and phis
 # output historgrams with associated trace plots
 # output table of HPD intervals
 #import the calibration curve
+def theta_samp_func(GIBBS_THETAS, GIBBS_PHIS, KEY_REF, PHI_REF, RESULT_VEC, STRAT_VEC, CONTEXT_NO, TOPO_SORT, iter_num, GIBBS_DICT_1): #, PREV_IT):
+    """GIVES A LIST OF INITAL THETA VALUES FOR MCMCM"""
+    out_vec = [0]*len(KEY_REF)  
+#    print(GIBBS_THETAS)     
+    for date in range(0, len(PHI_REF)):
+        t0_f = time.perf_counter()
+        ref_vec = np.where(np.array(KEY_REF) == PHI_REF[date])[0].tolist()  
+        phase_lab = PHI_REF[date]
+        phase = [CONTEXT_NO[i] for i in ref_vec]        
+        phase_topo = [i for i in TOPO_SORT if i in phase]  
+        phase_upp_lim = GIBBS_DICT_1[phase_lab]['boundaries'][1] # needs to be less than this
+        phase_low_lim = GIBBS_DICT_1[phase_lab]['boundaries'][0] # needs to be more than this
+        t1 = time.perf_counter() - t0_f
+        for i in phase_topo:
+            t0_f = time.perf_counter()
+            #print(i)
+            a = np.where(np.array(CONTEXT_NO) == i)[0][0].item()
+            below = STRAT_VEC[a][0] # should be less than this
+         #   print(type(below))
+            above = STRAT_VEC[a][1] # should be greater than this
+            t0_f = time.perf_counter()
+         #   print('inital part of loop ' + str(t1))
+            
+            if len(above) == 0:
+                if len(below) == 0: 
+                    t0_f = time.perf_counter()
+                    dates = RESULT_VEC[a][0]
+               #     aa = np.where(dates == round(phase_upp_lim, 1))[0].tolist()
+              #      dates_new = dates[0:aa]
+               #     b = np.where(dates_new == round(phase_low_lim, 1))[0].tolist()
+               #     dates_new = dates_new[b]
+               #     print([aa,b])
+                    ind =  (dates < phase_upp_lim) & (dates > phase_low_lim)
+               #     print([max(up), min(up)])
+                    crop = time.perf_counter() - t0_f
+                    t0_g = time.perf_counter()
+                    SAMPLE_VEC, SAMPLE_VEC_PROB = dates[ind], RESULT_VEC[a][1][ind]               
+                    crop2 = time.perf_counter() - t0_g
+               #     print('crop vecs ' + str(crop))
+              #      print('crop vecs 2 ' + str(crop2))
+                    ta = time.perf_counter()
+                    w = SAMPLE_VEC_PROB/np.sum(SAMPLE_VEC_PROB) 
+                    out_vec[a] = SAMPLE_VEC[np.searchsorted(w.cumsum(), random.random())] 
+                    tb = time.perf_counter() - ta     
+              #      print('sampling ' + str(tb))
+                    totfun = time.perf_counter() - t0_f
+             #       print('totfun ' + str(totfun))
+                   # print("t1, t2, t3" + str([t1_f, t2_f, totfun]))
+                else:
+                    maxstrat = max([GIBBS_THETAS[np.where(np.array(CONTEXT_NO) == j)[0][0].item()][iter_num] for j in below])
+                 #   print('iter_num' + str(iter_num))
+                  #  print('context' + str(i))
+                   # print(type(maxstrat)) 
+                    #print(maxstrat)
+                    max_tot = max([maxstrat, phase_low_lim])                           
+                    SAMPLE_VEC = RESULT_VEC[a][0][(RESULT_VEC[a][0] < phase_upp_lim) & (RESULT_VEC[a][0] > max_tot)]
+                    SAMPLE_VEC_PROB = RESULT_VEC[a][1][(RESULT_VEC[a][0] < phase_upp_lim) & (RESULT_VEC[a][0] > max_tot)]                
+                    out_vec[a] = random.choices(SAMPLE_VEC, weights=SAMPLE_VEC_PROB/sum(SAMPLE_VEC_PROB))[0]                          
+            elif len(below) == 0:
+                minstrat = min([out_vec[np.where(np.array(CONTEXT_NO) == j)[0][0].item()] for j in above])
+                min_tot = min([minstrat, phase_upp_lim])
+                SAMPLE_VEC = RESULT_VEC[a][0][(RESULT_VEC[a][0] < min_tot) & (RESULT_VEC[a][0] > phase_low_lim)]
+                SAMPLE_VEC_PROB = RESULT_VEC[a][1][(RESULT_VEC[a][0] < min_tot) & (RESULT_VEC[a][0] > phase_low_lim)]                
+                out_vec[a] = random.choices(SAMPLE_VEC, weights=SAMPLE_VEC_PROB/sum(SAMPLE_VEC_PROB))[0]
+            else:
+                maxstrat = max([GIBBS_THETAS[np.where(np.array(CONTEXT_NO) == j)[0][0].item()][iter_num] for j in below])
+              #  [print(GIBBS_THETAS[np.where(np.array(CONTEXT_NO) == j)[0][0].item()][iter_num]) for j in below]
+              #  print('context' + str(i))
+              #  print('iter_num' + str(iter_num))
+              #  print(type(maxstrat))
+              #  print(maxstrat)
+                max_tot = max([maxstrat, phase_low_lim])
+                minstrat = min([out_vec[np.where(np.array(CONTEXT_NO) == j)[0][0].item()] for j in above])
+                min_tot = min([minstrat, phase_upp_lim])
+                SAMPLE_VEC = RESULT_VEC[a][0][(RESULT_VEC[a][0] < min_tot) & (RESULT_VEC[a][0] > max_tot)]
+                SAMPLE_VEC_PROB = RESULT_VEC[a][1][(RESULT_VEC[a][0] < min_tot) & (RESULT_VEC[a][0] > max_tot)]                
+                out_vec[a] = random.choices(SAMPLE_VEC, weights=SAMPLE_VEC_PROB/sum(SAMPLE_VEC_PROB))[0]
+         #   print('sampling ' + str(tb))
+            t2 = time.perf_counter() - t0_f - t1
+   #         print('whole loop ' + str(t2) + '\n')
+        t1_f = time.perf_counter() - t0_f
+  #      print(len(SAMPLE_VEC))
+ #       print(phase_topo)
+   #     print(t1_f)
+  #  print([[out_vec[0] > out_vec[1]], [out_vec[1] > out_vec[2]], [out_vec[2] > out_vec[7]], [out_vec[7] > out_vec[8]], [out_vec[8] > out_vec[9]], [ out_vec[3] > out_vec[7]], [ out_vec[5] > out_vec[7]], [out_vec[4] > out_vec[5]], [out_vec[6] > out_vec[7]]])
+ #   print(out_vec)
+    return(out_vec)  
+    
 
+def phase_samp_func(key_reff, phi_reff, theta_vals, prev_phases, A, P, iter_num):
+    """GIVES A LIST OF INITAL PHASE BOUNDARY VALUES FOR MCMCM"""
+    PHASE_INITS = [] 
+    KEY_REF_1 = np.array(key_reff)
+    PHASE_INITS.append(np.random.uniform(max([theta_vals[i][iter_num + 1] for i in np.where(KEY_REF_1 == phi_reff[0])[0].tolist()]), P))
+    for j in range(1, len(phi_reff)):
+    #    print(max([theta_vals[i][iter_num + 1] for i in np.where(KEY_REF_1 == phi_reff[j])[0].tolist()]))
+    #    print(min([theta_vals[i][iter_num + 1] for i in np.where(KEY_REF_1 == phi_reff[j-1])[0].tolist()]))
+        a_temp = np.random.uniform(max([theta_vals[i][iter_num + 1] for i in np.where(KEY_REF_1 == phi_reff[j])[0].tolist()]),
+                                             min([theta_vals[i][iter_num + 1] for i in np.where(KEY_REF_1 == phi_reff[j-1])[0].tolist()]))
+        if prev_phases[j] != "abuting":
+           # print("TS")
+            a_temp = [a_temp, (np.random.uniform(max([theta_vals[i][iter_num + 1] for i in np.where(KEY_REF_1 == phi_reff[j])[0].tolist()]),
+                                 min([theta_vals[i][iter_num + 1] for i in np.where(KEY_REF_1 == phi_reff[j-1])[0].tolist()])))]
+            a_temp = sorted(a_temp, reverse = True)
+        else:
+            a_temp = [a_temp]
+        [PHASE_INITS.append(ref_ind) for ref_ind in a_temp]
+        #print(PHASE_INITS)
+    PHASE_INITS.append(np.random.uniform(min([theta_vals[i][iter_num + 1] for i in np.where(KEY_REF_1 == phi_reff[-1])[0].tolist()]), A))
+    #print(min([theta_vals[i][iter_num + 1] for i in np.where(KEY_REF_1 == phi_reff[-1])[0].tolist()]))
+    PHASE_INITS1 = sorted(PHASE_INITS, reverse=True)
+    return PHASE_INITS1 
 
 def sampling_vec(post_phase_vec, prev_phase_vec):
     """ gives vectors to sample between"""
@@ -553,8 +693,8 @@ def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_
   a = list(mydict.values())
   p = min(range(len(a)), key=lambda i: abs(a[i]-x_min))
   l = min(range(len(a)), key=lambda i: abs(a[i]-x_max))
-  A = max(p - 7*s, 0)
-  P = min(l + 7*s, 50000)
+  A = max(p - 10*s, 0)
+  P = min(l + 10*s, 50000)
   
   ##############################################
   ##initiating  likelihoods
@@ -743,7 +883,7 @@ def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_
               ##step 4 #########
                 #  print("step4")
                   rho = np.random.uniform(2/3, 3/2)
-                  constant = (rho-1)*mean(np.concatenate([PHIS_VEC, THETAS])).item()
+                  constant = (rho-1)*mean(np.concatebelownate([PHIS_VEC, THETAS])).item()
                   THETAS = [x*rho - constant for x in THETAS]
                   PHIS_VEC = [x*rho - constant for x in PHIS_VEC]
                   for s_4, a_4 in enumerate(THETAS):
@@ -795,31 +935,66 @@ def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_
       #plot code
           CHECK_ACCEPT = accept_prob(ACCEPT, PHI_ACCEPT, i)
           print(len(CHECK_ACCEPT[(CHECK_ACCEPT <= 0.1) | (CHECK_ACCEPT >= 0.7)]))
-      elif method == 'gibbs':          
+      elif method == 'gibbs': 
           acept_prob = 0
           POST_S = []
-          for i in range(0, 50000):
-              print(i)
-              for k in range(len(THETAS)):
-                  SITE_DICT_TEST_1 = dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF)
-                  key = KEY_REF[k]
-                  a = [CONTEXT_NO[k] in i for i in SITE_DICT_TEST_1[key]["dates"]].index(True)
-                  strat_single = strat_rel(SITE_DICT_TEST_1, key, a, THETAS, CONTEXT_NO)
-                  low_bound = max(SITE_DICT_TEST_1[key]["boundaries"][0], strat_single[1])
-                  up_bound = min(SITE_DICT_TEST_1[key]["boundaries"][1], strat_single[0])
-                  SAMPLE_VEC = RESULT_VEC[a][0][(RESULT_VEC[a][0] < up_bound) & (RESULT_VEC[a][0] > low_bound)]
-                  SAMPLE_VEC_PROB = RESULT_VEC[a][1][(RESULT_VEC[a][0] < up_bound) & (RESULT_VEC[a][0] > low_bound)]                  
-                  THETAS[k] = random.choices(SAMPLE_VEC, weights=SAMPLE_VEC_PROB/sum(SAMPLE_VEC_PROB))[0]
-                  POST_THETAS[k].append(THETAS[k])  
-              for j in range(len(PHIS_VEC)):
-                  lims = PHI_SAMP_DICT[STEP_1[j]][STEP_2[j]][STEP_3[j]](THETAS, PHIS_VEC, j, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF)
-                  PHIS_VEC[j] = np.random.uniform(lims[0], lims[1])
-                  POST_PHIS[j].append(PHIS_VEC[j])
-              POST_S.append(PHIS_VEC[0] - PHIS_VEC[M-1])
-          PHI_ACCEPT, ACCEPT = POST_PHIS, POST_THETAS
-  return(PHI_ACCEPT, ACCEPT, POST_S)
+          for i in range(0, 5000):
+                t0 = time.perf_counter()
+                print("i " + str(i) + "\n")
+                thetas =  theta_samp_func(POST_THETAS, POST_PHIS, KEY_REF, PHI_REF, RESULT_VEC, STRAT_VEC, CONTEXT_NO, TOPO_SORT, i, TEST_DICT_1)
+                t1 = time.perf_counter() - t0 
+                print('theta_samps ' + str(t1))
+                for g, j in enumerate(thetas):    
+                    POST_THETAS[g].append(j)
+                phis = phase_samp_func(KEY_REF, PHI_REF, POST_THETAS, PREV_PHASE, A, P, i)
+                for k, l in enumerate(phis):
+                    POST_PHIS[k].append(l)
+                TEST_DICT_1 = dict_update(TEST_DICT_1, POST_THETAS, POST_PHIS, i+1, i+1, POST_PHASE, PHI_REF)
+                POST_S.append(phis[0] - phis[M-1])
+                tottime = time.perf_counter() - t0
+                print('t2 ' + str(tottime))
+  PHI_ACCEPT, ACCEPT = POST_PHIS, POST_THETAS
+  hpd_dict = {}
+  for i, j in enumerate(CONTEXT_NO):
+        hpd_dict[j] = list(HPD_interval(np.array(ACCEPT[i][1000:])))
+  hpd_df = pd.DataFrame.from_dict(hpd_dict, orient='index')
+  hpd_df.to_csv("hpd_intervals_thetas")    
+  hpd_dict = {}
+  for k, l in enumerate(PHI_REF):
+        hpd_dict[l] = list(HPD_interval(PHI_ACCEPT[k][1000:]))
+  hpd_df = pd.DataFrame.from_dict(hpd_dict, orient='index')
+  hpd_df.to_csv("hpd_intervals_phis") 
+            
+    #    print(pc.stats.hpd(np.array(POST_S)))
+    #    plt.savefig("trace_sim_4.png")
+    #    tot = time.perf_counter() - t0
+    #    print(tot)
+    #    
+    #    for i in ACCEPT:
+    #        plt.plot(i)
+            
+  for n, m in enumerate(CONTEXT_NO): 
+        plt.figure()
+        plt.xlim(A, P)
+        k, bins, patches = plt.hist(ACCEPT[n], bins='auto', color='#0504aa',
+                        alpha=0.7, rwidth=0.85, density = True )
+        plt.gca().invert_xaxis()
+        plt.ioff()
+        file_name = str('Posterior_density_context_' + str(m))
+        plt.savefig(file_name)
+        
+  for q, w in enumerate(PHI_REF):
+        plt.figure()
+        plt.xlim(A, P)
+        k, bins, patches = plt.hist(PHI_ACCEPT[q], bins='auto', color='#0504aa',
+                        alpha=0.7, rwidth=0.85, density = True )
+        plt.gca().invert_xaxis()
+        plt.ioff()
+        file_name = str('Posterior_density_phase_' + str(w))
+        plt.savefig(file_name)
+
   
-PHI_ACCEPT, ACCEPT, POST_S = run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_REF, PREV_PHASE, POST_PHASE, TOPO_SORT)
+#PHI_ACCEPT, ACCEPT, POST_S = run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_REF, PREV_PHASE, POST_PHASE, TOPO_SORT)
 #    k, BINS, PATCHES = plt.hist(POST_S[100:], bins="auto", color='#0504aa',
 #                                alpha=0.7, rwidth=0.85, density=True)
 #    plt.title('Shag River Mouth data using the Alpha-beta \'squeezing\' model')
@@ -831,29 +1006,10 @@ PHI_ACCEPT, ACCEPT, POST_S = run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, 
 #    plt.plot(POST_S)
 #    plt.show()
 #    hpd_dict = {}
-hpd_dict = {}
-for i, j in enumerate(CONTEXT_NO):
-    hpd_dict[j] = list(pc.stats.hpd(np.array(ACCEPT[i][1000:])))
-hpd_df = pd.DataFrame.from_dict(hpd_dict, orient='index')
-hpd_df.to_csv("hpd_intervals_thetas")
 
-hpd_dict = {}
-for k, l in enumerate(PHI_REF):
-    hpd_dict[l] = list(pc.stats.hpd(np.array(PHI_ACCEPT[k][1000:])))
-hpd_df = pd.DataFrame.from_dict(hpd_dict, orient='index')
-hpd_df.to_csv("hpd_intervals_phis") 
-        
-#    print(pc.stats.hpd(np.array(POST_S)))
-#    plt.savefig("trace_sim_4.png")
-#    tot = time.perf_counter() - t0
-#    print(tot)
-#    
-#    for i in ACCEPT:
-#        plt.plot(i)
-        
-        
-    #k, bins, patches = plt.hist(accept[11], bins='auto', color='#0504aa',
-    #                      alpha=0.7, rwidth=0.85, density = True )
+#x_temp is dataframe of theta with posterior, e.g. gibbs_test[0] or gibbs_test[1]
+
+
     #k, bins, patches = plt.hist(accept[10], bins='auto', color='#0504aa',
     #                      alpha=0.7, rwidth=0.85, density = True )
     #k, bins, patches = plt.hist(accept[9], bins='auto', color='#0504aa',
