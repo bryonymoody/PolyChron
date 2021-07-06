@@ -683,7 +683,7 @@ def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_
 #            'unordered' : post_h_theta_phi_4,
 #            'ordered' : post_h
 #            }
-  random.seed(100)
+  #random.seed(100)
   method  = 'gibbs'
   CALIBRATION_DATA = CALIBRATION.to_dict()
   x_min = min(RCD_EST)
@@ -982,7 +982,7 @@ def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_
         plt.ioff()
         file_name = str('Posterior_density_context_' + str(m))
         plt.savefig(file_name)
-        
+  plt.close('all')      
   for q, w in enumerate(PHI_REF):
         plt.figure()
         plt.xlim(A, P)
@@ -992,6 +992,7 @@ def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_
         plt.ioff()
         file_name = str('Posterior_density_phase_' + str(w))
         plt.savefig(file_name)
+  plt.close('all')
 
   
 #PHI_ACCEPT, ACCEPT, POST_S = run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_REF, PREV_PHASE, POST_PHASE, TOPO_SORT)
