@@ -603,6 +603,8 @@ class popupWindow3(object):
         self.post_phase.append("end")
         write_dot(self.graphcopy, 'fi_new_chrono')
         self.top.destroy()
+
+
             
 class MainFrame(tk.Tk):
     """ Main frame for tkinter app"""
@@ -666,7 +668,7 @@ class MainFrame(tk.Tk):
         self.eqrelbutton.place(relx=0.55, rely=0.01, relwidth=0.1, relheight=0.03)
         self.phaselevsbutton = tk.Button(self.canvas, text ='Display in phases', command = lambda:self.phasing())
         self.phaselevsbutton.place(relx=0.65, rely=0.01, relwidth=0.1, relheight=0.03)               
-        self.mcmcbutton = tk.Button(self.canvas, text ='Run MCMC', command = lambda:self.MCMC_func())
+        self.mcmcbutton = tk.Button(self.canvas, text ='Run MCMC', command = lambda: self.load_mcmc())
         self.mcmcbutton.place(relx=0.88, rely=0.01, relwidth=0.1, relheight=0.03)        
          
 
@@ -887,7 +889,21 @@ class MainFrame(tk.Tk):
             self.width, self.height = self.image.size
             self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
             self.show_image()
-
+    def cleanup(self):
+        self.top.destroy()
+    def load_mcmc(self):
+        self.top=tk.Toplevel(self.littlecanvas)
+        self.top.geometry("1000x400")
+        self.pbar_ind = ttk.Progressbar(self.top, orient="horizontal", length=400, mode="indeterminate", maximum=100)
+        self.pbar_ind.pack()
+     #   self.pbar_ind.grid(row=0, column=0, pady=2, padx=2, columnspan=3)
+        self.l=tk.Label(self.top,text="MCMC in progress")
+        self.l.pack()
+    #    self.create_window(40, 35, window=self.l)
+        self.pbar_ind.start()
+        self.MCMC_func()
+        self.pbar_ind.stop()
+        self.cleanup()
 
     def addedge(self, edgevec):
         global node_df
@@ -940,21 +956,19 @@ class MainFrame(tk.Tk):
     def animation_stop(self):
         self.pbar_ind.stop()  
         
-#    def alert_popup(self, title, message, path):
-#    """Generate a pop-up window for special messages."""
+#    def alert_popup(self):
+#        """Generate a pop-up window for special messages."""
 #        w = 400     # popup window width
 #        h = 200     # popup window height
 #        sw = self.winfo_screenwidth()
 #        sh = self.winfo_screenheight()
 #        x = (sw - w)/2
 #        y = (sh - h)/2
-#        root.geometry('%dx%d+%d+%d' % (w, h, x, y))
-#        w.pack()
+#        self.geometry('%dx%d+%d+%d' % (w, h, x, y))
 #        self.pbar_ind = ttk.Progressbar(self.abovebelowcanvas, orient="horizontal", length=400, mode="indeterminate", maximum=100)
 #        self.pbar_ind.grid(row=0, column=0, pady=2, padx=2, columnspan=3)
 #        tk.Label(self.abovebelowcanvas, text="MCMC in progress").grid(row=1, column=0, pady=2, padx=2)
 #        self.animation_start()
-#        self.animation_stop()
 
     def MCMC_func(self):
     #    CALIBRATION = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True) 
@@ -979,7 +993,7 @@ class MainFrame(tk.Tk):
         TOPO_SORT.reverse()
 #        print(TOPO_SORT)
         mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.popup3.phi_ref, self.popup3.prev_phase, self.popup3.post_phase, TOPO_SORT)
-        
+
 
         
         
