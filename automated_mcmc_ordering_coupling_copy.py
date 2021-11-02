@@ -375,14 +375,14 @@ def theta_init_func_n(KEY_REF1, PHI_REF1, RESULT_VEC1, STRAT_VEC, P, CONTEXT_NO,
     return(out_vec) 
 #sampling functions
 def upp_samp_1(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF):
-    """ upper sample 1"""
+    """ upper sample 1 - oldest phase and next phase abutting"""
     limits = [max([theta_samp[i] for i, j in enumerate(KEY_REF) if
                    j == PHI_REF[SAMP_VEC_TRACK[m]]]), P]
     _ = phis_samp
     return limits
 
 def upp_samp_2(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF):
-    """ upper sample 2"""
+    """ upper sample 2 - oldest phase and next phase is overlapping"""
     in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
                       j == PHI_REF[SAMP_VEC_TRACK[m]]]
     in_phase_dates.append(phis_samp[m+2])
@@ -391,7 +391,7 @@ def upp_samp_2(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF)
     return limits
 
 def upp_samp_3(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF):
-    """ upper sample 3"""
+    """ upper sample 3 - phase with prev phase abbuting and next phase abbuting"""
     limits = [max([theta_samp[i] for i, j in enumerate(KEY_REF) if
                    j == PHI_REF[SAMP_VEC_TRACK[m]]]),
               min([theta_samp[i] for i, j in enumerate(KEY_REF)
@@ -400,7 +400,7 @@ def upp_samp_3(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF)
     return limits
 
 def upp_samp_4(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF):
-    """ upper sample 4"""
+    """ upper sample 4 - phase with prev phase overlapping and next phase abutting"""
     in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
                       j == PHI_REF[SAMP_VEC_TRACK[m-1]]]
     in_phase_dates.append(phis_samp[m+2])
@@ -410,7 +410,7 @@ def upp_samp_4(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF)
     return limits
 
 def upp_samp_5(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF):
-    """ upper sample 5"""
+    """ upper sample 5 - phase with prev phase gap, next phase overlap"""
     in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
                       j == PHI_REF[SAMP_VEC_TRACK[m]]]
     in_phase_dates.append(phis_samp[m-1])
@@ -418,7 +418,7 @@ def upp_samp_5(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF)
     return limits
 
 def upp_samp_6(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF):
-    """ upper sample 6"""
+    """ upper sample 6 - phase with prev phase gap next phase abbuting"""
     limits = [max([theta_samp[i] for i, j in enumerate(KEY_REF) if
                    j == PHI_REF[SAMP_VEC_TRACK[m]]]), phis_samp[m-1]]
     return limits
@@ -671,7 +671,10 @@ def step_1_squeeze(A, i, PREV_PROB_TEST, K, ACCEPT, SITE_DICT_TEST_1,  SITE_DICT
     prob_1_test = post_h(A, SITE_DICT_TEST_2, THETAS, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION)[1]
     c_test = []
     for j_1, a_1 in enumerate(prob_1_test):
-        c_test.append(a_1/PREV_PROB_TEST[j_1])
+        if PREV_PROB_TEST[j_1] == 0:
+            c_test.append(0)
+        else:
+            c_test.append(a_1/PREV_PROB_TEST[j_1])
     h_1 = np.prod(c_test)
     if h_1 >= 1:
         ACCEPT[k].append(THETAS[k])
@@ -703,7 +706,10 @@ def step_2_squeeze(i, prob_1_test, M, PHI_SAMP_DICT, POST_S, R, PHIS_VEC, SITE_D
       backup_b_test = step_2_prob[0]
       c_test = []
       for k_2, b_2 in enumerate(prob_2_test):
-          c_test.append(b_2/prob_1_test[k_2])
+          if prob_1_test[k_2] == 0:
+              c_test.append(0)
+          else:
+              c_test.append(b_2/prob_1_test[k_2])
       h_2 = np.prod(c_test)*(f_phi2/f_phi1)
       if h_2 >= 1:
           PHI_ACCEPT[m].append(PHIS_VEC[m])
@@ -742,7 +748,10 @@ def step_3_squeeze(A, i, backup_b_test, prob_2_test, S, ACCEPT, POST_S, PHIS_VEC
       b_test = temp[0]
       c_test = []
       for f, c_3 in enumerate(prob_3_test):
-          c_test.append(c_3/prob_2_test[f])
+          if prob_2_test[f] == 0:
+              c_test.append(0)
+          else:
+              c_test.append(c_3/prob_2_test[f])
       h_3 = np.prod(c_test)
       if h_3 >= 1:
       #    print("step 3 accept")
