@@ -849,6 +849,7 @@ def squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, 
     i = 0
      ###START OF MCMC ALGORITHM###############
     while min([len(i) for i in ACCEPT]) < 50000:
+        print(str(int((min([len(i) for i in ACCEPT])/50000)*100))+"% done")
         for l in np.linspace(0, 10002, 3335):
             #  t0 = time.time()
           #    print("i " + str(i) + "\n")
@@ -867,12 +868,12 @@ def squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, 
         acept_prob = len(CHECK_ACCEPT[(CHECK_ACCEPT <= 0.1) | (CHECK_ACCEPT >= 0.7)])
       #  print(acept_prob)
         if acept_prob > 0:
-            print("oh no")
+         #   print("oh no")
             break
       #plot code
     CHECK_ACCEPT = accept_prob(ACCEPT, PHI_ACCEPT, i)
-    print(CHECK_ACCEPT)
-    print(len(CHECK_ACCEPT[(CHECK_ACCEPT <= 0.05) | (CHECK_ACCEPT >= 0.7)]))
+  #  print(CHECK_ACCEPT)
+ #   print(len(CHECK_ACCEPT[(CHECK_ACCEPT <= 0.05) | (CHECK_ACCEPT >= 0.7)]))
     return PHI_ACCEPT, ACCEPT, POST_S
 
 #sampling dictionary
@@ -1051,7 +1052,7 @@ def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_
   elif method == 'gibbs':
      PHI_ACCEPT, ACCEPT, POST_S = gibbs_code(5000, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT)
      #posterior_plots(ACCEPT, CONTEXT_NO, PHI_REF, PHI_ACCEPT)
-  print('whole func', str(time.time() - t0))
+ # print('whole func', str(time.time() - t0))
 #  PHI_ACCEPT, ACCEPT, POST_S = run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_REF, PREV_PHASE, POST_PHASE, TOPO_SORT)
   get_hpd_intervals(CONTEXT_NO, ACCEPT, PHI_ACCEPT)
   posterior_plots(ACCEPT, CONTEXT_NO, PHI_REF, PHI_ACCEPT, A, P)
