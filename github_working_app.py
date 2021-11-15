@@ -31,18 +31,28 @@ import pandas as pd
 from tkinter.filedialog import askopenfile
 from graphviz import render
 import automated_mcmc_ordering_coupling_copy as mcmc
-from ttkthemes import ThemedTk
 from ttkthemes import ThemedStyle
-from tkinter import Tk, font
 from tkinter.font import BOLD
-import subprocess
+import sys
 #from ttkbootstrap import Style
 #from networkx.readwrite import json_graph
+
+old_stdout = sys.stdout
+
+class StdoutRedirector(object):
+
+    def __init__(self, text_area):
+        self.text_area = text_area
+
+    def write(self, str):
+        self.text_area.update_idletasks()
+        self.text_area.insert(tk.END, str)
+        self.text_area.see(tk.END)
 
 phase_true = 0
 CALIBRATION = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True)    
 def trim(im_trim):
-   # t0 = time.time()
+    # t0 = time.time()
     """Trims images down"""
     bg_trim = Image.new(im_trim.mode, im_trim.size)
     diff = ImageChops.difference(im_trim, bg_trim)
@@ -603,12 +613,46 @@ class popupWindow3(object):
         write_dot(self.graphcopy, 'fi_new_chrono')
         self.top.destroy()
 
-
-            
 class MainFrame(tk.Tk):
     """ Main frame for tkinter app"""
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        tk.Tk.__init__(self, *args, **kwargs)
+
+     #   self.title_font = tkfont.Font(family='Helvetica', size=18, weight="bold", slant="italic")
+
+        # the container is where we'll stack a bunch of frames
+        # on top of each other, then the one we want visible
+        # will be raised above the others
+        container = tk.Frame(self)
+        container.pack(side="top", fill="both", expand=True)
+        container.grid_rowconfigure(0, weight=1)
+        container.grid_columnconfigure(0, weight=1)
+
+        self.frames = {}
+        for F in (StartPage, PageOne, PageTwo):
+            page_name = F.__name__
+            frame = F(parent=container, controller=self)
+            self.frames[page_name] = frame
+
+            # put all of the pages in the same location;
+            # the one on the top of the stacking order
+            # will be the one that is visible.
+            frame.grid(row=0, column=0, sticky="nsew")
+
+        self.show_frame("StartPage")
+        
+    def show_frame(self, page_name):
+        '''Show a frame for the given page name'''
+        frame = self.frames[page_name]
+        frame.tkraise()
+            
+class StartPage(tk.Frame):
+    """ Main frame for tkinter app"""
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        self.canvas = tk.Canvas(self, bd=0, highlightthickness=0)
+ #       super().__init__(*args, **kwargs)
         #define all variables that are used
         self.h_1 = 0
         self.w_1 = 0
@@ -627,8 +671,9 @@ class MainFrame(tk.Tk):
         self.x_1 = 1
         self.image = "noimage"
         self.phase_rels = None 
+        
         #forming and placing canvas and little canvas
-        self.canvas = tk.Canvas(self, bd=0, highlightthickness=0)
+        
         self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
         self.canvas.update()
         self.littlecanvas = tk.Canvas(self.canvas, bd=0, bg = 'white',
@@ -668,8 +713,13 @@ class MainFrame(tk.Tk):
         self.phaselevsbutton = ttk.Button(self.canvas, text ='Display in phases', command = lambda:self.phasing())
         self.phaselevsbutton.place(relx=0.65, rely=0.01, relwidth=0.1, relheight=0.03)               
         self.mcmcbutton = ttk.Button(self.canvas, text ='Run MCMC', command = lambda: self.load_mcmc())
-        self.mcmcbutton.place(relx=0.88, rely=0.01, relwidth=0.1, relheight=0.03)        
-         
+        
+        self.mcmcbutton.place(relx=0.88, rely=0.01, relwidth=0.1, relheight=0.03)  
+        self.button1 = ttk.Button(self.canvas, text="Go to Page One", command=lambda: controller.show_frame("PageOne"))
+        self.button1.place(relx=0.78, rely=0.01, relwidth=0.1, relheight=0.03) 
+        
+    #    self.button2 = ttk.Button(self.canvas, text="Go to Page Two", command=lambda: controller.show_frame("PageTwo"))
+     #   self.button2.place(relx=0.78, rely=0.03, relwidth=0.1, relheight=0.03) 
 
         #########deleted nodes##################
         self.nodescanvas = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg = 'red')
@@ -700,6 +750,12 @@ class MainFrame(tk.Tk):
         self.variable = tk.StringVar(self.littlecanvas)
         self.variable.set("Node Action")
         self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable,self.OptionList[0], *self.OptionList, command = self.nodes)
+#        container = ttk.Frame(self.canvas)
+#        container.pack(side="top", fill="both", expand=True)
+#        container.grid_rowconfigure(0, weight=1)
+#        container.grid_columnconfigure(0, weight=1)
+
+
         def destroy(self):
             self.testmenu.place_forget()
     #    # This is the function that removes the selected item when the label is clicked.
@@ -712,6 +768,7 @@ class MainFrame(tk.Tk):
         self.metacanvas.place(relx=0.75, rely=0.52, relwidth=0.35, relheight=0.2)
         self.abovebelowcanvas = tk.Canvas(self.canvas, bg="white")
         self.abovebelowcanvas.place(relx=0.75, rely=0.75, relwidth=0.35, relheight=0.2)        
+
 
     def onRight(self, *args):
         '''makes test menu appear after right click '''
@@ -785,7 +842,7 @@ class MainFrame(tk.Tk):
         self.testbutton.place(relx=0.75, rely=0.01, relwidth=0.15, relheight=0.03) 
         self.littlecanvas.bind("<Button-3>", self.preClick)
     #    print((sys._getframe().f_code.co_name), str(time.time() - t0))
-            
+           
     def open_file2(self): 
         '''opens plain text strat file'''
    #     t0 = time.time()
@@ -893,19 +950,27 @@ class MainFrame(tk.Tk):
     def load_mcmc(self):
         self.top=tk.Toplevel(self.littlecanvas)
         self.top.geometry("1000x400")
-        self.pbar_ind = ttk.Progressbar(self.top, orient="horizontal", length=400, mode="indeterminate", maximum=100)
-        self.pbar_ind.pack()
+ #       self.pbar_ind = ttk.Progressbar(self.top, orient="horizontal", length=400, mode="indeterminate", maximum=100)
+  #      self.pbar_ind.pack()
      #   self.pbar_ind.grid(row=0, column=0, pady=2, padx=2, columnspan=3)
         self.l=ttk.Label(self.top,text="MCMC in progress")
         self.l.pack()
     #    self.create_window(40, 35, window=self.l)
-        self.pbar_ind.start()
-        MainFrame.update(self)
-        print('hi')
+        
+        outputPanel = tk.Text(self.top, wrap='word', height = 11, width=50)
+        outputPanel.pack()
+        sys.stdout = StdoutRedirector(outputPanel)
+ #       text = TextOut(self.top)
+  #      sys.stdout = text
+   #     text.update_idletasks()
+    #    text.pack(expand=True, fill=tk.BOTH)
+  #      self.pbar_ind.start()
+       # MainFrame.update(self)
         self.MCMC_func()
-        MainFrame.update(self)
-        self.pbar_ind.stop()
-       # self.cleanup()
+    #    MainFrame.update(self)
+  #      self.pbar_ind.stop()
+        self.cleanup()
+        self.controller.show_frame('PageOne')
 
     def addedge(self, edgevec):
         global node_df
@@ -1368,8 +1433,33 @@ class MainFrame(tk.Tk):
         self.littlecanvas2.itemconfig(self.littlecanvas2_img, image=self.littlecanvas2.img)        
    #     print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
-MAIN_FRAME = MainFrame() 
 
+
+class PageOne(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        label = tk.Label(self, text="This is page 1")
+        label.pack(side="top", fill="x", pady=10)
+        button = tk.Button(self, text="Go to the start page",
+                           command=lambda: controller.show_frame("StartPage"))
+        button.pack()
+
+
+class PageTwo(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        label = tk.Label(self, text="This is page 2")
+        label.pack(side="top", fill="x", pady=10)
+        button = tk.Button(self, text="Go to the start page",
+                           command=lambda: controller.show_frame("StartPage"))
+        button.pack()
+
+MAIN_FRAME = MainFrame() 
+sys.stdout = old_stdout
 style = ThemedStyle(MAIN_FRAME)
 style.set_theme("breeze") 
 MAIN_FRAME.geometry("2000x1000")
