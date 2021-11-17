@@ -50,6 +50,7 @@ class StdoutRedirector(object):
         self.text_area.see(tk.END)
 
 phase_true = 0
+load_check = 'not_loaded'
 CALIBRATION = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True)    
 def trim(im_trim):
     # t0 = time.time()
@@ -254,13 +255,16 @@ def imgrender(file):
 
 
 
-def imgrender2():
+def imgrender2(load_check):
     """renders png from dotfile"""
-    render('dot', 'png', 'fi_new_chrono')
-    inp = Image.open("fi_new_chrono.png")
-    inp = trim(inp)
-    inp.save("testdag_chrono.png")
-    outp = Image.open("testdag_chrono.png")
+    if load_check == 'loaded':
+        render('dot', 'png', 'fi_new_chrono')
+        inp = Image.open("fi_new_chrono.png")
+        inp = trim(inp)
+        inp.save("testdag_chrono.png")
+        outp = Image.open("testdag_chrono.png")
+    else: 
+        outp = 'No_image'
 #    print((sys._getframe().f_code.co_name), str(time.time() - t0))
     return outp
 
@@ -645,10 +649,12 @@ class MainFrame(tk.Tk):
         '''Show a frame for the given page name'''
         frame = self.frames[page_name]
         frame.tkraise()
+        frame.config()
             
 class StartPage(tk.Frame):
     """ Main frame for tkinter app"""
     def __init__(self, parent, controller):
+        global load_check
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.canvas = tk.Canvas(self, bd=0, highlightthickness=0)
@@ -671,7 +677,6 @@ class StartPage(tk.Frame):
         self.x_1 = 1
         self.image = "noimage"
         self.phase_rels = None 
-        
         #forming and placing canvas and little canvas
         
         self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
@@ -716,7 +721,7 @@ class StartPage(tk.Frame):
         
         self.mcmcbutton.place(relx=0.88, rely=0.01, relwidth=0.1, relheight=0.03)  
         self.button1 = ttk.Button(self.canvas, text="Go to Page One", command=lambda: controller.show_frame("PageOne"))
-        self.button1.place(relx=0.78, rely=0.01, relwidth=0.1, relheight=0.03) 
+        self.button1.place(relx=0.78, rely=0.04, relwidth=0.1, relheight=0.03) 
         
     #    self.button2 = ttk.Button(self.canvas, text="Go to Page Two", command=lambda: controller.show_frame("PageTwo"))
      #   self.button2.place(relx=0.78, rely=0.03, relwidth=0.1, relheight=0.03) 
@@ -987,18 +992,27 @@ class StartPage(tk.Frame):
 
 ##        #pt2
     def chronograph_render(self):
+        global load_check
         self.popup3 = popupWindow3(self, self.graph, self.littlecanvas2, self.phase_rels)
-        self.image2 = imgrender2()
-        self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
-        self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
-                                                               image=self.littlecanvas2.img)
-
-        self.width2, self.height2 = self.image2.size
-        self.imscale2 = 1.0  # scale for the canvaas image
-        self.delta2 = 1.1  # zoom magnitude
-        # Put image into container rectangle and use it to set proper coordinates to the image
-        self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
-        self.littlecanvas2.bind("<Configure>", self.resize2)         
+        try: 
+            load_check = 'loaded'
+        except (RuntimeError, TypeError, NameError):
+            load_check = 'not_loaded'
+        self.image2 = imgrender2(load_check)
+        print(self.image2)
+        if self.image2 != 'No_image':
+            self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
+            self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
+                                                                   image=self.littlecanvas2.img)
+    
+            self.width2, self.height2 = self.image2.size
+            self.imscale2 = 1.0  # scale for the canvaas image
+            self.delta2 = 1.1  # zoom magnitude
+            # Put image into container rectangle and use it to set proper coordinates to the image
+            self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
+            self.littlecanvas2.bind("<Configure>", self.resize2)
+            load_check = 'loaded'
+        print(str(load_check) + ' chronorender')    
         
     def stratfunc(self, node):
         rellist = list(nx.line_graph(self.graph))
@@ -1435,17 +1449,93 @@ class StartPage(tk.Frame):
 
 
 
-class PageOne(tk.Frame):
+class PageOne(tk.Frame ):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+            
         label = tk.Label(self, text="This is page 1")
         label.pack(side="top", fill="x", pady=10)
-        button = tk.Button(self, text="Go to the start page",
-                           command=lambda: controller.show_frame("StartPage"))
-        button.pack()
+        self.canvas = tk.Canvas(self, bd=0, highlightthickness=0)
+ #       super().__init__(*args, **kwargs)
+        #define all variables that are used
+        self.h_1 = 0
+        self.w_1 = 0
+        self.transx = 0
+        self.transy = 0
+        self.meta1 = ""
+        self.metatext = ""
+        self.rad_sel = ""
+        self.mode = ""
+        ##### intial values for all the functions
+        self.delnodes = []
+        self.edge_nodes = []
+        self.comb_nodes = []
+        self.edges_del = []
+        self.temp = []
+        self.x_1 = 1
+        self.image = "noimage"
+        self.phase_rels = None 
+        
+        #forming and placing canvas and little canvas
+        
+        self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.canvas.update()
+        self.littlecanvas = tk.Canvas(self.canvas, bd=0, bg = 'white',
+                                      selectborderwidth=0, highlightthickness=0, insertwidth=0)
+        self.littlecanvas.place(relx=0.02, rely=0.05, relwidth=0.35, relheight=0.43)
+        self.littlecanvas_a = tk.Canvas(self.canvas, bd=0, bg = 'white',
+                                      selectborderwidth=0, highlightthickness=0, insertwidth=0)
+        self.littlecanvas_a.place(relx=0.02, rely=0.50, relwidth=0.35, relheight=0.43)
+        self.littlecanvas2 = tk.Canvas(self.canvas, bd=0, bg = 'white',
+                                      selectborderwidth=0, highlightthickness=0, insertwidth=0)
+        self.littlecanvas2.place(relx=0.39, rely=0.05, relwidth=0.35, relheight=0.9)        
+#        self.littlecanvas.bind("<MouseWheel>", self.wheel)
+#        self.littlecanvas.bind('<Button-4>', self.wheel)# only with Linux, wheel scroll down
+#        self.littlecanvas.bind('<Button-5>', self.wheel)
+#        self.littlecanvas.bind('<Button-1>', self.move_from)
+#        self.littlecanvas.bind('<B1-Motion>', self.move_to)
+        
+        self.littlecanvas2.bind("<MouseWheel>", StartPage.wheel2)
+        self.littlecanvas2.bind('<Button-4>', StartPage.wheel2)# only with Linux, wheel scroll down
+        self.littlecanvas2.bind('<Button-5>', StartPage.wheel2)
+        self.littlecanvas2.bind('<Button-1>', StartPage.move_from2)
+        self.littlecanvas2.bind('<B1-Motion>', StartPage.move_to2)
+        #placing image on littlecanvas from graph
+        self.littlecanvas.rowconfigure(0, weight=1)
+        self.littlecanvas.columnconfigure(0, weight=1)
+        self.littlecanvas.update()
 
+        self.button1 = ttk.Button(self, text="Go to the start page",
+                           command=lambda: controller.show_frame("StartPage"))
+        self.button1.place(relx=0.78, rely=0.01, relwidth=0.1, relheight=0.03) 
+        self.chronograph_render_post()
+        
+                
+    def chronograph_render_post(self):
+        global load_check
+        print(load_check)
+        if load_check == 'loaded':
+            self.image2 = imgrender2(load_check)
+            print('hiiiiiiiiiii')
+            self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
+            self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
+                                                                  image=self.littlecanvas2.img)
+    
+            self.width2, self.height2 = self.image2.size
+            self.imscale2 = 1.0  # scale for the canvaas image
+            self.delta2 = 1.1  # zoom magnitude
+                # Put image into container rectangle and use it to set proper coordinates to the image
+            self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
+            self.littlecanvas2.bind("<Configure>", StartPage.resize2)  
+    def tkraise(self, aboveThis=None):
+            # Get a reference to StartPage
+       # start_page = self.controller.frames['StartPage']
+                # Get the selected item from start_page
+        self.chronograph_render_post()   
+            # Call the real .tkraise
+        super().tkraise(aboveThis)   
 
 class PageTwo(tk.Frame):
 
