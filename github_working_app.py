@@ -21,6 +21,7 @@ import copy
 import re
 import ast
 import time
+import matplotlib as plt
 #import threading
 from PIL import Image, ImageTk, ImageChops
 from networkx.drawing.nx_pydot import read_dot, write_dot
@@ -34,6 +35,8 @@ import automated_mcmc_ordering_coupling_copy as mcmc
 from ttkthemes import ThemedStyle
 from tkinter.font import BOLD
 import sys
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 #from ttkbootstrap import Style
 #from networkx.readwrite import json_graph
 
@@ -51,6 +54,7 @@ class StdoutRedirector(object):
 
 phase_true = 0
 load_check = 'not_loaded'
+mcmc_check = 'mcmc_notloaded'
 CALIBRATION = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True)    
 def trim(im_trim):
     # t0 = time.time()
@@ -413,7 +417,8 @@ def imgrender_phase(file):
     (graph,) = pydot.graph_from_dot_file('fi_new.txt')
     graph.write_png('test.png')
     inp = Image.open("test.png")
-    inp = trim(inp)
+    inp = trim(inp)  
+            # Call the real .tkraise
     inp.save("testdag.png")
     outp = Image.open("testdag.png")
   #  print((sys._getframe().f_code.co_name), str(time.time() - t0))
@@ -621,7 +626,6 @@ class MainFrame(tk.Tk):
     """ Main frame for tkinter app"""
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
-
      #   self.title_font = tkfont.Font(family='Helvetica', size=18, weight="bold", slant="italic")
 
         # the container is where we'll stack a bunch of frames
@@ -650,11 +654,15 @@ class MainFrame(tk.Tk):
         frame = self.frames[page_name]
         frame.tkraise()
         frame.config()
-            
+        
+    def get_page(self, page_class):
+            return self.frames[page_class] 
+        
+        
 class StartPage(tk.Frame):
     """ Main frame for tkinter app"""
     def __init__(self, parent, controller):
-        global load_check
+        global load_check, mcmc_check
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.canvas = tk.Canvas(self, bd=0, highlightthickness=0)
@@ -801,7 +809,7 @@ class StartPage(tk.Frame):
         try:
             self.testmenu.place_forget()
             self.onRight()
-        except Exception:
+        except Exception:  
             self.onRight()
 
     # Hide menu when left clicking
@@ -953,30 +961,22 @@ class StartPage(tk.Frame):
     def cleanup(self):
         self.top.destroy()
     def load_mcmc(self):
+        global mcmc_check
         self.top=tk.Toplevel(self.littlecanvas)
         self.top.geometry("1000x400")
- #       self.pbar_ind = ttk.Progressbar(self.top, orient="horizontal", length=400, mode="indeterminate", maximum=100)
-  #      self.pbar_ind.pack()
-     #   self.pbar_ind.grid(row=0, column=0, pady=2, padx=2, columnspan=3)
         self.l=ttk.Label(self.top,text="MCMC in progress")
         self.l.pack()
-    #    self.create_window(40, 35, window=self.l)
-        
         outputPanel = tk.Text(self.top, wrap='word', height = 11, width=50)
         outputPanel.pack()
         sys.stdout = StdoutRedirector(outputPanel)
- #       text = TextOut(self.top)
-  #      sys.stdout = text
-   #     text.update_idletasks()
-    #    text.pack(expand=True, fill=tk.BOTH)
-  #      self.pbar_ind.start()
-       # MainFrame.update(self)
-        self.MCMC_func()
-    #    MainFrame.update(self)
-  #      self.pbar_ind.stop()
-        self.cleanup()
+        self.CONTEXT_NO, self.ACCEPT, self.PHI, self.PHI_REF, self.A, self.P = self.MCMC_func()
+        print('hi')
+        mcmc_check = 'mcmc_loaded'
+        print(mcmc_check)  
+        sys.stdout = old_stdout
         self.controller.show_frame('PageOne')
-
+        self.cleanup()
+        
     def addedge(self, edgevec):
         global node_df
         x_1 = edgevec[0]
@@ -999,7 +999,6 @@ class StartPage(tk.Frame):
         except (RuntimeError, TypeError, NameError):
             load_check = 'not_loaded'
         self.image2 = imgrender2(load_check)
-        print(self.image2)
         if self.image2 != 'No_image':
             self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
             self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
@@ -1012,7 +1011,6 @@ class StartPage(tk.Frame):
             self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
             self.littlecanvas2.bind("<Configure>", self.resize2)
             load_check = 'loaded'
-        print(str(load_check) + ' chronorender')    
         
     def stratfunc(self, node):
         rellist = list(nx.line_graph(self.graph))
@@ -1060,8 +1058,8 @@ class StartPage(tk.Frame):
         TOPO_SORT = list(nx.topological_sort(self.graph))
         TOPO_SORT.reverse()
 #        print(TOPO_SORT)
-        mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.popup3.phi_ref, self.popup3.prev_phase, self.popup3.post_phase, TOPO_SORT)
-
+        CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P = mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.popup3.phi_ref, self.popup3.prev_phase, self.popup3.post_phase, TOPO_SORT)
+        return CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P
 
         
         
@@ -1120,7 +1118,6 @@ class StartPage(tk.Frame):
 
     def nodes(self, currentevent):
         """performs action using the node and redraws the graph"""
-        t0 = time.time()
         self.testmenu.place_forget()
         if self.image != "noimage":
             x_scal = self.cursorx + self.transx
@@ -1449,12 +1446,11 @@ class StartPage(tk.Frame):
 
 
 
-class PageOne(tk.Frame ):
+class PageOne(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        self.controller = controller
-            
+        self.controller = controller            
         label = tk.Label(self, text="This is page 1")
         label.pack(side="top", fill="x", pady=10)
         self.canvas = tk.Canvas(self, bd=0, highlightthickness=0)
@@ -1510,15 +1506,40 @@ class PageOne(tk.Frame ):
         self.button1 = ttk.Button(self, text="Go to the start page",
                            command=lambda: controller.show_frame("StartPage"))
         self.button1.place(relx=0.78, rely=0.01, relwidth=0.1, relheight=0.03) 
-        self.chronograph_render_post()
         
-                
+        
+       # self.chronograph_render_post()
+        
+    def mcmc_output(self):
+        global mcmc_check
+        startpage = self.controller.get_page('StartPage')
+        
+        if mcmc_check == 'mcmc_loaded':
+            
+            print('A')
+            print(startpage.ACCEPT[0][0])
+            fig = Figure(figsize = (5, 5),
+                 dpi = 100)
+            plot1 = fig.add_subplot(111)
+            plot1.hist(startpage.ACCEPT[0], bins='auto', color='#0504aa',
+                        alpha=0.7, rwidth=0.85, density = True )
+            canvas = FigureCanvasTkAgg(fig,
+                               master = self.littlecanvas)  
+            canvas.draw()
+            canvas.get_tk_widget().pack()
+  
+    # creating the Matplotlib toolbar
+            toolbar = NavigationToolbar2Tk(canvas,
+                                          self.littlecanvas)
+            toolbar.update()
+            canvas.get_tk_widget().pack()
+            
     def chronograph_render_post(self):
         global load_check
-        print(load_check)
+      #  print(load_check)
         if load_check == 'loaded':
             self.image2 = imgrender2(load_check)
-            print('hiiiiiiiiiii')
+      #      print('hiiiiiiiiiii')
             self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
             self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
                                                                   image=self.littlecanvas2.img)
@@ -1528,12 +1549,14 @@ class PageOne(tk.Frame ):
             self.delta2 = 1.1  # zoom magnitude
                 # Put image into container rectangle and use it to set proper coordinates to the image
             self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
-            self.littlecanvas2.bind("<Configure>", StartPage.resize2)  
+       #     self.littlecanvas2.bind("<Configure>", StartPage.resize2(self))  
     def tkraise(self, aboveThis=None):
             # Get a reference to StartPage
        # start_page = self.controller.frames['StartPage']
                 # Get the selected item from start_page
-        self.chronograph_render_post()   
+      #  print('pageone tkraise')
+        self.chronograph_render_post() 
+        self.mcmc_output()
             # Call the real .tkraise
         super().tkraise(aboveThis)   
 
@@ -1549,7 +1572,7 @@ class PageTwo(tk.Frame):
         button.pack()
 
 MAIN_FRAME = MainFrame() 
-sys.stdout = old_stdout
+
 style = ThemedStyle(MAIN_FRAME)
 style.set_theme("breeze") 
 MAIN_FRAME.geometry("2000x1000")
