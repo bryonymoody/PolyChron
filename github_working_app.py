@@ -37,10 +37,14 @@ from tkinter.font import BOLD
 import sys
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+import pickle
+
 #from ttkbootstrap import Style
 #from networkx.readwrite import json_graph
 
 old_stdout = sys.stdout
+FILENAME = "save.pickle"
+
 
 class StdoutRedirector(object):
 
@@ -69,7 +73,10 @@ def trim(im_trim):
 def polygonfunc(i):
     x = re.findall(r'points="(.*?)"', i)[0].replace(' ', ',')
     a = x.split(",")
-    coords_converted = [float(a[2]), float(a[6]), -1*float(a[7]), -1*float(a[3])]
+    if -1*float(a[7]) == -1*float(a[3]):
+        coords_converted = [float(a[2]), float(a[6]), -1*float(a[5]), -1*float(a[1])]
+    else:
+        coords_converted = [float(a[2]), float(a[6]), -1*float(a[7]), -1*float(a[3])]
     return(coords_converted)
 
 def ellipsefunc(i):
@@ -86,11 +93,14 @@ def node_coords_fromjson(graph):
     svg_string = str(graphs.create_svg())
     scale_info = re.search('points=(.*?)/>', svg_string).group(1).replace(' ', ',')
     scale_info = scale_info.split(",")
+ #   print(scale_info)
     scale = [float(scale_info[4]), -1*float(scale_info[3])]
-    coords_x = re.findall(r'id="node(.*?)</text>', svg_string)      
+    coords_x = re.findall(r'id="node(.*?)</text>', svg_string)  
     coords_temp = [polygonfunc(i) if "points" in i else ellipsefunc(i) for i in coords_x]
+  #  print(coords_temp)
     node_test = re.findall(r'node">\\n<title>(.*?)</title>', svg_string)
     node_list = [i.replace('&#45;', '-') for i in node_test]
+                        
     new_pos = dict(zip(node_list, coords_temp))
     df = pd.DataFrame.from_dict(new_pos, orient='index', columns=['x_lower', 'x_upper', 'y_lower', 'y_upper'])
  #   print((sys._getframe().f_code.co_name), str(time.time() - t0))
@@ -169,9 +179,9 @@ def chrono_edge_remov(file_graph):
         for node in phase_list:
             alp_beta_node_add(node, file_graph)
         for i, j in enumerate(elist):
-            file_graph.add_edge("b_" + str(j), evenlist[i], arrows=False)    
+            file_graph.add_edge("β_" + str(j), evenlist[i], arrows=False)    
         for i, j in enumerate(olist):
-            file_graph.add_edge(oddlist[i], "a_" + str(j.replace("_below", "")), arrows=False)
+            file_graph.add_edge(oddlist[i], "α_" + str(j.replace("_below", "")), arrows=False)
         #add boundary nodes
         #add dges between nodes using y_l as reference
         #figure out top and bottom nodes
@@ -192,10 +202,10 @@ def chrono_edge_remov(file_graph):
             alp_beta_node_add(node, file_graph)
         phase_lab = phase_list[0]   
         for z in evenlist:
-            file_graph.add_edge("b_" + str(phase_lab), z, arrows=False)
+            file_graph.add_edge("β_" + str(phase_lab), z, arrows=False)
                 
         for m in oddlist:
-            file_graph.add_edge(m, "a_" + str(phase_lab), arrows=False)
+            file_graph.add_edge(m, "α_<SUB>" + str(phase_lab) + "<\SUB>", arrows=False)
     return graph_data, [xs, ys]
 
 
@@ -209,27 +219,27 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
     for i in node_list:
         if (i in xs) == False:
             if (i in ys) == False:
-                file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrows=False)
-                file_graph.add_edge(i, "a_" + str(all_node_phase[i]), arrows=False)
+                file_graph.add_edge("β_" + str(all_node_phase[i]), i, arrows=False)
+                file_graph.add_edge(i, "α_" + str(all_node_phase[i]), arrows=False)
             else:
-                file_graph.add_edge(i, "a_" + str(all_node_phase[i]), arrows=False)
+                file_graph.add_edge(i, "α_" + str(all_node_phase[i]), arrows=False)
         elif (i in xs) == True:
             if (i in ys) == False:
                 #print(i)
-                file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrows=False)
+                file_graph.add_edge("β_" + str(all_node_phase[i]), i, arrows=False)
     if phasedict != None:
         for p in list(set(phase_trck)):
             relation = phasedict[p]
             if relation == 'gap':
-                file_graph.add_edge("a_" + str(p[0]), "b_" + str(p[1]))
+                file_graph.add_edge("α_" + str(p[0]) + str(p[0]), "β_" + str(p[1]))
             if relation == 'overlap':
-                file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[0]))
+                file_graph.add_edge("β_" + str(p[1]), "α_" + str(p[0]))
             if relation == "abuting":
                 x_bef = list(file_graph)
-                file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
+                file_graph = nx.contracted_nodes(file_graph, "α_" + str(p[0]), "β_" + str(p[1]))
                 x_nod = list(file_graph)
-                newnode = str("a_" + str(p[0]) + " = " +"b_" + str(p[1]))
-                y_nod = [newnode if i=="a_" + str(p[0]) else i for i in x_nod]
+                newnode = str("α_" + str(p[0]) + " = " +"β_" + str(p[1]))
+                y_nod = [newnode if i=="α_" + str(p[0]) else i for i in x_nod]
                 mapping = dict(zip(x_nod, y_nod))
                 file_graph = nx.relabel_nodes(file_graph, mapping)
     graph = nx.DiGraph()
@@ -380,9 +390,9 @@ def phase_info_func(file_graph):
     return reversed_dict, [phase_norm, node_list, phase_list, phase_trck], [x_l, y_l], phase_dic
 
 def alp_beta_node_add(x, graph):
-    graph.add_node("a_" + str(x), shape="diamond", fontsize="20.0",
+    graph.add_node("α_" + str(x), shape="diamond", fontsize="20.0",
                                    fontname="Ubuntu", penwidth="1.0")
-    graph.add_node("b_" + str(x), shape="diamond", fontsize="20.0",
+    graph.add_node("β_" + str(x), shape="diamond", fontsize="20.0",
                                    fontname="Ubuntu", penwidth="1.0")
 
 
@@ -482,12 +492,12 @@ class popupWindow2(object):
             self.entry4 = tk.Entry(self.canvas2)
             self.canvas2.create_window(90, 130, window=self.entry4, width=50)
             self.canvas2.create_window(90, 90, window=self.label4)
-            self.label5 = ttk.Label(self.canvas2, text='Error', bg = 'white')
+            self.label5 = ttk.Label(self.canvas2, text='Error')
             self.entry5 = tk.Entry(self.canvas2)
             self.canvas2.create_window(200, 130, window=self.entry5, width=50)
             self.canvas2.create_window(200, 90, window=self.label5)
         if self.variable_b.get() == "Input phase":          
-            self.label6 = ttk.Label(self.canvas2, text='Phase', bg = 'white')
+            self.label6 = ttk.Label(self.canvas2, text='Phase')
             self.entry6 = tk.Entry(self.canvas2)
             self.canvas2.create_window(90, 130, window=self.entry6, width=50)
             self.canvas2.create_window(90, 90, window=self.label6)
@@ -649,6 +659,7 @@ class MainFrame(tk.Tk):
 
         self.show_frame("StartPage")
         
+        
     def show_frame(self, page_name):
         '''Show a frame for the given page name'''
         frame = self.frames[page_name]
@@ -685,6 +696,22 @@ class StartPage(tk.Frame):
         self.x_1 = 1
         self.image = "noimage"
         self.phase_rels = None 
+        self.chrono_dag = None
+        self.imscale = 0
+        self.graph = None
+        self.littlecanvas_img = None
+        self.width = 0
+        self.height = 0
+        self.delta = 0
+        self.container = None
+        self.datefile = None
+        self.CONTEXT_NO = 0
+        self.ACCEPT = None
+        self.PHI = None
+        self.PHI_ACCEPT = None
+        self.A = 0
+        self.P = 0
+        self.variable = 0
         #forming and placing canvas and little canvas
         
         self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
@@ -710,6 +737,9 @@ class StartPage(tk.Frame):
         self.littlecanvas.rowconfigure(0, weight=1)
         self.littlecanvas.columnconfigure(0, weight=1)
         self.littlecanvas.update()
+        self.littlecanvas2.rowconfigure(0, weight=1)
+        self.littlecanvas2.columnconfigure(0, weight=1)
+        self.littlecanvas2.update()
         #### bind comands to canvas and little canvas ######
         self.dotbutton = ttk.Button(self.canvas, text ='Open dot file', command = lambda:self.open_file1())
         self.dotbutton.place(relx=0.05, rely=0.01, relwidth=0.1, relheight=0.03)
@@ -730,10 +760,13 @@ class StartPage(tk.Frame):
         self.mcmcbutton.place(relx=0.88, rely=0.01, relwidth=0.1, relheight=0.03)  
         self.button1 = ttk.Button(self.canvas, text="Go to Page One", command=lambda: controller.show_frame("PageOne"))
         self.button1.place(relx=0.78, rely=0.04, relwidth=0.1, relheight=0.03) 
+        self.save_button = ttk.Button(self.canvas, text = "Save", command = self.save_state)
+        self.save_button.place(relx=0.78, rely=0.94, relwidth=0.1, relheight=0.03) 
+        self.load_button = ttk.Button(self.canvas, text = "Reload", command = self.restore_state)
+        self.load_button.place(relx=0.58, rely=0.94, relwidth=0.1, relheight=0.03) 
+        self.button2 = ttk.Button(self.canvas, text="Go to Page Two", command=lambda: controller.show_frame("PageTwo"))
+        self.button2.place(relx=0.78, rely=0.03, relwidth=0.1, relheight=0.03) 
         
-    #    self.button2 = ttk.Button(self.canvas, text="Go to Page Two", command=lambda: controller.show_frame("PageTwo"))
-     #   self.button2.place(relx=0.78, rely=0.03, relwidth=0.1, relheight=0.03) 
-
         #########deleted nodes##################
         self.nodescanvas = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg = 'red')
         self.nodescanvas.place(relx=0.75, rely=0.05, relwidth=0.35, relheight=0.2)
@@ -763,12 +796,14 @@ class StartPage(tk.Frame):
         self.variable = tk.StringVar(self.littlecanvas)
         self.variable.set("Node Action")
         self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable,self.OptionList[0], *self.OptionList, command = self.nodes)
+        
 #        container = ttk.Frame(self.canvas)
 #        container.pack(side="top", fill="both", expand=True)
 #        container.grid_rowconfigure(0, weight=1)
 #        container.grid_columnconfigure(0, weight=1)
 
 
+        
         def destroy(self):
             self.testmenu.place_forget()
     #    # This is the function that removes the selected item when the label is clicked.
@@ -780,9 +815,105 @@ class StartPage(tk.Frame):
         self.metacanvas = tk.Canvas(self.canvas, bg="white")
         self.metacanvas.place(relx=0.75, rely=0.52, relwidth=0.35, relheight=0.2)
         self.abovebelowcanvas = tk.Canvas(self.canvas, bg="white")
-        self.abovebelowcanvas.place(relx=0.75, rely=0.75, relwidth=0.35, relheight=0.2)        
+        self.abovebelowcanvas.place(relx=0.75, rely=0.75, relwidth=0.35, relheight=0.2) 
+    
 
 
+
+    def save_state(self):
+        
+        try:
+            data = {
+                "h_1": self.h_1, 
+                "w_1": self.w_1,
+                "transx": self.transx,
+                "transy":self.transy,
+                "meta1": self.meta1,
+                "metatext": self.metatext, 
+                "rad_sel": self.rad_sel,
+                "mode": self.mode,
+                "del_nodes": self.delnodes, 
+                "edge_nodes": self.edge_nodes, 
+                "comb_nodes": self.comb_nodes,
+                "edges_del": self.edges_del,
+                "temp": self.temp,
+                "x_1": self.x_1,
+                "image": self.image, 
+                "phase_rels": self.phase_rels, 
+                "chrono_dag": self.chrono_dag, 
+                "imscale": self.imscale,
+#                "variable": self.variable,
+                "graph": self.graph,
+                "littlecanvas_img": self.littlecanvas_img,
+                "width" : self.width,
+                "height" : self.height,
+                "delta" : self.delta,
+                "container" : self.container,
+                "datefile" : self.datefile,
+                "context_no" : self.CONTEXT_NO,
+                "accept" : self.ACCEPT,
+                "phi": self.PHI,
+                "phi_accept": self.PHI_ACCEPT,
+                "A" : self.A,
+                "P" : self.P
+            }
+          #  print('tryin to save')
+            print(data)
+            with open(FILENAME, "wb") as f:
+                pickle.dump(data, f)
+            print('tryin to save')
+
+        except Exception as e:
+            print
+            "error saving state:", str(e)
+
+       # MainFrame.destroy()
+
+    def restore_state(self): 
+        print(FILENAME)
+        try:
+            with open(FILENAME, "rb") as f:
+                data = pickle.load(f)
+            self.h_1 = data["h_1"]
+            self.w_1 = data["w_1"]
+            self.transx = data["transx"]
+            self.transy = data["transy"]
+            self.meta1 = data["meta1"]
+            self.metatext = data["metatext"] 
+            self.rad_sel = data["rad_sel"]
+            self.mode = data["mode"]
+            self.delnodes = data["del_nodes"] 
+            self.edge_nodes = data["edge_nodes"] 
+            self.comb_nodes = data["comb_nodes"]
+            self.edges_del = data["edges_del"]
+            self.temp = data["temp"]
+            self.x_1 = data["x_1"]
+            self.image = data["image"]
+            self.phase_rels = data["phase_rels"] 
+            self.chrono_dag = data["chrono_dag"] 
+            self.imscale = data["imscale"]
+#            self.variable = data["variable"]
+            self.graph = data["graph"]
+            self.littlecanvas_img = data["littlecanvas_img"]
+            self.width = data["width"]
+            self.height = data["height"]
+            self.delta = data["delta"]
+            self.container = data["container"]
+            self.datefile = data["datefile"]
+            self.CONTEXT_NO = data["context_no"]
+            self.ACCEPT = data["accept"]
+            self.PHI = data["phi"]
+            self.PHI_ACCEPT = data["phi_accept"]
+            self.A = data["A"]
+            self.P = data["P"]
+            print(self.ACCEPT[0][450])
+            print('tryin to load')
+        
+        except Exception as e:
+            print
+            "error loading saved state:", str(e)
+            
+              
     def onRight(self, *args):
         '''makes test menu appear after right click '''
         self.littlecanvas.unbind("Button-1>")
@@ -851,11 +982,14 @@ class StartPage(tk.Frame):
         self.nodescanvas.create_window((0, 0), window=self.text, anchor='nw')
         self.text.insert('end', 'Deleted Contexts:\n' + str(self.delnodes)[1:-1])
         self.text.configure(state='disabled')
-        self.testbutton = ttk.Button(self.canvas, text ='Render Chronological DAG', command = lambda:self.chronograph_render()) #popupWindow3(self, self.graph, self.littlecanvas2))
+        self.testbutton = ttk.Button(self.canvas, text ='Render Chronological DAG', command = lambda:self.chronograph_render_wrap()) #popupWindow3(self, self.graph, self.littlecanvas2))
         self.testbutton.place(relx=0.75, rely=0.01, relwidth=0.15, relheight=0.03) 
         self.littlecanvas.bind("<Button-3>", self.preClick)
     #    print((sys._getframe().f_code.co_name), str(time.time() - t0))
-           
+    
+    def chronograph_render_wrap(self):
+        self.chrono_dag = self.chronograph_render()
+        
     def open_file2(self): 
         '''opens plain text strat file'''
    #     t0 = time.time()
@@ -897,7 +1031,7 @@ class StartPage(tk.Frame):
                 self.nodescanvas.create_window((0, 0), window=self.text, anchor='nw')
                 self.text.insert('end', 'Deleted Contexts:\n' + str(self.delnodes)[1:-1])
                 self.text.configure(state='normal')
-                self.testbutton = ttk.Button(self.canvas, text ='Render Chronological DAG', command = lambda:self.chronograph_render()) #popupWindow3(self, self.graph, self.littlecanvas2))
+                self.testbutton = ttk.Button(self.canvas, text ='Render Chronological DAG', command = lambda:self.chronograph_render_wrap()) #popupWindow3(self, self.graph, self.littlecanvas2))
                 self.testbutton.place(relx=0.75, rely=0.01, relwidth=0.15, relheight=0.03) 
                 self.littlecanvas.bind("<Button-3>", self.preClick)
     #canvas to hold buttons
@@ -920,7 +1054,7 @@ class StartPage(tk.Frame):
             
     def open_file4(self): 
     #    t0 = time.time()
-        file = askopenfile(mode ='r', filetypes =[('Python Files', '*.csv')]) 
+        file = askopenfile(mode ='r', filetypes =[('Pythotransxn Files', '*.csv')]) 
         if file is not None: 
             self.phasefile = pd.read_csv(file)
             self.phasefile = self.phasefile.applymap(str)
@@ -994,6 +1128,7 @@ class StartPage(tk.Frame):
     def chronograph_render(self):
         global load_check
         self.popup3 = popupWindow3(self, self.graph, self.littlecanvas2, self.phase_rels)
+        
         try: 
             load_check = 'loaded'
         except (RuntimeError, TypeError, NameError):
@@ -1011,6 +1146,7 @@ class StartPage(tk.Frame):
             self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
             self.littlecanvas2.bind("<Configure>", self.resize2)
             load_check = 'loaded'
+        return self.popup3.graphcopy
         
     def stratfunc(self, node):
         rellist = list(nx.line_graph(self.graph))
@@ -1246,12 +1382,6 @@ class StartPage(tk.Frame):
         #    print(time.time() - t0)
    #     print((sys._getframe().f_code.co_name), str(time.time() - t0)) 
 
-    def pos_update(self):
-#        t0 = time.time()
-        global node_df
-        node_df = node_coords_fromjson(self.graph) 
-    #    print((sys._getframe().f_code.co_name), str(time.time() - t0))
-
 
     def move_from(self, event):
 #        t0 = time.time()
@@ -1272,14 +1402,14 @@ class StartPage(tk.Frame):
     def move_from2(self, event):
 #        t0 = time.time()
         """Remembers previous coordinates for scrolling with the mouse"""
-        if self.image != "noimage":
+        if self.image2 != "noimage":
             self.littlecanvas2.scan_mark(event.x, event.y)
   #      print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
     def move_to2(self, event):
  #       t0 = time.time()
         """Drag (move) canvas to the new position"""
-        if self.image != "noimage":
+        if self.image2 != "noimage":
             self.littlecanvas2.scan_dragto(event.x, event.y, gain=1)
             self.show_image()
      #       bbox2 = self.littlecanvas2.bbox(self.container)
@@ -1450,16 +1580,18 @@ class PageOne(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        self.controller = controller            
+        self.controller = controller 
+  #      startpage = self.controller.get_page('StartPage')           
         label = tk.Label(self, text="This is page 1")
         label.pack(side="top", fill="x", pady=10)
         self.canvas = tk.Canvas(self, bd=0, highlightthickness=0)
+   #    popup3 = self.controller.get_page('popupWindow3')
  #       super().__init__(*args, **kwargs)
         #define all variables that are used
         self.h_1 = 0
         self.w_1 = 0
-        self.transx = 0
-        self.transy = 0
+        self.transx2 = 0
+        self.transy2 = 0
         self.meta1 = ""
         self.metatext = ""
         self.rad_sel = ""
@@ -1473,6 +1605,8 @@ class PageOne(tk.Frame):
         self.x_1 = 1
         self.image = "noimage"
         self.phase_rels = None 
+        self.imscale = 1.0  # scale for the canvaas image
+        self.delta = 1.1 
         
         #forming and placing canvas and little canvas
         
@@ -1486,18 +1620,25 @@ class PageOne(tk.Frame):
         self.littlecanvas_a.place(relx=0.02, rely=0.50, relwidth=0.35, relheight=0.43)
         self.littlecanvas2 = tk.Canvas(self.canvas, bd=0, bg = 'white',
                                       selectborderwidth=0, highlightthickness=0, insertwidth=0)
-        self.littlecanvas2.place(relx=0.39, rely=0.05, relwidth=0.35, relheight=0.9)        
-#        self.littlecanvas.bind("<MouseWheel>", self.wheel)
-#        self.littlecanvas.bind('<Button-4>', self.wheel)# only with Linux, wheel scroll down
-#        self.littlecanvas.bind('<Button-5>', self.wheel)
-#        self.littlecanvas.bind('<Button-1>', self.move_from)
-#        self.littlecanvas.bind('<B1-Motion>', self.move_to)
+        self.littlecanvas2.place(relx=0.39, rely=0.05, relwidth=0.35, relheight=0.9)    
+        self.littlecanvas3 = tk.Canvas(self.canvas, bd=0, bg = 'white',
+                                      selectborderwidth=0, highlightthickness=0, insertwidth=0)
+        self.littlecanvas3.place(relx=0.77, rely=0.25, relwidth=0.2, relheight=0.5)  
         
-        self.littlecanvas2.bind("<MouseWheel>", StartPage.wheel2)
-        self.littlecanvas2.bind('<Button-4>', StartPage.wheel2)# only with Linux, wheel scroll down
-        self.littlecanvas2.bind('<Button-5>', StartPage.wheel2)
-        self.littlecanvas2.bind('<Button-1>', StartPage.move_from2)
-        self.littlecanvas2.bind('<B1-Motion>', StartPage.move_to2)
+        
+        self.littlecanvas2.bind("<MouseWheel>", self.wheel2)
+        self.littlecanvas2.bind('<Button-4>', self.wheel2)# only with Linux, wheel scroll down
+        self.littlecanvas2.bind('<Button-5>', self.wheel2)
+        self.littlecanvas2.bind('<Button-3>', self.onRight)
+        self.littlecanvas2.bind('<Button-1>', self.move_from2)
+        self.littlecanvas2.bind('<B1-Motion>', self.move_to2)
+        #placing image on littlecanvas from graph
+        self.littlecanvas2.rowconfigure(0, weight=1)
+        self.littlecanvas2.columnconfigure(0, weight=1)
+        self.littlecanvas2.update()
+        
+   #     self.littlecanvas2.bind('<Button-1>', self.move_from2
+   #     self.littlecanvas2.bind('<B1-Motion>', self.move_to2
         #placing image on littlecanvas from graph
         self.littlecanvas.rowconfigure(0, weight=1)
         self.littlecanvas.columnconfigure(0, weight=1)
@@ -1506,14 +1647,70 @@ class PageOne(tk.Frame):
         self.button1 = ttk.Button(self, text="Go to the start page",
                            command=lambda: controller.show_frame("StartPage"))
         self.button1.place(relx=0.78, rely=0.01, relwidth=0.1, relheight=0.03) 
+        self.button2 = ttk.Button(self, text="Add nodes to list",
+                           command= self.node_list_tracker)
+        self.button2.place(relx=0.78, rely=0.15, relwidth=0.1, relheight=0.03)
+        self.ResultList = [
+            "Add to results list",
+            ]
+        self.variable = tk.StringVar(self.littlecanvas)
+        self.variable.set("Add to results list")
+        self.testmenu2 = ttk.OptionMenu(self.littlecanvas2, self.variable,self.ResultList[0], *self.ResultList, command = self.node_finder)
+ #       print(vars(self))
+ #       print(vars(startpage))
         
-        
+    def node_finder(self, currentevent):
+        startpage = self.controller.get_page('StartPage')
+        self.chronograph = startpage.chrono_dag
+        if self.variable.get() == 'Add to results list':
+            x = self.chrono_nodes(currentevent)
+            print(x)
        # self.chronograph_render_post()
+    def node_list_tracker(self):
+        print("hey")
+    def onRight(self, *args):
+        '''makes test menu appear after right click '''
+        print('hey')
+        self.littlecanvas2.unbind("Button-1>")
+        self.littlecanvas2.bind("<Button-1>", self.onLeft)
+        # Here we fetch our X and Y coordinates of the cursor RELATIVE to the window
+        self.cursorx2 = int(self.littlecanvas2.winfo_pointerx() - self.littlecanvas2.winfo_rootx())
+        self.cursory2 = int(self.littlecanvas2.winfo_pointery() - self.littlecanvas2.winfo_rooty())
+    
+        # Now we define our right click menu canvas
+        # And here is where we use our X and Y variables, to place the menu where our cursor is,
+        # That's how right click menus should be placed.           
+        self.testmenu2.place(x=self.cursorx2, y=self.cursory2)
+        # This is for packing our options onto the canvas, to prevent the canvas from resizing.
+        # This is extremely useful if you split your program into multiple canvases or frames
+        # and the pack method is forcing them to resize.
+        self.testmenu2.pack_propagate(0)
+        # Here is our label on the right click menu for deleting a row, notice the cursor
+        # value, which will give us a pointy finger when you hover over the option.
+        self.testmenu2.config(width=10)        
+        # This function is for removing the canvas when an option is clicked.
+  
+    def preClick(self, *args):
+        '''makes test menu appear and removes any previous test menu'''
+        try:
+            self.testmenu2.place_forget()
+            self.onRight()
+        except Exception:  
+            self.onRight()
+
+    # Hide menu when left clicking
+    def onLeft(self, *args):
+        '''hides menu when left clicking'''
+        try:
+            self.testmenu2.place_forget()
+        except Exception:
+            pass
         
     def mcmc_output(self):
         global mcmc_check
         startpage = self.controller.get_page('StartPage')
         
+        print(type(self.chronograph))
         if mcmc_check == 'mcmc_loaded':
             
             print('A')
@@ -1556,10 +1753,117 @@ class PageOne(tk.Frame):
                 # Get the selected item from start_page
       #  print('pageone tkraise')
         self.chronograph_render_post() 
-        self.mcmc_output()
+       # self.mcmc_output()
             # Call the real .tkraise
-        super().tkraise(aboveThis)   
+        super().tkraise(aboveThis)  
+        
+    def move_from2(self, event):
+#        t0 = time.time()
+        """Remembers previous coordinates for scrolling with the mouse"""
+        if self.image2 != "noimage":
+            self.littlecanvas2.scan_mark(event.x, event.y)
+  #      print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
+    def move_to2(self, event):
+ #       t0 = time.time()
+        """Drag (move) canvas to the new position"""        
+        if self.image2 != "noimage":
+            self.littlecanvas2.scan_dragto(event.x, event.y, gain=1)
+            self.show_image2()
+            
+            
+    def wheel2(self, event):
+   #     t0 = time.time()
+        """Zoom with mouse wheel"""
+        x_zoom = self.littlecanvas2.canvasx(event.x)
+        y_zoom = self.littlecanvas2.canvasy(event.y)
+        bbox = self.littlecanvas2.bbox(self.container2)  # get image area 
+        if bbox[0] < x_zoom < bbox[2] and bbox[1] < y_zoom < bbox[3]:
+            pass  # Ok! Inside the image
+        else: return  # zoom only inside image area
+        scale2 = 1.0
+        # Respond to Linux (event.num) or Windows (event.delta) wheel event
+        if event.num == 5 or event.delta == -120:  # scroll down
+            i = min(self.width2, self.height2)
+            if int(i * self.imscale2) < 30:
+                return  # image is less than 30 pixels
+            self.imscale2 /= self.delta2
+            scale2 /= self.delta2
+        if event.num == 4 or event.delta == 120:  # scroll up
+            i = min(self.littlecanvas2.winfo_width(), self.littlecanvas2.winfo_height())
+            if i < self.imscale2:
+                return  # 1 pixel is bigger than the visible area
+            self.imscale2 *= self.delta2
+            scale2 *= self.delta2  
+        self.littlecanvas2.scale('all', 0, 0, scale2, scale2)  # rescale all canvas objects
+        self.show_image2()
+
+    def show_image2(self):
+        """Show image on the Canvas"""
+        bbox1 = [0, 0, int(self.image2.size[0]*self.imscale2), int(self.image2.size[1]*self.imscale2)]
+        # Remove 1 pixel shift at the sides of the bbox1
+        bbox1 = (bbox1[0] + 1, bbox1[1] + 1, bbox1[2] - 1, bbox1[3] - 1)
+        bbox2 = (self.littlecanvas2.canvasx(0),  # get visible area of the canvas
+                 self.littlecanvas2.canvasy(0),
+                 self.littlecanvas2.canvasx(self.littlecanvas2.winfo_width()),
+                 self.littlecanvas2.canvasy(self.littlecanvas2.winfo_height()))
+        bbox = [min(bbox1[0], bbox2[0]), min(bbox1[1], bbox2[1]),  # get scroll region box
+                max(bbox1[2], bbox2[2]), max(bbox1[3], bbox2[3])]
+        bbox1 = [0, 0, int(self.image2.size[0]*self.imscale2), int(self.image2.size[1]*self.imscale2)]
+        if bbox[0] == bbox2[0] and bbox[2] == bbox2[2]:  # whole image in the visible area
+            bbox[0] = bbox1[0]
+            bbox[2] = bbox1[2]
+        if bbox[1] == bbox2[1] and bbox[3] == bbox2[3]:  # whole image in the visible area
+            bbox[1] = bbox1[1]
+            bbox[3] = bbox1[3]
+        self.littlecanvas2.configure(scrollregion=bbox)  # set scroll region
+        x_1 = max(bbox2[0] - bbox1[0], 0)  # get coordinates (x1,y1,x2,y2) of the image tile
+        y_1 = max(bbox2[1] - bbox1[1], 0)
+        x_2 = min(bbox2[2], bbox1[2]) - bbox1[0]
+        y_2 = min(bbox2[3], bbox1[3]) - bbox1[1]
+        if int(x_2 - x_1) > 0 and int(y_2 - y_1) > 0:  # show image if it in the visible area
+            x_img = min(int(x_2 / self.imscale2), self.width2)   # sometimes it is larger on 1 pixel
+            y_img = min(int(y_2 / self.imscale2), self.height2)  # ...and sometimes not
+            image2 = self.image2.crop((int(x_1 / self.imscale2), int(y_1 / self.imscale2),
+                                     x_img, y_img))
+            self.imagetk2 = ImageTk.PhotoImage(image2.resize((int(x_2 - x_1), int(y_2 - y_1))))
+            self.littlecanvas2.delete(self.littlecanvas2_img)
+            self.imageid2 = self.littlecanvas2.create_image(max(bbox2[0], bbox1[0]),
+                                                          max(bbox2[1], bbox1[1]), anchor='nw',
+                                                          image=self.imagetk2)
+            self.transx2, self.transy2 = bbox2[0], bbox2[1]
+            self.littlecanvas.imagetk2 = self.imagetk2 
+    def nodecheck(self, x_current, y_current):
+ #       t0 = time.time()
+        global node_df
+        """ returns the node that corresponds to the mouse cooridinates"""
+        node_inside = "no node"
+        node_df_con = node_coords_fromjson(self.chronograph)
+        node_df = node_df_con[0]
+        xmax, ymax = node_df_con[1]
+        print(node_df)
+        #forms a dataframe from the dicitonary of coords    
+        x, y = self.image2.size 
+        cavx = x*self.imscale2
+        cany = y*self.imscale2
+
+        xscale = (x_current)*(xmax)/cavx
+        yscale = (cany-y_current)*(ymax)/cany
+        print(xscale, yscale)
+        for n_ind in range(node_df.shape[0]):
+            if ((node_df.iloc[n_ind].x_lower < xscale < node_df.iloc[n_ind].x_upper) and
+                    (node_df.iloc[n_ind].y_lower < yscale < node_df.iloc[n_ind].y_upper)):
+                node_inside = node_df.iloc[n_ind].name       
+        return node_inside
+
+    def chrono_nodes(self, current):
+ #       self.cursorx = int(self.cursorx2 - self.littlecanvas2.winfo_rootx())
+ #       self.cursory = int(self.cursory2 - self.littlecanvas2.winfo_rooty())
+        x_scal = self.cursorx2 + self.transx2
+        y_scal = self.cursory2 + self.transy2
+        node = self.nodecheck(x_scal, y_scal)
+        return(node)
+        
 class PageTwo(tk.Frame):
 
     def __init__(self, parent, controller):
