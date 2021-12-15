@@ -821,7 +821,8 @@ class StartPage(tk.Frame):
 
 
     def save_state(self):
-        
+        global mcmc_check, load_check
+        print(self.popup3)
         try:
             data = {
                 "h_1": self.h_1, 
@@ -855,10 +856,15 @@ class StartPage(tk.Frame):
                 "phi": self.PHI,
                 "phi_accept": self.PHI_ACCEPT,
                 "A" : self.A,
-                "P" : self.P
+                "P" : self.P,
+                'load_check': load_check,
+                'mcmc_check' : mcmc_check,
+                'phasefile' : self.phasefile,
+                'phi_ref': self.popup3.phi_ref, 
+                'prev_phase' : self.popup3.prev_phase, 
+                'post_phase' : self.popup3.post_phase
             }
           #  print('tryin to save')
-            print(data)
             with open(FILENAME, "wb") as f:
                 pickle.dump(data, f)
             print('tryin to save')
@@ -870,10 +876,13 @@ class StartPage(tk.Frame):
        # MainFrame.destroy()
 
     def restore_state(self): 
+        global load_check, mcmc_check
+        
         print(FILENAME)
         try:
             with open(FILENAME, "rb") as f:
                 data = pickle.load(f)
+            
             self.h_1 = data["h_1"]
             self.w_1 = data["w_1"]
             self.transx = data["transx"]
@@ -906,8 +915,18 @@ class StartPage(tk.Frame):
             self.PHI_ACCEPT = data["phi_accept"]
             self.A = data["A"]
             self.P = data["P"]
-            print(self.ACCEPT[0][450])
-            print('tryin to load')
+            load_check = data['load_check']
+            mcmc_check = data['mcmc_check']
+            self.phasefile = data['phasefile']
+#            self.popup3.phi_ref = data['phi_ref']
+#            self.popup3.prev_phase = data['prev_phase'] 
+#            self.popup3.post_phase = data['post_phase']
+        #    print(type(self.graph) != 'NoneType')
+            if type(self.graph) != 'NoneType':
+                self.rerender_stratdag()
+            if load_check == 'loaded':
+                self.chronograph_render_wrap()
+                
         
         except Exception as e:
             print
@@ -986,6 +1005,35 @@ class StartPage(tk.Frame):
         self.testbutton.place(relx=0.75, rely=0.01, relwidth=0.15, relheight=0.03) 
         self.littlecanvas.bind("<Button-3>", self.preClick)
     #    print((sys._getframe().f_code.co_name), str(time.time() - t0))
+
+    def rerender_stratdag(self):
+        print('rerender')
+        if phase_true == 1:
+                self.image = imgrender_phase(self.graph)
+        else:
+            self.image = imgrender(self.graph)
+        self.littlecanvas.img = ImageTk.PhotoImage(self.image)
+        self.littlecanvas_img = self.littlecanvas.create_image(0, 0, anchor="nw",
+                                                               image=self.littlecanvas.img)
+
+        self.width, self.height = self.image.size
+        self.imscale = 1.0  # scale for the canvaas image
+        self.delta = 1.1  # zoom magnitude
+        # Put image into container rectangle and use it to set proper coordinates to the image
+        self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
+        self.canvas.bind("<Configure>", self.resize)
+        self.littlecanvas.bind("<Configure>", self.resize)
+        self.nodescanvas.bind("<Configure>", self.resize)
+        self.edgescanvas.bind("<Configure>", self.resize)
+        self.delnodes = []
+        self.text.delete("1.0", "end")
+        self.text = tk.Text(self.nodescanvas, width=120, height=40,  font = ('arial', 12, BOLD), bg = '#e8fdff')
+        self.nodescanvas.create_window((0, 0), window=self.text, anchor='nw')
+        self.text.insert('end', 'Deleted Contexts:\n' + str(self.delnodes)[1:-1])
+        self.text.configure(state='disabled')
+        self.testbutton = ttk.Button(self.canvas, text ='Render Chronological DAG', command = lambda:self.chronograph_render_wrap()) #popupWindow3(self, self.graph, self.littlecanvas2))
+        self.testbutton.place(relx=0.75, rely=0.01, relwidth=0.15, relheight=0.03) 
+        self.littlecanvas.bind("<Button-3>", self.preClick)
     
     def chronograph_render_wrap(self):
         self.chrono_dag = self.chronograph_render()
@@ -1147,7 +1195,24 @@ class StartPage(tk.Frame):
             self.littlecanvas2.bind("<Configure>", self.resize2)
             load_check = 'loaded'
         return self.popup3.graphcopy
-        
+#
+#    def rerender_chrono(self):
+#        global load_check
+#        self.image2 = imgrender2(load_check)
+#        if self.image2 != 'No_image':
+#            self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
+#            self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
+#                                                                   image=self.littlecanvas2.img)
+#    
+#            self.width2, self.height2 = self.image2.size
+#            self.imscale2 = 1.0  # scale for the canvaas image
+#            self.delta2 = 1.1  # zoom magnitude
+#            # Put image into container rectangle and use it to set proper coordinates to the image
+#            self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
+#            self.littlecanvas2.bind("<Configure>", self.resize2)
+#            load_check = 'loaded'
+    
+    
     def stratfunc(self, node):
         rellist = list(nx.line_graph(self.graph))
         above = ()
