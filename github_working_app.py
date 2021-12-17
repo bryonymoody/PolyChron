@@ -159,6 +159,7 @@ def chrono_edge_remov(file_graph):
     graph_data = phase_info_func(file_graph)
     phase_list = list(graph_data[1][2])
     phase_dic = graph_data[3]
+    print(len(phase_list))
     if len(phase_list) != 1:
         if len(graph_data[1][3]) == 0:
             file_graph.add_edge(phase_dic[phase_list[0]][0], phase_dic[phase_list[1]][0])
@@ -360,6 +361,7 @@ def phase_info_func(file_graph):
     node_list = list(file_graph.nodes)
     nd = dict(file_graph.nodes(data = True))   
     node_info = [nd[i] for i in node_list]    
+    print(FILE_INPUT)
     if FILE_INPUT != None:
         phase = nx.get_node_attributes(file_graph, "fillcolor")
         phase_norm = [phase[ph][phase[ph].rfind("/")+1:len(phase[ph])] for ph in phase]
@@ -566,6 +568,7 @@ class popupWindow2(object):
         
 class popupWindow3(object):
     def __init__(self, master, graph, canvas, phase_rels):
+        print('popup3')
         self.littlecanvas2 = canvas
         self.top=tk.Toplevel(master)
         self.top.geometry("1000x400")
@@ -577,15 +580,17 @@ class popupWindow3(object):
         self.prev_dict = {}
         self.post_dict = {}
         self.menu_list2 = ["abuting", "gap", "overlap"]            
-
+        
         
         self.button_b = ttk.Button(self.top, text='Render Chronological graph', command=lambda:self.full_chronograph_func())         
         self.graph = graph
+        
         self.graphcopy = copy.deepcopy(self.graph)
         self.step_1 = chrono_edge_remov(self.graphcopy)
+        print(self.step_1)
         self.button_b.place(relx=0.4, rely=0.55) 
-
-
+        print('hey')
+        print(self.phases)
         if self.phases != None: 
             for i in self.phases:
                 self.menu_list1.append("Relationship between start of phase " + str(i[0]) + " and end of phase " + str(i[1]))    
@@ -764,8 +769,8 @@ class StartPage(tk.Frame):
         self.save_button.place(relx=0.78, rely=0.94, relwidth=0.1, relheight=0.03) 
         self.load_button = ttk.Button(self.canvas, text = "Reload", command = self.restore_state)
         self.load_button.place(relx=0.58, rely=0.94, relwidth=0.1, relheight=0.03) 
-        self.button2 = ttk.Button(self.canvas, text="Go to Page Two", command=lambda: controller.show_frame("PageTwo"))
-        self.button2.place(relx=0.78, rely=0.03, relwidth=0.1, relheight=0.03) 
+  #      self.button2 = ttk.Button(self.canvas, text="Go to Page Two", command=lambda: controller.show_frame("PageTwo"))
+   #     self.button2.place(relx=0.78, rely=0.03, relwidth=0.1, relheight=0.03) 
         
         #########deleted nodes##################
         self.nodescanvas = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg = 'red')
@@ -876,7 +881,7 @@ class StartPage(tk.Frame):
        # MainFrame.destroy()
 
     def restore_state(self): 
-        global load_check, mcmc_check
+        global load_check, mcmc_check, FILE_INPUT
         
         print(FILENAME)
         try:
@@ -917,6 +922,7 @@ class StartPage(tk.Frame):
             self.P = data["P"]
             load_check = data['load_check']
             mcmc_check = data['mcmc_check']
+            
             self.phasefile = data['phasefile']
 #            self.popup3.phi_ref = data['phi_ref']
 #            self.popup3.prev_phase = data['prev_phase'] 
@@ -925,6 +931,7 @@ class StartPage(tk.Frame):
             if type(self.graph) != 'NoneType':
                 self.rerender_stratdag()
             if load_check == 'loaded':
+                FILE_INPUT = None
                 self.chronograph_render_wrap()
                 
         
@@ -1152,9 +1159,7 @@ class StartPage(tk.Frame):
         outputPanel.pack()
         sys.stdout = StdoutRedirector(outputPanel)
         self.CONTEXT_NO, self.ACCEPT, self.PHI, self.PHI_REF, self.A, self.P = self.MCMC_func()
-        print('hi')
         mcmc_check = 'mcmc_loaded'
-        print(mcmc_check)  
         sys.stdout = old_stdout
         self.controller.show_frame('PageOne')
         self.cleanup()
@@ -1175,7 +1180,8 @@ class StartPage(tk.Frame):
 ##        #pt2
     def chronograph_render(self):
         global load_check
-        self.popup3 = popupWindow3(self, self.graph, self.littlecanvas2, self.phase_rels)
+        if load_check != 'loaded':
+            self.popup3 = popupWindow3(self, self.graph, self.littlecanvas2, self.phase_rels)
         
         try: 
             load_check = 'loaded'
