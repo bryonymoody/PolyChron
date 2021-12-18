@@ -1673,6 +1673,7 @@ class PageOne(tk.Frame):
         self.comb_nodes = []
         self.edges_del = []
         self.temp = []
+        self.results_list = []
         self.x_1 = 1
         self.image = "noimage"
         self.phase_rels = None 
@@ -1718,8 +1719,8 @@ class PageOne(tk.Frame):
         self.button1 = ttk.Button(self, text="Go to the start page",
                            command=lambda: controller.show_frame("StartPage"))
         self.button1.place(relx=0.78, rely=0.01, relwidth=0.1, relheight=0.03) 
-        self.button2 = ttk.Button(self, text="Add nodes to list",
-                           command= self.node_list_tracker)
+        self.button2 = ttk.Button(self, text="Plot posterior density plots",
+                           command= self.mcmc_output )
         self.button2.place(relx=0.78, rely=0.15, relwidth=0.1, relheight=0.03)
         self.ResultList = [
             "Add to results list",
@@ -1734,11 +1735,12 @@ class PageOne(tk.Frame):
         startpage = self.controller.get_page('StartPage')
         self.chronograph = startpage.chrono_dag
         if self.variable.get() == 'Add to results list':
-            x = self.chrono_nodes(currentevent)
-            print(x)
-       # self.chronograph_render_post()
-    def node_list_tracker(self):
-        print("hey")
+            x = str(self.chrono_nodes(currentevent))
+            ref = np.where(np.array(startpage.CONTEXT_NO) == x)[0][0]
+            self.results_list.append(ref)
+        self.testmenu2.place_forget()
+            
+
     def onRight(self, *args):
         '''makes test menu appear after right click '''
         print('hey')
@@ -1780,17 +1782,16 @@ class PageOne(tk.Frame):
     def mcmc_output(self):
         global mcmc_check
         startpage = self.controller.get_page('StartPage')
-        
-        print(type(self.chronograph))
         if mcmc_check == 'mcmc_loaded':
-            
-            print('A')
-            print(startpage.ACCEPT[0][0])
             fig = Figure(figsize = (5, 5),
                  dpi = 100)
-            plot1 = fig.add_subplot(111)
-            plot1.hist(startpage.ACCEPT[0], bins='auto', color='#0504aa',
-                        alpha=0.7, rwidth=0.85, density = True )
+            for i,j  in enumerate(self.results_list):
+                plot_index = int(str(51) + str(j))
+                plot1 = fig.add_subplot(plot_index)
+                plot1.hist(startpage.ACCEPT[i], bins='auto', color='#0504aa',
+                            alpha=0.7, rwidth=0.85, density = True )
+                plot1.title.set_text('Posterior density plot for context ' + str(startpage.CONTEXT_NO[i]))
+            fig.tight_layout()
             canvas = FigureCanvasTkAgg(fig,
                                master = self.littlecanvas)  
             canvas.draw()
