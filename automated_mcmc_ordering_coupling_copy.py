@@ -25,8 +25,8 @@ def HPD_interval(x_temp, probs = 0):
     if probs == 0:
         x_temp = np.array(x_temp)
         n = math.ceil((x_temp.max() - x_temp.min()))
-        probs, x_temp, _ = plt.hist(x_temp, bins = n, density= 1)
-    df = pd.DataFrame({'Theta':x_temp[1:], 'Posterior':probs})     
+        probs, x_vals = np.histogram(x_temp, bins = n, density= 1)
+    df = pd.DataFrame({'Theta':x_vals[1:], 'Posterior':probs})     
     hpd_vec = []
     theta_vec = []
     y = df.sort_values(by = ['Posterior'], ascending = False)
@@ -44,6 +44,7 @@ def HPD_interval(x_temp, probs = 0):
         if theta_vec[i+1] - theta_vec[i] > 5:
             rangevec.extend([int(theta_vec[i]), int(theta_vec[i+1])])
     rangevec.append(int(max(theta_vec)))
+    print(rangevec)
     return rangevec
 
 def theta_samp_func(GIBBS_THETAS, GIBBS_PHIS, KEY_REF, PHI_REF, RESULT_VEC, STRAT_VEC, CONTEXT_NO, TOPO_SORT, iter_num, GIBBS_DICT_1): #, PREV_IT):
@@ -1054,6 +1055,7 @@ def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_
      #posterior_plots(ACCEPT, CONTEXT_NO, PHI_REF, PHI_ACCEPT)
  # print('whole func', str(time.time() - t0))
 #  PHI_ACCEPT, ACCEPT, POST_S = run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_REF, PREV_PHASE, POST_PHASE, TOPO_SORT)
-  get_hpd_intervals(CONTEXT_NO, ACCEPT, PHI_ACCEPT)
-  posterior_plots(ACCEPT, CONTEXT_NO, PHI_REF, PHI_ACCEPT, A, P)
+  return CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P  
+#  get_hpd_intervals(CONTEXT_NO, ACCEPT, PHI_ACCEPT)
+#  posterior_plots(ACCEPT, CONTEXT_NO, PHI_REF, PHI_ACCEPT, A, P)
 

@@ -1783,6 +1783,7 @@ class PageOne(tk.Frame):
         global mcmc_check
         startpage = self.controller.get_page('StartPage')
         if mcmc_check == 'mcmc_loaded':
+            hpd_str = ""
             fig = Figure(figsize = (5, 5),
                  dpi = 100)
             for i,j  in enumerate(self.results_list):
@@ -1791,6 +1792,16 @@ class PageOne(tk.Frame):
                 plot1.hist(startpage.ACCEPT[i], bins='auto', color='#0504aa',
                             alpha=0.7, rwidth=0.85, density = True )
                 plot1.title.set_text('Posterior density plot for context ' + str(startpage.CONTEXT_NO[i]))
+                hpd_str = hpd_str + "\n HPD interval for context " + str(startpage.CONTEXT_NO[i] + " : \n")
+                interval = list(mcmc.HPD_interval(np.array(startpage.ACCEPT[i][1000:])))
+                refs = [k for k in range(len(interval)) if k %2]
+                print(interval)
+                print(refs)
+                for i in refs:
+                    hpd_str = hpd_str + str(interval[i-1]) + " - " + str(interval[i]) + " Cal BP "
+            print(type(hpd_str))
+            self.littlecanvas_a.create_text(150, 80, text = hpd_str)
+
             fig.tight_layout()
             canvas = FigureCanvasTkAgg(fig,
                                master = self.littlecanvas)  
