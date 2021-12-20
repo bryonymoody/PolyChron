@@ -44,7 +44,6 @@ def HPD_interval(x_temp, probs = 0):
         if theta_vec[i+1] - theta_vec[i] > 5:
             rangevec.extend([int(theta_vec[i]), int(theta_vec[i+1])])
     rangevec.append(int(max(theta_vec)))
-    print(rangevec)
     return rangevec
 
 def theta_samp_func(GIBBS_THETAS, GIBBS_PHIS, KEY_REF, PHI_REF, RESULT_VEC, STRAT_VEC, CONTEXT_NO, TOPO_SORT, iter_num, GIBBS_DICT_1): #, PREV_IT):

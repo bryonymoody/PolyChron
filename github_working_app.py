@@ -1679,6 +1679,7 @@ class PageOne(tk.Frame):
         self.phase_rels = None 
         self.imscale = 1.0  # scale for the canvaas image
         self.delta = 1.1 
+        self.results_text = None
         
         #forming and placing canvas and little canvas
         
@@ -1735,15 +1736,17 @@ class PageOne(tk.Frame):
         startpage = self.controller.get_page('StartPage')
         self.chronograph = startpage.chrono_dag
         if self.variable.get() == 'Add to results list':
+            self.littlecanvas3.delete(self.results_text)
             x = str(self.chrono_nodes(currentevent))
             ref = np.where(np.array(startpage.CONTEXT_NO) == x)[0][0]
             self.results_list.append(ref)
+        self.result_contexts = [startpage.CONTEXT_NO[i] for i in self.results_list]
+        self.results_text = self.littlecanvas3.create_text(100, 10, text = self.result_contexts)
         self.testmenu2.place_forget()
             
 
     def onRight(self, *args):
         '''makes test menu appear after right click '''
-        print('hey')
         self.littlecanvas2.unbind("Button-1>")
         self.littlecanvas2.bind("<Button-1>", self.onLeft)
         # Here we fetch our X and Y coordinates of the cursor RELATIVE to the window
@@ -1795,11 +1798,8 @@ class PageOne(tk.Frame):
                 hpd_str = hpd_str + "\n HPD interval for context " + str(startpage.CONTEXT_NO[i] + " : \n")
                 interval = list(mcmc.HPD_interval(np.array(startpage.ACCEPT[i][1000:])))
                 refs = [k for k in range(len(interval)) if k %2]
-                print(interval)
-                print(refs)
                 for i in refs:
                     hpd_str = hpd_str + str(interval[i-1]) + " - " + str(interval[i]) + " Cal BP "
-            print(type(hpd_str))
             self.littlecanvas_a.create_text(150, 80, text = hpd_str)
 
             fig.tight_layout()
@@ -1924,15 +1924,12 @@ class PageOne(tk.Frame):
         node_df_con = node_coords_fromjson(self.chronograph)
         node_df = node_df_con[0]
         xmax, ymax = node_df_con[1]
-        print(node_df)
         #forms a dataframe from the dicitonary of coords    
         x, y = self.image2.size 
         cavx = x*self.imscale2
         cany = y*self.imscale2
-
         xscale = (x_current)*(xmax)/cavx
         yscale = (cany-y_current)*(ymax)/cany
-        print(xscale, yscale)
         for n_ind in range(node_df.shape[0]):
             if ((node_df.iloc[n_ind].x_lower < xscale < node_df.iloc[n_ind].x_upper) and
                     (node_df.iloc[n_ind].y_lower < yscale < node_df.iloc[n_ind].y_upper)):
