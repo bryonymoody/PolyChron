@@ -144,7 +144,7 @@ def imagefunc(dotfile):
     node_info_init = list()
     node_info = all_node_info(node_list, x_image, node_info_init)
     for k in enumerate(node_list):
-        node_info[k[0]].update({"Date":"None", "Find_Type":"None", "Phase":node_info[k[0]]['fillcolor']})
+        node_info[k[0]].update({"Date":"None", "Find_Type":"None", "Phase":node_info[k[0]]['fillcolor'], 'color' : 'black'})
     individ_attrs = zip(node_list, node_info)
     attrs = dict(individ_attrs)#add the dictionary of attributed to a node
     nx.set_node_attributes(file, attrs)
@@ -206,7 +206,7 @@ def chrono_edge_remov(file_graph):
             file_graph.add_edge("β_" + str(phase_lab), z, arrows=False)
                 
         for m in oddlist:
-            file_graph.add_edge(m, "α_<SUB>" + str(phase_lab) + "<\SUB>", arrows=False)
+            file_graph.add_edge(m, "α_" + str(phase_lab), arrows=False)
     return graph_data, [xs, ys]
 
 
@@ -773,7 +773,7 @@ class StartPage(tk.Frame):
    #     self.button2.place(relx=0.78, rely=0.03, relwidth=0.1, relheight=0.03) 
         
         #########deleted nodes##################
-        self.nodescanvas = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg = 'red')
+        self.nodescanvas = tk.Canvas(self.canvas, bd=0, highlightthickness=0)
         self.nodescanvas.place(relx=0.75, rely=0.05, relwidth=0.35, relheight=0.2)
         self.text = tk.Text(self.nodescanvas, font = ('arial', 12, BOLD), bg = '#e8fdff')
         self.nodescanvas.create_window((0, 0), window=self.text, anchor='nw')
@@ -928,12 +928,13 @@ class StartPage(tk.Frame):
 #            self.popup3.prev_phase = data['prev_phase'] 
 #            self.popup3.post_phase = data['post_phase']
         #    print(type(self.graph) != 'NoneType')
+
             if type(self.graph) != 'NoneType':
                 self.rerender_stratdag()
             if load_check == 'loaded':
                 FILE_INPUT = None
                 self.chronograph_render_wrap()
-                
+            
         
         except Exception as e:
             print
@@ -947,7 +948,10 @@ class StartPage(tk.Frame):
         # Here we fetch our X and Y coordinates of the cursor RELATIVE to the window
         self.cursorx = int(self.littlecanvas.winfo_pointerx() - self.littlecanvas.winfo_rootx())
         self.cursory = int(self.littlecanvas.winfo_pointery() - self.littlecanvas.winfo_rooty())
-    
+        if self.image != "noimage":
+            x_scal = self.cursorx + self.transx
+            y_scal = self.cursory + self.transy
+            self.node = self.nodecheck(x_scal, y_scal)
         # Now we define our right click menu canvas
         # And here is where we use our X and Y variables, to place the menu where our cursor is,
         # That's how right click menus should be placed.           
@@ -1055,7 +1059,7 @@ class StartPage(tk.Frame):
             self.stratfile = pd.read_csv(file, dtype = str)
             G = nx.DiGraph()
             for i in set(self.stratfile.iloc[:,0]):
-                G.add_node(i, shape="box", fontname="Helvetica", fontsize="30.0", penwidth="1.0")
+                G.add_node(i, shape="box", fontname="Helvetica", fontsize="30.0", penwidth="1.0", color = 'black')
             edges = []
             for i in range(len(self.stratfile)):
                 a = tuple(self.stratfile.iloc[i,:])
@@ -1285,10 +1289,23 @@ class StartPage(tk.Frame):
 
         xscale = (x_current)*(xmax)/cavx
         yscale = (cany-y_current)*(ymax)/cany
+        outline = nx.get_node_attributes(self.graph, 'color')
         for n_ind in range(node_df.shape[0]):
             if ((node_df.iloc[n_ind].x_lower < xscale < node_df.iloc[n_ind].x_upper) and
                     (node_df.iloc[n_ind].y_lower < yscale < node_df.iloc[n_ind].y_upper)):
-                node_inside = node_df.iloc[n_ind].name       
+                node_inside = node_df.iloc[n_ind].name  
+                self.graph[node_inside]
+                outline[node_inside] = 'red'
+                nx.set_node_attributes(self.graph, outline, 'color')  
+                print('colorchange')
+            if phase_true == 1:
+                imgrender_phase(self.graph)
+            else:
+                imgrender(self.graph) 
+            self.image = Image.open('testdag.png')
+         #   self.width, self.height = self.image.size
+        #    self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
+            self.show_image()
         return node_inside
 
 #    def scroll_y(self, *args, **kwargs):
@@ -1326,130 +1343,126 @@ class StartPage(tk.Frame):
     def nodes(self, currentevent):
         """performs action using the node and redraws the graph"""
         self.testmenu.place_forget()
-        if self.image != "noimage":
-            x_scal = self.cursorx + self.transx
-            y_scal = self.cursory + self.transy
-            node = self.nodecheck(x_scal, y_scal)
-            if self.variable.get() == "Delete Node":
-                if node != "no node":
-                    self.graph.remove_node(node)
-                    self.delnodes = np.append(self.delnodes, node)
-            
-            if self.variable.get() == "Add Nodes":
-                self.w=popupWindow(self)
-                self.wait_window(self.w.top)
-                node = self.w.value 
-                self.graph.add_node(node, shape="box", fontsize="30.0",
-                                   fontname="Ubuntu", penwidth="1.0")                   
-                           
-            if self.variable.get() == "Metadata Menu":
-                self.w=popupWindow2(self, self.graph, self.metacanvas)    
-            if len(self.edge_nodes) == 1:       
-                if self.variable.get() == "Delete Edge with "+ str(self.edge_nodes[0]):
-                    self.edge_nodes = np.append(self.edge_nodes, node)
+        if self.variable.get() == "Delete Node":
+            if self.node != "no node":
+                self.graph.remove_node(self.node)
+                self.delnodes = np.append(self.delnodes, self.node)
+        
+        if self.variable.get() == "Add Nodes":
+            self.w=popupWindow(self)
+            self.wait_window(self.w.top)
+            self.node = self.w.value 
+            self.graph.add_node(self.node, shape="box", fontsize="30.0",
+                               fontname="Ubuntu", penwidth="1.0")                   
+                       
+        if self.variable.get() == "Metadata Menu":
+            self.w=popupWindow2(self, self.graph, self.metacanvas)    
+        if len(self.edge_nodes) == 1:       
+            if self.variable.get() == "Delete Edge with "+ str(self.edge_nodes[0]):
+                self.edge_nodes = np.append(self.edge_nodes, self.node)
+                try:
+                    self.graph.remove_edge(self.edge_nodes[0], self.edge_nodes[1])
+                    self.edge_render()
+                except (KeyError, nx.exception.NetworkXError):
                     try:
-                        self.graph.remove_edge(self.edge_nodes[0], self.edge_nodes[1])
+                        self.graph.remove_edge(self.edge_nodes[1], self.edge_nodes[0])
                         self.edge_render()
                     except (KeyError, nx.exception.NetworkXError):
-                        try:
-                            self.graph.remove_edge(self.edge_nodes[1], self.edge_nodes[0])
-                            self.edge_render()
-                        except (KeyError, nx.exception.NetworkXError):
-                            ttk.messagebox.showinfo('Error', 'An edge doesnt exist between those nodes')
-                    
-                    self.OptionList.remove("Delete Edge with "+ str(self.edge_nodes[0]))
-                    self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command=self.nodes)
-                    self.edge_nodes = []
-
-                elif self.variable.get() == ("Place "+ str(self.edge_nodes[0]) + " Above"):
-                    self.edge_nodes = np.append(self.edge_nodes, node) 
-                    self.addedge(self.edge_nodes)
-                    self.OptionList.remove("Place "+ str(self.edge_nodes[0]) + " Above")
-                    self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command=self.nodes)
-                    self.edge_nodes = []      
-                    
-            if self.variable.get() == "Delete Edge":
-                if len(self.edge_nodes) == 1:
-                    self.OptionList.remove("Delete Edge with "+ str(self.edge_nodes[0]))
-                    self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)
-                    self.edge_nodes = []                    
-                self.edge_nodes = np.append(self.edge_nodes, node)                
-                self.OptionList.append("Delete Edge with "+ str(self.edge_nodes[0]))
-                self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)
-
-            if len(self.comb_nodes) == 1:       
-                if self.variable.get() == "Combine Node with "+ str(self.comb_nodes[0]):
-                    self.comb_nodes = np.append(self.comb_nodes, node)
-                    self.graph = nx.contracted_nodes(self.graph, self.comb_nodes[0], self.comb_nodes[1])
-                    x_nod = list(self.graph) 
-                    newnode = str(self.comb_nodes[0]) + " = " + str(self.comb_nodes[1])
-                    y_nod = [newnode if i==self.comb_nodes[0] else i for i in x_nod]
-                    mapping = dict(zip(x_nod, y_nod))
-                    self.graph = nx.relabel_nodes(self.graph, mapping)
-                    self.OptionList.remove("Combine Node with "+ str(self.comb_nodes[0]))
-                    self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)
-                    self.comb_nodes = []
-                    
-            if self.variable.get() == "Combine Node":
-                if len(self.comb_nodes) == 1:
-                    self.OptionList.remove("Combine Node with "+ str(self.comb_nodes[0]))
-                    self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)
-                    self.comb_nodes = []                    
-                self.comb_nodes = np.append(self.comb_nodes, node)                
-                self.OptionList.append("Combine Node with "+ str(self.comb_nodes[0]))
-                self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)       
-                            
-            if self.variable.get() == "Get Metadata":
-                self.metatext = tk.Text(self.metacanvas, width=120, height=40)
-                self.metacanvas.create_window((0, 0), window=self.metatext, anchor='nw')
-                self.meta1 = pd.DataFrame.from_dict(self.graph.nodes()[str(node)], orient='index')
-                self.meta2 = self.meta1.loc["Date":"Phase",]
-                self.meta2.columns = ["Data"]
-                #if self.meta2.loc["Date"] != "None":
-                if self.meta2.loc["Date"][0] != "None":
-                   self.meta2.loc["Date"][0] = str(self.meta2.loc["Date"][0][0]) + " +- " + str(self.meta2.loc["Date"][0][1]) + " Carbon BP"
-               # self.nice_meta2 = tabulate(self.meta2, headers='keys', tablefmt='psql')
-                self.metatext.insert('end', 'Metadata of node ' +
-                                     str(node) + ':\n')
-                cols = list(self.meta2.columns)
-                tree = ttk.Treeview(self.metacanvas)
-                tree["columns"] = cols
-                tree.place(relx=0, rely=0.25)
-                tree.column("Data", anchor="w")
-                tree.heading("Data", text="Data", anchor='w')        
-                for index, row in self.meta2.iterrows():
-                    tree.insert("",0,text=index,values=list(row))
-                self.metatext.configure()
-                    
-            if self.variable.get() == "Place Above Other Context":
-                if len(self.edge_nodes) == 1:
-                    "tester"
-                    self.OptionList.remove("Place "+ str(self.edge_nodes[0]) + " Above")
-                    self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, self.OptionList[0], *self.OptionList, command = self.nodes)
-                    self.edge_nodes = []                    
-                self.edge_nodes = np.append(self.edge_nodes, node)                
-                self.OptionList.append("Place "+ str(self.edge_nodes[0]) + " Above")
-                self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, self.OptionList[0], *self.OptionList, command = self.nodes)
-            if self.variable.get() == "Get stratigraphic information":
-                self.stratfunc(node)
+                        ttk.messagebox.showinfo('Error', 'An edge doesnt exist between those nodes')
                 
-            if phase_true == 1:
-                imgrender_phase(self.graph)
-            else:
-                imgrender(self.graph) 
-            self.image = Image.open('testdag.png')
-            self.width, self.height = self.image.size
-            self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
-            self.show_image()
-            self.text = tk.Text(self.nodescanvas, width=120, height=40)
-            self.nodescanvas.create_window((0, 0), window=self.text, anchor='nw', bg = 'white')
-            nbnodes = str(self.delnodes)
-            self.text.insert('end', 'Deleted Contexts:\n' + str(nbnodes.replace("'", ""))[1:-1])
-            self.text.configure(state='normal')
-            self.variable.set("Node Action")
-            self.littlecanvas.unbind('<Button-1>')
-            self.littlecanvas.bind('<Button-1>', self.move_from)
-            self.littlecanvas.bind("<MouseWheel>", self.wheel)
+                self.OptionList.remove("Delete Edge with "+ str(self.edge_nodes[0]))
+                self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command=self.nodes)
+                self.edge_nodes = []
+
+            elif self.variable.get() == ("Place "+ str(self.edge_nodes[0]) + " Above"):
+                self.edge_nodes = np.append(self.edge_nodes, self.node) 
+                self.addedge(self.edge_nodes)
+                self.OptionList.remove("Place "+ str(self.edge_nodes[0]) + " Above")
+                self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command=self.nodes)
+                self.edge_nodes = []      
+                
+        if self.variable.get() == "Delete Edge":
+            if len(self.edge_nodes) == 1:
+                self.OptionList.remove("Delete Edge with "+ str(self.edge_nodes[0]))
+                self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)
+                self.edge_nodes = []                    
+            self.edge_nodes = np.append(self.edge_nodes, self.node)                
+            self.OptionList.append("Delete Edge with "+ str(self.edge_nodes[0]))
+            self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)
+
+        if len(self.comb_nodes) == 1:       
+            if self.variable.get() == "Combine Node with "+ str(self.comb_nodes[0]):
+                self.comb_nodes = np.append(self.comb_nodes, self.node)
+                self.graph = nx.contracted_nodes(self.graph, self.comb_nodes[0], self.comb_nodes[1])
+                x_nod = list(self.graph) 
+                newnode = str(self.comb_nodes[0]) + " = " + str(self.comb_nodes[1])
+                y_nod = [newnode if i==self.comb_nodes[0] else i for i in x_nod]
+                mapping = dict(zip(x_nod, y_nod))
+                self.graph = nx.relabel_nodes(self.graph, mapping)
+                self.OptionList.remove("Combine Node with "+ str(self.comb_nodes[0]))
+                self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)
+                self.comb_nodes = []
+                
+        if self.variable.get() == "Combine Node":
+            if len(self.comb_nodes) == 1:
+                self.OptionList.remove("Combine Node with "+ str(self.comb_nodes[0]))
+                self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)
+                self.comb_nodes = []                    
+            self.comb_nodes = np.append(self.comb_nodes, self.node)                
+            self.OptionList.append("Combine Node with "+ str(self.comb_nodes[0]))
+            self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command = self.nodes)       
+                        
+        if self.variable.get() == "Get Metadata":
+            self.metatext = tk.Text(self.metacanvas, width=120, height=40)
+            self.metacanvas.create_window((0, 0), window=self.metatext, anchor='nw')
+            self.meta1 = pd.DataFrame.from_dict(self.graph.nodes()[str(self.node)], orient='index')
+            self.meta2 = self.meta1.loc["Date":"Phase",]
+            self.meta2.columns = ["Data"]
+            #if self.meta2.loc["Date"] != "None":
+            if self.meta2.loc["Date"][0] != "None":
+               self.meta2.loc["Date"][0] = str(self.meta2.loc["Date"][0][0]) + " +- " + str(self.meta2.loc["Date"][0][1]) + " Carbon BP"
+           # self.nice_meta2 = tabulate(self.meta2, headers='keys', tablefmt='psql')
+            self.metatext.insert('end', 'Metadata of node ' +
+                                 str(self.node) + ':\n')
+            cols = list(self.meta2.columns)
+            tree = ttk.Treeview(self.metacanvas)
+            tree["columns"] = cols
+            tree.place(relx=0, rely=0.25)
+            tree.column("Data", anchor="w")
+            tree.heading("Data", text="Data", anchor='w')        
+            for index, row in self.meta2.iterrows():
+                tree.insert("",0,text=index,values=list(row))
+            self.metatext.configure()
+                
+        if self.variable.get() == "Place Above Other Context":
+            if len(self.edge_nodes) == 1:
+                "tester"
+                self.OptionList.remove("Place "+ str(self.edge_nodes[0]) + " Above")
+                self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, self.OptionList[0], *self.OptionList, command = self.nodes)
+                self.edge_nodes = []                    
+            self.edge_nodes = np.append(self.edge_nodes, self.node)                
+            self.OptionList.append("Place "+ str(self.edge_nodes[0]) + " Above")
+            self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, self.OptionList[0], *self.OptionList, command = self.nodes)
+        if self.variable.get() == "Get stratigraphic information":
+            self.stratfunc(self.node)
+        nx.set_node_attributes(self.graph, 'black', 'color')    
+        if phase_true == 1:
+            imgrender_phase(self.graph)
+        else:
+            imgrender(self.graph) 
+        self.image = Image.open('testdag.png')
+        self.width, self.height = self.image.size
+        self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
+        self.show_image()
+        self.text = tk.Text(self.nodescanvas, width=120, height=40)
+        self.nodescanvas.create_window((0, 0), window=self.text, anchor='nw')
+        nbnodes = str(self.delnodes)
+        self.text.insert('end', 'Deleted Contexts:\n' + str(nbnodes.replace("'", ""))[1:-1])
+        self.text.configure(state='normal')
+        self.variable.set("Node Action")
+        self.littlecanvas.unbind('<Button-1>')
+        self.littlecanvas.bind('<Button-1>', self.move_from)
+        self.littlecanvas.bind("<MouseWheel>", self.wheel)
         #    print(time.time() - t0)
    #     print((sys._getframe().f_code.co_name), str(time.time() - t0)) 
 
@@ -1680,7 +1693,7 @@ class PageOne(tk.Frame):
         self.imscale = 1.0  # scale for the canvaas image
         self.delta = 1.1 
         self.results_text = None
-        
+        self.phase_len_nodes = []
         #forming and placing canvas and little canvas
         
         self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
@@ -1725,6 +1738,7 @@ class PageOne(tk.Frame):
         self.button2.place(relx=0.78, rely=0.15, relwidth=0.1, relheight=0.03)
         self.ResultList = [
             "Add to results list",
+            "Get phase length", 
             ]
         self.variable = tk.StringVar(self.littlecanvas)
         self.variable.set("Add to results list")
@@ -1733,16 +1747,35 @@ class PageOne(tk.Frame):
  #       print(vars(startpage))
         
     def node_finder(self, currentevent):
+        self.testmenu2.place_forget()
         startpage = self.controller.get_page('StartPage')
         self.chronograph = startpage.chrono_dag
+        x = str(self.chrono_nodes(currentevent))
         if self.variable.get() == 'Add to results list':
             self.littlecanvas3.delete(self.results_text)
-            x = str(self.chrono_nodes(currentevent))
             ref = np.where(np.array(startpage.CONTEXT_NO) == x)[0][0]
             self.results_list.append(ref)
+        if len(self.phase_len_nodes) == 1:
+            if self.variable.get() == "Get phase length between "+ str(self.phase_len_nodes[0]) + ' and another context':
+                self.phase_len_nodes = np.append(self.phase_len_nodes, x)
+                print(self.phase_len_nodes)
+            self.ResultList.remove("Get phase length between "+ str(self.phase_len_nodes[0]) + ' and another context')
+            self.testmenu2 = ttk.OptionMenu(self.littlecanvas2, self.variable, self.ResultList[0], *self.ResultList, command = self.node_finder)
+            self.phase_len_nodes = []
+#                self.phase_len_nodes = []
+                
+        if self.variable.get() == "Get phase length":
+            if len(self.phase_len_nodes) == 1:
+                self.ResultList.remove("Get phase length between "+ str(self.phase_len_nodes[0]) + ' and another context')
+                self.testmenu2 = ttk.OptionMenu(self.littlecanvas2, self.variable, self.ResultList[0], *self.ResultList, command = self.node_finder)
+                self.phase_len_nodes = []                    
+            self.phase_len_nodes = np.append(self.phase_len_nodes, x)                
+            self.ResultList.append("Get phase length between "+ str(self.phase_len_nodes[0]) + ' and another context')
+            self.testmenu2 = ttk.OptionMenu(self.littlecanvas2, self.variable,self.ResultList[0], *self.ResultList, command = self.node_finder)
         self.result_contexts = [startpage.CONTEXT_NO[i] for i in self.results_list]
         self.results_text = self.littlecanvas3.create_text(100, 10, text = self.result_contexts)
-        self.testmenu2.place_forget()
+        self.variable.set("Add to results list")
+        
             
 
     def onRight(self, *args):
@@ -1930,10 +1963,13 @@ class PageOne(tk.Frame):
         cany = y*self.imscale2
         xscale = (x_current)*(xmax)/cavx
         yscale = (cany-y_current)*(ymax)/cany
+        outline = nx.get_node_attributes(self.chronograph, 'color')
         for n_ind in range(node_df.shape[0]):
             if ((node_df.iloc[n_ind].x_lower < xscale < node_df.iloc[n_ind].x_upper) and
                     (node_df.iloc[n_ind].y_lower < yscale < node_df.iloc[n_ind].y_upper)):
-                node_inside = node_df.iloc[n_ind].name       
+                node_inside = node_df.iloc[n_ind].name
+                outline[node_inside] = 'red'
+                nx.set_node_attributes(self.chronograph, outline, 'color')  
         return node_inside
 
     def chrono_nodes(self, current):
