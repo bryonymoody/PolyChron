@@ -20,6 +20,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
+CALIBRATION = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True)
 
 def HPD_interval(x_temp, probs = 0):
     if probs == 0:
@@ -652,7 +653,7 @@ def gibbs_code(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_
   PHI_ACCEPT, ACCEPT = POST_PHIS, POST_THETAS
   return PHI_ACCEPT, ACCEPT, POST_S
 
-def step_1_squeeze(A, i, PREV_PROB_TEST, K, ACCEPT, SITE_DICT_TEST_1,  SITE_DICT_TEST_2, THETAS, POST_THETAS, POST_PHIS, KEY_REF, CONTEXT_NO, POST_PHASE, PHI_REF, RCD_ERR, RCD_EST, CALIBRATION):
+def step_1_squeeze(A, i, PREV_PROB_TEST, K, ACCEPT, SITE_DICT_TEST_1,  SITE_DICT_TEST_2, THETAS, POST_THETAS, POST_PHIS, KEY_REF, CONTEXT_NO, POST_PHASE, PHI_REF, RCD_ERR, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI):
     k = int(random.sample(range(0, K), 1)[0])
     oldtheta = THETAS[k]
     key = KEY_REF[k]
@@ -678,18 +679,20 @@ def step_1_squeeze(A, i, PREV_PROB_TEST, K, ACCEPT, SITE_DICT_TEST_1,  SITE_DICT
     h_1 = np.prod(c_test)
     if h_1 >= 1:
         ACCEPT[k].append(THETAS[k])
+        [ALL_SAMPS_CONT[j].append(THETAS[j]) for j in range(len(THETAS))]
     else:
         u = np.random.uniform(0, 1)
         if h_1 > u:
             ACCEPT[k].append(THETAS[k])
+            [ALL_SAMPS_CONT[j].append(THETAS[j]) for j in range(len(THETAS))]
         else:
             THETAS[k] = oldtheta
             for g2 in range(len(THETAS)):
                 POST_THETAS[g2][i+1] = POST_THETAS[g2][i]
             prob_1_test = PREV_PROB_TEST
-    return prob_1_test, ACCEPT, SITE_DICT_TEST_1,  SITE_DICT_TEST_2, THETAS, POST_THETAS, POST_PHIS
+    return prob_1_test, ACCEPT, SITE_DICT_TEST_1,  SITE_DICT_TEST_2, THETAS, POST_THETAS, POST_PHIS, ALL_SAMPS_CONT
 
-def step_2_squeeze(i, prob_1_test, M, PHI_SAMP_DICT, POST_S, R, PHIS_VEC, SITE_DICT_TEST_3, THETAS, POST_THETAS, POST_PHIS, STEP_1, STEP_2, STEP_3, A, P, SAMP_VEC_TRACK, PHI_ACCEPT, KEY_REF, PHI_REF, CONTEXT_NO, RCD_ERR, POST_PHASE, RCD_EST, CALIBRATION):
+def step_2_squeeze(i, prob_1_test, M, PHI_SAMP_DICT, POST_S, R, PHIS_VEC, SITE_DICT_TEST_3, THETAS, POST_THETAS, POST_PHIS, STEP_1, STEP_2, STEP_3, A, P, SAMP_VEC_TRACK, PHI_ACCEPT, KEY_REF, PHI_REF, CONTEXT_NO, RCD_ERR, POST_PHASE, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI):
       m = int(random.sample(range(0, M), 1)[0])
       s1 = max(PHIS_VEC) - min(PHIS_VEC)
       f_phi1 = (s1**(1-M))/(R-s1)
@@ -713,6 +716,7 @@ def step_2_squeeze(i, prob_1_test, M, PHI_SAMP_DICT, POST_S, R, PHIS_VEC, SITE_D
       h_2 = np.prod(c_test)*(f_phi2/f_phi1)
       if h_2 >= 1:
           PHI_ACCEPT[m].append(PHIS_VEC[m])
+          [ALL_SAMPS_PHI[j].append(PHI_ACCEPT[j]) for j in range(len(PHIS_VEC))]
       #    print("step 2 accept")
           if m == M-1:
               POST_S.append(max(PHIS_VEC) - PHIS_VEC[m])
@@ -723,6 +727,7 @@ def step_2_squeeze(i, prob_1_test, M, PHI_SAMP_DICT, POST_S, R, PHIS_VEC, SITE_D
           if h_2 > u:
            #   print("step 2 accept")
               PHI_ACCEPT[m].append(PHIS_VEC[m])
+              [ALL_SAMPS_PHI[j].append(PHI_ACCEPT[j]) for j in range(len(PHIS_VEC))]
               if m == M-1:
                   POST_S.append(max(PHIS_VEC) - PHIS_VEC[m])
               elif m == 0:
@@ -732,9 +737,9 @@ def step_2_squeeze(i, prob_1_test, M, PHI_SAMP_DICT, POST_S, R, PHIS_VEC, SITE_D
                   POST_PHIS[v2[0]][i+1] = POST_PHIS[v2[0]][i]
               PHIS_VEC[m] = oldphi
               prob_2_test = prob_1_test
-      return backup_b_test, prob_2_test, POST_S, PHIS_VEC, SITE_DICT_TEST_3, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT
+      return backup_b_test, prob_2_test, POST_S, PHIS_VEC, SITE_DICT_TEST_3, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, ALL_SAMPS_PHI
 
-def step_3_squeeze(A, i, backup_b_test, prob_2_test, S, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_4, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, POST_PHASE, PHI_REF, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION): 
+def step_3_squeeze(A, i, backup_b_test, prob_2_test, S, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_4, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, POST_PHASE, PHI_REF, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI): 
       step = np.random.uniform(-1*S, S)
       THETAS = [x + step for x in THETAS]
       PHIS_VEC = [x + step for x in PHIS_VEC]
@@ -757,8 +762,10 @@ def step_3_squeeze(A, i, backup_b_test, prob_2_test, S, ACCEPT, POST_S, PHIS_VEC
       #    print("step 3 accept")
           for j_3, d_3 in enumerate(PHIS_VEC):
               PHI_ACCEPT[j_3].append(d_3)
+              ALL_SAMPS_PHI[j_3].append(d_3)
           for k_3, e_3 in enumerate(THETAS):
               ACCEPT[k_3].append(e_3)
+              ALL_SAMPS_CONT[k_3].append(e_3)
           POST_S.append(max(PHIS_VEC) - min(PHIS_VEC))
       else:
           u = np.random.uniform(0, 1)
@@ -766,8 +773,10 @@ def step_3_squeeze(A, i, backup_b_test, prob_2_test, S, ACCEPT, POST_S, PHIS_VEC
           #    print("step 3 accept")
               for j_3, f_3 in enumerate(PHIS_VEC):
                   PHI_ACCEPT[j_3].append(f_3)
+                  ALL_SAMPS_PHI[j_3].append(f_3)
               for k_3, i_3 in enumerate(THETAS):
                   ACCEPT[k_3].append(i_3)
+                  ALL_SAMPS_CONT[k_3].append(i_3) 
               POST_S.append(max(PHIS_VEC) - min(PHIS_VEC))
           else:
               for g_3 in enumerate(THETAS):
@@ -778,9 +787,9 @@ def step_3_squeeze(A, i, backup_b_test, prob_2_test, S, ACCEPT, POST_S, PHIS_VEC
               PHIS_VEC = [x - step for x in PHIS_VEC]
               prob_3_test = prob_2_test
               b_test = backup_b_test
-      return b_test, prob_3_test, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_4, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT
+      return b_test, prob_3_test, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_4, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, ALL_SAMPS_CONT, ALL_SAMPS_PHI
 
-def step_4_squeeze(A, i, b_test, prob_3_test, ACCEPT, POST_S, R, PHIS_VEC, SITE_DICT_TEST_5, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, POST_PHASE, PHI_REF, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION):
+def step_4_squeeze(A, i, b_test, prob_3_test, ACCEPT, POST_S, R, PHIS_VEC, SITE_DICT_TEST_5, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, POST_PHASE, PHI_REF, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI):
       rho = np.random.uniform(2/3, 3/2)
       constant = (rho-1)*mean(np.concatenate([PHIS_VEC, THETAS])).item()
       THETAS = [x*rho - constant for x in THETAS]
@@ -804,8 +813,10 @@ def step_4_squeeze(A, i, b_test, prob_3_test, ACCEPT, POST_S, R, PHIS_VEC, SITE_
         #  print("step 4 accept")
           for j_4, c_4 in enumerate(PHIS_VEC):
               PHI_ACCEPT[j_4].append(c_4)
+              ALL_SAMPS_PHI[j_4].append(c_4)
           for k_4, f_4 in enumerate(THETAS):
               ACCEPT[k_4].append(f_4)
+              ALL_SAMPS_CONT[k_4].append(f_4)
           POST_S.append(max(PHIS_VEC) - min(PHIS_VEC))
       else:
           u = np.random.uniform(0, 1)
@@ -813,8 +824,10 @@ def step_4_squeeze(A, i, b_test, prob_3_test, ACCEPT, POST_S, R, PHIS_VEC, SITE_
             #  print("step 4 accept")
               for j_4, g_4 in enumerate(PHIS_VEC):
                   PHI_ACCEPT[j_4].append(g_4)
+                  ALL_SAMPS_PHI[j_4].append(g_4)
               for k_4, i_4 in enumerate(THETAS):
                   ACCEPT[k_4].append(i_4)
+                  ALL_SAMPS_CONT[k_4].append(i_4)
               POST_S.append(max(PHIS_VEC) - min(PHIS_VEC))
           else:
               for g_4 in range(len(THETAS)):
@@ -824,7 +837,7 @@ def step_4_squeeze(A, i, b_test, prob_3_test, ACCEPT, POST_S, R, PHIS_VEC, SITE_
               THETAS = [(x + constant)/rho for x in THETAS]
               PHIS_VEC = [(x + constant)/rho for x in PHIS_VEC]
               PREV_PROB_TEST = prob_3_test
-      return PREV_PROB_TEST, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_5, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT
+      return PREV_PROB_TEST, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_5, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, ALL_SAMPS_CONT, ALL_SAMPS_PHI
 
 def squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_REF, RCD_EST, CALIBRATION):
   acept_prob = 1
@@ -846,6 +859,8 @@ def squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, 
     SITE_DICT_TEST_5 = TEST_DICT_1
     ACCEPT = [[] for _ in range(len(THETAS))]
     PHI_ACCEPT = [[] for _ in range(len(PHIS_VEC))]
+    ALL_SAMPS_CONT = [[] for _ in range(len(THETAS))]
+    ALL_SAMPS_PHI = [[] for _ in range(len(PHIS_VEC))]
     i = 0
      ###START OF MCMC ALGORITHM###############
     while min([len(i) for i in ACCEPT]) < 50000:
@@ -855,13 +870,13 @@ def squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, 
           #    print("i " + str(i) + "\n")
               SITE_DICT_TEST_1 = dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF)
               #step 1
-              prob_1_test, ACCEPT, SITE_DICT_TEST_1, SITE_DICT_TEST_2, THETAS, POST_THETAS, POST_PHIS = step_1_squeeze(A, i, PREV_PROB_TEST, K, ACCEPT, SITE_DICT_TEST_1,  SITE_DICT_TEST_2, THETAS, POST_THETAS, POST_PHIS, KEY_REF, CONTEXT_NO, POST_PHASE, PHI_REF, RCD_ERR, RCD_EST, CALIBRATION)
+              prob_1_test, ACCEPT, SITE_DICT_TEST_1, SITE_DICT_TEST_2, THETAS, POST_THETAS, POST_PHIS, ALL_SAMPS_CONT = step_1_squeeze(A, i, PREV_PROB_TEST, K, ACCEPT, SITE_DICT_TEST_1,  SITE_DICT_TEST_2, THETAS, POST_THETAS, POST_PHIS, KEY_REF, CONTEXT_NO, POST_PHASE, PHI_REF, RCD_ERR, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI)
               #step 2
-              backup_b_test, prob_2_test, POST_S, PHIS_VEC, SITE_DICT_TEST_3, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT = step_2_squeeze(i, prob_1_test, M, PHI_SAMP_DICT, POST_S, R, PHIS_VEC,SITE_DICT_TEST_3, THETAS, POST_THETAS, POST_PHIS, STEP_1, STEP_2, STEP_3, A, P, SAMP_VEC_TRACK, PHI_ACCEPT, KEY_REF, PHI_REF, CONTEXT_NO, RCD_ERR, POST_PHASE, RCD_EST, CALIBRATION)
+              backup_b_test, prob_2_test, POST_S, PHIS_VEC, SITE_DICT_TEST_3, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, ALL_SAMPS_PHI = step_2_squeeze(i, prob_1_test, M, PHI_SAMP_DICT, POST_S, R, PHIS_VEC,SITE_DICT_TEST_3, THETAS, POST_THETAS, POST_PHIS, STEP_1, STEP_2, STEP_3, A, P, SAMP_VEC_TRACK, PHI_ACCEPT, KEY_REF, PHI_REF, CONTEXT_NO, RCD_ERR, POST_PHASE, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI)
               #step3
-              b_test, prob_3_test, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_4, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT = step_3_squeeze(A, i, backup_b_test, prob_2_test, S, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_4, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, POST_PHASE, PHI_REF, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION)
+              b_test, prob_3_test, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_4, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, ALL_SAMPS_CONT, ALL_SAMPS_PHI = step_3_squeeze(A, i, backup_b_test, prob_2_test, S, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_4, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, POST_PHASE, PHI_REF, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI)
               #step 4
-              PREV_PROB_TEST, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_5, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT = step_4_squeeze(A, i, b_test, prob_3_test, ACCEPT, POST_S, R, PHIS_VEC, SITE_DICT_TEST_5, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, POST_PHASE, PHI_REF, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION)
+              PREV_PROB_TEST, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_5, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, ALL_SAMPS_CONT, ALL_SAMPS_PHI = step_4_squeeze(A, i, b_test, prob_3_test, ACCEPT, POST_S, R, PHIS_VEC, SITE_DICT_TEST_5, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, POST_PHASE, PHI_REF, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI)
               i = i + 3
              # print('whole loop', str(time.time() - t0))
         CHECK_ACCEPT = accept_prob(ACCEPT, PHI_ACCEPT, i)
@@ -874,7 +889,7 @@ def squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, 
     CHECK_ACCEPT = accept_prob(ACCEPT, PHI_ACCEPT, i)
   #  print(CHECK_ACCEPT)
  #   print(len(CHECK_ACCEPT[(CHECK_ACCEPT <= 0.05) | (CHECK_ACCEPT >= 0.7)]))
-    return PHI_ACCEPT, ACCEPT, POST_S
+    return PHI_ACCEPT, ACCEPT, POST_S, ALL_SAMPS_CONT, ALL_SAMPS_PHI
 
 #sampling dictionary
 
@@ -1041,20 +1056,12 @@ def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_
                     }
                 }
             }
-  t0 = time.time()
   method = "squeeze"
   A, P, RESULT_VEC = initialise(CALIBRATION, RCD_EST, RCD_ERR)#  tot_i = 0
-  #P = 10000
   if method == "squeeze": 
-     PHI_ACCEPT, ACCEPT, POST_S = squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_REF, RCD_EST, CALIBRATION) 
-   #  PHI_ACCEPT1, ACCEPT2, POST_S3 = squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_REF)  
- #    results = [squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_REF) for k in [0,1]]
+     PHI_ACCEPT, ACCEPT, POST_S, ALL_SAMPS_CONT, ALL_SAMPS_PHI = squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_REF, RCD_EST, CALIBRATION) 
   elif method == 'gibbs':
-     PHI_ACCEPT, ACCEPT, POST_S = gibbs_code(5000, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT)
-     #posterior_plots(ACCEPT, CONTEXT_NO, PHI_REF, PHI_ACCEPT)
- # print('whole func', str(time.time() - t0))
-#  PHI_ACCEPT, ACCEPT, POST_S = run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_REF, PREV_PHASE, POST_PHASE, TOPO_SORT)
-  return CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P  
-#  get_hpd_intervals(CONTEXT_NO, ACCEPT, PHI_ACCEPT)
-#  posterior_plots(ACCEPT, CONTEXT_NO, PHI_REF, PHI_ACCEPT, A, P)
+     PHI_ACCEPT, ACCEPT, POST_S, ALL_SAMPS_CONT, ALL_SAMPS_PHI = gibbs_code(5000, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT)
+  return CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI
+
 

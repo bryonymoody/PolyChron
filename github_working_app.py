@@ -127,6 +127,23 @@ def all_node_info(node_list, x_image, node_info):
 #    print((sys._getframe().f_code.co_name), str(time.time() - t0))  
     return node_info
 
+def phase_length_finder(con_1, con_2, ALL_SAMPS_CONT, CONTEXT_NO):
+    phase_lengths = []
+    x_1 = np.where(np.array(CONTEXT_NO) == con_1)[0][0]
+    x_2 = np.where(np.array(CONTEXT_NO) == con_2)[0][0]
+    print([con_1, con_2])
+    print(np.where(np.array(CONTEXT_NO) == con_1)[0][0])
+    sampl_list = [len(i) for i in ALL_SAMPS_CONT]       
+    for i in range(min(sampl_list)):
+        phase_lengths.append(ALL_SAMPS_CONT[x_1][i] - ALL_SAMPS_CONT[x_2][i])
+    un_phase_lens = []
+    for i in range(len(phase_lengths)-1):
+        if phase_lengths[i] != phase_lengths[i+1]:
+            un_phase_lens.append(phase_lengths[i])
+    print(min(un_phase_lens))
+    print(max(un_phase_lens))
+    return phase_lengths
+        
 def imagefunc(dotfile):
  #   t0 = time.time()
     """Sets note attributes to a dot string"""
@@ -1162,7 +1179,7 @@ class StartPage(tk.Frame):
         outputPanel = tk.Text(self.top, wrap='word', height = 11, width=50)
         outputPanel.pack()
         sys.stdout = StdoutRedirector(outputPanel)
-        self.CONTEXT_NO, self.ACCEPT, self.PHI, self.PHI_REF, self.A, self.P = self.MCMC_func()
+        self.CONTEXT_NO, self.ACCEPT, self.PHI, self.PHI_REF, self.A, self.P, self.ALL_SAMPS_CONT = self.MCMC_func()
         mcmc_check = 'mcmc_loaded'
         sys.stdout = old_stdout
         self.controller.show_frame('PageOne')
@@ -1269,8 +1286,8 @@ class StartPage(tk.Frame):
         TOPO_SORT = list(nx.topological_sort(self.graph))
         TOPO_SORT.reverse()
 #        print(TOPO_SORT)
-        CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P = mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.popup3.phi_ref, self.popup3.prev_phase, self.popup3.post_phase, TOPO_SORT)
-        return CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P
+        CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.popup3.phi_ref, self.popup3.prev_phase, self.popup3.post_phase, TOPO_SORT)
+        return CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT
 
         
         
@@ -1758,7 +1775,19 @@ class PageOne(tk.Frame):
         if len(self.phase_len_nodes) == 1:
             if self.variable.get() == "Get phase length between "+ str(self.phase_len_nodes[0]) + ' and another context':
                 self.phase_len_nodes = np.append(self.phase_len_nodes, x)
-                print(self.phase_len_nodes)
+                fig = Figure(figsize = (5, 5),
+                 dpi = 100)
+                LENGTHS = phase_length_finder(self.phase_len_nodes[0], self.phase_len_nodes[1], startpage.ALL_SAMPS_CONT, startpage.CONTEXT_NO)
+                plot1 = fig.add_subplot(111)
+                plot1.hist(LENGTHS, bins='auto', color='#0504aa',
+                            alpha=0.7, rwidth=0.85, density = True )
+                plot1.title.set_text('Posterior density plot for time elapsed between ' + str(self.phase_len_nodes[0]) + ' and '+ str(self.phase_len_nodes[1]))
+                interval = list(mcmc.HPD_interval(np.array(LENGTHS[1000:])))
+                hpd_str = "HPD interval for phase length: "
+                refs = [k for k in range(len(interval)) if k %2]
+                for i in refs:
+                    hpd_str = hpd_str + str(interval[i-1]) + " - " + str(interval[i]) + " Cal BP "
+                print(hpd_str)
             self.ResultList.remove("Get phase length between "+ str(self.phase_len_nodes[0]) + ' and another context')
             self.testmenu2 = ttk.OptionMenu(self.littlecanvas2, self.variable, self.ResultList[0], *self.ResultList, command = self.node_finder)
             self.phase_len_nodes = []
@@ -1775,8 +1804,6 @@ class PageOne(tk.Frame):
         self.result_contexts = [startpage.CONTEXT_NO[i] for i in self.results_list]
         self.results_text = self.littlecanvas3.create_text(100, 10, text = self.result_contexts)
         self.variable.set("Add to results list")
-        
-            
 
     def onRight(self, *args):
         '''makes test menu appear after right click '''
