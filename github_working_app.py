@@ -176,7 +176,7 @@ def chrono_edge_remov(file_graph):
     graph_data = phase_info_func(file_graph)
     phase_list = list(graph_data[1][2])
     phase_dic = graph_data[3]
-    print(len(phase_list))
+#    print(len(phase_list))
     if len(phase_list) != 1:
         if len(graph_data[1][3]) == 0:
             file_graph.add_edge(phase_dic[phase_list[0]][0], phase_dic[phase_list[1]][0])
@@ -227,10 +227,41 @@ def chrono_edge_remov(file_graph):
     return graph_data, [xs, ys]
 
 
+def phase_labels(phi_ref, POST_PHASE, phi_accept):
+    "provides phase limits for a phase"""
+    labels = ['a_' + str(phi_ref[0])]
+    i = 0
+    print(i)
+    results_dict = {labels[0]: phi_accept[i]}
+    
+    for a_val in enumerate(POST_PHASE):
+        i = i + 1
+        if a_val[1] == "abuting":
+            labels.append('b_' + str(phi_ref[a_val[0]]) + ' = a_' + str(phi_ref[a_val[0]+1]))
+            results_dict['b_' + str(phi_ref[a_val[0]])] =  phi_accept[i]
+            results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
+        elif a_val[1] == 'end':
+            labels.append('b_' + str(phi_ref[-1]))
+            results_dict['b_' + str(phi_ref[a_val[0]])] =  phi_accept[i]
+        elif a_val == 'gap':
+            labels.append('b_' + str(phi_ref(a_val[0])))
+            labels.append('a_' + str(phi_ref[a_val[0]+1]))
+            results_dict['b_' + str(phi_ref[a_val[0]])] = phi_accept[i]
+            i = i + 1
+            results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
+        else:
+            labels.append('a_' + str(phi_ref[a_val[0]+1]))
+            labels.append('b_' + str(phi_ref(a_val[0])))
+            results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
+            i = i + 1
+            results_dict['b_' + str(phi_ref[a_val[0]])] = phi_accept[i]
+    return labels, results_dict
+
 
 def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
     xs = xs_ys[0]
     ys = xs_ys[1]
+    phase_nodes = []
     phase_norm, node_list = graph_data[1][0], graph_data[1][1]
     all_node_phase = dict(zip(node_list, phase_norm))
    # print(node_list, phase_norm)     
@@ -246,20 +277,28 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
                 #print(i)
                 file_graph.add_edge("β_" + str(all_node_phase[i]), i, arrows=False)
     if phasedict != None:
-        for p in list(set(phase_trck)):
+        p_list = list(set(phase_trck))
+        print(p_list[0])
+        phase_nodes.append('a_'+ str(p_list[0][0]))
+        for p in p_list:
             relation = phasedict[p]
             if relation == 'gap':
-                file_graph.add_edge("α_" + str(p[0]) + str(p[0]), "β_" + str(p[1]))
+                file_graph.add_edge("α_" + str(p[0]), "β_" + str(p[1]))
+                phase_nodes.append("b_" + str(p[1]))
+                phase_nodes.append("a_" + str(p[0]))
             if relation == 'overlap':
                 file_graph.add_edge("β_" + str(p[1]), "α_" + str(p[0]))
+                phase_nodes.append("a_" + str(p[0]))
+                phase_nodes.append("b_" + str(p[1]))
             if relation == "abuting":
-                x_bef = list(file_graph)
                 file_graph = nx.contracted_nodes(file_graph, "α_" + str(p[0]), "β_" + str(p[1]))
                 x_nod = list(file_graph)
                 newnode = str("α_" + str(p[0]) + " = " +"β_" + str(p[1]))
+                phase_nodes.append("a_" + str(p[0]) + " = " +"b_" + str(p[1]))
                 y_nod = [newnode if i=="α_" + str(p[0]) else i for i in x_nod]
                 mapping = dict(zip(x_nod, y_nod))
                 file_graph = nx.relabel_nodes(file_graph, mapping)
+        phase_nodes.append('b_' + str(p_list[len(p_list)-1][0]))        
     graph = nx.DiGraph()
     if len(phase_trck) != 0:
         graph.add_edges_from(phase_trck)
@@ -270,6 +309,7 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
         if len(list(a-b)) != 0:
             rem = list(a-b)[0]
             file_graph.remove_edge(rem[0], rem[1])     
+    print(phase_nodes)
     return(file_graph, phi_ref)
 
 
@@ -378,7 +418,7 @@ def phase_info_func(file_graph):
     node_list = list(file_graph.nodes)
     nd = dict(file_graph.nodes(data = True))   
     node_info = [nd[i] for i in node_list]    
-    print(FILE_INPUT)
+#    print(FILE_INPUT)
     if FILE_INPUT != None:
         phase = nx.get_node_attributes(file_graph, "fillcolor")
         phase_norm = [phase[ph][phase[ph].rfind("/")+1:len(phase[ph])] for ph in phase]
@@ -585,7 +625,7 @@ class popupWindow2(object):
         
 class popupWindow3(object):
     def __init__(self, master, graph, canvas, phase_rels):
-        print('popup3')
+#        print('popup3')
         self.littlecanvas2 = canvas
         self.top=tk.Toplevel(master)
         self.top.geometry("1000x400")
@@ -604,9 +644,9 @@ class popupWindow3(object):
         
         self.graphcopy = copy.deepcopy(self.graph)
         self.step_1 = chrono_edge_remov(self.graphcopy)
-        print(self.step_1)
+      #  print(self.step_1)
         self.button_b.place(relx=0.4, rely=0.55) 
-        print('hey')
+       # print('hey')
         print(self.phases)
         if self.phases != None: 
             for i in self.phases:
@@ -729,7 +769,6 @@ class StartPage(tk.Frame):
         self.datefile = None
         self.CONTEXT_NO = 0
         self.ACCEPT = None
-        self.PHI = None
         self.PHI_ACCEPT = None
         self.A = 0
         self.P = 0
@@ -844,7 +883,7 @@ class StartPage(tk.Frame):
 
     def save_state(self):
         global mcmc_check, load_check
-        print(self.popup3)
+    #    print(self.popup3)
         try:
             data = {
                 "h_1": self.h_1, 
@@ -875,10 +914,10 @@ class StartPage(tk.Frame):
                 "datefile" : self.datefile,
                 "context_no" : self.CONTEXT_NO,
                 "accept" : self.ACCEPT,
-                "phi": self.PHI,
                 "phi_accept": self.PHI_ACCEPT,
                 "A" : self.A,
                 "P" : self.P,
+                'all_samps_cont' : self.ALL_SAMPS_CONT,
                 'load_check': load_check,
                 'mcmc_check' : mcmc_check,
                 'phasefile' : self.phasefile,
@@ -889,7 +928,7 @@ class StartPage(tk.Frame):
           #  print('tryin to save')
             with open(FILENAME, "wb") as f:
                 pickle.dump(data, f)
-            print('tryin to save')
+        #    print('tryin to save')
 
         except Exception as e:
             print
@@ -900,7 +939,7 @@ class StartPage(tk.Frame):
     def restore_state(self): 
         global load_check, mcmc_check, FILE_INPUT
         
-        print(FILENAME)
+    #    print(FILENAME)
         try:
             with open(FILENAME, "rb") as f:
                 data = pickle.load(f)
@@ -933,7 +972,7 @@ class StartPage(tk.Frame):
             self.datefile = data["datefile"]
             self.CONTEXT_NO = data["context_no"]
             self.ACCEPT = data["accept"]
-            self.PHI = data["phi"]
+            self.ALL_SAMPS_CONT = data['all_samps_cont']
             self.PHI_ACCEPT = data["phi_accept"]
             self.A = data["A"]
             self.P = data["P"]
@@ -941,11 +980,13 @@ class StartPage(tk.Frame):
             mcmc_check = data['mcmc_check']
             
             self.phasefile = data['phasefile']
-#            self.popup3.phi_ref = data['phi_ref']
-#            self.popup3.prev_phase = data['prev_phase'] 
-#            self.popup3.post_phase = data['post_phase']
+            self.phi_ref = data['phi_ref']
+            self.prev_phase = data['prev_phase'] 
+            self.post_phase = data['post_phase']
+            print(self.phi_ref)
+            print(self.post_phase)
         #    print(type(self.graph) != 'NoneType')
-
+            print(phase_labels(self.phi_ref, self.post_phase, self.PHI_ACCEPT))
             if type(self.graph) != 'NoneType':
                 self.rerender_stratdag()
             if load_check == 'loaded':
@@ -1035,7 +1076,7 @@ class StartPage(tk.Frame):
     #    print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
     def rerender_stratdag(self):
-        print('rerender')
+    #    print('rerender')
         if phase_true == 1:
                 self.image = imgrender_phase(self.graph)
         else:
@@ -1179,7 +1220,7 @@ class StartPage(tk.Frame):
         outputPanel = tk.Text(self.top, wrap='word', height = 11, width=50)
         outputPanel.pack()
         sys.stdout = StdoutRedirector(outputPanel)
-        self.CONTEXT_NO, self.ACCEPT, self.PHI, self.PHI_REF, self.A, self.P, self.ALL_SAMPS_CONT = self.MCMC_func()
+        self.CONTEXT_NO, self.ACCEPT, self.PHI_ACCEPT, self.PHI_REF, self.A, self.P, self.ALL_SAMPS_CONT = self.MCMC_func()
         mcmc_check = 'mcmc_loaded'
         sys.stdout = old_stdout
         self.controller.show_frame('PageOne')
@@ -1314,7 +1355,7 @@ class StartPage(tk.Frame):
                 self.graph[node_inside]
                 outline[node_inside] = 'red'
                 nx.set_node_attributes(self.graph, outline, 'color')  
-                print('colorchange')
+            #    print('colorchange')
             if phase_true == 1:
                 imgrender_phase(self.graph)
             else:
@@ -1787,10 +1828,11 @@ class PageOne(tk.Frame):
                 refs = [k for k in range(len(interval)) if k %2]
                 for i in refs:
                     hpd_str = hpd_str + str(interval[i-1]) + " - " + str(interval[i]) + " Cal BP "
-                print(hpd_str)
+             #   print(hpd_str)
             self.ResultList.remove("Get phase length between "+ str(self.phase_len_nodes[0]) + ' and another context')
             self.testmenu2 = ttk.OptionMenu(self.littlecanvas2, self.variable, self.ResultList[0], *self.ResultList, command = self.node_finder)
             self.phase_len_nodes = []
+       #     print(startpage.phi_ref )
 #                self.phase_len_nodes = []
                 
         if self.variable.get() == "Get phase length":
