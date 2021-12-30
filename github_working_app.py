@@ -127,15 +127,21 @@ def all_node_info(node_list, x_image, node_info):
 #    print((sys._getframe().f_code.co_name), str(time.time() - t0))  
     return node_info
 
-def phase_length_finder(con_1, con_2, ALL_SAMPS_CONT, CONTEXT_NO):
+def phase_length_finder(con_1, con_2, ALL_SAMPS_CONT, CONTEXT_NO, resultsdict):
     phase_lengths = []
     x_1 = np.where(np.array(CONTEXT_NO) == con_1)[0][0]
     x_2 = np.where(np.array(CONTEXT_NO) == con_2)[0][0]
-    print([con_1, con_2])
-    print(np.where(np.array(CONTEXT_NO) == con_1)[0][0])
+    x_3 = resultsdict[con_1]
+    x_4 = resultsdict[con_2]
+    print(len(x_3))
+    print(len(x_4))
+    print([len(i) for i in ALL_SAMPS_CONT])
+    test = []
     sampl_list = [len(i) for i in ALL_SAMPS_CONT]       
     for i in range(min(sampl_list)):
         phase_lengths.append(ALL_SAMPS_CONT[x_1][i] - ALL_SAMPS_CONT[x_2][i])
+   #     test.append(x_3[i] - x_4[i])
+   # print(test == phase_lengths)
     un_phase_lens = []
     for i in range(len(phase_lengths)-1):
         if phase_lengths[i] != phase_lengths[i+1]:
@@ -229,7 +235,7 @@ def chrono_edge_remov(file_graph):
 
 def phase_labels(phi_ref, POST_PHASE, phi_accept):
     "provides phase limits for a phase"""
-    labels = ['a_' + str(phi_ref[0])]
+    labels = ['α_' + str(phi_ref[0])]
     i = 0
     print(i)
     results_dict = {labels[0]: phi_accept[i]}
@@ -237,24 +243,24 @@ def phase_labels(phi_ref, POST_PHASE, phi_accept):
     for a_val in enumerate(POST_PHASE):
         i = i + 1
         if a_val[1] == "abuting":
-            labels.append('b_' + str(phi_ref[a_val[0]]) + ' = a_' + str(phi_ref[a_val[0]+1]))
-            results_dict['b_' + str(phi_ref[a_val[0]])] =  phi_accept[i]
-            results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
+            labels.append('β_' + str(phi_ref[a_val[0]]) + ' = α_' + str(phi_ref[a_val[0]+1]))
+            results_dict['β_' + str(phi_ref[a_val[0]])] =  phi_accept[i]
+            results_dict['α_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
         elif a_val[1] == 'end':
-            labels.append('b_' + str(phi_ref[-1]))
-            results_dict['b_' + str(phi_ref[a_val[0]])] =  phi_accept[i]
+            labels.append('β_' + str(phi_ref[-1]))
+            results_dict['β_' + str(phi_ref[a_val[0]])] =  phi_accept[i]
         elif a_val == 'gap':
-            labels.append('b_' + str(phi_ref(a_val[0])))
-            labels.append('a_' + str(phi_ref[a_val[0]+1]))
-            results_dict['b_' + str(phi_ref[a_val[0]])] = phi_accept[i]
+            labels.append('β_' + str(phi_ref(a_val[0])))
+            labels.append('α_' + str(phi_ref[a_val[0]+1]))
+            results_dict['β_' + str(phi_ref[a_val[0]])] = phi_accept[i]
             i = i + 1
-            results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
+            results_dict['α_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
         else:
-            labels.append('a_' + str(phi_ref[a_val[0]+1]))
-            labels.append('b_' + str(phi_ref(a_val[0])))
-            results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
+            labels.append('α_' + str(phi_ref[a_val[0]+1]))
+            labels.append('β_' + str(phi_ref(a_val[0])))
+            results_dict['α_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
             i = i + 1
-            results_dict['b_' + str(phi_ref[a_val[0]])] = phi_accept[i]
+            results_dict['β_' + str(phi_ref[a_val[0]])] = phi_accept[i]
     return labels, results_dict
 
 
@@ -278,7 +284,7 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
                 file_graph.add_edge("β_" + str(all_node_phase[i]), i, arrows=False)
     if phasedict != None:
         p_list = list(set(phase_trck))
-        print(p_list[0])
+       # print(p_list[0])
         phase_nodes.append('a_'+ str(p_list[0][0]))
         for p in p_list:
             relation = phasedict[p]
@@ -309,7 +315,7 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
         if len(list(a-b)) != 0:
             rem = list(a-b)[0]
             file_graph.remove_edge(rem[0], rem[1])     
-    print(phase_nodes)
+  #  print(phase_nodes)
     return(file_graph, phi_ref)
 
 
@@ -318,10 +324,12 @@ def imgrender(file):
     """renders png from dotfile"""
     write_dot(file, 'fi_new')
     render('dot', 'png', 'fi_new')
+    
     inp = Image.open("fi_new.png")
     inp = trim(inp)
     inp.save("testdag.png")
     outp = Image.open("testdag.png")
+    
 #    print((sys._getframe().f_code.co_name), str(time.time() - t0))
     return outp
 
@@ -647,7 +655,7 @@ class popupWindow3(object):
       #  print(self.step_1)
         self.button_b.place(relx=0.4, rely=0.55) 
        # print('hey')
-        print(self.phases)
+     #   print(self.phases)
         if self.phases != None: 
             for i in self.phases:
                 self.menu_list1.append("Relationship between start of phase " + str(i[0]) + " and end of phase " + str(i[1]))    
@@ -770,6 +778,7 @@ class StartPage(tk.Frame):
         self.CONTEXT_NO = 0
         self.ACCEPT = None
         self.PHI_ACCEPT = None
+        self.resultsdict = None
         self.A = 0
         self.P = 0
         self.variable = 0
@@ -923,7 +932,8 @@ class StartPage(tk.Frame):
                 'phasefile' : self.phasefile,
                 'phi_ref': self.popup3.phi_ref, 
                 'prev_phase' : self.popup3.prev_phase, 
-                'post_phase' : self.popup3.post_phase
+                'post_phase' : self.popup3.post_phase,
+                'resultsdict' : self.resultsdict
             }
           #  print('tryin to save')
             with open(FILENAME, "wb") as f:
@@ -978,15 +988,15 @@ class StartPage(tk.Frame):
             self.P = data["P"]
             load_check = data['load_check']
             mcmc_check = data['mcmc_check']
-            
+            self.resultsdict = data['resultsdict']
             self.phasefile = data['phasefile']
             self.phi_ref = data['phi_ref']
             self.prev_phase = data['prev_phase'] 
             self.post_phase = data['post_phase']
-            print(self.phi_ref)
-            print(self.post_phase)
+          #  print(self.phi_ref)
+          #  print(self.post_phase)
         #    print(type(self.graph) != 'NoneType')
-            print(phase_labels(self.phi_ref, self.post_phase, self.PHI_ACCEPT))
+       #     print(phase_labels(self.phi_ref, self.post_phase, self.PHI_ACCEPT))
             if type(self.graph) != 'NoneType':
                 self.rerender_stratdag()
             if load_check == 'loaded':
@@ -1220,7 +1230,7 @@ class StartPage(tk.Frame):
         outputPanel = tk.Text(self.top, wrap='word', height = 11, width=50)
         outputPanel.pack()
         sys.stdout = StdoutRedirector(outputPanel)
-        self.CONTEXT_NO, self.ACCEPT, self.PHI_ACCEPT, self.PHI_REF, self.A, self.P, self.ALL_SAMPS_CONT = self.MCMC_func()
+        self.CONTEXT_NO, self.ACCEPT, self.PHI_ACCEPT, self.PHI_REF, self.A, self.P, self.ALL_SAMPS_CONT, self.resultsdict = self.MCMC_func()
         mcmc_check = 'mcmc_loaded'
         sys.stdout = old_stdout
         self.controller.show_frame('PageOne')
@@ -1328,7 +1338,10 @@ class StartPage(tk.Frame):
         TOPO_SORT.reverse()
 #        print(TOPO_SORT)
         CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.popup3.phi_ref, self.popup3.prev_phase, self.popup3.post_phase, TOPO_SORT)
-        return CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT
+        phase_nodes, resultsdict = phase_labels(PHI_REF, self.popup3.post_phase, PHI_ACCEPT)
+        for i, j in enumerate(CONTEXT_NO):
+            resultsdict[j] = ACCEPT[i]
+        return CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT,resultsdict
 
         
         
@@ -1811,14 +1824,14 @@ class PageOne(tk.Frame):
         x = str(self.chrono_nodes(currentevent))
         if self.variable.get() == 'Add to results list':
             self.littlecanvas3.delete(self.results_text)
-            ref = np.where(np.array(startpage.CONTEXT_NO) == x)[0][0]
-            self.results_list.append(ref)
+            #ref = np.where(np.array(startpage.CONTEXT_NO) == x)[0][0]
+            self.results_list.append(x)
         if len(self.phase_len_nodes) == 1:
             if self.variable.get() == "Get phase length between "+ str(self.phase_len_nodes[0]) + ' and another context':
                 self.phase_len_nodes = np.append(self.phase_len_nodes, x)
                 fig = Figure(figsize = (5, 5),
                  dpi = 100)
-                LENGTHS = phase_length_finder(self.phase_len_nodes[0], self.phase_len_nodes[1], startpage.ALL_SAMPS_CONT, startpage.CONTEXT_NO)
+                LENGTHS = phase_length_finder(self.phase_len_nodes[0], self.phase_len_nodes[1], startpage.ALL_SAMPS_CONT, startpage.CONTEXT_NO, startpage.resultsdict)
                 plot1 = fig.add_subplot(111)
                 plot1.hist(LENGTHS, bins='auto', color='#0504aa',
                             alpha=0.7, rwidth=0.85, density = True )
@@ -1843,8 +1856,8 @@ class PageOne(tk.Frame):
             self.phase_len_nodes = np.append(self.phase_len_nodes, x)                
             self.ResultList.append("Get phase length between "+ str(self.phase_len_nodes[0]) + ' and another context')
             self.testmenu2 = ttk.OptionMenu(self.littlecanvas2, self.variable,self.ResultList[0], *self.ResultList, command = self.node_finder)
-        self.result_contexts = [startpage.CONTEXT_NO[i] for i in self.results_list]
-        self.results_text = self.littlecanvas3.create_text(100, 10, text = self.result_contexts)
+  #      self.result_contexts = [startpage.CONTEXT_NO[i] for i in self.results_list]
+        self.results_text = self.littlecanvas3.create_text(100, 10, text = self.results_list)
         self.variable.set("Add to results list")
 
     def onRight(self, *args):
@@ -1891,14 +1904,18 @@ class PageOne(tk.Frame):
             hpd_str = ""
             fig = Figure(figsize = (5, 5),
                  dpi = 100)
+            print(self.results_list)
             for i,j  in enumerate(self.results_list):
-                plot_index = int(str(51) + str(j))
+                plot_index = int(str(51) + str(i+1))
                 plot1 = fig.add_subplot(plot_index)
-                plot1.hist(startpage.ACCEPT[i], bins='auto', color='#0504aa',
+        #        ref = np.where(np.array(startpage.CONTEXT_NO) == j)[0][0]
+                plot1.hist(startpage.resultsdict[j], bins='auto', color='#0504aa',
                             alpha=0.7, rwidth=0.85, density = True )
-                plot1.title.set_text('Posterior density plot for context ' + str(startpage.CONTEXT_NO[i]))
-                hpd_str = hpd_str + "\n HPD interval for context " + str(startpage.CONTEXT_NO[i] + " : \n")
-                interval = list(mcmc.HPD_interval(np.array(startpage.ACCEPT[i][1000:])))
+                plot1.title.set_text('Posterior density plot for context ' + str(j))
+                hpd_str = hpd_str + "\n HPD interval for context " + str(j) + " : \n"
+         #       interval = list(mcmc.HPD_interval(np.array(startpage.ACCEPT[ref][1000:])))
+                interval = list(mcmc.HPD_interval(np.array(startpage.resultsdict[j][1000:])))
+     #           print(interval == test)
                 refs = [k for k in range(len(interval)) if k %2]
                 for i in refs:
                     hpd_str = hpd_str + str(interval[i-1]) + " - " + str(interval[i]) + " Cal BP "
