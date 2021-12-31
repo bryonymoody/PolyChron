@@ -173,6 +173,23 @@ def imagefunc(dotfile):
     nx.set_node_attributes(file, attrs)
  #   print((sys._getframe().f_code.co_name), str(time.time() - t0))
     return file
+def phase_relabel(graph):
+    label_dict = {}
+    for i in graph.nodes():
+        if str(i)[0] == 'a':
+            label_str = '<&alpha;<SUB>' + str(i[2:]) + '</SUB>>'
+           # print(i)
+            label_dict[i] = label_str
+            #print(label_dict)
+        elif str(i)[0] == 'b':
+            label_str = '<&beta;<SUB>' + str(i[2:]) + '</SUB>>'
+            label_dict[i] = label_str
+        else: 
+            label_str = str(i)
+            label_dict[i] = label_str
+  #  print(label_dict)
+    nx.set_node_attributes(graph, label_dict, 'label')
+    return graph
 
 def chrono_edge_remov(file_graph):
     xs, ys = [], []
@@ -202,10 +219,12 @@ def chrono_edge_remov(file_graph):
              
         for node in phase_list:
             alp_beta_node_add(node, file_graph)
+        file_graph = phase_relabel(file_graph)
+        
         for i, j in enumerate(elist):
-            file_graph.add_edge("β_" + str(j), evenlist[i], arrows=False)    
+            file_graph.add_edge("b_" + str(j), evenlist[i], arrows=False)    
         for i, j in enumerate(olist):
-            file_graph.add_edge(oddlist[i], "α_" + str(j.replace("_below", "")), arrows=False)
+            file_graph.add_edge(oddlist[i], "a_" + str(j.replace("_below", "")), arrows=False)
         #add boundary nodes
         #add dges between nodes using y_l as reference
         #figure out top and bottom nodes
@@ -226,16 +245,16 @@ def chrono_edge_remov(file_graph):
             alp_beta_node_add(node, file_graph)
         phase_lab = phase_list[0]   
         for z in evenlist:
-            file_graph.add_edge("β_" + str(phase_lab), z, arrows=False)
+            file_graph.add_edge("b_" + str(phase_lab), z, arrows=False)
                 
         for m in oddlist:
-            file_graph.add_edge(m, "α_" + str(phase_lab), arrows=False)
+            file_graph.add_edge(m, "a_" + str(phase_lab), arrows=False)
     return graph_data, [xs, ys]
 
 
 def phase_labels(phi_ref, POST_PHASE, phi_accept):
     "provides phase limits for a phase"""
-    labels = ['α_' + str(phi_ref[0])]
+    labels = ['a_' + str(phi_ref[0])]
     i = 0
     print(i)
     results_dict = {labels[0]: phi_accept[i]}
@@ -243,24 +262,24 @@ def phase_labels(phi_ref, POST_PHASE, phi_accept):
     for a_val in enumerate(POST_PHASE):
         i = i + 1
         if a_val[1] == "abuting":
-            labels.append('β_' + str(phi_ref[a_val[0]]) + ' = α_' + str(phi_ref[a_val[0]+1]))
-            results_dict['β_' + str(phi_ref[a_val[0]])] =  phi_accept[i]
-            results_dict['α_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
+            labels.append('b_' + str(phi_ref[a_val[0]]) + ' = a_' + str(phi_ref[a_val[0]+1]))
+            results_dict['b_' + str(phi_ref[a_val[0]])] =  phi_accept[i]
+            results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
         elif a_val[1] == 'end':
-            labels.append('β_' + str(phi_ref[-1]))
-            results_dict['β_' + str(phi_ref[a_val[0]])] =  phi_accept[i]
+            labels.append('b_' + str(phi_ref[-1]))
+            results_dict['b_' + str(phi_ref[a_val[0]])] =  phi_accept[i]
         elif a_val == 'gap':
-            labels.append('β_' + str(phi_ref(a_val[0])))
-            labels.append('α_' + str(phi_ref[a_val[0]+1]))
-            results_dict['β_' + str(phi_ref[a_val[0]])] = phi_accept[i]
+            labels.append('b_' + str(phi_ref(a_val[0])))
+            labels.append('a_' + str(phi_ref[a_val[0]+1]))
+            results_dict['b_' + str(phi_ref[a_val[0]])] = phi_accept[i]
             i = i + 1
-            results_dict['α_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
+            results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
         else:
-            labels.append('α_' + str(phi_ref[a_val[0]+1]))
-            labels.append('β_' + str(phi_ref(a_val[0])))
-            results_dict['α_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
+            labels.append('a_' + str(phi_ref[a_val[0]+1]))
+            labels.append('b_' + str(phi_ref(a_val[0])))
+            results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
             i = i + 1
-            results_dict['β_' + str(phi_ref[a_val[0]])] = phi_accept[i]
+            results_dict['b_' + str(phi_ref[a_val[0]])] = phi_accept[i]
     return labels, results_dict
 
 
@@ -270,18 +289,19 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
     phase_nodes = []
     phase_norm, node_list = graph_data[1][0], graph_data[1][1]
     all_node_phase = dict(zip(node_list, phase_norm))
+    label_dict = {}
    # print(node_list, phase_norm)     
     for i in node_list:
         if (i in xs) == False:
             if (i in ys) == False:
-                file_graph.add_edge("β_" + str(all_node_phase[i]), i, arrows=False)
-                file_graph.add_edge(i, "α_" + str(all_node_phase[i]), arrows=False)
+                file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrows=False)
+                file_graph.add_edge(i, "a_" + str(all_node_phase[i]), arrows=False)
             else:
-                file_graph.add_edge(i, "α_" + str(all_node_phase[i]), arrows=False)
+                file_graph.add_edge(i, "a_" + str(all_node_phase[i]), arrows=False)
         elif (i in xs) == True:
             if (i in ys) == False:
                 #print(i)
-                file_graph.add_edge("β_" + str(all_node_phase[i]), i, arrows=False)
+                file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrows=False)
     if phasedict != None:
         p_list = list(set(phase_trck))
        # print(p_list[0])
@@ -289,19 +309,22 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
         for p in p_list:
             relation = phasedict[p]
             if relation == 'gap':
-                file_graph.add_edge("α_" + str(p[0]), "β_" + str(p[1]))
-                phase_nodes.append("b_" + str(p[1]))
-                phase_nodes.append("a_" + str(p[0]))
+                file_graph.add_edge("a_" + str(p[0]), "b_" + str(p[1]))
+              #  phase_nodes.append("b_" + str(p[1]))
+               # phase_nodes.append("a_" + str(p[0]))
             if relation == 'overlap':
-                file_graph.add_edge("β_" + str(p[1]), "α_" + str(p[0]))
-                phase_nodes.append("a_" + str(p[0]))
-                phase_nodes.append("b_" + str(p[1]))
+                file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[0]))
+               # phase_nodes.append("a_" + str(p[0]))
+               # phase_nodes.append("b_" + str(p[1]))
             if relation == "abuting":
-                file_graph = nx.contracted_nodes(file_graph, "α_" + str(p[0]), "β_" + str(p[1]))
+                file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
                 x_nod = list(file_graph)
-                newnode = str("α_" + str(p[0]) + " = " +"β_" + str(p[1]))
+                newnode = str("a_" + str(p[0]) + " = " +"b_" + str(p[1]))
+                label_str = '<&alpha;<SUB>' + str(p[0]) + '</SUB> = &beta;<SUB>' + str(p[1]) + '</SUB>>'
+                label_dict[newnode] =  label_str
+                print(label_dict)
                 phase_nodes.append("a_" + str(p[0]) + " = " +"b_" + str(p[1]))
-                y_nod = [newnode if i=="α_" + str(p[0]) else i for i in x_nod]
+                y_nod = [newnode if i=="a_" + str(p[0]) else i for i in x_nod]
                 mapping = dict(zip(x_nod, y_nod))
                 file_graph = nx.relabel_nodes(file_graph, mapping)
         phase_nodes.append('b_' + str(p_list[len(p_list)-1][0]))        
@@ -315,7 +338,7 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
         if len(list(a-b)) != 0:
             rem = list(a-b)[0]
             file_graph.remove_edge(rem[0], rem[1])     
-  #  print(phase_nodes)
+    nx.set_node_attributes(file_graph, label_dict, 'label')
     return(file_graph, phi_ref)
 
 
@@ -323,8 +346,7 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
 def imgrender(file):
     """renders png from dotfile"""
     write_dot(file, 'fi_new')
-    render('dot', 'png', 'fi_new')
-    
+    render('dot', 'png', 'fi_new')    
     inp = Image.open("fi_new.png")
     inp = trim(inp)
     inp.save("testdag.png")
@@ -457,9 +479,9 @@ def phase_info_func(file_graph):
     return reversed_dict, [phase_norm, node_list, phase_list, phase_trck], [x_l, y_l], phase_dic
 
 def alp_beta_node_add(x, graph):
-    graph.add_node("α_" + str(x), shape="diamond", fontsize="20.0",
+    graph.add_node("a_" + str(x), shape="diamond", fontsize="20.0",
                                    fontname="Ubuntu", penwidth="1.0")
-    graph.add_node("β_" + str(x), shape="diamond", fontsize="20.0",
+    graph.add_node("b_" + str(x), shape="diamond", fontsize="20.0",
                                    fontname="Ubuntu", penwidth="1.0")
 
 
@@ -671,7 +693,7 @@ class popupWindow3(object):
             self.menudict = None
         master.wait_window(self.top)
         
-
+        
     def phase_rel_func(self):
         n = re.search('start of phase (.+?) and end', self.variable_1.get()).group(1)
         m = re.search('and end of phase (.+?)', self.variable_1.get()).group(1)
@@ -699,6 +721,7 @@ class popupWindow3(object):
         else:
             self.phi_ref = list(self.step_1[0][1][2])
         self.post_phase.append("end")
+   #     self.phase_relabel(self.graphcopy)
         write_dot(self.graphcopy, 'fi_new_chrono')
         self.top.destroy()
 

@@ -8,9 +8,13 @@ Created on Thu Dec 30 14:20:32 2021
 
 file = askopenfile(mode ='r', filetypes =[('Python Files', '*.dot')])
 FILE_INPUT = file.name
-graph = nx.DiGraph(imagefunc(file.name))  
-nx.set_node_attributes(graph, '<&beta;<SUB>456</SUB>>', 'label')
+graph = nx.DiGraph(imagefunc(file.name)) 
+label_dict = {}
+for i in graph.nodes():
+    label_str = '<&beta;<SUB>' + str(i) + '</SUB>>'
+    label_dict[i] = label_str
+nx.set_node_attributes(graph, label_dict, 'label')
 imgrender(graph)
-graph.nodes()
+
 
 
