@@ -38,7 +38,7 @@ import sys
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 import pickle
-
+from html2text import html2text 
 #from ttkbootstrap import Style
 #from networkx.readwrite import json_graph
 
@@ -133,11 +133,11 @@ def phase_length_finder(con_1, con_2, ALL_SAMPS_CONT, CONTEXT_NO, resultsdict):
     x_2 = np.where(np.array(CONTEXT_NO) == con_2)[0][0]
     x_3 = resultsdict[con_1]
     x_4 = resultsdict[con_2]
-    print(len(x_3))
-    print(len(x_4))
-    print([len(i) for i in ALL_SAMPS_CONT])
+ #   print(len(x_3))
+#    print(len(x_4))
+  #  print([len(i) for i in ALL_SAMPS_CONT])
     test = []
-    sampl_list = [len(i) for i in ALL_SAMPS_CONT]       
+    sampl_list = [len(i) for i in ALL_SAMPS_CONT]
     for i in range(min(sampl_list)):
         phase_lengths.append(ALL_SAMPS_CONT[x_1][i] - ALL_SAMPS_CONT[x_2][i])
    #     test.append(x_3[i] - x_4[i])
@@ -256,15 +256,14 @@ def phase_labels(phi_ref, POST_PHASE, phi_accept):
     "provides phase limits for a phase"""
     labels = ['a_' + str(phi_ref[0])]
     i = 0
-    print(i)
     results_dict = {labels[0]: phi_accept[i]}
     
     for a_val in enumerate(POST_PHASE):
         i = i + 1
         if a_val[1] == "abuting":
             labels.append('b_' + str(phi_ref[a_val[0]]) + ' = a_' + str(phi_ref[a_val[0]+1]))
-            results_dict['b_' + str(phi_ref[a_val[0]])] =  phi_accept[i]
-            results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
+            results_dict['a_' + str(phi_ref[a_val[0]+1])  + ' = b_' + str(phi_ref[a_val[0]])] =  phi_accept[i]
+           # results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
         elif a_val[1] == 'end':
             labels.append('b_' + str(phi_ref[-1]))
             results_dict['b_' + str(phi_ref[a_val[0]])] =  phi_accept[i]
@@ -280,6 +279,7 @@ def phase_labels(phi_ref, POST_PHASE, phi_accept):
             results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
             i = i + 1
             results_dict['b_' + str(phi_ref[a_val[0]])] = phi_accept[i]
+    print(results_dict.keys())
     return labels, results_dict
 
 
@@ -322,7 +322,6 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
                 newnode = str("a_" + str(p[0]) + " = " +"b_" + str(p[1]))
                 label_str = '<&alpha;<SUB>' + str(p[0]) + '</SUB> = &beta;<SUB>' + str(p[1]) + '</SUB>>'
                 label_dict[newnode] =  label_str
-                print(label_dict)
                 phase_nodes.append("a_" + str(p[0]) + " = " +"b_" + str(p[1]))
                 y_nod = [newnode if i=="a_" + str(p[0]) else i for i in x_nod]
                 mapping = dict(zip(x_nod, y_nod))
@@ -1929,13 +1928,25 @@ class PageOne(tk.Frame):
                  dpi = 100)
             print(self.results_list)
             for i,j  in enumerate(self.results_list):
+                plt.rcParams['text.usetex']
                 plot_index = int(str(51) + str(i+1))
                 plot1 = fig.add_subplot(plot_index)
         #        ref = np.where(np.array(startpage.CONTEXT_NO) == j)[0][0]
                 plot1.hist(startpage.resultsdict[j], bins='auto', color='#0504aa',
                             alpha=0.7, rwidth=0.85, density = True )
-                plot1.title.set_text('Posterior density plot for context ' + str(j))
-                hpd_str = hpd_str + "\n HPD interval for context " + str(j) + " : \n"
+                node = str(j)
+                print(node)
+                print(node[0] == 'a')
+                if 'a' in node:
+                    print('hey')
+                    node = node.replace('a_', r'\alpha_{')
+                if 'b' in node:
+                    node  = node.replace('b_', r'\beta_{')
+                if '=' in node:
+                    node = node.replace('=', '} = ')
+                print(node)   
+                plot1.title.set_text(r"Posterior density plot for context " +  r"$" + node + "}$")
+                hpd_str = hpd_str + "\n HPD interval for context " + html2text(nx.get_node_attributes(self.chronograph, 'label')[str(j)][1:-1])
          #       interval = list(mcmc.HPD_interval(np.array(startpage.ACCEPT[ref][1000:])))
                 interval = list(mcmc.HPD_interval(np.array(startpage.resultsdict[j][1000:])))
      #           print(interval == test)
