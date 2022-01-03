@@ -67,7 +67,6 @@ def trim(im_trim):
     diff = ImageChops.difference(im_trim, bg_trim)
     diff = ImageChops.add(diff, diff, 2.0, -100)
     bbox = diff.getbbox()    
- #   print("trim", str(time.time() - t0))
     return im_trim.crop(bbox)
 
 def polygonfunc(i):
@@ -93,17 +92,14 @@ def node_coords_fromjson(graph):
     svg_string = str(graphs.create_svg())
     scale_info = re.search('points=(.*?)/>', svg_string).group(1).replace(' ', ',')
     scale_info = scale_info.split(",")
- #   print(scale_info)
     scale = [float(scale_info[4]), -1*float(scale_info[3])]
     coords_x = re.findall(r'id="node(.*?)</text>', svg_string)  
     coords_temp = [polygonfunc(i) if "points" in i else ellipsefunc(i) for i in coords_x]
-  #  print(coords_temp)
     node_test = re.findall(r'node">\\n<title>(.*?)</title>', svg_string)
     node_list = [i.replace('&#45;', '-') for i in node_test]
                         
     new_pos = dict(zip(node_list, coords_temp))
     df = pd.DataFrame.from_dict(new_pos, orient='index', columns=['x_lower', 'x_upper', 'y_lower', 'y_upper'])
- #   print((sys._getframe().f_code.co_name), str(time.time() - t0))
     return df, scale
 
 def all_node_info(node_list, x_image, node_info):
@@ -124,30 +120,21 @@ def all_node_info(node_list, x_image, node_info):
                         atr_newer = str('{\''+atr_new+'}')
                         dicc = ast.literal_eval(atr_newer)
                         node_info.append(dicc)
-#    print((sys._getframe().f_code.co_name), str(time.time() - t0))  
     return node_info
 
 def phase_length_finder(con_1, con_2, ALL_SAMPS_CONT, CONTEXT_NO, resultsdict):
     phase_lengths = []
-    x_1 = np.where(np.array(CONTEXT_NO) == con_1)[0][0]
-    x_2 = np.where(np.array(CONTEXT_NO) == con_2)[0][0]
     x_3 = resultsdict[con_1]
     x_4 = resultsdict[con_2]
- #   print(len(x_3))
-#    print(len(x_4))
-  #  print([len(i) for i in ALL_SAMPS_CONT])
-    test = []
-    sampl_list = [len(i) for i in ALL_SAMPS_CONT]
-    for i in range(min(sampl_list)):
-        phase_lengths.append(ALL_SAMPS_CONT[x_1][i] - ALL_SAMPS_CONT[x_2][i])
-   #     test.append(x_3[i] - x_4[i])
-   # print(test == phase_lengths)
+ #   sampl_list = [len(i) for i in ALL_SAMPS_CONT]
+    for i in range(len(x_3)):
+   #    print(x_3[i])
+   #    print(x_4[i])
+       phase_lengths.append(x_3[i] - x_4[i])
     un_phase_lens = []
     for i in range(len(phase_lengths)-1):
         if phase_lengths[i] != phase_lengths[i+1]:
             un_phase_lens.append(phase_lengths[i])
-    print(min(un_phase_lens))
-    print(max(un_phase_lens))
     return phase_lengths
         
 def imagefunc(dotfile):
@@ -171,23 +158,19 @@ def imagefunc(dotfile):
     individ_attrs = zip(node_list, node_info)
     attrs = dict(individ_attrs)#add the dictionary of attributed to a node
     nx.set_node_attributes(file, attrs)
- #   print((sys._getframe().f_code.co_name), str(time.time() - t0))
     return file
 def phase_relabel(graph):
     label_dict = {}
     for i in graph.nodes():
         if str(i)[0] == 'a':
             label_str = '<&alpha;<SUB>' + str(i[2:]) + '</SUB>>'
-           # print(i)
             label_dict[i] = label_str
-            #print(label_dict)
         elif str(i)[0] == 'b':
             label_str = '<&beta;<SUB>' + str(i[2:]) + '</SUB>>'
             label_dict[i] = label_str
         else: 
             label_str = str(i)
             label_dict[i] = label_str
-  #  print(label_dict)
     nx.set_node_attributes(graph, label_dict, 'label')
     return graph
 
@@ -199,7 +182,6 @@ def chrono_edge_remov(file_graph):
     graph_data = phase_info_func(file_graph)
     phase_list = list(graph_data[1][2])
     phase_dic = graph_data[3]
-#    print(len(phase_list))
     if len(phase_list) != 1:
         if len(graph_data[1][3]) == 0:
             file_graph.add_edge(phase_dic[phase_list[0]][0], phase_dic[phase_list[1]][0])
@@ -225,13 +207,7 @@ def chrono_edge_remov(file_graph):
             file_graph.add_edge("b_" + str(j), evenlist[i], arrows=False)    
         for i, j in enumerate(olist):
             file_graph.add_edge(oddlist[i], "a_" + str(j.replace("_below", "")), arrows=False)
-        #add boundary nodes
-        #add dges between nodes using y_l as reference
-        #figure out top and bottom nodes
-        #figure out floating nodes
-   # elif len(phaselist > 1)
     elif len(phase_list) == 1:
-
         evenlist = []
         oddlist = []
         for nd in graph_data[1][1]:
@@ -252,35 +228,41 @@ def chrono_edge_remov(file_graph):
     return graph_data, [xs, ys]
 
 
-def phase_labels(phi_ref, POST_PHASE, phi_accept):
+def phase_labels(phi_ref, POST_PHASE, phi_accept, all_samps_phi):
     "provides phase limits for a phase"""
     labels = ['a_' + str(phi_ref[0])]
     i = 0
     results_dict = {labels[0]: phi_accept[i]}
+    all_results_dict = {labels[0]: all_samps_phi[i]}
     
     for a_val in enumerate(POST_PHASE):
         i = i + 1
         if a_val[1] == "abuting":
             labels.append('b_' + str(phi_ref[a_val[0]]) + ' = a_' + str(phi_ref[a_val[0]+1]))
             results_dict['a_' + str(phi_ref[a_val[0]+1])  + ' = b_' + str(phi_ref[a_val[0]])] =  phi_accept[i]
+            all_results_dict['a_' + str(phi_ref[a_val[0]+1])  + ' = b_' + str(phi_ref[a_val[0]])] =  all_samps_phi[i]            
            # results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
         elif a_val[1] == 'end':
             labels.append('b_' + str(phi_ref[-1]))
             results_dict['b_' + str(phi_ref[a_val[0]])] =  phi_accept[i]
+            all_results_dict['b_' + str(phi_ref[a_val[0]])] =  all_samps_phi[i]
         elif a_val == 'gap':
             labels.append('b_' + str(phi_ref(a_val[0])))
             labels.append('a_' + str(phi_ref[a_val[0]+1]))
             results_dict['b_' + str(phi_ref[a_val[0]])] = phi_accept[i]
+            all_results_dict['b_' + str(phi_ref[a_val[0]])] = all_samps_phi[i]
             i = i + 1
             results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
+            all_results_dict['a_' + str(phi_ref[a_val[0]+1])] = all_samps_phi[i]
         else:
             labels.append('a_' + str(phi_ref[a_val[0]+1]))
             labels.append('b_' + str(phi_ref(a_val[0])))
             results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
+            all_results_dict['a_' + str(phi_ref[a_val[0]+1])] = all_samps_phi[i]
             i = i + 1
             results_dict['b_' + str(phi_ref[a_val[0]])] = phi_accept[i]
-    print(results_dict.keys())
-    return labels, results_dict
+            all_results_dict['b_' + str(phi_ref[a_val[0]])] = all_samps_phi[i]
+    return labels, results_dict, all_results_dict
 
 
 def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
@@ -289,8 +271,7 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
     phase_nodes = []
     phase_norm, node_list = graph_data[1][0], graph_data[1][1]
     all_node_phase = dict(zip(node_list, phase_norm))
-    label_dict = {}
-   # print(node_list, phase_norm)     
+    label_dict = {}     
     for i in node_list:
         if (i in xs) == False:
             if (i in ys) == False:
@@ -300,22 +281,16 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
                 file_graph.add_edge(i, "a_" + str(all_node_phase[i]), arrows=False)
         elif (i in xs) == True:
             if (i in ys) == False:
-                #print(i)
                 file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrows=False)
     if phasedict != None:
         p_list = list(set(phase_trck))
-       # print(p_list[0])
         phase_nodes.append('a_'+ str(p_list[0][0]))
         for p in p_list:
             relation = phasedict[p]
             if relation == 'gap':
                 file_graph.add_edge("a_" + str(p[0]), "b_" + str(p[1]))
-              #  phase_nodes.append("b_" + str(p[1]))
-               # phase_nodes.append("a_" + str(p[0]))
             if relation == 'overlap':
                 file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[0]))
-               # phase_nodes.append("a_" + str(p[0]))
-               # phase_nodes.append("b_" + str(p[1]))
             if relation == "abuting":
                 file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
                 x_nod = list(file_graph)
@@ -350,8 +325,6 @@ def imgrender(file):
     inp = trim(inp)
     inp.save("testdag.png")
     outp = Image.open("testdag.png")
-    
-#    print((sys._getframe().f_code.co_name), str(time.time() - t0))
     return outp
 
 
@@ -366,7 +339,6 @@ def imgrender2(load_check):
         outp = Image.open("testdag_chrono.png")
     else: 
         outp = 'No_image'
-#    print((sys._getframe().f_code.co_name), str(time.time() - t0))
     return outp
 
 
@@ -404,7 +376,6 @@ def edge_of_phase(test1, pset, node_list, node_info):
                 x_l.append(test1[i[0]][0])
                 y_l.append(str(key_1 + "_below"))
                 phase_tracker.append((key_1, key))
-#    print((sys._getframe().f_code.co_name), str(time.time() - t0))
     return x_l, y_l, mydict.keys(), phase_tracker, mydict
 
 
@@ -435,7 +406,6 @@ def edge_of_phase_new(test1, pset, node_list, node_info):
                 x_l.append(test1[i[0]][0])
                 y_l.append(str(key_1 + "_below"))
                 phase_tracker.append((key_1, key))
-#    print((sys._getframe().f_code.co_name), str(time.time() - t0))
     return x_l, y_l, mydict.keys(), phase_tracker
 
 
@@ -447,7 +417,6 @@ def phase_info_func(file_graph):
     node_list = list(file_graph.nodes)
     nd = dict(file_graph.nodes(data = True))   
     node_info = [nd[i] for i in node_list]    
-#    print(FILE_INPUT)
     if FILE_INPUT != None:
         phase = nx.get_node_attributes(file_graph, "fillcolor")
         phase_norm = [phase[ph][phase[ph].rfind("/")+1:len(phase[ph])] for ph in phase]
@@ -473,8 +442,7 @@ def phase_info_func(file_graph):
         testdic = dict(zip(x_l, y_l))
         for key, value in testdic.items():
             reversed_dict.setdefault(value, [])
-            reversed_dict[value].append(key)   
-  #  print((sys._getframe().f_code.co_name), str(time.time() - t0))    
+            reversed_dict[value].append(key)       
     return reversed_dict, [phase_norm, node_list, phase_list, phase_trck], [x_l, y_l], phase_dic
 
 def alp_beta_node_add(x, graph):
@@ -499,7 +467,6 @@ def rank_func(tes, file_content):
         rank_same.append(x_2)
     rank_string = ''.join(rank_same)[:-1]
     new_string = file_content[:-2] + rank_string + file_content[-2]
- #   print((sys._getframe().f_code.co_name), str(time.time() - t0))
     return new_string
 
 def imgrender_phase(file):
@@ -519,7 +486,6 @@ def imgrender_phase(file):
             # Call the real .tkraise
     inp.save("testdag.png")
     outp = Image.open("testdag.png")
-  #  print((sys._getframe().f_code.co_name), str(time.time() - t0))
     return outp
 
 
@@ -570,8 +536,7 @@ class popupWindow2(object):
         self.optionmenu_b = ttk.OptionMenu(top, self.variable_b,'None',  'None')
         self.variable_a.set('Date')
         self.optionmenu_a.place(relx=0.3, rely=0.15)
-        self.optionmenu_b.place(relx=0.6, rely=0.15)    
-  #      self.b=tk.Button(top,text='Ok',command=self.cleanup)
+        self.optionmenu_b.place(relx=0.6, rely=0.15)
         self.button3.place(relx = 0.1, rely = 0.7)
         
     def testdate_input(self, *args):
@@ -630,10 +595,8 @@ class popupWindow2(object):
         tree.heading("Data", text="Data", anchor='w')        
         for index, row in self.meta2.iterrows():
             tree.insert("",0,text=index,values=list(row))
-
-
         self.metatext.configure(state='disabled')
-  #      print((sys._getframe().f_code.co_name), str(time.time() - t0))
+
     def update_options(self, *args):
   #      t0 = time.time()
         """updates metadata drop down menu 1"""
@@ -643,8 +606,7 @@ class popupWindow2(object):
         menu.delete(0, 'end')
         for meta in meta_data:
             menu.add_command(label=meta,
-                             command=lambda nation=meta: self.variable_b.set(nation))   
-#        print((sys._getframe().f_code.co_name), str(time.time() - t0))
+                             command=lambda nation=meta: self.variable_b.set(nation))  
 
                 
     def cleanup(self):
@@ -654,7 +616,6 @@ class popupWindow2(object):
         
 class popupWindow3(object):
     def __init__(self, master, graph, canvas, phase_rels):
-#        print('popup3')
         self.littlecanvas2 = canvas
         self.top=tk.Toplevel(master)
         self.top.geometry("1000x400")
@@ -673,10 +634,7 @@ class popupWindow3(object):
         
         self.graphcopy = copy.deepcopy(self.graph)
         self.step_1 = chrono_edge_remov(self.graphcopy)
-      #  print(self.step_1)
-        self.button_b.place(relx=0.4, rely=0.55) 
-       # print('hey')
-     #   print(self.phases)
+        self.button_b.place(relx=0.4, rely=0.55)
         if self.phases != None: 
             for i in self.phases:
                 self.menu_list1.append("Relationship between start of phase " + str(i[0]) + " and end of phase " + str(i[1]))    
@@ -686,8 +644,6 @@ class popupWindow3(object):
             self.optionmenu_a.place(relx=0.1, rely=0.15)
             self.optionmenu_b.place(relx=0.6, rely=0.15)
             self.button_a.place(relx=0.7, rely=0.15)
-    
-
         else: 
             self.menudict = None
         master.wait_window(self.top)
@@ -720,7 +676,6 @@ class popupWindow3(object):
         else:
             self.phi_ref = list(self.step_1[0][1][2])
         self.post_phase.append("end")
-   #     self.phase_relabel(self.graphcopy)
         write_dot(self.graphcopy, 'fi_new_chrono')
         self.top.destroy()
 
@@ -728,7 +683,6 @@ class MainFrame(tk.Tk):
     """ Main frame for tkinter app"""
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
-     #   self.title_font = tkfont.Font(family='Helvetica', size=18, weight="bold", slant="italic")
 
         # the container is where we'll stack a bunch of frames
         # on top of each other, then the one we want visible
@@ -888,11 +842,7 @@ class StartPage(tk.Frame):
         self.variable = tk.StringVar(self.littlecanvas)
         self.variable.set("Node Action")
         self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable,self.OptionList[0], *self.OptionList, command = self.nodes)
-        
-#        container = ttk.Frame(self.canvas)
-#        container.pack(side="top", fill="both", expand=True)
-#        container.grid_rowconfigure(0, weight=1)
-#        container.grid_columnconfigure(0, weight=1)
+
 
 
         
@@ -900,7 +850,6 @@ class StartPage(tk.Frame):
             self.testmenu.place_forget()
     #    # This is the function that removes the selected item when the label is clicked.
         def delete(self, *args):
-       # print(self.variable.get())
             self.destroy()  
             self.testmenu.place_forget()
             self.variable.set("Node Action")
@@ -914,7 +863,6 @@ class StartPage(tk.Frame):
 
     def save_state(self):
         global mcmc_check, load_check
-    #    print(self.popup3)
         try:
             data = {
                 "h_1": self.h_1, 
@@ -949,29 +897,25 @@ class StartPage(tk.Frame):
                 "A" : self.A,
                 "P" : self.P,
                 'all_samps_cont' : self.ALL_SAMPS_CONT,
+                'all_samps_phi' : self.ALL_SAMPS_PHI,
                 'load_check': load_check,
                 'mcmc_check' : mcmc_check,
                 'phasefile' : self.phasefile,
                 'phi_ref': self.popup3.phi_ref, 
                 'prev_phase' : self.popup3.prev_phase, 
                 'post_phase' : self.popup3.post_phase,
-                'resultsdict' : self.resultsdict
+                'resultsdict' : self.resultsdict,
+                'all_results_dict' : self.all_results_dict
             }
-          #  print('tryin to save')
             with open(FILENAME, "wb") as f:
                 pickle.dump(data, f)
-        #    print('tryin to save')
 
         except Exception as e:
             print
             "error saving state:", str(e)
 
-       # MainFrame.destroy()
-
     def restore_state(self): 
         global load_check, mcmc_check, FILE_INPUT
-        
-    #    print(FILENAME)
         try:
             with open(FILENAME, "rb") as f:
                 data = pickle.load(f)
@@ -1005,6 +949,7 @@ class StartPage(tk.Frame):
             self.CONTEXT_NO = data["context_no"]
             self.ACCEPT = data["accept"]
             self.ALL_SAMPS_CONT = data['all_samps_cont']
+            self.ALL_SAMPS_PHI = data['all_samps_phi']
             self.PHI_ACCEPT = data["phi_accept"]
             self.A = data["A"]
             self.P = data["P"]
@@ -1015,10 +960,7 @@ class StartPage(tk.Frame):
             self.phi_ref = data['phi_ref']
             self.prev_phase = data['prev_phase'] 
             self.post_phase = data['post_phase']
-          #  print(self.phi_ref)
-          #  print(self.post_phase)
-        #    print(type(self.graph) != 'NoneType')
-       #     print(phase_labels(self.phi_ref, self.post_phase, self.PHI_ACCEPT))
+            self.all_results_dict = data['all_results_dict']
             if type(self.graph) != 'NoneType':
                 self.rerender_stratdag()
             if load_check == 'loaded':
@@ -1105,10 +1047,8 @@ class StartPage(tk.Frame):
         self.testbutton = ttk.Button(self.canvas, text ='Render Chronological DAG', command = lambda:self.chronograph_render_wrap()) #popupWindow3(self, self.graph, self.littlecanvas2))
         self.testbutton.place(relx=0.75, rely=0.01, relwidth=0.15, relheight=0.03) 
         self.littlecanvas.bind("<Button-3>", self.preClick)
-    #    print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
     def rerender_stratdag(self):
-    #    print('rerender')
         if phase_true == 1:
                 self.image = imgrender_phase(self.graph)
         else:
@@ -1252,7 +1192,7 @@ class StartPage(tk.Frame):
         outputPanel = tk.Text(self.top, wrap='word', height = 11, width=50)
         outputPanel.pack()
         sys.stdout = StdoutRedirector(outputPanel)
-        self.CONTEXT_NO, self.ACCEPT, self.PHI_ACCEPT, self.PHI_REF, self.A, self.P, self.ALL_SAMPS_CONT, self.resultsdict = self.MCMC_func()
+        self.CONTEXT_NO, self.ACCEPT, self.PHI_ACCEPT, self.PHI_REF, self.A, self.P, self.ALL_SAMPS_CONT, self.ALL_SAMPS_PHI, self.resultsdict, self.all_results_dict = self.MCMC_func()
         mcmc_check = 'mcmc_loaded'
         sys.stdout = old_stdout
         self.controller.show_frame('PageOne')
@@ -1295,22 +1235,6 @@ class StartPage(tk.Frame):
             self.littlecanvas2.bind("<Configure>", self.resize2)
             load_check = 'loaded'
         return self.popup3.graphcopy
-#
-#    def rerender_chrono(self):
-#        global load_check
-#        self.image2 = imgrender2(load_check)
-#        if self.image2 != 'No_image':
-#            self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
-#            self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
-#                                                                   image=self.littlecanvas2.img)
-#    
-#            self.width2, self.height2 = self.image2.size
-#            self.imscale2 = 1.0  # scale for the canvaas image
-#            self.delta2 = 1.1  # zoom magnitude
-#            # Put image into container rectangle and use it to set proper coordinates to the image
-#            self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
-#            self.littlecanvas2.bind("<Configure>", self.resize2)
-#            load_check = 'loaded'
     
     
     def stratfunc(self, node):
@@ -1338,7 +1262,6 @@ class StartPage(tk.Frame):
     
 
     def MCMC_func(self):
-    #    CALIBRATION = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True) 
         context_no = list(self.graph.nodes())
         self.key_ref = [list(self.phasefile["phase"])[list(self.phasefile["context"]).index(i)] for i in context_no]
         strat_vec = [[list(self.graph.predecessors(i)), list(self.graph.successors(i))] for i in context_no]
@@ -1346,24 +1269,15 @@ class StartPage(tk.Frame):
         self.RCD_ERR = [int(list(self.datefile["error"])[list(self.datefile["context"]).index(i)]) for i in context_no]        
         rcd_est = self.RCD_EST
         rcd_err = self.RCD_ERR
-#        print("mcmc")
-##        print(calibrate, "calibrate")
-#        print(strat_vec, "strat_vec")
-#        print(rcd_est, "rcd_est")
-#        print(rcd_err, "rcd_est")
-#        print(self.key_ref, "key_ref")
-#        print(context_no, "context_no")
-#        print(self.popup3.phi_ref, "phi_ref")
-#        print(self.popup3.prev_phase, "prev_phase")
-#        print(self.popup3.post_phase, "post_phase")
         TOPO_SORT = list(nx.topological_sort(self.graph))
         TOPO_SORT.reverse()
-#        print(TOPO_SORT)
         CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.popup3.phi_ref, self.popup3.prev_phase, self.popup3.post_phase, TOPO_SORT)
-        phase_nodes, resultsdict = phase_labels(PHI_REF, self.popup3.post_phase, PHI_ACCEPT)
+        phase_nodes, resultsdict, all_results_dict = phase_labels(PHI_REF, self.popup3.post_phase, PHI_ACCEPT, ALL_SAMPS_PHI)
         for i, j in enumerate(CONTEXT_NO):
             resultsdict[j] = ACCEPT[i]
-        return CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT,resultsdict
+        for k, l in enumerate(CONTEXT_NO):
+            all_results_dict[l] = ALL_SAMPS_CONT[k]
+        return CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI, resultsdict, all_results_dict
 
         
         
@@ -1390,32 +1304,13 @@ class StartPage(tk.Frame):
                 self.graph[node_inside]
                 outline[node_inside] = 'red'
                 nx.set_node_attributes(self.graph, outline, 'color')  
-            #    print('colorchange')
             if phase_true == 1:
                 imgrender_phase(self.graph)
             else:
                 imgrender(self.graph) 
             self.image = Image.open('testdag.png')
-         #   self.width, self.height = self.image.size
-        #    self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
             self.show_image()
         return node_inside
-
-#    def scroll_y(self, *args, **kwargs):
-#        t0 = time.time()
-#        """ Scroll canvas vertically and redraw the image"""
-#        self.canvas.yview(*args, **kwargs)  # scroll vertically        
-#        self.show_image()
-#       # print((sys._getframe().f_code.co_name), str(time.time() - t0))
-#        # redraw the image
-#
-#
-#    def scroll_x(self, *args, **kwargs):
-# #       t0 = time.time()
-#        """Scroll canvas horizontally and redraw the image"""
-#        self.canvas.xview(*args, **kwargs)  # scroll horizontally
-#        self.show_image()  # redraw the image
-##        print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
     def edge_render(self):
 #        t0 = time.time()
@@ -1430,8 +1325,6 @@ class StartPage(tk.Frame):
         self.temp = self.temp + '\n' + str(ednodes.replace("'", ""))
         edgetext.insert('end', 'Deleted Edges:' + str(self.temp)) #self.temp is string of deleted edges
         edgetext.configure()
-#        print((sys._getframe().f_code.co_name), str(time.time() - t0))
-#
 
     def nodes(self, currentevent):
         """performs action using the node and redraws the graph"""
@@ -1511,10 +1404,8 @@ class StartPage(tk.Frame):
             self.meta1 = pd.DataFrame.from_dict(self.graph.nodes()[str(self.node)], orient='index')
             self.meta2 = self.meta1.loc["Date":"Phase",]
             self.meta2.columns = ["Data"]
-            #if self.meta2.loc["Date"] != "None":
             if self.meta2.loc["Date"][0] != "None":
                self.meta2.loc["Date"][0] = str(self.meta2.loc["Date"][0][0]) + " +- " + str(self.meta2.loc["Date"][0][1]) + " Carbon BP"
-           # self.nice_meta2 = tabulate(self.meta2, headers='keys', tablefmt='psql')
             self.metatext.insert('end', 'Metadata of node ' +
                                  str(self.node) + ':\n')
             cols = list(self.meta2.columns)
@@ -1556,8 +1447,6 @@ class StartPage(tk.Frame):
         self.littlecanvas.unbind('<Button-1>')
         self.littlecanvas.bind('<Button-1>', self.move_from)
         self.littlecanvas.bind("<MouseWheel>", self.wheel)
-        #    print(time.time() - t0)
-   #     print((sys._getframe().f_code.co_name), str(time.time() - t0)) 
 
 
     def move_from(self, event):
@@ -1565,7 +1454,6 @@ class StartPage(tk.Frame):
         """Remembers previous coordinates for scrolling with the mouse"""
         if self.image != "noimage":
             self.littlecanvas.scan_mark(event.x, event.y)
-  #      print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
     def move_to(self, event):
  #       t0 = time.time()
@@ -1573,7 +1461,6 @@ class StartPage(tk.Frame):
         if self.image != "noimage":
             self.littlecanvas.scan_dragto(event.x, event.y, gain=1)
             self.show_image()
-      #      bbox = self.littlecanvas.bbox(self.container)
             
         # redraw the image
     def move_from2(self, event):
@@ -1581,7 +1468,6 @@ class StartPage(tk.Frame):
         """Remembers previous coordinates for scrolling with the mouse"""
         if self.image2 != "noimage":
             self.littlecanvas2.scan_mark(event.x, event.y)
-  #      print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
     def move_to2(self, event):
  #       t0 = time.time()
@@ -1589,7 +1475,6 @@ class StartPage(tk.Frame):
         if self.image2 != "noimage":
             self.littlecanvas2.scan_dragto(event.x, event.y, gain=1)
             self.show_image()
-     #       bbox2 = self.littlecanvas2.bbox(self.container)
             
             
     def wheel(self, event):
@@ -1617,7 +1502,6 @@ class StartPage(tk.Frame):
             scale *= self.delta  
         self.littlecanvas.scale('all', 0, 0, scale, scale)  # rescale all canvas objects
         self.show_image()
-#        print((sys._getframe().f_code.co_name), str(time.time() - t0))
         
     def wheel2(self, event):
    #     t0 = time.time()
@@ -1727,8 +1611,6 @@ class StartPage(tk.Frame):
         phase_true = 1
         self.show_image()
         node_df = node_coords_fromjson("fi_new.txt")
-    #    node_df = pd.DataFrame.from_dict(pos_dag, orient='index')
- #       print((sys._getframe().f_code.co_name), str(time.time() - t0))
         return node_df
 
 
@@ -1749,7 +1631,6 @@ class StartPage(tk.Frame):
         self.w_1 = event.width
         self.h_1 = event.height
         self.littlecanvas2.itemconfig(self.littlecanvas2_img, image=self.littlecanvas2.img)        
-   #     print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
 
 
@@ -1758,12 +1639,9 @@ class PageOne(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller 
-  #      startpage = self.controller.get_page('StartPage')           
         label = tk.Label(self, text="This is page 1")
         label.pack(side="top", fill="x", pady=10)
         self.canvas = tk.Canvas(self, bd=0, highlightthickness=0)
-   #    popup3 = self.controller.get_page('popupWindow3')
- #       super().__init__(*args, **kwargs)
         #define all variables that are used
         self.h_1 = 0
         self.w_1 = 0
@@ -1815,9 +1693,6 @@ class PageOne(tk.Frame):
         self.littlecanvas2.rowconfigure(0, weight=1)
         self.littlecanvas2.columnconfigure(0, weight=1)
         self.littlecanvas2.update()
-        
-   #     self.littlecanvas2.bind('<Button-1>', self.move_from2
-   #     self.littlecanvas2.bind('<B1-Motion>', self.move_to2
         #placing image on littlecanvas from graph
         self.littlecanvas.rowconfigure(0, weight=1)
         self.littlecanvas.columnconfigure(0, weight=1)
@@ -1836,14 +1711,13 @@ class PageOne(tk.Frame):
         self.variable = tk.StringVar(self.littlecanvas)
         self.variable.set("Add to results list")
         self.testmenu2 = ttk.OptionMenu(self.littlecanvas2, self.variable,self.ResultList[0], *self.ResultList, command = self.node_finder)
- #       print(vars(self))
- #       print(vars(startpage))
         
     def node_finder(self, currentevent):
         self.testmenu2.place_forget()
         startpage = self.controller.get_page('StartPage')
         self.chronograph = startpage.chrono_dag
         x = str(self.chrono_nodes(currentevent))
+
         if self.variable.get() == 'Add to results list':
             self.littlecanvas3.delete(self.results_text)
             #ref = np.where(np.array(startpage.CONTEXT_NO) == x)[0][0]
@@ -1853,22 +1727,43 @@ class PageOne(tk.Frame):
                 self.phase_len_nodes = np.append(self.phase_len_nodes, x)
                 fig = Figure(figsize = (5, 5),
                  dpi = 100)
-                LENGTHS = phase_length_finder(self.phase_len_nodes[0], self.phase_len_nodes[1], startpage.ALL_SAMPS_CONT, startpage.CONTEXT_NO, startpage.resultsdict)
+                print(startpage.all_results_dict.keys())
+                LENGTHS = phase_length_finder(self.phase_len_nodes[0], self.phase_len_nodes[1], startpage.ALL_SAMPS_CONT, startpage.CONTEXT_NO, startpage.all_results_dict)
                 plot1 = fig.add_subplot(111)
+                
                 plot1.hist(LENGTHS, bins='auto', color='#0504aa',
                             alpha=0.7, rwidth=0.85, density = True )
                 plot1.title.set_text('Posterior density plot for time elapsed between ' + str(self.phase_len_nodes[0]) + ' and '+ str(self.phase_len_nodes[1]))
                 interval = list(mcmc.HPD_interval(np.array(LENGTHS[1000:])))
-                hpd_str = "HPD interval for phase length: "
+                columns = ('context_1', 'context_2', 'hpd_interval')
+                tree = ttk.Treeview(self.littlecanvas_a, columns=columns, show='headings')               
+                # define headings
+                tree.heading('context_1', text='Context 1')
+                tree.heading('context_2', text='Context 2')
+                tree.heading('hpd_interval', text='HPD interval')
+                
+                # generate sample data
+                intervals = []
+                
+                hpd_str = ""
                 refs = [k for k in range(len(interval)) if k %2]
                 for i in refs:
                     hpd_str = hpd_str + str(interval[i-1]) + " - " + str(interval[i]) + " Cal BP "
-             #   print(hpd_str)
+                # add data to the treeview
+                intervals.append((self.phase_len_nodes[0], self.phase_len_nodes[1], hpd_str))
+                for contact in intervals:
+                    tree.insert('', tk.END, values=contact)
+                
+                
+                tree.grid(row=0, column=0, sticky='nsew')
+                
+                # add a scrollbar
+                scrollbar = ttk.Scrollbar(self.littlecanvas_a, orient=tk.VERTICAL, command=tree.yview)
+                tree.configure(yscroll=scrollbar.set)
+                scrollbar.grid(row=0, column=1, sticky='nsew')
             self.ResultList.remove("Get phase length between "+ str(self.phase_len_nodes[0]) + ' and another context')
             self.testmenu2 = ttk.OptionMenu(self.littlecanvas2, self.variable, self.ResultList[0], *self.ResultList, command = self.node_finder)
             self.phase_len_nodes = []
-       #     print(startpage.phi_ref )
-#                self.phase_len_nodes = []
                 
         if self.variable.get() == "Get phase length":
             if len(self.phase_len_nodes) == 1:
@@ -1878,7 +1773,6 @@ class PageOne(tk.Frame):
             self.phase_len_nodes = np.append(self.phase_len_nodes, x)                
             self.ResultList.append("Get phase length between "+ str(self.phase_len_nodes[0]) + ' and another context')
             self.testmenu2 = ttk.OptionMenu(self.littlecanvas2, self.variable,self.ResultList[0], *self.ResultList, command = self.node_finder)
-  #      self.result_contexts = [startpage.CONTEXT_NO[i] for i in self.results_list]
         self.results_text = self.littlecanvas3.create_text(100, 10, text = self.results_list)
         self.variable.set("Add to results list")
 
@@ -1926,36 +1820,28 @@ class PageOne(tk.Frame):
             hpd_str = ""
             fig = Figure(figsize = (5, 5),
                  dpi = 100)
-            print(self.results_list)
             for i,j  in enumerate(self.results_list):
                 plt.rcParams['text.usetex']
                 plot_index = int(str(51) + str(i+1))
                 plot1 = fig.add_subplot(plot_index)
-        #        ref = np.where(np.array(startpage.CONTEXT_NO) == j)[0][0]
                 plot1.hist(startpage.resultsdict[j], bins='auto', color='#0504aa',
                             alpha=0.7, rwidth=0.85, density = True )
                 node = str(j)
-                print(node)
-                print(node[0] == 'a')
                 if 'a' in node:
-                    print('hey')
                     node = node.replace('a_', r'\alpha_{')
                 if 'b' in node:
                     node  = node.replace('b_', r'\beta_{')
                 if '=' in node:
-                    node = node.replace('=', '} = ')
-                print(node)   
+                    node = node.replace('=', '} = ') 
                 plot1.title.set_text(r"Posterior density plot for context " +  r"$" + node + "}$")
-                hpd_str = hpd_str + "\n HPD interval for context " + html2text(nx.get_node_attributes(self.chronograph, 'label')[str(j)][1:-1])
-         #       interval = list(mcmc.HPD_interval(np.array(startpage.ACCEPT[ref][1000:])))
+                hpd_str = hpd_str + "\n HPD interval for context " + node + "}$"
                 interval = list(mcmc.HPD_interval(np.array(startpage.resultsdict[j][1000:])))
-     #           print(interval == test)
                 refs = [k for k in range(len(interval)) if k %2]
                 for i in refs:
                     hpd_str = hpd_str + str(interval[i-1]) + " - " + str(interval[i]) + " Cal BP "
             self.littlecanvas_a.create_text(150, 80, text = hpd_str)
 
-            fig.tight_layout()
+            fig.set_tight_layout(True)
             canvas = FigureCanvasTkAgg(fig,
                                master = self.littlecanvas)  
             canvas.draw()
@@ -1969,10 +1855,8 @@ class PageOne(tk.Frame):
             
     def chronograph_render_post(self):
         global load_check
-      #  print(load_check)
         if load_check == 'loaded':
             self.image2 = imgrender2(load_check)
-      #      print('hiiiiiiiiiii')
             self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
             self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
                                                                   image=self.littlecanvas2.img)
@@ -1982,26 +1866,17 @@ class PageOne(tk.Frame):
             self.delta2 = 1.1  # zoom magnitude
                 # Put image into container rectangle and use it to set proper coordinates to the image
             self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
-       #     self.littlecanvas2.bind("<Configure>", StartPage.resize2(self))  
+            
     def tkraise(self, aboveThis=None):
-            # Get a reference to StartPage
-       # start_page = self.controller.frames['StartPage']
-                # Get the selected item from start_page
-      #  print('pageone tkraise')
         self.chronograph_render_post() 
-       # self.mcmc_output()
-            # Call the real .tkraise
         super().tkraise(aboveThis)  
         
     def move_from2(self, event):
-#        t0 = time.time()
         """Remembers previous coordinates for scrolling with the mouse"""
         if self.image2 != "noimage":
             self.littlecanvas2.scan_mark(event.x, event.y)
-  #      print((sys._getframe().f_code.co_name), str(time.time() - t0))
 
     def move_to2(self, event):
- #       t0 = time.time()
         """Drag (move) canvas to the new position"""        
         if self.image2 != "noimage":
             self.littlecanvas2.scan_dragto(event.x, event.y, gain=1)
@@ -2009,7 +1884,6 @@ class PageOne(tk.Frame):
             
             
     def wheel2(self, event):
-   #     t0 = time.time()
         """Zoom with mouse wheel"""
         x_zoom = self.littlecanvas2.canvasx(event.x)
         y_zoom = self.littlecanvas2.canvasy(event.y)
@@ -2069,8 +1943,8 @@ class PageOne(tk.Frame):
                                                           image=self.imagetk2)
             self.transx2, self.transy2 = bbox2[0], bbox2[1]
             self.littlecanvas.imagetk2 = self.imagetk2 
+            
     def nodecheck(self, x_current, y_current):
- #       t0 = time.time()
         global node_df
         """ returns the node that corresponds to the mouse cooridinates"""
         node_inside = "no node"
@@ -2093,8 +1967,6 @@ class PageOne(tk.Frame):
         return node_inside
 
     def chrono_nodes(self, current):
- #       self.cursorx = int(self.cursorx2 - self.littlecanvas2.winfo_rootx())
- #       self.cursory = int(self.cursory2 - self.littlecanvas2.winfo_rooty())
         x_scal = self.cursorx2 + self.transx2
         y_scal = self.cursory2 + self.transy2
         node = self.nodecheck(x_scal, y_scal)
