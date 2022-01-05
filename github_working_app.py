@@ -130,7 +130,7 @@ def phase_length_finder(con_1, con_2, ALL_SAMPS_CONT, CONTEXT_NO, resultsdict):
     for i in range(len(x_3)):
    #    print(x_3[i])
    #    print(x_4[i])
-       phase_lengths.append(x_3[i] - x_4[i])
+       phase_lengths.append(np.abs(x_3[i] - x_4[i]))
     un_phase_lens = []
     for i in range(len(phase_lengths)-1):
         if phase_lengths[i] != phase_lengths[i+1]:
@@ -181,6 +181,7 @@ def chrono_edge_remov(file_graph):
         ys.append(y)
     graph_data = phase_info_func(file_graph)
     phase_list = list(graph_data[1][2])
+    print(['phase_list', phase_list])
     phase_dic = graph_data[3]
     if len(phase_list) != 1:
         if len(graph_data[1][3]) == 0:
@@ -272,6 +273,7 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
     phase_norm, node_list = graph_data[1][0], graph_data[1][1]
     all_node_phase = dict(zip(node_list, phase_norm))
     label_dict = {}     
+    print(['all_node_phase', all_node_phase])
     for i in node_list:
         if (i in xs) == False:
             if (i in ys) == False:
@@ -284,8 +286,23 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
                 file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrows=False)
     if phasedict != None:
         p_list = list(set(phase_trck))
+       # print(['p_list', p_list])
         phase_nodes.append('a_'+ str(p_list[0][0]))
         for p in p_list:
+            if (p[0] in graph_data[1][2]) == False:
+                file_graph.add_node("a_" + str(p[0]), shape="diamond", fontsize="20.0",
+                                   fontname="Ubuntu", penwidth="1.0")
+                file_graph.add_node("b_" + str(p[0]), shape="diamond", fontsize="20.0",
+                                   fontname="Ubuntu", penwidth="1.0")
+                file_graph.add_edge("b_" + str(p[0]), "a_" + str(p[0]))
+                phase_relabel(file_graph)
+            if (p[1] in graph_data[1][2]) == False:
+                file_graph.add_node("a_" + str(p[1]), shape="diamond", fontsize="20.0",
+                                   fontname="Ubuntu", penwidth="1.0")
+                file_graph.add_node("b_" + str(p[1]), shape="diamond", fontsize="20.0",
+                                   fontname="Ubuntu", penwidth="1.0")
+                file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[1]))
+                phase_relabel(file_graph)
             relation = phasedict[p]
             if relation == 'gap':
                 file_graph.add_edge("a_" + str(p[0]), "b_" + str(p[1]))
@@ -633,6 +650,18 @@ class popupWindow3(object):
         self.graph = graph
         
         self.graphcopy = copy.deepcopy(self.graph)
+        phasedict = nx.get_node_attributes(self.graphcopy, 'Phase')
+        datadict = nx.get_node_attributes(self.graphcopy, 'Date')
+        nodes = self.graphcopy.nodes()
+        node_del_tracker = []
+        for i in nodes:
+            if phasedict[i] == None:
+                node_del_tracker.append(i)
+            elif datadict[i] == [None, None]:
+                node_del_tracker.append(i)
+        for j in node_del_tracker:
+            self.graphcopy.remove_node(j)
+        
         self.step_1 = chrono_edge_remov(self.graphcopy)
         self.button_b.place(relx=0.4, rely=0.55)
         if self.phases != None: 
@@ -751,13 +780,22 @@ class StartPage(tk.Frame):
         self.delta = 0
         self.container = None
         self.datefile = None
+        self.phasefile = None
         self.CONTEXT_NO = 0
+        self.PHI_REF = None
+        self.prev_phase = []
+        self.post_phase = []
         self.ACCEPT = None
         self.PHI_ACCEPT = None
         self.resultsdict = None
+        self.ALL_SAMPS_CONT = None
+        self.ALL_SAMPS_PHI = None
         self.A = 0
         self.P = 0
         self.variable = 0
+        self.image2 = 'noimage'
+        self.resultsdict = {}
+        self.all_results_dict = {}
         #forming and placing canvas and little canvas
         
         self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
@@ -864,6 +902,7 @@ class StartPage(tk.Frame):
     def save_state(self):
         global mcmc_check, load_check
         try:
+            print('this far?')
             data = {
                 "h_1": self.h_1, 
                 "w_1": self.w_1,
@@ -901,12 +940,13 @@ class StartPage(tk.Frame):
                 'load_check': load_check,
                 'mcmc_check' : mcmc_check,
                 'phasefile' : self.phasefile,
-                'phi_ref': self.popup3.phi_ref, 
-                'prev_phase' : self.popup3.prev_phase, 
-                'post_phase' : self.popup3.post_phase,
+                'phi_ref': self.PHI_REF, 
+                'prev_phase' : self.prev_phase, 
+                'post_phase' : self.post_phase,
                 'resultsdict' : self.resultsdict,
                 'all_results_dict' : self.all_results_dict
             }
+            print('down_here?')
             with open(FILENAME, "wb") as f:
                 pickle.dump(data, f)
 
@@ -1090,6 +1130,8 @@ class StartPage(tk.Frame):
             G = nx.DiGraph()
             for i in set(self.stratfile.iloc[:,0]):
                 G.add_node(i, shape="box", fontname="Helvetica", fontsize="30.0", penwidth="1.0", color = 'black')
+                G.nodes()[i].update({"Date": [None, None]})
+                G.nodes()[i].update({"Phase": None})
             edges = []
             for i in range(len(self.stratfile)):
                 a = tuple(self.stratfile.iloc[i,:])
@@ -1271,6 +1313,7 @@ class StartPage(tk.Frame):
         rcd_err = self.RCD_ERR
         TOPO_SORT = list(nx.topological_sort(self.graph))
         TOPO_SORT.reverse()
+        self.prev_phase, self.post_phase = self.popup3.prev_phase, self.popup3.post_phase
         CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.popup3.phi_ref, self.popup3.prev_phase, self.popup3.post_phase, TOPO_SORT)
         phase_nodes, resultsdict, all_results_dict = phase_labels(PHI_REF, self.popup3.post_phase, PHI_ACCEPT, ALL_SAMPS_PHI)
         for i, j in enumerate(CONTEXT_NO):
@@ -1664,6 +1707,7 @@ class PageOne(tk.Frame):
         self.imscale = 1.0  # scale for the canvaas image
         self.delta = 1.1 
         self.results_text = None
+        self.canvas_plt = None
         self.phase_len_nodes = []
         #forming and placing canvas and little canvas
         
@@ -1725,41 +1769,42 @@ class PageOne(tk.Frame):
         if len(self.phase_len_nodes) == 1:
             if self.variable.get() == "Get phase length between "+ str(self.phase_len_nodes[0]) + ' and another context':
                 self.phase_len_nodes = np.append(self.phase_len_nodes, x)
-                fig = Figure(figsize = (5, 5),
-                 dpi = 100)
-                print(startpage.all_results_dict.keys())
+                if self.canvas_plt != None:
+                    self.canvas_plt.get_tk_widget().pack_forget()
+                self.fig = Figure()
                 LENGTHS = phase_length_finder(self.phase_len_nodes[0], self.phase_len_nodes[1], startpage.ALL_SAMPS_CONT, startpage.CONTEXT_NO, startpage.all_results_dict)
-                plot1 = fig.add_subplot(111)
+                plot1 = self.fig.add_subplot(111)
                 
                 plot1.hist(LENGTHS, bins='auto', color='#0504aa',
                             alpha=0.7, rwidth=0.85, density = True )
                 plot1.title.set_text('Posterior density plot for time elapsed between ' + str(self.phase_len_nodes[0]) + ' and '+ str(self.phase_len_nodes[1]))
                 interval = list(mcmc.HPD_interval(np.array(LENGTHS[1000:])))
                 columns = ('context_1', 'context_2', 'hpd_interval')
-                tree = ttk.Treeview(self.littlecanvas_a, columns=columns, show='headings')               
+                self.fig.set_tight_layout(True)
+                self.canvas_plt = FigureCanvasTkAgg(self.fig,
+                        master = self.littlecanvas)
+                
+                self.canvas_plt.get_tk_widget().pack()
+                self.canvas_plt.draw_idle()
+                #show hpd intervlls -----------
+                self.tree_phases = ttk.Treeview(self.littlecanvas_a, columns=columns, show='headings')               
                 # define headings
-                tree.heading('context_1', text='Context 1')
-                tree.heading('context_2', text='Context 2')
-                tree.heading('hpd_interval', text='HPD interval')
-                
-                # generate sample data
+                self.tree_phases.heading('context_1', text='Context 1')
+                self.tree_phases.heading('context_2', text='Context 2')
+                self.tree_phases.heading('hpd_interval', text='HPD interval')
                 intervals = []
-                
                 hpd_str = ""
                 refs = [k for k in range(len(interval)) if k %2]
                 for i in refs:
-                    hpd_str = hpd_str + str(interval[i-1]) + " - " + str(interval[i]) + " Cal BP "
+                    hpd_str = hpd_str + str(np.abs(interval[i-1])) + " - " + str(np.abs(interval[i])) + " Cal BP "
                 # add data to the treeview
                 intervals.append((self.phase_len_nodes[0], self.phase_len_nodes[1], hpd_str))
                 for contact in intervals:
-                    tree.insert('', tk.END, values=contact)
-                
-                
-                tree.grid(row=0, column=0, sticky='nsew')
-                
+                    self.tree_phases.insert('', tk.END, values=contact)
+                self.tree_phases.grid(row=0, column=0, sticky='nsew')                
                 # add a scrollbar
-                scrollbar = ttk.Scrollbar(self.littlecanvas_a, orient=tk.VERTICAL, command=tree.yview)
-                tree.configure(yscroll=scrollbar.set)
+                scrollbar = ttk.Scrollbar(self.littlecanvas_a, orient=tk.VERTICAL, command=self.tree_phases.yview)
+                self.tree_phases.configure(yscroll=scrollbar.set)
                 scrollbar.grid(row=0, column=1, sticky='nsew')
             self.ResultList.remove("Get phase length between "+ str(self.phase_len_nodes[0]) + ' and another context')
             self.testmenu2 = ttk.OptionMenu(self.littlecanvas2, self.variable, self.ResultList[0], *self.ResultList, command = self.node_finder)
@@ -1818,8 +1863,15 @@ class PageOne(tk.Frame):
         startpage = self.controller.get_page('StartPage')
         if mcmc_check == 'mcmc_loaded':
             hpd_str = ""
+            columns = ('context', 'hpd_interval')
+            self.tree_phases = ttk.Treeview(self.littlecanvas_a, columns=columns, show='headings') 
+            if self.canvas_plt != None:
+                    self.canvas_plt.get_tk_widget().pack_forget()
             fig = Figure(figsize = (5, 5),
                  dpi = 100)
+            self.tree_phases.heading('context', text='Context')
+            self.tree_phases.heading('hpd_interval', text='HPD interval')
+            intervals = []
             for i,j  in enumerate(self.results_list):
                 plt.rcParams['text.usetex']
                 plot_index = int(str(51) + str(i+1))
@@ -1834,24 +1886,38 @@ class PageOne(tk.Frame):
                 if '=' in node:
                     node = node.replace('=', '} = ') 
                 plot1.title.set_text(r"Posterior density plot for context " +  r"$" + node + "}$")
-                hpd_str = hpd_str + "\n HPD interval for context " + node + "}$"
+                
+                              
                 interval = list(mcmc.HPD_interval(np.array(startpage.resultsdict[j][1000:])))
+            # define headings
+                hpd_str = ""
                 refs = [k for k in range(len(interval)) if k %2]
                 for i in refs:
-                    hpd_str = hpd_str + str(interval[i-1]) + " - " + str(interval[i]) + " Cal BP "
+                    hpd_str = hpd_str + str(np.abs(interval[i-1])) + " - " + str(np.abs(interval[i])) + " Cal BP "
+                # add data to the treeview
+                
+
+            intervals.append((node, hpd_str))
+            for contact in intervals:
+                self.tree_phases.insert('', tk.END, values=contact)
+            self.tree_phases.grid(row=0, column=0, sticky='nsew')                
+            # add a scrollbar
+            scrollbar = ttk.Scrollbar(self.littlecanvas_a, orient=tk.VERTICAL, command=self.tree_phases.yview)
+            self.tree_phases.configure(yscroll=scrollbar.set)
+            scrollbar.grid(row=0, column=1, sticky='nsew')
             self.littlecanvas_a.create_text(150, 80, text = hpd_str)
 
             fig.set_tight_layout(True)
-            canvas = FigureCanvasTkAgg(fig,
+            self.canvas_plt = FigureCanvasTkAgg(fig,
                                master = self.littlecanvas)  
-            canvas.draw()
-            canvas.get_tk_widget().pack()
+            self.canvas_plt.draw()
+            self.canvas_plt.get_tk_widget().pack()
   
     # creating the Matplotlib toolbar
-            toolbar = NavigationToolbar2Tk(canvas,
+            toolbar = NavigationToolbar2Tk(self.canvas_plt,
                                           self.littlecanvas)
             toolbar.update()
-            canvas.get_tk_widget().pack()
+            self.canvas_plt.get_tk_widget().pack()
             
     def chronograph_render_post(self):
         global load_check
