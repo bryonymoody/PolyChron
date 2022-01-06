@@ -226,7 +226,7 @@ def chrono_edge_remov(file_graph):
                 
         for m in oddlist:
             file_graph.add_edge(m, "a_" + str(phase_lab), arrows=False)
-    return graph_data, [xs, ys]
+    return graph_data, [xs, ys], phase_list
 
 
 def phase_labels(phi_ref, POST_PHASE, phi_accept, all_samps_phi):
@@ -235,7 +235,6 @@ def phase_labels(phi_ref, POST_PHASE, phi_accept, all_samps_phi):
     i = 0
     results_dict = {labels[0]: phi_accept[i]}
     all_results_dict = {labels[0]: all_samps_phi[i]}
-    
     for a_val in enumerate(POST_PHASE):
         i = i + 1
         if a_val[1] == "abuting":
@@ -248,7 +247,7 @@ def phase_labels(phi_ref, POST_PHASE, phi_accept, all_samps_phi):
             results_dict['b_' + str(phi_ref[a_val[0]])] =  phi_accept[i]
             all_results_dict['b_' + str(phi_ref[a_val[0]])] =  all_samps_phi[i]
         elif a_val == 'gap':
-            labels.append('b_' + str(phi_ref(a_val[0])))
+            labels.append('b_' + str(phi_ref[a_val[0]]))
             labels.append('a_' + str(phi_ref[a_val[0]+1]))
             results_dict['b_' + str(phi_ref[a_val[0]])] = phi_accept[i]
             all_results_dict['b_' + str(phi_ref[a_val[0]])] = all_samps_phi[i]
@@ -257,7 +256,7 @@ def phase_labels(phi_ref, POST_PHASE, phi_accept, all_samps_phi):
             all_results_dict['a_' + str(phi_ref[a_val[0]+1])] = all_samps_phi[i]
         else:
             labels.append('a_' + str(phi_ref[a_val[0]+1]))
-            labels.append('b_' + str(phi_ref(a_val[0])))
+            labels.append('b_' + str(phi_ref[a_val[0]]))
             results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
             all_results_dict['a_' + str(phi_ref[a_val[0]+1])] = all_samps_phi[i]
             i = i + 1
@@ -273,7 +272,7 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
     phase_norm, node_list = graph_data[1][0], graph_data[1][1]
     all_node_phase = dict(zip(node_list, phase_norm))
     label_dict = {}     
-    print(['all_node_phase', all_node_phase])
+#    print(['all_node_phase', all_node_phase])
     for i in node_list:
         if (i in xs) == False:
             if (i in ys) == False:
@@ -287,6 +286,7 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
     if phasedict != None:
         p_list = list(set(phase_trck))
        # print(['p_list', p_list])
+        null_phases = []
         phase_nodes.append('a_'+ str(p_list[0][0]))
         for p in p_list:
             if (p[0] in graph_data[1][2]) == False:
@@ -303,21 +303,45 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
                                    fontname="Ubuntu", penwidth="1.0")
                 file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[1]))
                 phase_relabel(file_graph)
+        for p in p_list:
             relation = phasedict[p]
             if relation == 'gap':
-                file_graph.add_edge("a_" + str(p[0]), "b_" + str(p[1]))
+                if (p[0] in graph_data[1][2]) == False:
+                    file_graph = nx.contracted_nodes(file_graph, "b_" + str(p[1]), "a_" + str(p[0]))
+                    null_phases.append(p)
+                elif (p[1] in graph_data[1][2]) == False:
+                    file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
+                    null_phases.append(p)
+                else:
+                    file_graph.add_edge("a_" + str(p[0]), "b_" + str(p[1]))
             if relation == 'overlap':
-                file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[0]))
+                if (p[0] in graph_data[1][2]) == False:
+                    file_graph = nx.contracted_nodes(file_graph, "b_" + str(p[1]), "a_" + str(p[0]))
+                    null_phases.append(p)
+                elif (p[1] in graph_data[1][2]) == False:
+                    file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
+                    null_phases.append(p)
+                else:
+                    file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[0]))
             if relation == "abuting":
-                file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
-                x_nod = list(file_graph)
-                newnode = str("a_" + str(p[0]) + " = " +"b_" + str(p[1]))
-                label_str = '<&alpha;<SUB>' + str(p[0]) + '</SUB> = &beta;<SUB>' + str(p[1]) + '</SUB>>'
-                label_dict[newnode] =  label_str
-                phase_nodes.append("a_" + str(p[0]) + " = " +"b_" + str(p[1]))
-                y_nod = [newnode if i=="a_" + str(p[0]) else i for i in x_nod]
-                mapping = dict(zip(x_nod, y_nod))
-                file_graph = nx.relabel_nodes(file_graph, mapping)
+                
+                if (p[0] in graph_data[1][2]) == False:
+                    file_graph = nx.contracted_nodes(file_graph, "b_" + str(p[1]), "a_" + str(p[0]))
+                    null_phases.append(p)
+                elif (p[1] in graph_data[1][2]) == False:
+                  #  print(p)
+                    file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
+                    null_phases.append(p)
+                else:
+                    file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
+                    x_nod = list(file_graph)
+                    newnode = str("a_" + str(p[0]) + " = " +"b_" + str(p[1]))
+                    label_str = '<&alpha;<SUB>' + str(p[0]) + '</SUB> = &beta;<SUB>' + str(p[1]) + '</SUB>>'
+                    label_dict[newnode] =  label_str
+                    phase_nodes.append("a_" + str(p[0]) + " = " +"b_" + str(p[1]))
+                    y_nod = [newnode if i=="a_" + str(p[0]) else i for i in x_nod]
+                    mapping = dict(zip(x_nod, y_nod))
+                    file_graph = nx.relabel_nodes(file_graph, mapping)
         phase_nodes.append('b_' + str(p_list[len(p_list)-1][0]))        
     graph = nx.DiGraph()
     if len(phase_trck) != 0:
@@ -330,7 +354,7 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
             rem = list(a-b)[0]
             file_graph.remove_edge(rem[0], rem[1])     
     nx.set_node_attributes(file_graph, label_dict, 'label')
-    return(file_graph, phi_ref)
+    return(file_graph, phi_ref, null_phases)
 
 
 
@@ -653,13 +677,13 @@ class popupWindow3(object):
         phasedict = nx.get_node_attributes(self.graphcopy, 'Phase')
         datadict = nx.get_node_attributes(self.graphcopy, 'Date')
         nodes = self.graphcopy.nodes()
-        node_del_tracker = []
+        self.node_del_tracker = []
         for i in nodes:
             if phasedict[i] == None:
-                node_del_tracker.append(i)
+                self.node_del_tracker.append(i)
             elif datadict[i] == [None, None]:
-                node_del_tracker.append(i)
-        for j in node_del_tracker:
+                self.node_del_tracker.append(i)
+        for j in self.node_del_tracker:
             self.graphcopy.remove_node(j)
         
         self.step_1 = chrono_edge_remov(self.graphcopy)
@@ -695,8 +719,9 @@ class popupWindow3(object):
     def full_chronograph_func(self):
         self.prev_phase = ["start"]
         self.post_phase = []
+        phase_list = self.step_1[2]
         if len(self.step_1[0][1][3]) != 0:
-            self.graphcopy, self.phi_ref = chrono_edge_add(self.graphcopy, self.step_1[0], self.step_1[1], self.menudict, self.phases)
+            self.graphcopy, self.phi_ref, self.null_phases = chrono_edge_add(self.graphcopy, self.step_1[0], self.step_1[1], self.menudict, self.phases)
             self.post_phase.append(self.post_dict[self.phi_ref[0]])
             for i in range(1,len(self.phi_ref)-1):
                     self.prev_phase.append(self.prev_dict[self.phi_ref[i]])
@@ -705,6 +730,32 @@ class popupWindow3(object):
         else:
             self.phi_ref = list(self.step_1[0][1][2])
         self.post_phase.append("end")
+        del_phases =  [i for i in self.phi_ref if (i in phase_list) == False]
+        ref_list = []
+        for i in del_phases:
+            ref = np.where(np.array(self.phi_ref) == i)[0][0]
+            ref_list.append(ref)
+       # print(ref_list)
+        #delete the phase from phiref
+     #   del self.phi_ref[np.array(ref_list)]
+        for index in sorted(ref_list, reverse=True):
+            del self.phi_ref[index]
+#change to new phase rels
+        for i in ref_list:
+    #        print(i)
+            self.prev_phase[i] = 'gap' 
+            self.post_phase[i] = 'gap'
+   #     print(self.prev_phase)
+        for index in sorted(ref_list, reverse=True):
+            del self.prev_phase[index+1]
+      #  del self.prev_phase[np.array(ref_list)+1]            
+    #    print(self.post_phase)
+        for index in sorted(ref_list, reverse=True):
+            del self.post_phase[index-1]
+       # del self.prev_phase[np.array(ref_list)-1]
+            
+            
+      #  print(self.phi_ref, self.prev_phase, self.post_phase)
         write_dot(self.graphcopy, 'fi_new_chrono')
         self.top.destroy()
 
@@ -1180,7 +1231,6 @@ class StartPage(tk.Frame):
             for i, j in enumerate(self.datefile["context"]):
                 self.graph.nodes()[str(j)].update({"Date":[self.datefile["date"][i], self.datefile["error"][i]]})
             self.context_no = list(self.graph.nodes())    
-            self.context_no = list(self.graph.nodes())
 
             
     def open_file4(self): 
@@ -1304,7 +1354,7 @@ class StartPage(tk.Frame):
     
 
     def MCMC_func(self):
-        context_no = list(self.graph.nodes())
+        context_no = [x for x in list(self.graph.nodes()) if x not in self.popup3.node_del_tracker] 
         self.key_ref = [list(self.phasefile["phase"])[list(self.phasefile["context"]).index(i)] for i in context_no]
         strat_vec = [[list(self.graph.predecessors(i)), list(self.graph.successors(i))] for i in context_no]
         self.RCD_EST = [int(list(self.datefile["date"])[list(self.datefile["context"]).index(i)]) for i in context_no]
@@ -1320,6 +1370,7 @@ class StartPage(tk.Frame):
             resultsdict[j] = ACCEPT[i]
         for k, l in enumerate(CONTEXT_NO):
             all_results_dict[l] = ALL_SAMPS_CONT[k]
+        
         return CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI, resultsdict, all_results_dict
 
         
