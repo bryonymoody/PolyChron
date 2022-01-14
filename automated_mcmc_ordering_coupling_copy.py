@@ -257,11 +257,12 @@ def dict_seek_ordered(A, P, i_seek, key, site_dict, THETAS, CONTEXT_NO, RCD_ERR,
     strat_up, strat_low  = strat_rel(site_dict, key, i_seek, THETAS, CONTEXT_NO) #get dates of contexts that are stratigraphically linked to the context in question
     cont_type = site_dict[key]['dates'][i_seek][4]
     if cont_type == 'residual':  
-        up = int((alpha - A + 0.05)*10) #faster version on np.where
+        up = int((alpha - A + 0.05)*10) + 1  #faster version on np.where
         low = 0   #as above
         vec_2_up = int(((min(strat_up, alpha) - A)+ 0.05)*10) + 1 #as in lines with up and low
         vec_2_low = 0 #see above
-        phase_len = site_dict[key]["boundaries"][1] - A #phase length
+        phase_len = site_dict[key]["boundaries"][1] - like1[low] + 1 #phase length
+        
      #   print(phase_len)
     elif cont_type == 'intrustive':
         up = len(like2)-1 #faster version on np.where
@@ -270,7 +271,7 @@ def dict_seek_ordered(A, P, i_seek, key, site_dict, THETAS, CONTEXT_NO, RCD_ERR,
         vec_2_low = int(((max(strat_low, beta) - A)+ 0.05)*10) #see above
         phase_len = P - site_dict[key]["boundaries"][0] #phase length
     else:
-        up = int((alpha - A + 0.05)*10) #faster version on np.where
+        up = int((alpha - A + 0.05)*10) + 1  #faster version on np.where
         low = int((beta - A + 0.05)*10)   #as above
         vec_2_up = int(((min(strat_up, alpha) - A)+ 0.05)*10) + 1 #as in lines with up and low
         vec_2_low = int(((max(strat_low, beta) - A)+ 0.05)*10) #see above
@@ -278,8 +279,18 @@ def dict_seek_ordered(A, P, i_seek, key, site_dict, THETAS, CONTEXT_NO, RCD_ERR,
     temp_vec = like2[low:up]  #two vectors of proablilities that need summing (this and the row below)
     temp_vec_2 = like2[vec_2_low:vec_2_up]
     if len(temp_vec_2)==0:  #checking it's not too small that the likelihood func things it's prob 0
+          print('this??')
           ref = CONTEXT_NO.index(cont)
           temp_vec_2 = np.array(likeli(RCD_EST[ref], RCD_ERR[ref], float(int(site_dict[key]["dates"][i_seek][0])), CALIBRATION))
+    if len(temp_vec)==0:  #checking it's not too small that the likelihood func things it's prob 0
+          print('or this??')
+          ref = CONTEXT_NO.index(cont)
+          temp_vec = np.array(likeli(RCD_EST[ref], RCD_ERR[ref], float(int(site_dict[key]["dates"][i_seek][0])), CALIBRATION))
+   # if len(temp_vec)==0:  #checking it's not too small that the likelihood func things it's prob 0
+   #       print('this??')
+#    if len(temp_vec)==0:  #checking it's not too small that the likelihood func things it's prob 0
+#          ref = CONTEXT_NO.index(cont)
+#          temp_vec = np.array(likeli(RCD_EST[ref], RCD_ERR[ref], float(int(site_dict[key]["dates"][i_seek][0])), CALIBRATION))
     date = site_dict[key]["dates"][i_seek][0]
     date_ref = int((date - A + 0.05)*10)
     if date_ref >= len(like1): #checking we haven't sampled outside the realms of the likelihood
@@ -288,19 +299,33 @@ def dict_seek_ordered(A, P, i_seek, key, site_dict, THETAS, CONTEXT_NO, RCD_ERR,
     else:   
         x_temp = like2[date_ref]
         x_len = (x_temp/phase_len)*(temp_vec.sum()/temp_vec_2.sum())
-    if x_temp > 1:
+      #  print(temp_vec.sum()/temp_vec_2.sum())
+#    if sum(temp_vec_2) == 0:
+#        print('temp_vec')
+    if phase_len == 0:
+        print('phase_len')
         print(cont)
-        print('x_temp \n')
-        print(x_temp)
-    if x_len > 1:
-        print(cont)
-        print('x_len /n')
-        print(phase_len)
-        print(A)
-        print(site_dict[key]["boundaries"][1])
-        print(site_dict[key]["boundaries"][1] - site_dict[key]['boundaries'][0])
-    #    print(x_temp/phase_len)
-    #    print(temp_vec.sum()/temp_vec_2.sum())
+        print(site_dict[key]['boundaries'][0])
+        print(like1[low])
+  #  
+ #   if x_len == 0:
+      #  print(cont)
+     #   print('x_len \n')
+  #  print(x_len) 
+ #   print(x_temp)
+      #  print(temp_vec.sum())
+#    print('x_len \n')
+#    print(phase_len)
+#   # print(A)
+#   # print(site_dict[key]["boundaries"][1])
+#    print(site_dict[key]["boundaries"][1])
+#    print(site_dict[key]['boundaries'][0])
+#    print(x_temp/phase_len)
+#    print(temp_vec)
+#    print(temp_vec_2)
+    #print(temp_vec)
+   # print(temp_vec_2)
+#    print(x_len)
     return x_temp, x_len
 
 
@@ -351,6 +376,7 @@ def dict_update(test_dict_2, post_t, post_p, inter, inter2, POST_PHASE, PHI_REF)
         for j_up in enumerate(test_dict_2[i_2]["dates"]):
             test_dict_2[i_2]["dates"][j_up[0]][0] = post_t[count][inter]
             count = count + 1
+    
     return test_dict_2
 
 def phase_bd_init_func(key_reff, phi_reff, theta_initt, prev_phases, A, P):
@@ -616,7 +642,7 @@ def posterior_plots(ACCEPT, CONTEXT_NO, PHI_REF, PHI_ACCEPT, A, P):
                         alpha=0.7, rwidth=0.85, density = True )
         plt.gca().invert_xaxis()
         plt.ioff()
-        file_name = str('resid_Posterior_density_context_' + str(m))
+        file_name = str('Posterior_density_context_' + str(m))
         plt.savefig(file_name)
       plt.close('all')
       for q, w in enumerate(PHI_ACCEPT):
@@ -630,7 +656,7 @@ def posterior_plots(ACCEPT, CONTEXT_NO, PHI_REF, PHI_ACCEPT, A, P):
         plt.ylabel('Probability')
         plt.gca().invert_xaxis()
         plt.ioff()
-        file_name = str('resid_Posterior_density_phase_' + str(q))
+        file_name = str('Posterior_density_phase_' + str(q))
         plt.savefig(file_name)
         plt.close('all')
 
@@ -639,13 +665,13 @@ def get_hpd_intervals(CONTEXT_NO, ACCEPT, PHI_ACCEPT):
       for i, j in enumerate(CONTEXT_NO):
               hpd_dict[j] = list(HPD_interval(np.array(ACCEPT[i][1000:])))
       hpd_df = pd.DataFrame.from_dict(hpd_dict, orient='index')
-      hpd_df.to_csv("hpd_intervals_thetas_correct")
+      hpd_df.to_csv("resid_hpd_intervals_thetas_correct")
 
       hpd_dict = {}
       for k, l in enumerate(PHI_ACCEPT):
           hpd_dict[k] = list(HPD_interval(PHI_ACCEPT[k][1000:]))
       hpd_df = pd.DataFrame.from_dict(hpd_dict, orient='index')
-      hpd_df.to_csv("hpd_intervals_phis_correct")
+      hpd_df.to_csv("resid_hpd_intervals_phis_correct")
 
 
 def gibbs_code(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT, CONT_TYPE): 
@@ -703,11 +729,14 @@ def step_1_squeeze(A, P, i, PREV_PROB_TEST, K, ACCEPT, SITE_DICT_TEST_1,  SITE_D
         THETAS[k] = np.random.uniform(max(SITE_DICT_TEST_1[key]["boundaries"][0], strat_single[1]),
                                   min(SITE_DICT_TEST_1[key]["boundaries"][1], strat_single[0]))
     elif cont_type == 'residual':
-        THETAS[k] = np.random.uniform(A,
+        THETAS[k] = np.random.uniform(PHIS_VEC[-1],
                                  min(SITE_DICT_TEST_1[key]["boundaries"][1], strat_single[0]))
+        print(PHIS_VEC[-1], min(SITE_DICT_TEST_1[key]["boundaries"][1], strat_single[0]))
+   #     print(PHIS)
     elif cont_type == 'intrusive':
         THETAS[k] = np.random.uniform(max(SITE_DICT_TEST_1[key]["boundaries"][0], strat_single[1]),
                                   P)        
+        
 #    if len(STRAT_VEC[k][0]) != 0:
 #        rel_con_1 = CONTEXT_NO.index(STRAT_VEC[k][0][0])
 #    if len(STRAT_VEC[k][1]) != 0:
@@ -724,6 +753,7 @@ def step_1_squeeze(A, P, i, PREV_PROB_TEST, K, ACCEPT, SITE_DICT_TEST_1,  SITE_D
         else:
             c_test.append(a_1/PREV_PROB_TEST[j_1])
     h_1 = np.prod(c_test)
+#    print(h_1)
     if h_1 >= 1:
         ACCEPT[k].append(THETAS[k])
         [ALL_SAMPS_CONT[j].append(THETAS[j]) for j in range(len(THETAS))]
@@ -749,6 +779,9 @@ def step_2_squeeze(i, prob_1_test, M, PHI_SAMP_DICT, POST_S, R, PHIS_VEC, SITE_D
    #   print(m)
     #  print(PHIS_VEC)
       lims = PHI_SAMP_DICT[STEP_1[m]][STEP_2[m]][STEP_3[m]](THETAS, PHIS_VEC, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE)
+#      if m == 0: 
+#          print(lims)
+       #   print(THETAS[4])
       PHIS_VEC[m] = np.random.uniform(lims[0], lims[1])
       for v1, a_2 in enumerate(PHIS_VEC):
           POST_PHIS[v1].append(a_2)
