@@ -1361,10 +1361,11 @@ class StartPage(tk.Frame):
         self.RCD_ERR = [int(list(self.datefile["error"])[list(self.datefile["context"]).index(i)]) for i in context_no]        
         rcd_est = self.RCD_EST
         rcd_err = self.RCD_ERR
+        self.CONT_TYPE = ['normal' for i in context_no]
         TOPO_SORT = list(nx.topological_sort(self.graph))
         TOPO_SORT.reverse()
         self.prev_phase, self.post_phase = self.popup3.prev_phase, self.popup3.post_phase
-        CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.popup3.phi_ref, self.popup3.prev_phase, self.popup3.post_phase, TOPO_SORT)
+        CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.popup3.phi_ref, self.popup3.prev_phase, self.popup3.post_phase, TOPO_SORT, self.CONT_TYPE)
         phase_nodes, resultsdict, all_results_dict = phase_labels(PHI_REF, self.popup3.post_phase, PHI_ACCEPT, ALL_SAMPS_PHI)
         for i, j in enumerate(CONTEXT_NO):
             resultsdict[j] = ACCEPT[i]
@@ -1799,13 +1800,25 @@ class PageOne(tk.Frame):
         self.button2 = ttk.Button(self, text="Plot posterior density plots",
                            command= self.mcmc_output )
         self.button2.place(relx=0.78, rely=0.15, relwidth=0.1, relheight=0.03)
+        self.button2a = ttk.Button(self, text="Get HPD intervals",
+                           command= self.mcmc_output )
+        self.button2a.place(relx=0.78, rely=0.19, relwidth=0.1, relheight=0.03)
+        self.button3 = ttk.Button(self, text="Clear list",
+                           command= self.clear_results_list )
+        self.button3.place(relx=0.88, rely=0.15, relwidth=0.1, relheight=0.03)
         self.ResultList = [
             "Add to results list",
-            "Get phase length", 
+            "Get time elapsed", 
             ]
         self.variable = tk.StringVar(self.littlecanvas)
         self.variable.set("Add to results list")
         self.testmenu2 = ttk.OptionMenu(self.littlecanvas2, self.variable,self.ResultList[0], *self.ResultList, command = self.node_finder)
+    def clear_results_list(self):
+        self.results_list = []
+        self.littlecanvas3.delete(self.results_text)
+        self.canvas_plt.get_tk_widget().pack_forget()
+        for item in self.tree_phases.get_children():
+            self.tree_phases.delete(item)
         
     def node_finder(self, currentevent):
         self.testmenu2.place_forget()
@@ -1816,16 +1829,18 @@ class PageOne(tk.Frame):
         if self.variable.get() == 'Add to results list':
             self.littlecanvas3.delete(self.results_text)
             #ref = np.where(np.array(startpage.CONTEXT_NO) == x)[0][0]
-            self.results_list.append(x)
+            if x != 'no node':
+                self.results_list.append(x)
+                
         if len(self.phase_len_nodes) == 1:
-            if self.variable.get() == "Get phase length between "+ str(self.phase_len_nodes[0]) + ' and another context':
+            if self.variable.get() == "Get time elapsed between "+ str(self.phase_len_nodes[0]) + ' and another context':
                 self.phase_len_nodes = np.append(self.phase_len_nodes, x)
                 if self.canvas_plt != None:
                     self.canvas_plt.get_tk_widget().pack_forget()
                 self.fig = Figure()
                 LENGTHS = phase_length_finder(self.phase_len_nodes[0], self.phase_len_nodes[1], startpage.ALL_SAMPS_CONT, startpage.CONTEXT_NO, startpage.all_results_dict)
                 plot1 = self.fig.add_subplot(111)
-                
+                print('hey')
                 plot1.hist(LENGTHS, bins='auto', color='#0504aa',
                             alpha=0.7, rwidth=0.85, density = True )
                 plot1.title.set_text('Posterior density plot for time elapsed between ' + str(self.phase_len_nodes[0]) + ' and '+ str(self.phase_len_nodes[1]))
@@ -1857,17 +1872,17 @@ class PageOne(tk.Frame):
                 scrollbar = ttk.Scrollbar(self.littlecanvas_a, orient=tk.VERTICAL, command=self.tree_phases.yview)
                 self.tree_phases.configure(yscroll=scrollbar.set)
                 scrollbar.grid(row=0, column=1, sticky='nsew')
-            self.ResultList.remove("Get phase length between "+ str(self.phase_len_nodes[0]) + ' and another context')
+            self.ResultList.remove("Get time elapsed between "+ str(self.phase_len_nodes[0]) + ' and another context')
             self.testmenu2 = ttk.OptionMenu(self.littlecanvas2, self.variable, self.ResultList[0], *self.ResultList, command = self.node_finder)
             self.phase_len_nodes = []
                 
-        if self.variable.get() == "Get phase length":
+        if self.variable.get() == "Get time elapsed":
             if len(self.phase_len_nodes) == 1:
-                self.ResultList.remove("Get phase length between "+ str(self.phase_len_nodes[0]) + ' and another context')
+                self.ResultList.remove("Get time elapsed between "+ str(self.phase_len_nodes[0]) + ' and another context')
                 self.testmenu2 = ttk.OptionMenu(self.littlecanvas2, self.variable, self.ResultList[0], *self.ResultList, command = self.node_finder)
                 self.phase_len_nodes = []                    
             self.phase_len_nodes = np.append(self.phase_len_nodes, x)                
-            self.ResultList.append("Get phase length between "+ str(self.phase_len_nodes[0]) + ' and another context')
+            self.ResultList.append("Get time elapsed between "+ str(self.phase_len_nodes[0]) + ' and another context')
             self.testmenu2 = ttk.OptionMenu(self.littlecanvas2, self.variable,self.ResultList[0], *self.ResultList, command = self.node_finder)
         self.results_text = self.littlecanvas3.create_text(100, 10, text = self.results_list)
         self.variable.set("Add to results list")
@@ -1929,6 +1944,8 @@ class PageOne(tk.Frame):
                 plot1 = fig.add_subplot(plot_index)
                 plot1.hist(startpage.resultsdict[j], bins='auto', color='#0504aa',
                             alpha=0.7, rwidth=0.85, density = True )
+                fig.gca().invert_xaxis()
+                plot1.set_xlim(startpage.A, startpage.P)
                 node = str(j)
                 if 'a' in node:
                     node = node.replace('a_', r'\alpha_{')
@@ -1946,9 +1963,9 @@ class PageOne(tk.Frame):
                 for i in refs:
                     hpd_str = hpd_str + str(np.abs(interval[i-1])) + " - " + str(np.abs(interval[i])) + " Cal BP "
                 # add data to the treeview
-                
+                intervals.append((node, hpd_str))
 
-            intervals.append((node, hpd_str))
+            
             for contact in intervals:
                 self.tree_phases.insert('', tk.END, values=contact)
             self.tree_phases.grid(row=0, column=0, sticky='nsew')                
@@ -1965,9 +1982,9 @@ class PageOne(tk.Frame):
             self.canvas_plt.get_tk_widget().pack()
   
     # creating the Matplotlib toolbar
-            toolbar = NavigationToolbar2Tk(self.canvas_plt,
-                                          self.littlecanvas)
-            toolbar.update()
+        #    toolbar = NavigationToolbar2Tk(self.canvas_plt,
+        #                                  self.littlecanvas)
+         #   toolbar.update()
             self.canvas_plt.get_tk_widget().pack()
             
     def chronograph_render_post(self):

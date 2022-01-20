@@ -438,6 +438,7 @@ def theta_init_func_n(KEY_REF1, PHI_REF1, RESULT_VEC1, STRAT_VEC, P, CONTEXT_NO,
                 out_vec[a] = np.random.choice(SAMPLE_VEC, p=SAMPLE_VEC_PROB/sum(SAMPLE_VEC_PROB))
         prev_min = min([d for d in out_vec if d != 0])
     return(out_vec) 
+    #%%
 #sampling functions
 def upp_samp_1(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
     """ upper sample 1 - oldest phase and next phase abutting or gap"""
@@ -576,6 +577,7 @@ def overlap_samp_2(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_
     in_phase_dates.append(phis_samp[m+1])
     limits = [phis_samp[m+3], min(in_phase_dates)]
     return limits
+#%%
 def initialise(CALIBRATION, RCD_EST, RCD_ERR):
 #  method  = 'squeeze'
   CALIBRATION_DATA = CALIBRATION.to_dict()
@@ -673,7 +675,7 @@ def get_hpd_intervals(CONTEXT_NO, ACCEPT, PHI_ACCEPT):
       hpd_df = pd.DataFrame.from_dict(hpd_dict, orient='index')
       hpd_df.to_csv("resid_hpd_intervals_phis_correct")
 
-
+#%%
 def gibbs_code(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT, CONT_TYPE): 
   THETA_INITS = theta_init_func_n(KEY_REF, PHI_REF, RESULT_VEC, STRAT_VEC, P, CONTEXT_NO, TOPO_SORT)
   PHASE_BOUNDARY_INITS = phase_bd_init_func(KEY_REF, PHI_REF, THETA_INITS, PREV_PHASE, A, P)
@@ -717,7 +719,7 @@ def gibbs_code(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_
         POST_S.append(PHIS_VEC[0] - PHIS_VEC[M-1])
   PHI_ACCEPT, ACCEPT = POST_PHIS, POST_THETAS
   return PHI_ACCEPT, ACCEPT, POST_S
-
+#%%
 def step_1_squeeze(A, P, i, PREV_PROB_TEST, K, ACCEPT, SITE_DICT_TEST_1,  SITE_DICT_TEST_2, THETAS, POST_THETAS, POST_PHIS, KEY_REF, CONTEXT_NO, POST_PHASE, PHI_REF, RCD_ERR, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI, PHIS_VEC, CONT_TYPE):
     k = int(random.sample(range(0, K), 1)[0])
     oldtheta = THETAS[k]
@@ -1009,7 +1011,7 @@ def squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, 
 #########SHAG RIVER MOUTH
 #np.random.seed(99999)
 
-
+#%%
 def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_REF, PREV_PHASE, POST_PHASE, TOPO_SORT, CONT_TYPE):
 #  t0 = time.perf_counter()
   PHI_SAMP_DICT = {
