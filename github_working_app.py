@@ -39,6 +39,7 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
 import pickle
 from html2text import html2text 
+from tkinter import simpledialog
 #from ttkbootstrap import Style
 #from networkx.readwrite import json_graph
 
@@ -794,8 +795,63 @@ class MainFrame(tk.Tk):
         
     def get_page(self, page_class):
             return self.frames[page_class] 
+
+class popupWindow4(object):
+    def __init__(self, master, canvas):
+        self.littlecanvas2 = canvas
+        self.top=tk.Toplevel(master)
+      #  self.top.geometry("1000x400")
+     #    self.button2 = tk.Button (root, text='Exit Application',command=ExitApplication,bg='brown',fg='white')
+   #     self.button = ttk.Button(self.top, text='Submit', command=lambda:self.top.destroy())
+    #    self.button.grid(column = 30, row = 4)
+  #      self.resid_check()
+        master.wait_window(self.top) 
+
+#    def resid_check(self):
+#        MsgBox = tk.messagebox.askquestion ('Residual and Intrusive Contexts','Do you suspect any of your samples are residual or intrusive?',icon = 'warning')
+#        if MsgBox == 'yes':
+#           print('load window pls')
+#        else:
+#            self.top.destroy
         
+
         
+    
+    def test(self):
+        #dropdown_dict = {}
+        # Label
+        x = ['123', '134a', '1543gfs', '123b', '134b', '1543gfsc', '123a', '134f', '1543g', '123qqq', '134q', '1543dfs']
+        for i, j in enumerate(x):
+            ttk.Label(self.top, text = str(j), 
+                    font = ("Times New Roman", 10)).grid(column = 0, 
+                    row = i, padx = 30, pady = 25)
+              
+            n = tk.StringVar()
+            dropdown_dict = ttk.Combobox(self.top, width = 27, 
+                                        textvariable = n, state = "readonly")
+              
+            # Adding combobox drop down list
+            dropdown_dict['values'] = ('Normal',
+                                      'Intrusive',
+                                      'Residual')
+            dropdown_dict.current(0) 
+            dropdown_dict["background"] = '#ff0000'
+            dropdown_dict.grid(column = 1, row = i)
+            
+        #    ttk.Label(window, 
+         #           font = ("Times New Roman", 10)).grid(column = 20, 
+          #          row = i, padx = 30, pady = 25)
+              
+            n2 = tk.StringVar()
+            nodetype2 = ttk.Combobox(self.top, width = 27, 
+                                        textvariable = n2, state = "disabled")
+              
+            # Adding combobox drop down list
+            nodetype2['values'] = ('Excluse from modelling',
+                                      'Treat as TPQ/TAQ',)
+        #    nodetype2.current(0) 
+            nodetype2.grid(column = 21, row = i)
+            
 class StartPage(tk.Frame):
     """ Main frame for tkinter app"""
     def __init__(self, parent, controller):
@@ -890,7 +946,7 @@ class StartPage(tk.Frame):
         self.eqrelbutton.place(relx=0.55, rely=0.01, relwidth=0.1, relheight=0.03)
         self.phaselevsbutton = ttk.Button(self.canvas, text ='Display in phases', command = lambda:self.phasing())
         self.phaselevsbutton.place(relx=0.65, rely=0.01, relwidth=0.1, relheight=0.03)               
-        self.mcmcbutton = ttk.Button(self.canvas, text ='Run MCMC', command = lambda: self.load_mcmc())
+        self.mcmcbutton = ttk.Button(self.canvas, text ='Run MCMC', command = lambda: self.resid_check())#self.load_mcmc())
         
         self.mcmcbutton.place(relx=0.88, rely=0.01, relwidth=0.1, relheight=0.03)  
         self.button1 = ttk.Button(self.canvas, text="Go to Page One", command=lambda: controller.show_frame("PageOne"))
@@ -1303,10 +1359,19 @@ class StartPage(tk.Frame):
         self.show_image()  
 
 
+    def resid_check(self):
+        MsgBox = tk.messagebox.askquestion ('Residual and Intrusive Contexts','Do you suspect any of your samples are residual or intrusive?',icon = 'warning')
+        if MsgBox == 'yes':
+            self.controller.show_frame("PageTwo")
+        else:
+            self.popup3 = popupWindow3(self, self.graph, self.littlecanvas2, self.phase_rels) 
+
 ##        #pt2
     def chronograph_render(self):
         global load_check
         if load_check != 'loaded':
+    #        self.resid_check()
+       #     self.popup4 = popupWindow4(self, self.littlecanvas2)
             self.popup3 = popupWindow3(self, self.graph, self.littlecanvas2, self.phase_rels)
         
         try: 
@@ -1801,7 +1866,7 @@ class PageOne(tk.Frame):
                            command= self.mcmc_output )
         self.button2.place(relx=0.78, rely=0.15, relwidth=0.1, relheight=0.03)
         self.button2a = ttk.Button(self, text="Get HPD intervals",
-                           command= self.mcmc_output )
+                           command= self.get_hpd_interval )
         self.button2a.place(relx=0.78, rely=0.19, relwidth=0.1, relheight=0.03)
         self.button3 = ttk.Button(self, text="Clear list",
                            command= self.clear_results_list )
@@ -1813,6 +1878,7 @@ class PageOne(tk.Frame):
         self.variable = tk.StringVar(self.littlecanvas)
         self.variable.set("Add to results list")
         self.testmenu2 = ttk.OptionMenu(self.littlecanvas2, self.variable,self.ResultList[0], *self.ResultList, command = self.node_finder)
+        
     def clear_results_list(self):
         self.results_list = []
         self.littlecanvas3.delete(self.results_text)
@@ -1928,16 +1994,17 @@ class PageOne(tk.Frame):
         global mcmc_check
         startpage = self.controller.get_page('StartPage')
         if mcmc_check == 'mcmc_loaded':
-            hpd_str = ""
-            columns = ('context', 'hpd_interval')
-            self.tree_phases = ttk.Treeview(self.littlecanvas_a, columns=columns, show='headings') 
+          #  hpd_str = ""
+           # columns = ('context', 'hpd_interval')
+          #  self.tree_phases = ttk.Treeview(self.littlecanvas_a, columns=columns, show='headings') 
             if self.canvas_plt != None:
                     self.canvas_plt.get_tk_widget().pack_forget()
+                    self.toolbar.destroy()
             fig = Figure(figsize = (5, 5),
                  dpi = 100)
-            self.tree_phases.heading('context', text='Context')
-            self.tree_phases.heading('hpd_interval', text='HPD interval')
-            intervals = []
+         #   self.tree_phases.heading('context', text='Context')
+        #    self.tree_phases.heading('hpd_interval', text='HPD interval')
+           # intervals = []
             for i,j  in enumerate(self.results_list):
                 plt.rcParams['text.usetex']
                 plot_index = int(str(51) + str(i+1))
@@ -1956,16 +2023,61 @@ class PageOne(tk.Frame):
                 plot1.title.set_text(r"Posterior density plot for context " +  r"$" + node + "}$")
                 
                               
-                interval = list(mcmc.HPD_interval(np.array(startpage.resultsdict[j][1000:])))
+              #  interval = list(mcmc.HPD_interval(np.array(startpage.resultsdict[j][1000:])))
+            # define headings
+              #  hpd_str = ""
+             #   refs = [k for k in range(len(interval)) if k %2]
+            #    for i in refs:
+           #         hpd_str = hpd_str + str(np.abs(interval[i-1])) + " - " + str(np.abs(interval[i])) + " Cal BP "
+                # add data to the treeview
+           #     intervals.append((node, hpd_str))
+
+            
+          #  for contact in intervals:
+         #       self.tree_phases.insert('', tk.END, values=contact)
+        #    self.tree_phases.grid(row=0, column=0, sticky='nsew')                
+            # add a scrollbar
+       #     scrollbar = ttk.Scrollbar(self.littlecanvas_a, orient=tk.VERTICAL, command=self.tree_phases.yview)
+       #     self.tree_phases.configure(yscroll=scrollbar.set)
+       #     scrollbar.grid(row=0, column=1, sticky='nsew')
+       #     self.littlecanvas_a.create_text(150, 80, text = hpd_str)
+
+            fig.set_tight_layout(True)
+            self.canvas_plt = FigureCanvasTkAgg(fig,
+                               master = self.littlecanvas)  
+            self.canvas_plt.draw()
+           # self.canvas_plt.get_tk_widget().pack()
+  
+    # creating the Matplotlib toolbar
+            self.toolbar = NavigationToolbar2Tk(self.canvas_plt,
+                                          self.littlecanvas)#
+            self.toolbar.update()#
+            self.canvas_plt.get_tk_widget().pack()
+            
+    def get_hpd_interval(self):
+        global mcmc_check
+        startpage = self.controller.get_page('StartPage')
+        USER_INP = simpledialog.askstring(title="HPD interval percentage",
+                                  prompt="Please input HPD interval percentage. Note, 95% is used as standard \n \n Percentage:")
+
+        self.lim = np.float(USER_INP)/100
+        if mcmc_check == 'mcmc_loaded':
+            hpd_str = ""
+            columns = ('context', 'hpd_interval')
+            self.tree_phases = ttk.Treeview(self.littlecanvas_a, columns=columns, show='headings') 
+            self.tree_phases.heading('context', text='Context')
+            self.tree_phases.heading('hpd_interval', text=str(USER_INP) + '% HPD interval')
+            intervals = []
+            for i,j  in enumerate(list(set(self.results_list))):
+                node = str(j)             
+                interval = list(mcmc.HPD_interval(np.array(startpage.resultsdict[j][1000:]), lim = self.lim))
             # define headings
                 hpd_str = ""
                 refs = [k for k in range(len(interval)) if k %2]
                 for i in refs:
                     hpd_str = hpd_str + str(np.abs(interval[i-1])) + " - " + str(np.abs(interval[i])) + " Cal BP "
                 # add data to the treeview
-                intervals.append((node, hpd_str))
-
-            
+                intervals.append((node, hpd_str)) 
             for contact in intervals:
                 self.tree_phases.insert('', tk.END, values=contact)
             self.tree_phases.grid(row=0, column=0, sticky='nsew')                
@@ -1974,18 +2086,6 @@ class PageOne(tk.Frame):
             self.tree_phases.configure(yscroll=scrollbar.set)
             scrollbar.grid(row=0, column=1, sticky='nsew')
             self.littlecanvas_a.create_text(150, 80, text = hpd_str)
-
-            fig.set_tight_layout(True)
-            self.canvas_plt = FigureCanvasTkAgg(fig,
-                               master = self.littlecanvas)  
-            self.canvas_plt.draw()
-            self.canvas_plt.get_tk_widget().pack()
-  
-    # creating the Matplotlib toolbar
-        #    toolbar = NavigationToolbar2Tk(self.canvas_plt,
-        #                                  self.littlecanvas)
-         #   toolbar.update()
-            self.canvas_plt.get_tk_widget().pack()
             
     def chronograph_render_post(self):
         global load_check
@@ -2111,12 +2211,256 @@ class PageTwo(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
+        self.canvas = tk.Canvas(self, bd=0, highlightthickness=0)
+        self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
+        startpage = self.controller.get_page('StartPage')
+        self.graphcanvas = tk.Canvas(self.canvas, bd=0, bg = 'white',
+                                      selectborderwidth=0, highlightthickness=0, insertwidth=0)
+        self.graphcanvas.place(relx=0.02, rely=0.05, relwidth=0.35, relheight=0.9)
+        if startpage.graph != None:
+            self.load_graph()
+        self.graphcanvas.update()
         label = tk.Label(self, text="This is page 2")
         label.pack(side="top", fill="x", pady=10)
         button = tk.Button(self, text="Go to the start page",
                            command=lambda: controller.show_frame("StartPage"))
         button.pack()
+        button1 = tk.Button(self, text="Residual mode",
+                           command=lambda: self.mode_set('resid'))
+        button1.pack()
+        button3 = tk.Button(self, text="Intrusive mode",
+                           command=lambda: self.mode_set('intru'))
+        button3.pack()
+        self.h_1 = 0
+        self.w_1 = 0
+        self.transx2 = 0
+        self.transy2 = 0
+        self.modevariable = None
+        self.meta1 = ""
+        self.metatext = ""
+        self.rad_sel = ""
+        self.mode = ""
+        ##### intial values for all the functions
+        self.delnodes = []
+        self.edge_nodes = []
+        self.comb_nodes = []
+        self.edges_del = []
+        self.temp = []
+        self.results_list = []
+        self.x_1 = 1
+        self.image = "noimage"
+        self.phase_rels = None
+        self.graphcopy = None
+        self.imscale2 = 1.0  # scale for the canvaas image
+        self.delta2 = 1.1 
+        self.results_text = None
+        self.canvas_plt = None
+        self.phase_len_nodes = []
+        self.intru_list = []
+        self.resid_list = []
+        self.graphcanvas.bind("<MouseWheel>", self.wheel2)
+        self.graphcanvas.bind('<Button-4>', self.wheel2)# only with Linux, wheel scroll down
+        self.graphcanvas.bind('<Button-5>', self.wheel2)
+        self.graphcanvas.bind('<Double-Button-3>', self.resid_node_click)
+        self.graphcanvas.bind('<Button-1>', self.move_from2)
+        self.graphcanvas.bind('<B1-Motion>', self.move_to2)
+        #placing image on littlecanvas from graph
+    def mode_set(self, var_set):
+        self.modevariable = var_set
+        
+    def tkraise(self, aboveThis=None):
+        self.load_graph()
+        super().tkraise(aboveThis) 
+        
+        
+    def load_graph(self):
+            startpage = self.controller.get_page('StartPage')
+            self.graphcopy = copy.deepcopy(startpage.graph)
+         #   phasedict = nx.get_node_attributes(self.graphcopy, 'Phase')
+            datadict = nx.get_node_attributes(self.graphcopy, 'Date')
+            nodes = self.graphcopy.nodes()
+            self.node_del_tracker = []
+            for i in nodes:
+#                if phasedict[i] == None:
+#                    self.node_del_tracker.append(i)
+                if datadict[i] == [None, None]:
+                    self.node_del_tracker.append(i)
+            color = (nx.get_node_attributes(self.graphcopy, 'color'))
+            fill = (nx.get_node_attributes(self.graphcopy, 'fontcolor'))
+            print(fill)
+            for j in self.node_del_tracker:
+                color[j] = 'gray'
+                fill[j] = 'gray'
+                
+            nx.set_node_attributes(self.graphcopy, color, 'color')
+            nx.set_node_attributes(self.graphcopy, fill, 'fontcolor')
+            
+                    
+    #        graph = nx.draw_networkx(G,pos, node_color=color_map)
+            if phase_true == 1:
+                    self.image = imgrender_phase(self.graphcopy)
+            else:
+                self.image = imgrender(self.graphcopy)
+            print(self.node_del_tracker)
+            self.graphcanvas.img = ImageTk.PhotoImage(self.image)
+            self.graphcanvas_img = self.graphcanvas.create_image(0, 0, anchor="nw",
+                                                                   image=self.graphcanvas.img)
+    
+            self.width2, self.height2 = self.image.size
+            self.imscale2 = 1.0  # scale for the canvaas image
+            self.delta2 = 1.1  # zoom magnitude
+            # Put image into container rectangle and use it to set proper coordinates to the image
+            self.container = self.graphcanvas.create_rectangle(0, 0, self.width2, self.height2, width=0)
 
+    def move_from2(self, event):
+        """Remembers previous coordinates for scrolling with the mouse"""
+        if self.image != "noimage":
+            self.graphcanvas.scan_mark(event.x, event.y)
+
+    def move_to2(self, event):
+        """Drag (move) canvas to the new position"""        
+        if self.image != "noimage":
+            self.graphcanvas.scan_dragto(event.x, event.y, gain=1)
+            self.show_image2()
+            
+            
+    def wheel2(self, event):
+        """Zoom with mouse wheel"""
+        x_zoom = self.graphcanvas.canvasx(event.x)
+        y_zoom = self.graphcanvas.canvasy(event.y)
+        bbox = self.graphcanvas.bbox(self.container)  # get image area 
+        if bbox[0] < x_zoom < bbox[2] and bbox[1] < y_zoom < bbox[3]:
+            pass  # Ok! Inside the image
+        else: return  # zoom only inside image area
+        scale2 = 1.0
+        # Respond to Linux (event.num) or Windows (event.delta) wheel event
+        if event.num == 5 or event.delta == -120:  # scroll down
+            i = min(self.width2, self.height2)
+            if int(i * self.imscale2) < 30:
+                return  # image is less than 30 pixels
+            self.imscale2 /= self.delta2
+            scale2 /= self.delta2
+        if event.num == 4 or event.delta == 120:  # scroll up
+            i = min(self.graphcanvas.winfo_width(), self.graphcanvas.winfo_height())
+            if i < self.imscale2:
+                return  # 1 pixel is bigger than the visible area
+            self.imscale2 *= self.delta2
+            scale2 *= self.delta2  
+        self.graphcanvas.scale('all', 0, 0, scale2, scale2)  # rescale all canvas objects
+        self.show_image2()
+
+    def show_image2(self):
+        """Show image on the Canvas"""
+        bbox1 = [0, 0, int(self.image.size[0]*self.imscale2), int(self.image.size[1]*self.imscale2)]
+        # Remove 1 pixel shift at the sides of the bbox1
+        bbox1 = (bbox1[0] + 1, bbox1[1] + 1, bbox1[2] - 1, bbox1[3] - 1)
+        bbox2 = (self.graphcanvas.canvasx(0),  # get visible area of the canvas
+                 self.graphcanvas.canvasy(0),
+                 self.graphcanvas.canvasx(self.graphcanvas.winfo_width()),
+                 self.graphcanvas.canvasy(self.graphcanvas.winfo_height()))
+        bbox = [min(bbox1[0], bbox2[0]), min(bbox1[1], bbox2[1]),  # get scroll region box
+                max(bbox1[2], bbox2[2]), max(bbox1[3], bbox2[3])]
+        bbox1 = [0, 0, int(self.image.size[0]*self.imscale2), int(self.image.size[1]*self.imscale2)]
+        if bbox[0] == bbox2[0] and bbox[2] == bbox2[2]:  # whole image in the visible area
+            bbox[0] = bbox1[0]
+            bbox[2] = bbox1[2]
+        if bbox[1] == bbox2[1] and bbox[3] == bbox2[3]:  # whole image in the visible area
+            bbox[1] = bbox1[1]
+            bbox[3] = bbox1[3]
+        self.graphcanvas.configure(scrollregion=bbox)  # set scroll region
+        x_1 = max(bbox2[0] - bbox1[0], 0)  # get coordinates (x1,y1,x2,y2) of the image tile
+        y_1 = max(bbox2[1] - bbox1[1], 0)
+        x_2 = min(bbox2[2], bbox1[2]) - bbox1[0]
+        y_2 = min(bbox2[3], bbox1[3]) - bbox1[1]
+        if int(x_2 - x_1) > 0 and int(y_2 - y_1) > 0:  # show image if it in the visible area
+            x_img = min(int(x_2 / self.imscale2), self.width2)   # sometimes it is larger on 1 pixel
+            y_img = min(int(y_2 / self.imscale2), self.height2)  # ...and sometimes not
+            image2 = self.image.crop((int(x_1 / self.imscale2), int(y_1 / self.imscale2),
+                                     x_img, y_img))
+            self.imagetk2 = ImageTk.PhotoImage(image2.resize((int(x_2 - x_1), int(y_2 - y_1))))
+            self.graphcanvas.delete(self.graphcanvas_img)
+            self.imageid2 = self.graphcanvas.create_image(max(bbox2[0], bbox1[0]),
+                                                          max(bbox2[1], bbox1[1]), anchor='nw',
+                                                          image=self.imagetk2)
+            self.transx2, self.transy2 = bbox2[0], bbox2[1]
+            self.graphcanvas.imagetk2 = self.imagetk2 
+            
+    def nodecheck(self, x_current, y_current):
+        global node_df
+        """ returns the node that corresponds to the mouse cooridinates"""
+        node_inside = "no node"
+        if self.graphcopy != None:
+            node_df_con = node_coords_fromjson(self.graphcopy)
+            node_df = node_df_con[0]
+            xmax, ymax = node_df_con[1]
+            #forms a dataframe from the dicitonary of coords    
+            x, y = self.image.size 
+            cavx = x*self.imscale2
+            cany = y*self.imscale2
+            xscale = (x_current)*(xmax)/cavx
+            yscale = (cany-y_current)*(ymax)/cany
+            outline = nx.get_node_attributes(self.graphcopy, 'color')
+            for n_ind in range(node_df.shape[0]):
+                if ((node_df.iloc[n_ind].x_lower < xscale < node_df.iloc[n_ind].x_upper) and
+                        (node_df.iloc[n_ind].y_lower < yscale < node_df.iloc[n_ind].y_upper)):
+                    node_inside = node_df.iloc[n_ind].name
+                    outline[node_inside] = 'red'
+                    nx.set_node_attributes(self.graphcopy, outline, 'color')  
+        return node_inside
+
+#    def onRight(self, *args):
+#        '''makes test menu appear after right click '''
+#        self.graphcanvas.unbind("Button-1>")
+#        self.graphcanvas.bind("<Button-1>", self.onLeft)
+#        # Here we fetch our X and Y coordinates of the cursor RELATIVE to the window
+#        self.cursorx2 = int(self.graphcanvas.winfo_pointerx() - self.graphcanvas.winfo_rootx())
+#        self.cursory2 = int(self.graphcanvas.winfo_pointery() - self.graphcanvas.winfo_rooty())
+#    
+#        # Now we define our right click menu canvas
+#        # And here is where we use our X and Y variables, to place the menu where our cursor is,
+#        # That's how right click menus should be placed.           
+#        self.testmenu2.place(x=self.cursorx2, y=self.cursory2)
+#        # This is for packing our options onto the canvas, to prevent the canvas from resizing.
+#        # This is extremely useful if you split your program into multiple canvases or frames
+#        # and the pack method is forcing them to resize.
+#        self.testmenu2.pack_propagate(0)
+#        # Here is our label on the right click menu for deleting a row, notice the cursor
+#        # value, which will give us a pointy finger when you hover over the option.
+#        self.testmenu2.config(width=10)        
+#        # This function is for removing the canvas when an option is clicked.
+  
+#    def preClick(self, *args):
+#        '''makes test menu appear and removes any previous test menu'''
+#        try:
+#            self.testmenu2.place_forget()
+#            self.onRight()
+#        except Exception:  
+#            self.onRight()
+#
+#    # Hide menu when left clicking
+#    def onLeft(self, *args):
+#        '''hides menu when left clicking'''
+#        try:
+#            self.testmenu2.place_forget()
+#        except Exception:
+#            pass
+
+    def resid_node_click(self, event):
+        print('hello?')
+        
+        self.cursorx2 = int(self.graphcanvas.winfo_pointerx() - self.graphcanvas.winfo_rootx())
+        self.cursory2 = int(self.graphcanvas.winfo_pointery() - self.graphcanvas.winfo_rooty())
+        x_scal = self.cursorx2 + self.transx2
+        y_scal = self.cursory2 + self.transy2
+        node = self.nodecheck(x_scal, y_scal)
+        if self.modevariable == 'resid':
+            self.resid_list.append(node)
+        elif self.modevariable == 'intru':
+            self.intru_list.append(node)
+        print(self.resid_list)
+        return(node)
+            
+            
 MAIN_FRAME = MainFrame() 
 
 style = ThemedStyle(MAIN_FRAME)
