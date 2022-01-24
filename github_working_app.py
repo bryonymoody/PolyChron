@@ -2210,6 +2210,8 @@ class PageTwo(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
+        self.intru_list = []
+        self.resid_list = []
         self.controller = controller
         self.canvas = tk.Canvas(self, bd=0, highlightthickness=0)
         self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
@@ -2217,6 +2219,30 @@ class PageTwo(tk.Frame):
         self.graphcanvas = tk.Canvas(self.canvas, bd=0, bg = 'white',
                                       selectborderwidth=0, highlightthickness=0, insertwidth=0)
         self.graphcanvas.place(relx=0.02, rely=0.05, relwidth=0.35, relheight=0.9)
+        label = tk.Message(self, bg = 'white', font = ('Courier New', '14', 'bold'), text='Using this page: \n\n Please click on the buttons below to set into residual or intrusive mode. Then double right click on any context to set as residual/intrusive. \n\n Note that orange boxes denote intrusive contexts and blue boxes denote residual contexts. \n\n If you have clicked on a context by mistake, double right click to remove any label attributed to the context.')
+        label.place(relx=0.4, rely=0.05)
+        label2 = tk.Label(self.canvas, bg = 'white', font = ('Courier New', '14', 'bold'), text='Residual Contexts')
+        label2.place(relx=0.4, rely=0.4)
+        self.residcanvas = tk.Canvas(self.canvas, bd=0, bg = 'white',
+                                      selectborderwidth=0, highlightthickness=0, insertwidth=0)
+        self.residcanvas.place(relx=0.4, rely=0.42, relwidth=0.35, relheight=0.08)
+        self.intrucanvas = tk.Canvas(self.canvas, bd=0, bg = 'white',
+                                      selectborderwidth=0, highlightthickness=0, insertwidth=0)
+        self.intrucanvas.place(relx=0.4, rely=0.54, relwidth=0.35, relheight=0.08)
+        
+        self.resid_label = tk.Label(self.residcanvas, text = self.resid_list, bg = 'white')
+        self.resid_label.place(relx=0, rely=0, relwidth=1, relheight=1)
+        scroll_bar1 = ttk.Scrollbar(self.residcanvas)
+        scroll_bar1.pack(side=tk.RIGHT)
+        self.intru_label = tk.Label(self.intrucanvas, text = self.intru_list, bg = 'white')
+        self.intru_label.place(relx=0, rely=0, relwidth=1, relheight=1)
+        scroll_bar2 = ttk.Scrollbar(self.intrucanvas)
+        scroll_bar2.pack(side=tk.RIGHT)
+        
+        # Insert text into the text widget
+    #    text_widget1.insert('1.0', self.intru_list)
+        label3 = tk.Label(self.canvas, bg = 'white', font = ('Courier New', '14', 'bold'), text='Intrusive Contexts')
+        label3.place(relx=0.4, rely=0.52)
         if startpage.graph != None:
             self.load_graph()
         self.graphcanvas.update()
@@ -2224,13 +2250,15 @@ class PageTwo(tk.Frame):
         label.pack(side="top", fill="x", pady=10)
         button = tk.Button(self, text="Go to the start page",
                            command=lambda: controller.show_frame("StartPage"))
-        button.pack()
+        
         button1 = tk.Button(self, text="Residual mode",
                            command=lambda: self.mode_set('resid'))
-        button1.pack()
+        button1.place(relx=0.44, rely=0.35, relwidth=0.09, relheight=0.03)
         button3 = tk.Button(self, text="Intrusive mode",
                            command=lambda: self.mode_set('intru'))
-        button3.pack()
+        button.place(relx=0.48, rely=0.65, relwidth=0.09, relheight=0.03)
+        button3.place(relx=0.54, rely=0.35, relwidth=0.09, relheight=0.03)
+        
         self.h_1 = 0
         self.w_1 = 0
         self.transx2 = 0
@@ -2256,8 +2284,6 @@ class PageTwo(tk.Frame):
         self.results_text = None
         self.canvas_plt = None
         self.phase_len_nodes = []
-        self.intru_list = []
-        self.resid_list = []
         self.graphcanvas.bind("<MouseWheel>", self.wheel2)
         self.graphcanvas.bind('<Button-4>', self.wheel2)# only with Linux, wheel scroll down
         self.graphcanvas.bind('<Button-5>', self.wheel2)
@@ -2267,6 +2293,20 @@ class PageTwo(tk.Frame):
         #placing image on littlecanvas from graph
     def mode_set(self, var_set):
         self.modevariable = var_set
+        if var_set == 'resid':
+            button1 = tk.Button(self, text="Residual mode",
+                           command=lambda: self.mode_set('resid'), background = 'orange')
+            button1.place(relx=0.44, rely=0.35, relwidth=0.09, relheight=0.03)
+            button3 = tk.Button(self, text="Intrusive mode",
+                           command=lambda: self.mode_set('intru'))
+            button3.place(relx=0.54, rely=0.35, relwidth=0.09, relheight=0.03)
+        if var_set == 'intru':
+            button1 = tk.Button(self, text="Residual mode",
+                           command=lambda: self.mode_set('resid'))
+            button1.place(relx=0.44, rely=0.35, relwidth=0.09, relheight=0.03)
+            button3 = tk.Button(self, text="Intrusive mode",
+                           command=lambda: self.mode_set('intru'), background = 'lightgreen')
+            button3.place(relx=0.54, rely=0.35, relwidth=0.09, relheight=0.03)
         
     def tkraise(self, aboveThis=None):
         self.load_graph()
@@ -2404,7 +2444,6 @@ class PageTwo(tk.Frame):
                 if ((node_df.iloc[n_ind].x_lower < xscale < node_df.iloc[n_ind].x_upper) and
                         (node_df.iloc[n_ind].y_lower < yscale < node_df.iloc[n_ind].y_upper)):
                     node_inside = node_df.iloc[n_ind].name
-                    outline[node_inside] = 'red'
                     nx.set_node_attributes(self.graphcopy, outline, 'color')  
         return node_inside
 
@@ -2453,11 +2492,47 @@ class PageTwo(tk.Frame):
         x_scal = self.cursorx2 + self.transx2
         y_scal = self.cursory2 + self.transy2
         node = self.nodecheck(x_scal, y_scal)
-        if self.modevariable == 'resid':
-            self.resid_list.append(node)
-        elif self.modevariable == 'intru':
+        outline = nx.get_node_attributes(self.graphcopy, 'color')
+        if ((node in self.resid_list) == True) and (self.modevariable != 'intru'):
+            self.resid_list.remove(node)
+            outline[node] = 'black' 
+        elif ((node in self.resid_list) == True) and (self.modevariable == 'intru'):
+            self.resid_list.remove(node)
+            outline[node] = 'green'
             self.intru_list.append(node)
-        print(self.resid_list)
+        elif ((node in self.intru_list) == True) and (self.modevariable != 'resid') :
+            self.intru_list.remove(node)
+            outline[node] = 'black'
+        elif ((node in self.intru_list) == True) and (self.modevariable == 'resid') :
+            self.intru_list.remove(node)
+            self.resid_list.append(node)
+            outline[node] = 'orange' 
+        elif (self.modevariable == 'resid') and ((node in self.resid_list) == False):
+            self.resid_list.append(node)
+            outline[node] = 'orange'          
+        elif self.modevariable == 'intru'and ((node in self.intru_list) == False):
+            self.intru_list.append(node)
+            outline[node] = 'green'
+
+      #  print(self.resid_list, 'resid')
+      #  print(self.intru_list, 'intru')
+        self.resid_label = tk.Label(self.residcanvas, text = str(self.resid_list).replace("'", "")[1:-1], bg = 'white')
+        self.resid_label.place(relx=0, rely=0, relwidth=1, relheight=1)
+        self.intru_label = tk.Label(self.intrucanvas, text = str(self.intru_list).replace("'", "")[1:-1], bg = 'white')
+        self.intru_label.place(relx=0, rely=0, relwidth=1, relheight=1)
+        scroll_bar1 = ttk.Scrollbar(self.residcanvas)
+        scroll_bar1.pack(side=tk.RIGHT)
+        scroll_bar2 = ttk.Scrollbar(self.intrucanvas)
+        scroll_bar2.pack(side=tk.RIGHT)
+        nx.set_node_attributes(self.graphcopy, outline, 'color') 
+        if phase_true == 1:
+            imgrender_phase(self.graphcopy)
+        else:
+            imgrender(self.graphcopy) 
+        self.image = Image.open('testdag.png')
+        self.width2, self.height2 = self.image.size
+        self.container = self.graphcanvas.create_rectangle(0, 0, self.width2, self.height2, width=0)
+        self.show_image2()
         return(node)
             
             
