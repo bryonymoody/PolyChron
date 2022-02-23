@@ -129,8 +129,6 @@ def phase_length_finder(con_1, con_2, ALL_SAMPS_CONT, CONTEXT_NO, resultsdict):
     x_4 = resultsdict[con_2]
  #   sampl_list = [len(i) for i in ALL_SAMPS_CONT]
     for i in range(len(x_3)):
-   #    print(x_3[i])
-   #    print(x_4[i])
        phase_lengths.append(np.abs(x_3[i] - x_4[i]))
     un_phase_lens = []
     for i in range(len(phase_lengths)-1):
@@ -182,7 +180,6 @@ def chrono_edge_remov(file_graph):
         ys.append(y)
     graph_data = phase_info_func(file_graph)
     phase_list = list(graph_data[1][2])
-    print(['phase_list', phase_list])
     phase_dic = graph_data[3]
     if len(phase_list) != 1:
         if len(graph_data[1][3]) == 0:
@@ -273,7 +270,6 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
     phase_norm, node_list = graph_data[1][0], graph_data[1][1]
     all_node_phase = dict(zip(node_list, phase_norm))
     label_dict = {}     
-#    print(['all_node_phase', all_node_phase])
     for i in node_list:
         if (i in xs) == False:
             if (i in ys) == False:
@@ -286,7 +282,6 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
                 file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrows=False)
     if phasedict != None:
         p_list = list(set(phase_trck))
-       # print(['p_list', p_list])
         null_phases = []
         phase_nodes.append('a_'+ str(p_list[0][0]))
         for p in p_list:
@@ -330,7 +325,6 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
                     file_graph = nx.contracted_nodes(file_graph, "b_" + str(p[1]), "a_" + str(p[0]))
                     null_phases.append(p)
                 elif (p[1] in graph_data[1][2]) == False:
-                  #  print(p)
                     file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
                     null_phases.append(p)
                 else:
@@ -534,12 +528,12 @@ def imgrender_phase(file):
 
 class popupWindow(object):
     def __init__(self,master):
-        top=self.top=tk.Toplevel(master)
-        self.l=tk.Label(top,text="Context Number")
+        self.top=tk.Toplevel(master)
+        self.l=tk.Label(self.top,text="Context Number")
         self.l.pack()
-        self.e=tk.Entry(top)
+        self.e=tk.Entry(self.top)
         self.e.pack()
-        self.b=tk.Button(top,text='Ok',command=self.cleanup)
+        self.b=tk.Button(self.top,text='Ok',command=self.cleanup)
         self.b.pack()
     def cleanup(self):
         self.value=self.e.get()
@@ -655,25 +649,16 @@ class popupWindow2(object):
         self.value=self.canvas2.get()
         self.top.destroy()
         
+class popupWindow3_backup(object):
+    def __init__(self, master, controller):
+        self.graphcopy = None        
         
 class popupWindow3(object):
-    def __init__(self, master, graph, canvas, phase_rels):
+    def __init__(self, master, controller, graph, canvas, phase_rels, dropdown_ns, dropdown_intru, resid_list = [], intru_list = []):
         self.littlecanvas2 = canvas
         self.top=tk.Toplevel(master)
         self.top.geometry("1000x400")
-        self.variable_1 = tk.StringVar(self.top)
-        self.variable_2 = tk.StringVar(self.top)
-        self.phases = phase_rels        
-        self.menu_list1 = []
-        self.menudict = {}
-        self.prev_dict = {}
-        self.post_dict = {}
-        self.menu_list2 = ["abuting", "gap", "overlap"]            
-        
-        
-        self.button_b = ttk.Button(self.top, text='Render Chronological graph', command=lambda:self.full_chronograph_func())         
         self.graph = graph
-        
         self.graphcopy = copy.deepcopy(self.graph)
         phasedict = nx.get_node_attributes(self.graphcopy, 'Phase')
         datadict = nx.get_node_attributes(self.graphcopy, 'Date')
@@ -686,6 +671,46 @@ class popupWindow3(object):
                 self.node_del_tracker.append(i)
         for j in self.node_del_tracker:
             self.graphcopy.remove_node(j)
+        self.context_no = [x for x in list(self.graph.nodes()) if x not in self.node_del_tracker] 
+        self.CONT_TYPE = ['normal' for i in self.context_no]
+        self.variable_1 = tk.StringVar(self.top)
+        self.variable_2 = tk.StringVar(self.top)
+        self.phases = phase_rels        
+        self.menu_list1 = []
+        self.menudict = {}
+        self.prev_dict = {}
+        self.post_dict = {}
+        self.menu_list2 = ["abuting", "gap", "overlap"]            
+        self.resid_list3 = resid_list
+        self.intru_list3 = intru_list
+        self.dropdown_ns = dropdown_ns
+        self.dropdown_intru = dropdown_intru
+        print(self.context_no)
+        print('popup3 context no')
+    #   self.dropdown_ns[self.resid_list3[i].get()] 
+        for i in range(len(self.resid_list3)):
+            if self.dropdown_ns[self.resid_list3[i]].get() == "Treat as TPQ":
+                self.CONT_TYPE[np.where(np.array(self.context_no) == self.resid_list3[i])[0][0]] = "residual"
+            elif self.dropdown_ns[self.resid_list3[i]].get() == "Exclude from modelling":
+                print('del')
+                self.graphcopy.remove_node(self.resid_list3[i])
+                self.CONT_TYPE.pop(np.where(np.array(self.context_no) == self.resid_list3[i])[0][0])
+                self.context_no.remove(self.resid_list3[i])
+        for j in range(len(self.intru_list3)):
+            if self.dropdown_intru[self.intru_list3[j]].get() == "Treat as TAQ":
+                self.CONT_TYPE[np.where(np.array(self.context_no) == self.intru_list3[j])[0][0]] = "intrusive"
+            elif self.dropdown_intru[self.intru_list3[j]].get() == "Exclude from modelling":
+                print('del1')
+                self.graphcopy.remove_node(self.intru_list3[j])
+                self.CONT_TYPE.pop(np.where(np.array(self.context_no) == self.intru_list3[j])[0][0])
+                self.context_no.remove(self.intru_list3[j])
+        print('nodes from graph copy')
+     #   print(self.context_no)
+        print(self.graphcopy.nodes())
+          #  print(self.dropdown_ns[self.resid_list3[0]].get())
+        self.button_b = ttk.Button(self.top, text='Render Chronological graph', command=lambda:self.full_chronograph_func())         
+        
+
         
         self.step_1 = chrono_edge_remov(self.graphcopy)
         self.button_b.place(relx=0.4, rely=0.55)
@@ -736,27 +761,17 @@ class popupWindow3(object):
         for i in del_phases:
             ref = np.where(np.array(self.phi_ref) == i)[0][0]
             ref_list.append(ref)
-       # print(ref_list)
-        #delete the phase from phiref
-     #   del self.phi_ref[np.array(ref_list)]
         for index in sorted(ref_list, reverse=True):
             del self.phi_ref[index]
 #change to new phase rels
         for i in ref_list:
-    #        print(i)
             self.prev_phase[i] = 'gap' 
             self.post_phase[i] = 'gap'
-   #     print(self.prev_phase)
         for index in sorted(ref_list, reverse=True):
             del self.prev_phase[index+1]
-      #  del self.prev_phase[np.array(ref_list)+1]            
-    #    print(self.post_phase)
         for index in sorted(ref_list, reverse=True):
             del self.post_phase[index-1]
-       # del self.prev_phase[np.array(ref_list)-1]
-            
-            
-      #  print(self.phi_ref, self.prev_phase, self.post_phase)
+
         write_dot(self.graphcopy, 'fi_new_chrono')
         self.top.destroy()
 
@@ -774,7 +789,7 @@ class MainFrame(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
 
         self.frames = {}
-        for F in (StartPage, PageOne, PageTwo):
+        for F in (StartPage, PageOne):
             page_name = F.__name__
             frame = F(parent=container, controller=self)
             self.frames[page_name] = frame
@@ -797,60 +812,76 @@ class MainFrame(tk.Tk):
             return self.frames[page_class] 
 
 class popupWindow4(object):
-    def __init__(self, master, canvas):
-        self.littlecanvas2 = canvas
-        self.top=tk.Toplevel(master)
-      #  self.top.geometry("1000x400")
-     #    self.button2 = tk.Button (root, text='Exit Application',command=ExitApplication,bg='brown',fg='white')
-   #     self.button = ttk.Button(self.top, text='Submit', command=lambda:self.top.destroy())
-    #    self.button.grid(column = 30, row = 4)
-  #      self.resid_check()
-        master.wait_window(self.top) 
+    def __init__(self, master, controller, resid_list, intru_list, node_track, graph):
+        self.top=tk.Toplevel(controller)
+        self.top.geometry("1000x400")
+        self.node_del_tracker = node_track
+        self.controller = controller
+        self.resid_list = resid_list
+        self.intru_list = intru_list
+  #      self.button2 = tk.Button (self.top, text='Exit Application',command=ExitApplication,bg='brown',fg='white')
+        self.button = ttk.Button(self.top, text='Go back', command=lambda:self.top.destroy())
+        self.button.grid(column = 30, row = 4)
+        self.button = ttk.Button(self.top, text='Proceed to render chronological DAG', command=lambda:self.move_to_graph())
+        self.button.grid(column = 30, row = 6)
+        self.test(resid_list, intru_list)
+  #      self.graphcopy = graph
+       
+        controller.wait_window(self.top) 
 
-#    def resid_check(self):
-#        MsgBox = tk.messagebox.askquestion ('Residual and Intrusive Contexts','Do you suspect any of your samples are residual or intrusive?',icon = 'warning')
-#        if MsgBox == 'yes':
-#           print('load window pls')
-#        else:
-#            self.top.destroy
-        
-
+    def move_to_graph(self):
+        startpage = self.controller.get_page('StartPage')
+     #   self.chronograph = startpage.chrono_dag
+        self.controller.show_frame("StartPage")  
+      #  startpage.popup3.graphcopy = self.chronograph
+        self.popup3 = popupWindow3(startpage, startpage.controller, startpage.graph, startpage.littlecanvas2, startpage.phase_rels, self.dropdown_ns, self.dropdown_intru, self.resid_list, self.intru_list) 
+        self.CONT_TYPE = self.popup3.CONT_TYPE
+        self.prev_phase = self.popup3.prev_phase
+        self.post_phase = self.popup3.post_phase
+        self.phi_ref = self.popup3.phi_ref
+        self.context_no = self.popup3.context_no
+        self.graphcopy = self.popup3.graphcopy
+        self.top.destroy()
         
     
-    def test(self):
-        #dropdown_dict = {}
+    def test(self,  resid_list, intru_list):
+        self.dropdowns = {}
+        self.dropdown_ns = {}
+        self.dropdown_intru = {}
+        self.nodetype2 = {}
+            
         # Label
-        x = ['123', '134a', '1543gfs', '123b', '134b', '1543gfsc', '123a', '134f', '1543g', '123qqq', '134q', '1543dfs']
-        for i, j in enumerate(x):
+#        x = ['123', '134a', '1543gfs', '123b', '134b', '1543gfsc', '123a', '134f', '1543g', '123qqq', '134q', '1543dfs']
+        for i, j in enumerate(resid_list):
             ttk.Label(self.top, text = str(j), 
                     font = ("Times New Roman", 10)).grid(column = 0, 
                     row = i, padx = 30, pady = 25)
               
-            n = tk.StringVar()
-            dropdown_dict = ttk.Combobox(self.top, width = 27, 
-                                        textvariable = n, state = "readonly")
+            self.dropdown_ns[j] = tk.StringVar()
+            self.dropdowns[j] =  ttk.Combobox(self.top, width = 27, 
+                                        textvariable = self.dropdown_ns[j], state = "readonly")
               
             # Adding combobox drop down list
-            dropdown_dict['values'] = ('Normal',
-                                      'Intrusive',
-                                      'Residual')
-            dropdown_dict.current(0) 
-            dropdown_dict["background"] = '#ff0000'
-            dropdown_dict.grid(column = 1, row = i)
-            
-        #    ttk.Label(window, 
-         #           font = ("Times New Roman", 10)).grid(column = 20, 
-          #          row = i, padx = 30, pady = 25)
+            self.dropdowns[j]['values'] = ('Exclude from modelling',
+                                      'Treat as TPQ')
+       #     dropdowns[j].current(0) 
+            self.dropdowns[j]["background"] = '#ff0000'
+            self.dropdowns[j].grid(column = 1, row = i)
+        for k, l in enumerate(intru_list):         
+            ttk.Label(self.top, text = str(l), 
+                    font = ("Times New Roman", 10)).grid(column = 21, 
+                    row = k, padx = 30, pady = 25)
               
-            n2 = tk.StringVar()
-            nodetype2 = ttk.Combobox(self.top, width = 27, 
-                                        textvariable = n2, state = "disabled")
+            self.dropdown_intru[l] = tk.StringVar()
+            self.nodetype2[l] = ttk.Combobox(self.top, width = 27, 
+                                        textvariable = self.dropdown_intru[l], state = "readonly")
               
             # Adding combobox drop down list
-            nodetype2['values'] = ('Excluse from modelling',
-                                      'Treat as TPQ/TAQ',)
+            self.nodetype2[l]['values'] = ('Exclude from modelling',
+                                      'Treat as TAQ')
+            self.nodetype2[l].current(0)
         #    nodetype2.current(0) 
-            nodetype2.grid(column = 21, row = i)
+            self.nodetype2[l].grid(column = 22, row = k)
             
 class StartPage(tk.Frame):
     """ Main frame for tkinter app"""
@@ -859,6 +890,7 @@ class StartPage(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.canvas = tk.Canvas(self, bd=0, highlightthickness=0)
+        
  #       super().__init__(*args, **kwargs)
         #define all variables that are used
         self.h_1 = 0
@@ -946,7 +978,7 @@ class StartPage(tk.Frame):
         self.eqrelbutton.place(relx=0.55, rely=0.01, relwidth=0.1, relheight=0.03)
         self.phaselevsbutton = ttk.Button(self.canvas, text ='Display in phases', command = lambda:self.phasing())
         self.phaselevsbutton.place(relx=0.65, rely=0.01, relwidth=0.1, relheight=0.03)               
-        self.mcmcbutton = ttk.Button(self.canvas, text ='Run MCMC', command = lambda: self.resid_check())#self.load_mcmc())
+        self.mcmcbutton = ttk.Button(self.canvas, text ='Run MCMC', command = lambda: self.load_mcmc())
         
         self.mcmcbutton.place(relx=0.88, rely=0.01, relwidth=0.1, relheight=0.03)  
         self.button1 = ttk.Button(self.canvas, text="Go to Page One", command=lambda: controller.show_frame("PageOne"))
@@ -972,6 +1004,8 @@ class StartPage(tk.Frame):
         self.edgescanvas.create_window((0, 0), window=self.text, anchor='nw')
         self.text.insert('end', 'Deleted Edges:\n') #+ str(self.edges_del[1:-1]))
         self.text.configure(state='disabled')
+      #  pagetwo = self.controller.get_('PageTwo')
+      #  self.popup3 = pagetwo.popup4
         ##########radiobutton for edge delete node delete##########
 
         self.OptionList = [
@@ -988,9 +1022,20 @@ class StartPage(tk.Frame):
         self.variable.set("Node Action")
         self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable,self.OptionList[0], *self.OptionList, command = self.nodes)
 
+    def resid_check(self):
+        global load_check
+        MsgBox = tk.messagebox.askquestion ('Residual and Intrusive Contexts','Do you suspect any of your samples are residual or intrusive?',icon = 'warning')
+        if MsgBox == 'yes':
+        #    pagetwo = self.controller.get_page('PageTwo')
+         #   self.popup3 = pagetwo.popup4
+           # self.controller.show_frame("PageTwo")
+            pagetwo = PageTwo(self, self.controller)
+            self.popup3 = pagetwo.popup4 
 
+        else:            
+            self.popup3 = popupWindow3(self, self.controller, self.graph, self.littlecanvas2, self.phase_rels, {}) 
 
-        
+            
         def destroy(self):
             self.testmenu.place_forget()
     #    # This is the function that removes the selected item when the label is clicked.
@@ -1001,7 +1046,7 @@ class StartPage(tk.Frame):
         self.metacanvas = tk.Canvas(self.canvas, bg="white")
         self.metacanvas.place(relx=0.75, rely=0.52, relwidth=0.35, relheight=0.2)
         self.abovebelowcanvas = tk.Canvas(self.canvas, bg="white")
-        self.abovebelowcanvas.place(relx=0.75, rely=0.75, relwidth=0.35, relheight=0.2) 
+        self.abovebelowcanvas.place(relx=0.75, rely=0.75, relwidth=0.35, relheight=0.2)
     
 
 
@@ -1009,7 +1054,6 @@ class StartPage(tk.Frame):
     def save_state(self):
         global mcmc_check, load_check
         try:
-            print('this far?')
             data = {
                 "h_1": self.h_1, 
                 "w_1": self.w_1,
@@ -1053,7 +1097,6 @@ class StartPage(tk.Frame):
                 'resultsdict' : self.resultsdict,
                 'all_results_dict' : self.all_results_dict
             }
-            print('down_here?')
             with open(FILENAME, "wb") as f:
                 pickle.dump(data, f)
 
@@ -1359,21 +1402,14 @@ class StartPage(tk.Frame):
         self.show_image()  
 
 
-    def resid_check(self):
-        MsgBox = tk.messagebox.askquestion ('Residual and Intrusive Contexts','Do you suspect any of your samples are residual or intrusive?',icon = 'warning')
-        if MsgBox == 'yes':
-            self.controller.show_frame("PageTwo")
-        else:
-            self.popup3 = popupWindow3(self, self.graph, self.littlecanvas2, self.phase_rels) 
+    def run_popup3(self):
+            self.popup3 = popupWindow3(self, self.controller, self.graph, self.littlecanvas2, self.phase_rels, {}) 
 
 ##        #pt2
     def chronograph_render(self):
         global load_check
         if load_check != 'loaded':
-    #        self.resid_check()
-       #     self.popup4 = popupWindow4(self, self.littlecanvas2)
-            self.popup3 = popupWindow3(self, self.graph, self.littlecanvas2, self.phase_rels)
-        
+            self.resid_check()
         try: 
             load_check = 'loaded'
         except (RuntimeError, TypeError, NameError):
@@ -1419,18 +1455,29 @@ class StartPage(tk.Frame):
     
 
     def MCMC_func(self):
-        context_no = [x for x in list(self.graph.nodes()) if x not in self.popup3.node_del_tracker] 
+        context_no = [x for x in list(self.popup3.context_no) if x not in self.popup3.node_del_tracker] 
+        print('cont_no')
+        print(context_no)
         self.key_ref = [list(self.phasefile["phase"])[list(self.phasefile["context"]).index(i)] for i in context_no]
+    #    print(self.key_ref)
         strat_vec = [[list(self.graph.predecessors(i)), list(self.graph.successors(i))] for i in context_no]
+     #   print(strat_vec)
         self.RCD_EST = [int(list(self.datefile["date"])[list(self.datefile["context"]).index(i)]) for i in context_no]
-        self.RCD_ERR = [int(list(self.datefile["error"])[list(self.datefile["context"]).index(i)]) for i in context_no]        
+        self.RCD_ERR = [int(list(self.datefile["error"])[list(self.datefile["context"]).index(i)]) for i in context_no]   
+      #  print(self.RCD_EST)
+       # print(self.RCD_ERR)
         rcd_est = self.RCD_EST
         rcd_err = self.RCD_ERR
-        self.CONT_TYPE = ['normal' for i in context_no]
-        TOPO_SORT = list(nx.topological_sort(self.graph))
+        #print(self.popup3.CONT_TYPE)
+  #      self.CONT_TYPE = ['normal' for i in context_no]
+        TOPO = list(nx.topological_sort(self.chrono_dag))
+        TOPO_SORT = [x for x in TOPO if (x not in self.popup3.node_del_tracker) and (x in context_no)]
         TOPO_SORT.reverse()
+        print('topo')
+        print(TOPO_SORT)
         self.prev_phase, self.post_phase = self.popup3.prev_phase, self.popup3.post_phase
-        CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.popup3.phi_ref, self.popup3.prev_phase, self.popup3.post_phase, TOPO_SORT, self.CONT_TYPE)
+  #      print(self.prev_phase, self.post_phase)
+        CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.popup3.phi_ref, self.popup3.prev_phase, self.popup3.post_phase, TOPO_SORT, self.popup3.CONT_TYPE)
         phase_nodes, resultsdict, all_results_dict = phase_labels(PHI_REF, self.popup3.post_phase, PHI_ACCEPT, ALL_SAMPS_PHI)
         for i, j in enumerate(CONTEXT_NO):
             resultsdict[j] = ACCEPT[i]
@@ -1890,6 +1937,8 @@ class PageOne(tk.Frame):
         self.testmenu2.place_forget()
         startpage = self.controller.get_page('StartPage')
         self.chronograph = startpage.chrono_dag
+        print('chronograph_nodes')
+        print(self.chronograph.nodes())
         x = str(self.chrono_nodes(currentevent))
 
         if self.variable.get() == 'Add to results list':
@@ -1906,7 +1955,6 @@ class PageOne(tk.Frame):
                 self.fig = Figure()
                 LENGTHS = phase_length_finder(self.phase_len_nodes[0], self.phase_len_nodes[1], startpage.ALL_SAMPS_CONT, startpage.CONTEXT_NO, startpage.all_results_dict)
                 plot1 = self.fig.add_subplot(111)
-                print('hey')
                 plot1.hist(LENGTHS, bins='auto', color='#0504aa',
                             alpha=0.7, rwidth=0.85, density = True )
                 plot1.title.set_text('Posterior density plot for time elapsed between ' + str(self.phase_len_nodes[0]) + ' and '+ str(self.phase_len_nodes[1]))
@@ -2206,20 +2254,48 @@ class PageOne(tk.Frame):
         node = self.nodecheck(x_scal, y_scal)
         return(node)
         
-class PageTwo(tk.Frame):
-
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
+class PageTwo(object):
+    def __init__(self, master, controller):
+        self.top=tk.Toplevel(controller)
+        self.top.geometry("1000x1000")
         self.intru_list = []
         self.resid_list = []
         self.controller = controller
-        self.canvas = tk.Canvas(self, bd=0, highlightthickness=0)
+        self.h_1 = 0
+        self.w_1 = 0
+        self.transx2 = 0
+        self.transy2 = 0
+        self.modevariable = None
+        self.meta1 = ""
+        self.metatext = ""
+        self.rad_sel = ""
+        self.mode = ""
+        ##### intial values for all the functions
+        self.delnodes = []
+        self.edge_nodes = []
+        self.comb_nodes = []
+        self.edges_del = []
+        self.temp = []
+        self.results_list = []
+        self.x_1 = 1
+        self.image = "noimage"
+        self.phase_rels = None
+       # self.graphcopy = None
+        self.imscale2 = 1.0  # scale for the canvaas image
+        self.delta2 = 1.1 
+        self.results_text = None
+        self.canvas_plt = None
+        self.phase_len_nodes = []
+        self.canvas = tk.Canvas(self.top, bd=0, highlightthickness=0)
         self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
         startpage = self.controller.get_page('StartPage')
         self.graphcanvas = tk.Canvas(self.canvas, bd=0, bg = 'white',
                                       selectborderwidth=0, highlightthickness=0, insertwidth=0)
         self.graphcanvas.place(relx=0.02, rely=0.05, relwidth=0.35, relheight=0.9)
-        label = tk.Message(self, bg = 'white', font = ('Courier New', '14', 'bold'), text='Using this page: \n\n Please click on the buttons below to set into residual or intrusive mode. Then double right click on any context to set as residual/intrusive. \n\n Note that orange boxes denote intrusive contexts and blue boxes denote residual contexts. \n\n If you have clicked on a context by mistake, double right click to remove any label attributed to the context.')
+        
+        
+        
+        label = tk.Message(self.top, bg = 'white', font = ('Courier New', '14', 'bold'), text='Using this page: \n\n Please click on the buttons below to set into residual or intrusive mode. Then double right click on any context to set as residual/intrusive. \n\n Note that orange boxes denote intrusive contexts and blue boxes denote residual contexts. \n\n If you have clicked on a context by mistake, double right click to remove any label attributed to the context.')
         label.place(relx=0.4, rely=0.05)
         label2 = tk.Label(self.canvas, bg = 'white', font = ('Courier New', '14', 'bold'), text='Residual Contexts')
         label2.place(relx=0.4, rely=0.4)
@@ -2244,67 +2320,47 @@ class PageTwo(tk.Frame):
         label3 = tk.Label(self.canvas, bg = 'white', font = ('Courier New', '14', 'bold'), text='Intrusive Contexts')
         label3.place(relx=0.4, rely=0.52)
         if startpage.graph != None:
-            self.load_graph()
+            self.graphcopy = self.load_graph()
+            self.show_image2()
         self.graphcanvas.update()
-        label = tk.Label(self, text="This is page 2")
-        label.pack(side="top", fill="x", pady=10)
-        button = tk.Button(self, text="Go to the start page",
-                           command=lambda: controller.show_frame("StartPage"))
+        button = tk.Button(self.top, text="Proceed",
+                           command=lambda: self.popup4_wrapper(controller))
         
-        button1 = tk.Button(self, text="Residual mode",
+        button1 = tk.Button(self.top, text="Residual mode",
                            command=lambda: self.mode_set('resid'))
         button1.place(relx=0.44, rely=0.35, relwidth=0.09, relheight=0.03)
-        button3 = tk.Button(self, text="Intrusive mode",
+        button3 = tk.Button(self.top, text="Intrusive mode",
                            command=lambda: self.mode_set('intru'))
         button.place(relx=0.48, rely=0.65, relwidth=0.09, relheight=0.03)
         button3.place(relx=0.54, rely=0.35, relwidth=0.09, relheight=0.03)
-        
-        self.h_1 = 0
-        self.w_1 = 0
-        self.transx2 = 0
-        self.transy2 = 0
-        self.modevariable = None
-        self.meta1 = ""
-        self.metatext = ""
-        self.rad_sel = ""
-        self.mode = ""
-        ##### intial values for all the functions
-        self.delnodes = []
-        self.edge_nodes = []
-        self.comb_nodes = []
-        self.edges_del = []
-        self.temp = []
-        self.results_list = []
-        self.x_1 = 1
-        self.image = "noimage"
-        self.phase_rels = None
-        self.graphcopy = None
-        self.imscale2 = 1.0  # scale for the canvaas image
-        self.delta2 = 1.1 
-        self.results_text = None
-        self.canvas_plt = None
-        self.phase_len_nodes = []
+
         self.graphcanvas.bind("<MouseWheel>", self.wheel2)
         self.graphcanvas.bind('<Button-4>', self.wheel2)# only with Linux, wheel scroll down
         self.graphcanvas.bind('<Button-5>', self.wheel2)
         self.graphcanvas.bind('<Double-Button-3>', self.resid_node_click)
         self.graphcanvas.bind('<Button-1>', self.move_from2)
         self.graphcanvas.bind('<B1-Motion>', self.move_to2)
+        master.wait_window(self.top)
+        
         #placing image on littlecanvas from graph
+    def popup4_wrapper(self, controller):
+        self.popup4 = popupWindow4(self, controller, self.resid_list, self.intru_list, self.node_del_tracker, self.graphcopy)
+        self.top.destroy()
+
     def mode_set(self, var_set):
         self.modevariable = var_set
         if var_set == 'resid':
-            button1 = tk.Button(self, text="Residual mode",
+            button1 = tk.Button(self.top, text="Residual mode",
                            command=lambda: self.mode_set('resid'), background = 'orange')
             button1.place(relx=0.44, rely=0.35, relwidth=0.09, relheight=0.03)
-            button3 = tk.Button(self, text="Intrusive mode",
+            button3 = tk.Button(self.top, text="Intrusive mode",
                            command=lambda: self.mode_set('intru'))
             button3.place(relx=0.54, rely=0.35, relwidth=0.09, relheight=0.03)
         if var_set == 'intru':
-            button1 = tk.Button(self, text="Residual mode",
+            button1 = tk.Button(self.top, text="Residual mode",
                            command=lambda: self.mode_set('resid'))
             button1.place(relx=0.44, rely=0.35, relwidth=0.09, relheight=0.03)
-            button3 = tk.Button(self, text="Intrusive mode",
+            button3 = tk.Button(self.top, text="Intrusive mode",
                            command=lambda: self.mode_set('intru'), background = 'lightgreen')
             button3.place(relx=0.54, rely=0.35, relwidth=0.09, relheight=0.03)
         
@@ -2314,43 +2370,36 @@ class PageTwo(tk.Frame):
         
         
     def load_graph(self):
-            startpage = self.controller.get_page('StartPage')
+            startpage = self.controller.get_page('StartPage')  
             self.graphcopy = copy.deepcopy(startpage.graph)
-         #   phasedict = nx.get_node_attributes(self.graphcopy, 'Phase')
             datadict = nx.get_node_attributes(self.graphcopy, 'Date')
             nodes = self.graphcopy.nodes()
             self.node_del_tracker = []
             for i in nodes:
-#                if phasedict[i] == None:
-#                    self.node_del_tracker.append(i)
                 if datadict[i] == [None, None]:
                     self.node_del_tracker.append(i)
             color = (nx.get_node_attributes(self.graphcopy, 'color'))
             fill = (nx.get_node_attributes(self.graphcopy, 'fontcolor'))
-            print(fill)
             for j in self.node_del_tracker:
                 color[j] = 'gray'
                 fill[j] = 'gray'
                 
             nx.set_node_attributes(self.graphcopy, color, 'color')
             nx.set_node_attributes(self.graphcopy, fill, 'fontcolor')
-            
-                    
-    #        graph = nx.draw_networkx(G,pos, node_color=color_map)
             if phase_true == 1:
                     self.image = imgrender_phase(self.graphcopy)
             else:
                 self.image = imgrender(self.graphcopy)
-            print(self.node_del_tracker)
-            self.graphcanvas.img = ImageTk.PhotoImage(self.image)
+            self.icon = ImageTk.PhotoImage(self.image)
             self.graphcanvas_img = self.graphcanvas.create_image(0, 0, anchor="nw",
-                                                                   image=self.graphcanvas.img)
-    
+                                                                   image=self.icon)
             self.width2, self.height2 = self.image.size
             self.imscale2 = 1.0  # scale for the canvaas image
             self.delta2 = 1.1  # zoom magnitude
-            # Put image into container rectangle and use it to set proper coordinates to the image
+            startpage.update_idletasks() 
             self.container = self.graphcanvas.create_rectangle(0, 0, self.width2, self.height2, width=0)
+            return self.graphcopy
+            
 
     def move_from2(self, event):
         """Remembers previous coordinates for scrolling with the mouse"""
@@ -2391,6 +2440,8 @@ class PageTwo(tk.Frame):
 
     def show_image2(self):
         """Show image on the Canvas"""
+        startpage = self.controller.get_page('StartPage')
+        startpage.update_idletasks()
         bbox1 = [0, 0, int(self.image.size[0]*self.imscale2), int(self.image.size[1]*self.imscale2)]
         # Remove 1 pixel shift at the sides of the bbox1
         bbox1 = (bbox1[0] + 1, bbox1[1] + 1, bbox1[2] - 1, bbox1[3] - 1)
@@ -2412,21 +2463,24 @@ class PageTwo(tk.Frame):
         y_1 = max(bbox2[1] - bbox1[1], 0)
         x_2 = min(bbox2[2], bbox1[2]) - bbox1[0]
         y_2 = min(bbox2[3], bbox1[3]) - bbox1[1]
-        if int(x_2 - x_1) > 0 and int(y_2 - y_1) > 0:  # show image if it in the visible area
+        
+        if int(x_2 - x_1) > 0 and int(y_2 - y_1) > 0:  # show image if it in the visible area            
             x_img = min(int(x_2 / self.imscale2), self.width2)   # sometimes it is larger on 1 pixel
             y_img = min(int(y_2 / self.imscale2), self.height2)  # ...and sometimes not
             image2 = self.image.crop((int(x_1 / self.imscale2), int(y_1 / self.imscale2),
-                                     x_img, y_img))
-            self.imagetk2 = ImageTk.PhotoImage(image2.resize((int(x_2 - x_1), int(y_2 - y_1))))
-            self.graphcanvas.delete(self.graphcanvas_img)
+                                     x_img, y_img)) 
+            self.graphcanvas.delete(self.icon)
+            self.icon = ImageTk.PhotoImage(image2.resize((int(x_2 - x_1), int(y_2 - y_1))))
             self.imageid2 = self.graphcanvas.create_image(max(bbox2[0], bbox1[0]),
                                                           max(bbox2[1], bbox1[1]), anchor='nw',
-                                                          image=self.imagetk2)
+                                                          image=self.icon)
             self.transx2, self.transy2 = bbox2[0], bbox2[1]
-            self.graphcanvas.imagetk2 = self.imagetk2 
+        
             
     def nodecheck(self, x_current, y_current):
         global node_df
+        startpage = self.controller.get_page('StartPage')
+        startpage.update_idletasks()
         """ returns the node that corresponds to the mouse cooridinates"""
         node_inside = "no node"
         if self.graphcopy != None:
@@ -2447,46 +2501,9 @@ class PageTwo(tk.Frame):
                     nx.set_node_attributes(self.graphcopy, outline, 'color')  
         return node_inside
 
-#    def onRight(self, *args):
-#        '''makes test menu appear after right click '''
-#        self.graphcanvas.unbind("Button-1>")
-#        self.graphcanvas.bind("<Button-1>", self.onLeft)
-#        # Here we fetch our X and Y coordinates of the cursor RELATIVE to the window
-#        self.cursorx2 = int(self.graphcanvas.winfo_pointerx() - self.graphcanvas.winfo_rootx())
-#        self.cursory2 = int(self.graphcanvas.winfo_pointery() - self.graphcanvas.winfo_rooty())
-#    
-#        # Now we define our right click menu canvas
-#        # And here is where we use our X and Y variables, to place the menu where our cursor is,
-#        # That's how right click menus should be placed.           
-#        self.testmenu2.place(x=self.cursorx2, y=self.cursory2)
-#        # This is for packing our options onto the canvas, to prevent the canvas from resizing.
-#        # This is extremely useful if you split your program into multiple canvases or frames
-#        # and the pack method is forcing them to resize.
-#        self.testmenu2.pack_propagate(0)
-#        # Here is our label on the right click menu for deleting a row, notice the cursor
-#        # value, which will give us a pointy finger when you hover over the option.
-#        self.testmenu2.config(width=10)        
-#        # This function is for removing the canvas when an option is clicked.
-  
-#    def preClick(self, *args):
-#        '''makes test menu appear and removes any previous test menu'''
-#        try:
-#            self.testmenu2.place_forget()
-#            self.onRight()
-#        except Exception:  
-#            self.onRight()
-#
-#    # Hide menu when left clicking
-#    def onLeft(self, *args):
-#        '''hides menu when left clicking'''
-#        try:
-#            self.testmenu2.place_forget()
-#        except Exception:
-#            pass
-
-    def resid_node_click(self, event):
-        print('hello?')
-        
+    def resid_node_click(self, event):   
+        startpage = self.controller.get_page('StartPage')
+        startpage.update_idletasks()
         self.cursorx2 = int(self.graphcanvas.winfo_pointerx() - self.graphcanvas.winfo_rootx())
         self.cursory2 = int(self.graphcanvas.winfo_pointery() - self.graphcanvas.winfo_rooty())
         x_scal = self.cursorx2 + self.transx2
@@ -2514,8 +2531,6 @@ class PageTwo(tk.Frame):
             self.intru_list.append(node)
             outline[node] = 'green'
 
-      #  print(self.resid_list, 'resid')
-      #  print(self.intru_list, 'intru')
         self.resid_label = tk.Label(self.residcanvas, text = str(self.resid_list).replace("'", "")[1:-1], bg = 'white')
         self.resid_label.place(relx=0, rely=0, relwidth=1, relheight=1)
         self.intru_label = tk.Label(self.intrucanvas, text = str(self.intru_list).replace("'", "")[1:-1], bg = 'white')

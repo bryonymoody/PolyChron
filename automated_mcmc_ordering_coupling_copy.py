@@ -22,7 +22,7 @@ import pandas as pd
 
 CALIBRATION = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True)
 
-def HPD_interval(x_temp, probs = 0):
+def HPD_interval(x_temp, lim = 0.95, probs = 0):
     if probs == 0:
         x_temp = np.array(x_temp)
         n = math.ceil((x_temp.max() - x_temp.min()))
@@ -34,7 +34,7 @@ def HPD_interval(x_temp, probs = 0):
     posterior_x = np.array(y['Posterior'])    
     posterior_theta = np.array(y['Theta'])
     i = 0
-    while sum(hpd_vec) <= 0.95:
+    while sum(hpd_vec) <= lim:
         hpd_vec.append(posterior_x[i])
         theta_vec.append(posterior_theta[i])
         i = i + 1    
@@ -691,7 +691,7 @@ def gibbs_code(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_
   POST_THETAS, POST_PHIS, POST_S = set_up_post_arrays(POST_THETAS, POST_PHIS, THETA_INITS, PHASE_BOUNDARY_INITS)
   POST_S = []
   for i in range(0, iter_num):
-        print(i)
+    #    print(i)
         for k in range(len(THETA_INITS)):
               SITE_DICT_TEST_1 = dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF)
               key = KEY_REF[k]
@@ -733,7 +733,7 @@ def step_1_squeeze(A, P, i, PREV_PROB_TEST, K, ACCEPT, SITE_DICT_TEST_1,  SITE_D
     elif cont_type == 'residual':
         THETAS[k] = np.random.uniform(PHIS_VEC[-1],
                                  min(SITE_DICT_TEST_1[key]["boundaries"][1], strat_single[0]))
-        print(PHIS_VEC[-1], min(SITE_DICT_TEST_1[key]["boundaries"][1], strat_single[0]))
+     #   print(PHIS_VEC[-1], min(SITE_DICT_TEST_1[key]["boundaries"][1], strat_single[0]))
    #     print(PHIS)
     elif cont_type == 'intrusive':
         THETAS[k] = np.random.uniform(max(SITE_DICT_TEST_1[key]["boundaries"][0], strat_single[1]),
