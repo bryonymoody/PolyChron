@@ -284,48 +284,86 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
         p_list = list(set(phase_trck))
         null_phases = []
         phase_nodes.append('a_'+ str(p_list[0][0]))
-        for p in p_list:
-            if (p[0] in graph_data[1][2]) == False:
-                file_graph.add_node("a_" + str(p[0]), shape="diamond", fontsize="20.0",
+        up_phase = [i[0] for i in p_list]
+        low_phase = [i[1] for i in p_list]
+        act_phases = set(up_phase + low_phase)
+        del_phase = act_phases - set(graph_data[1][2])
+        del_phase_dict_1 = {}
+        for j in del_phase:
+            del_phase_dict = {}
+            rels_list = [i for i in phasedict.keys() if j in i]
+            for rels in rels_list:
+                if rels[0] == j:
+                    del_phase_dict['lower'] = rels[1]
+                if rels[1] == j:
+                    del_phase_dict['upper'] = rels[0]
+            del_phase_dict_1[j] = del_phase_dict
+          
+        for j in del_phase:
+            rels_list = [i for i in phasedict.keys() if j in i]
+            for rels in rels_list:
+                if rels[0] == j:
+                    if (rels[1] in del_phase) == True:
+                        print(j, rels[1])
+                        del_phase_dict_1[j]['lower'] = del_phase_dict_1[rels[1]]['lower']
+                if rels[1] == j:
+                    if (rels[0] in del_phase) == True:
+                        del_phase_dict_1[j]['upper'] = del_phase_dict_1[rels[0]]['upper']
+        new_phase_rels = set([[del_phase_dict_1[l]['upper'], del_phase_dict_1[l]['lower']] for l in del_phase_dict_1.keys()])
+        print(new_phase_rels)
+ #       print(graph_data[1][2])
+#        print(act_phases)
+        for s in graph_data[1][2]:
+                file_graph.add_node("a_" + str(s), shape="diamond", fontsize="20.0",
                                    fontname="Ubuntu", penwidth="1.0")
-                file_graph.add_node("b_" + str(p[0]), shape="diamond", fontsize="20.0",
+                file_graph.add_node("b_" + str(s), shape="diamond", fontsize="20.0",
                                    fontname="Ubuntu", penwidth="1.0")
-                file_graph.add_edge("b_" + str(p[0]), "a_" + str(p[0]))
+                file_graph.add_edge("b_" + str(s), "a_" + str(s))
                 phase_relabel(file_graph)
-            if (p[1] in graph_data[1][2]) == False:
-                file_graph.add_node("a_" + str(p[1]), shape="diamond", fontsize="20.0",
-                                   fontname="Ubuntu", penwidth="1.0")
-                file_graph.add_node("b_" + str(p[1]), shape="diamond", fontsize="20.0",
-                                   fontname="Ubuntu", penwidth="1.0")
-                file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[1]))
-                phase_relabel(file_graph)
+#        for p in p_list:
+#            if (p[0] in graph_data[1][2]) == False:
+#                file_graph.add_node("a_" + str(p[0]), shape="diamond", fontsize="20.0",
+#                                   fontname="Ubuntu", penwidth="1.0")
+#                file_graph.add_node("b_" + str(p[0]), shape="diamond", fontsize="20.0",
+#                                   fontname="Ubuntu", penwidth="1.0")
+#                file_graph.add_edge("b_" + str(p[0]), "a_" + str(p[0]))
+#                phase_relabel(file_graph)
+#            if (p[1] in graph_data[1][2]) == False:
+#                file_graph.add_node("a_" + str(p[1]), shape="diamond", fontsize="20.0",
+#                                   fontname="Ubuntu", penwidth="1.0")
+#                file_graph.add_node("b_" + str(p[1]), shape="diamond", fontsize="20.0",
+#                                   fontname="Ubuntu", penwidth="1.0")
+#                file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[1]))
+#                phase_relabel(file_graph)
+                
         for p in p_list:
             relation = phasedict[p]
             if relation == 'gap':
                 if (p[0] in graph_data[1][2]) == False:
-                    file_graph = nx.contracted_nodes(file_graph, "b_" + str(p[1]), "a_" + str(p[0]))
+                 #   file_graph = nx.contracted_nodes(file_graph, "b_" + str(p[1]), "a_" + str(p[0]))
+                    phasedict.pop[p]
                     null_phases.append(p)
                 elif (p[1] in graph_data[1][2]) == False:
-                    file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
+                  #  file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
                     null_phases.append(p)
                 else:
                     file_graph.add_edge("a_" + str(p[0]), "b_" + str(p[1]))
             if relation == 'overlap':
                 if (p[0] in graph_data[1][2]) == False:
-                    file_graph = nx.contracted_nodes(file_graph, "b_" + str(p[1]), "a_" + str(p[0]))
+                   # file_graph = nx.contracted_nodes(file_graph, "b_" + str(p[1]), "a_" + str(p[0]))
                     null_phases.append(p)
                 elif (p[1] in graph_data[1][2]) == False:
-                    file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
+                    #file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
                     null_phases.append(p)
                 else:
                     file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[0]))
             if relation == "abuting":
                 
                 if (p[0] in graph_data[1][2]) == False:
-                    file_graph = nx.contracted_nodes(file_graph, "b_" + str(p[1]), "a_" + str(p[0]))
+                  #  file_graph = nx.contracted_nodes(file_graph, "b_" + str(p[1]), "a_" + str(p[0]))
                     null_phases.append(p)
                 elif (p[1] in graph_data[1][2]) == False:
-                    file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
+                   # file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
                     null_phases.append(p)
                 else:
                     file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
@@ -654,7 +692,7 @@ class popupWindow3_backup(object):
         self.graphcopy = None        
         
 class popupWindow3(object):
-    def __init__(self, master, controller, graph, canvas, phase_rels, dropdown_ns, dropdown_intru, resid_list = [], intru_list = []):
+    def __init__(self, master, controller, graph, canvas, phase_rels, dropdown_ns = [], dropdown_intru = [], resid_list = [], intru_list = []):
         self.littlecanvas2 = canvas
         self.top=tk.Toplevel(master)
         self.top.geometry("1000x400")
@@ -685,8 +723,6 @@ class popupWindow3(object):
         self.intru_list3 = intru_list
         self.dropdown_ns = dropdown_ns
         self.dropdown_intru = dropdown_intru
-        print(self.context_no)
-        print('popup3 context no')
     #   self.dropdown_ns[self.resid_list3[i].get()] 
         for i in range(len(self.resid_list3)):
             if self.dropdown_ns[self.resid_list3[i]].get() == "Treat as TPQ":
@@ -704,10 +740,6 @@ class popupWindow3(object):
                 self.graphcopy.remove_node(self.intru_list3[j])
                 self.CONT_TYPE.pop(np.where(np.array(self.context_no) == self.intru_list3[j])[0][0])
                 self.context_no.remove(self.intru_list3[j])
-        print('nodes from graph copy')
-     #   print(self.context_no)
-        print(self.graphcopy.nodes())
-          #  print(self.dropdown_ns[self.resid_list3[0]].get())
         self.button_b = ttk.Button(self.top, text='Render Chronological graph', command=lambda:self.full_chronograph_func())         
         
 
@@ -839,6 +871,7 @@ class popupWindow4(object):
         self.prev_phase = self.popup3.prev_phase
         self.post_phase = self.popup3.post_phase
         self.phi_ref = self.popup3.phi_ref
+        #DELETE ALPHA AND BETA NODE FOR EMPTY PHASES HERE CHECK HOW I DID IT BEFORE
         self.context_no = self.popup3.context_no
         self.graphcopy = self.popup3.graphcopy
         self.top.destroy()
