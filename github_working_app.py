@@ -263,17 +263,17 @@ def phase_labels(phi_ref, POST_PHASE, phi_accept, all_samps_phi):
     return labels, results_dict, all_results_dict
 
 
-def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
+def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck, post_dict, prev_dict):
     xs = xs_ys[0]
     ys = xs_ys[1]
     phase_nodes = []
     phase_norm, node_list = graph_data[1][0], graph_data[1][1]
     all_node_phase = dict(zip(node_list, phase_norm))
     label_dict = {}     
-    for i in node_list:
+    for i in node_list: #loop adds edges between phases
         if (i in xs) == False:
             if (i in ys) == False:
-                file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrows=False)
+                file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrows=False) 
                 file_graph.add_edge(i, "a_" + str(all_node_phase[i]), arrows=False)
             else:
                 file_graph.add_edge(i, "a_" + str(all_node_phase[i]), arrows=False)
@@ -281,14 +281,25 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
             if (i in ys) == False:
                 file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrows=False)
     if phasedict != None:
-        p_list = list(set(phase_trck))
-        null_phases = []
+        p_list = list(set(phase_trck)) #phases before any get removed due to having no dates
+        null_phases = []  # keep track of phases we need to delete
         phase_nodes.append('a_'+ str(p_list[0][0]))
         up_phase = [i[0] for i in p_list]
         low_phase = [i[1] for i in p_list]
-        act_phases = set(up_phase + low_phase)
+        act_phases = set(up_phase + low_phase) #actual ohases we are working with
         del_phase = act_phases - set(graph_data[1][2])
         del_phase_dict_1 = {}
+        graph = nx.DiGraph()
+        if len(phase_trck) != 0:
+            graph.add_edges_from(phase_trck)
+            phi_ref = list(reversed(list(nx.topological_sort(graph))))
+            graph_temp = nx.transitive_reduction(graph)    
+            a = set(graph.edges())
+            b = set(graph_temp.edges())
+            if len(list(a-b)) != 0:
+                rem = list(a-b)[0]
+                file_graph.remove_edge(rem[0], rem[1])
+        #this loop checks for any phase rels that need changing due to missing dates
         for j in del_phase:
             del_phase_dict = {}
             rels_list = [i for i in phasedict.keys() if j in i]
@@ -298,72 +309,48 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
                 if rels[1] == j:
                     del_phase_dict['upper'] = rels[0]
             del_phase_dict_1[j] = del_phase_dict
-          
+        #We then have to run the loop again in case any phases are next to eachother, this checks that  
         for j in del_phase:
             rels_list = [i for i in phasedict.keys() if j in i]
             for rels in rels_list:
                 if rels[0] == j:
                     if (rels[1] in del_phase) == True:
-                        print(j, rels[1])
                         del_phase_dict_1[j]['lower'] = del_phase_dict_1[rels[1]]['lower']
+                    if j == phi_ref[0]:
+                        del_phase_dict_1[j]['upper'] = 'start'
                 if rels[1] == j:
                     if (rels[0] in del_phase) == True:
                         del_phase_dict_1[j]['upper'] = del_phase_dict_1[rels[0]]['upper']
-        new_phase_rels = set([[del_phase_dict_1[l]['upper'], del_phase_dict_1[l]['lower']] for l in del_phase_dict_1.keys()])
-        print(new_phase_rels)
- #       print(graph_data[1][2])
-#        print(act_phases)
-        for s in graph_data[1][2]:
-                file_graph.add_node("a_" + str(s), shape="diamond", fontsize="20.0",
-                                   fontname="Ubuntu", penwidth="1.0")
-                file_graph.add_node("b_" + str(s), shape="diamond", fontsize="20.0",
-                                   fontname="Ubuntu", penwidth="1.0")
-                file_graph.add_edge("b_" + str(s), "a_" + str(s))
-                phase_relabel(file_graph)
-#        for p in p_list:
-#            if (p[0] in graph_data[1][2]) == False:
-#                file_graph.add_node("a_" + str(p[0]), shape="diamond", fontsize="20.0",
-#                                   fontname="Ubuntu", penwidth="1.0")
-#                file_graph.add_node("b_" + str(p[0]), shape="diamond", fontsize="20.0",
-#                                   fontname="Ubuntu", penwidth="1.0")
-#                file_graph.add_edge("b_" + str(p[0]), "a_" + str(p[0]))
-#                phase_relabel(file_graph)
-#            if (p[1] in graph_data[1][2]) == False:
-#                file_graph.add_node("a_" + str(p[1]), shape="diamond", fontsize="20.0",
-#                                   fontname="Ubuntu", penwidth="1.0")
-#                file_graph.add_node("b_" + str(p[1]), shape="diamond", fontsize="20.0",
-#                                   fontname="Ubuntu", penwidth="1.0")
-#                file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[1]))
-#                phase_relabel(file_graph)
-                
+                    if j == phi_ref[0]:
+                        del_phase_dict_1[j]['lower'] = 'end'
+        print(del_phase_dict_1)
+        #make a list of new phase relationships we need to add in
+        new_phase_rels = [[del_phase_dict_1[l]['upper'], del_phase_dict_1[l]['lower']] for l in del_phase_dict_1.keys() if del_phase_dict_1[l]['upper'] != 'start' if del_phase_dict_1[l]['lower'] != 'end']
+        #changes diplay labels to alpha ans betas
+        phase_relabel(file_graph)
+        #adds edges between phases that had gaps due to no contexts being left in them
+        [file_graph.add_edge("a_"+ str(i[0]), "b_" + str(i[1])) for i in new_phase_rels]       
         for p in p_list:
             relation = phasedict[p]
             if relation == 'gap':
                 if (p[0] in graph_data[1][2]) == False:
-                 #   file_graph = nx.contracted_nodes(file_graph, "b_" + str(p[1]), "a_" + str(p[0]))
                     phasedict.pop[p]
                     null_phases.append(p)
                 elif (p[1] in graph_data[1][2]) == False:
-                  #  file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
                     null_phases.append(p)
                 else:
                     file_graph.add_edge("a_" + str(p[0]), "b_" + str(p[1]))
             if relation == 'overlap':
                 if (p[0] in graph_data[1][2]) == False:
-                   # file_graph = nx.contracted_nodes(file_graph, "b_" + str(p[1]), "a_" + str(p[0]))
                     null_phases.append(p)
                 elif (p[1] in graph_data[1][2]) == False:
-                    #file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
                     null_phases.append(p)
                 else:
                     file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[0]))
-            if relation == "abuting":
-                
+            if relation == "abuting":   
                 if (p[0] in graph_data[1][2]) == False:
-                  #  file_graph = nx.contracted_nodes(file_graph, "b_" + str(p[1]), "a_" + str(p[0]))
                     null_phases.append(p)
                 elif (p[1] in graph_data[1][2]) == False:
-                   # file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
                     null_phases.append(p)
                 else:
                     file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
@@ -376,16 +363,11 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck):
                     mapping = dict(zip(x_nod, y_nod))
                     file_graph = nx.relabel_nodes(file_graph, mapping)
         phase_nodes.append('b_' + str(p_list[len(p_list)-1][0]))        
-    graph = nx.DiGraph()
-    if len(phase_trck) != 0:
-        graph.add_edges_from(phase_trck)
-        phi_ref = list(reversed(list(nx.topological_sort(graph))))
-        graph_temp = nx.transitive_reduction(graph)    
-        a = set(graph.edges())
-        b = set(graph_temp.edges())
-        if len(list(a-b)) != 0:
-            rem = list(a-b)[0]
-            file_graph.remove_edge(rem[0], rem[1])     
+
+    #replace phase rels with gap for phases adjoined due to missing phases
+    for i in new_phase_rels:
+        post_dict[i[1]] = 'gap'
+        prev_dict[i[0]] = 'gap'
     nx.set_node_attributes(file_graph, label_dict, 'label')
     return(file_graph, phi_ref, null_phases)
 
@@ -723,23 +705,28 @@ class popupWindow3(object):
         self.intru_list3 = intru_list
         self.dropdown_ns = dropdown_ns
         self.dropdown_intru = dropdown_intru
-    #   self.dropdown_ns[self.resid_list3[i].get()] 
+        #COM Why is cont type not working ehhhhh?
         for i in range(len(self.resid_list3)):
+            
             if self.dropdown_ns[self.resid_list3[i]].get() == "Treat as TPQ":
                 self.CONT_TYPE[np.where(np.array(self.context_no) == self.resid_list3[i])[0][0]] = "residual"
+                print(self.graphcopy.out_edges(self.resid_list3[i]))
+                print(self.graphcopy.in_edges(self.resid_list3[i]))
             elif self.dropdown_ns[self.resid_list3[i]].get() == "Exclude from modelling":
-                print('del')
                 self.graphcopy.remove_node(self.resid_list3[i])
                 self.CONT_TYPE.pop(np.where(np.array(self.context_no) == self.resid_list3[i])[0][0])
                 self.context_no.remove(self.resid_list3[i])
+                
         for j in range(len(self.intru_list3)):
             if self.dropdown_intru[self.intru_list3[j]].get() == "Treat as TAQ":
                 self.CONT_TYPE[np.where(np.array(self.context_no) == self.intru_list3[j])[0][0]] = "intrusive"
+                print(self.graphcopy.out_edges(self.resid_list3[i]))
+                print(self.graphcopy.in_edges(self.resid_list3[i]))
             elif self.dropdown_intru[self.intru_list3[j]].get() == "Exclude from modelling":
-                print('del1')
                 self.graphcopy.remove_node(self.intru_list3[j])
                 self.CONT_TYPE.pop(np.where(np.array(self.context_no) == self.intru_list3[j])[0][0])
                 self.context_no.remove(self.intru_list3[j])
+                
         self.button_b = ttk.Button(self.top, text='Render Chronological graph', command=lambda:self.full_chronograph_func())         
         
 
@@ -779,7 +766,7 @@ class popupWindow3(object):
         self.post_phase = []
         phase_list = self.step_1[2]
         if len(self.step_1[0][1][3]) != 0:
-            self.graphcopy, self.phi_ref, self.null_phases = chrono_edge_add(self.graphcopy, self.step_1[0], self.step_1[1], self.menudict, self.phases)
+            self.graphcopy, self.phi_ref, self.null_phases = chrono_edge_add(self.graphcopy, self.step_1[0], self.step_1[1], self.menudict, self.phases, self.post_dict, self.prev_dict)
             self.post_phase.append(self.post_dict[self.phi_ref[0]])
             for i in range(1,len(self.phi_ref)-1):
                     self.prev_phase.append(self.prev_dict[self.phi_ref[i]])
@@ -1492,24 +1479,23 @@ class StartPage(tk.Frame):
         print('cont_no')
         print(context_no)
         self.key_ref = [list(self.phasefile["phase"])[list(self.phasefile["context"]).index(i)] for i in context_no]
-    #    print(self.key_ref)
+        print(self.key_ref)
         strat_vec = [[list(self.graph.predecessors(i)), list(self.graph.successors(i))] for i in context_no]
-     #   print(strat_vec)
+        print(strat_vec)
         self.RCD_EST = [int(list(self.datefile["date"])[list(self.datefile["context"]).index(i)]) for i in context_no]
         self.RCD_ERR = [int(list(self.datefile["error"])[list(self.datefile["context"]).index(i)]) for i in context_no]   
-      #  print(self.RCD_EST)
-       # print(self.RCD_ERR)
+        print(self.RCD_EST)
+        print(self.RCD_ERR)
         rcd_est = self.RCD_EST
         rcd_err = self.RCD_ERR
-        #print(self.popup3.CONT_TYPE)
-  #      self.CONT_TYPE = ['normal' for i in context_no]
+        print(self.popup3.CONT_TYPE)
         TOPO = list(nx.topological_sort(self.chrono_dag))
         TOPO_SORT = [x for x in TOPO if (x not in self.popup3.node_del_tracker) and (x in context_no)]
         TOPO_SORT.reverse()
         print('topo')
         print(TOPO_SORT)
         self.prev_phase, self.post_phase = self.popup3.prev_phase, self.popup3.post_phase
-  #      print(self.prev_phase, self.post_phase)
+        print(self.prev_phase, self.post_phase)
         CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.popup3.phi_ref, self.popup3.prev_phase, self.popup3.post_phase, TOPO_SORT, self.popup3.CONT_TYPE)
         phase_nodes, resultsdict, all_results_dict = phase_labels(PHI_REF, self.popup3.post_phase, PHI_ACCEPT, ALL_SAMPS_PHI)
         for i, j in enumerate(CONTEXT_NO):
@@ -1970,8 +1956,6 @@ class PageOne(tk.Frame):
         self.testmenu2.place_forget()
         startpage = self.controller.get_page('StartPage')
         self.chronograph = startpage.chrono_dag
-        print('chronograph_nodes')
-        print(self.chronograph.nodes())
         x = str(self.chrono_nodes(currentevent))
 
         if self.variable.get() == 'Add to results list':
@@ -2290,7 +2274,7 @@ class PageOne(tk.Frame):
 class PageTwo(object):
     def __init__(self, master, controller):
         self.top=tk.Toplevel(controller)
-        self.top.geometry("1000x1000")
+        self.top.geometry("2000x1000")
         self.intru_list = []
         self.resid_list = []
         self.controller = controller
