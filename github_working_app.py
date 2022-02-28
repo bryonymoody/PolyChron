@@ -269,7 +269,8 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck, post_d
     phase_nodes = []
     phase_norm, node_list = graph_data[1][0], graph_data[1][1]
     all_node_phase = dict(zip(node_list, phase_norm))
-    label_dict = {}     
+    label_dict = {}    
+    print(all_node_phase)
     for i in node_list: #loop adds edges between phases
         if (i in xs) == False:
             if (i in ys) == False:
@@ -287,6 +288,8 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck, post_d
         up_phase = [i[0] for i in p_list]
         low_phase = [i[1] for i in p_list]
         act_phases = set(up_phase + low_phase) #actual ohases we are working with
+        print(act_phases)
+        print(set(graph_data[1][2]))
         del_phase = act_phases - set(graph_data[1][2])
         del_phase_dict_1 = {}
         graph = nx.DiGraph()
@@ -305,30 +308,34 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck, post_d
             rels_list = [i for i in phasedict.keys() if j in i]
             for rels in rels_list:
                 if rels[0] == j:
-                    del_phase_dict['lower'] = rels[1]
+                    del_phase_dict['lower'] = rels[1]               
                 if rels[1] == j:
                     del_phase_dict['upper'] = rels[0]
             del_phase_dict_1[j] = del_phase_dict
+        if phi_ref[-1] in del_phase_dict_1.keys():
+                        del_phase_dict_1[phi_ref[-1]]['upper'] = 'end'
+        if phi_ref[0] in del_phase_dict_1.keys():
+                        del_phase_dict_1[phi_ref[0]]['lower'] = 'start'
         #We then have to run the loop again in case any phases are next to eachother, this checks that  
         for j in del_phase:
             rels_list = [i for i in phasedict.keys() if j in i]
             for rels in rels_list:
+                print(rels)
                 if rels[0] == j:
                     if (rels[1] in del_phase) == True:
                         del_phase_dict_1[j]['lower'] = del_phase_dict_1[rels[1]]['lower']
-                    if j == phi_ref[0]:
-                        del_phase_dict_1[j]['upper'] = 'start'
+                    
                 if rels[1] == j:
                     if (rels[0] in del_phase) == True:
                         del_phase_dict_1[j]['upper'] = del_phase_dict_1[rels[0]]['upper']
-                    if j == phi_ref[0]:
-                        del_phase_dict_1[j]['lower'] = 'end'
-        print(del_phase_dict_1)
+
         #make a list of new phase relationships we need to add in
-        new_phase_rels = [[del_phase_dict_1[l]['upper'], del_phase_dict_1[l]['lower']] for l in del_phase_dict_1.keys() if del_phase_dict_1[l]['upper'] != 'start' if del_phase_dict_1[l]['lower'] != 'end']
+        new_phase_rels = [[del_phase_dict_1[l]['upper'], del_phase_dict_1[l]['lower']] for l in del_phase_dict_1.keys() if (del_phase_dict_1[l]['upper'] != 'end' ) if del_phase_dict_1[l]['lower'] != 'start']
         #changes diplay labels to alpha ans betas
         phase_relabel(file_graph)
         #adds edges between phases that had gaps due to no contexts being left in them
+        print('new')
+        print(new_phase_rels)
         [file_graph.add_edge("a_"+ str(i[0]), "b_" + str(i[1])) for i in new_phase_rels]       
         for p in p_list:
             relation = phasedict[p]
@@ -362,6 +369,8 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck, post_d
                     y_nod = [newnode if i=="a_" + str(p[0]) else i for i in x_nod]
                     mapping = dict(zip(x_nod, y_nod))
                     file_graph = nx.relabel_nodes(file_graph, mapping)
+                    
+        phi_ref = [i for i in phi_ref if i in set(graph_data[1][2])]
         phase_nodes.append('b_' + str(p_list[len(p_list)-1][0]))        
 
     #replace phase rels with gap for phases adjoined due to missing phases
@@ -767,6 +776,7 @@ class popupWindow3(object):
         phase_list = self.step_1[2]
         if len(self.step_1[0][1][3]) != 0:
             self.graphcopy, self.phi_ref, self.null_phases = chrono_edge_add(self.graphcopy, self.step_1[0], self.step_1[1], self.menudict, self.phases, self.post_dict, self.prev_dict)
+            print(self.phi_ref)
             self.post_phase.append(self.post_dict[self.phi_ref[0]])
             for i in range(1,len(self.phi_ref)-1):
                     self.prev_phase.append(self.prev_dict[self.phi_ref[i]])
@@ -786,10 +796,17 @@ class popupWindow3(object):
         for i in ref_list:
             self.prev_phase[i] = 'gap' 
             self.post_phase[i] = 'gap'
-        for index in sorted(ref_list, reverse=True):
-            del self.prev_phase[index+1]
-        for index in sorted(ref_list, reverse=True):
-            del self.post_phase[index-1]
+#        
+#        print(self.prev_phase)
+#        print(self.post_phase)
+#        for index in sorted(ref_list, reverse=True):
+#            print(index)
+#            del self.prev_phase[index]
+#            del self.post_phase[index+1]
+#            del ref_list[index]
+#            print(self.prev_phase)
+#            print(self.post_phase)
+            
 
         write_dot(self.graphcopy, 'fi_new_chrono')
         self.top.destroy()
@@ -1072,9 +1089,10 @@ class StartPage(tk.Frame):
 
 
     def save_state(self):
-        global mcmc_check, load_check
+        global mcmc_check, load_check, FILE_INPUT
         try:
             data = {
+                "file_input":  FILE_INPUT,
                 "h_1": self.h_1, 
                 "w_1": self.w_1,
                 "transx": self.transx,
@@ -1125,7 +1143,7 @@ class StartPage(tk.Frame):
             "error saving state:", str(e)
 
     def restore_state(self): 
-        global load_check, mcmc_check, FILE_INPUT
+        global load_check, mcmc_check
         try:
             with open(FILENAME, "rb") as f:
                 data = pickle.load(f)
@@ -1163,6 +1181,7 @@ class StartPage(tk.Frame):
             self.PHI_ACCEPT = data["phi_accept"]
             self.A = data["A"]
             self.P = data["P"]
+            FILE_INPUT = data['file_input']
             load_check = data['load_check']
             mcmc_check = data['mcmc_check']
             self.resultsdict = data['resultsdict']
