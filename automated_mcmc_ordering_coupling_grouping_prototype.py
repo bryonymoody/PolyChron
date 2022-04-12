@@ -14,6 +14,19 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
+STRAT_VEC = [[[], ['814']], [['758'], ['1235']], [['814'], ['358']], [[], ['358']], [[], ['923']], [['925'], ['358']], [[], ['358']], [['1235', '493', '923', '1168'], ['813']], [['358'], ['1210']], [['813'], []]]
+STRAT_VEC = [[i[1], i[0]] for i in STRAT_VEC ]
+RCD_EST = [3275, 3270, 3400, 3190, 3420, 3435, 3160, 3340, 3270, 3200]
+RCD_ERR = [75, 80, 75, 75, 65, 60, 70, 80, 75, 70]
+KEY_REF = ['1', '1', '1', '1', '1', '1', '1', '2','2','2']
+CONTEXT_NO = ['758', '814', '1235', '493', '925', '923', '1168', '358', '813', '1210'] 
+PHI_REF = ['1', '2']
+PREV_PHASE = ["start", 'abuting']
+POST_PHASE = ["abuting", "end"]
+TOPO_SORT = ['b_2', '1210', '813', '358', 'a_2 - b_1', '1235', '1168', '923', '493', '814', '925', '758', 'a_1'] 
+TOPO_SORT.reverse() #becuase dates MUST be from oldest to youngest
+CONT_TYPE = ['normal','normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal']
+
 CALIBRATION = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True)
 data = pd.read_csv('group_test.csv')
 
@@ -320,18 +333,13 @@ def post_h_theta_phi_4(site_dict):
     hj_2 = [i[1] for i in h_vec]
     return hj_1, hj_2
 
-def dict_update(test_dict_2, post_t, post_p, inter, inter2, POST_PHASE, PHI_REF):
+def dict_update(test_dict_2, post_t, post_p, inter, inter2, CONTEXT_NO, PHI_REF):
     """ updates site dictionary"""
-    count = 0
-    count_1 = 0
-    b_lst = phase_limits([phi[inter2] for phi in post_p], POST_PHASE)
-    for i_2 in PHI_REF:
-        test_dict_2[i_2]["boundaries"] = b_lst[count_1]
-        count_1 = count_1 + 1
-        for j_up in enumerate(test_dict_2[i_2]["dates"]):
-            test_dict_2[i_2]["dates"][j_up[0]][0] = post_t[count][inter]
-            count = count + 1
-
+    for i_2, j_2 in enumerate(PHI_REF):
+        print(post_p[i_2])
+        test_dict_2[j_2]["boundaries"] = post_p[i_2][inter2]
+        for j_up, k_up in enumerate(test_dict_2[j_2]["dates"]):
+            test_dict_2[j_2]["dates"][j_up][0] = post_t[np.where(np.array(CONTEXT_NO) == test_dict_2[j_2]["dates"][j_up][2])[0][0]][inter]
     return test_dict_2
 
 def phase_bd_init_func(key_reff, phi_reff, theta_initt, prev_phases, A, P):
@@ -401,8 +409,7 @@ def new_init_func(CONTEXT_NO, TOPO_SORT, A, P, RESULT_VEC):
         sample[i] = np.random.choice(SAMPLE_VEC, p=SAMPLE_VEC_PROB/sum(SAMPLE_VEC_PROB))
         for j in range(cut_off, i):
             sample[j] = np.random.uniform(up_lim, sample[i])
-            up_lim = sample[j]
-            
+            up_lim = sample[j]            
         up_lim = sample[i]
         cut_off = i+1
     for k in range(cut_off, len(sample)):
@@ -597,7 +604,7 @@ def initialise(CALIBRATION, RCD_EST, RCD_ERR):
     RESULT_VEC = [likelihood_func(date[0], date[1], A, P, CALIBRATION_DATA) for date in RCD_S]
     return A, P, RESULT_VEC
 
-def dict_form_func(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC, PHI_INITS, POST_PHASE, PHI_REF, PREV_PHASE, KEY_REF, CONT_TYPE):
+def dict_form_func(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC, PHI_INITS, POST_PHASE, PHI_REF, PREV_PHASE, KEY_REF, CONT_TYPE, data):
     '''initiating the inital dict'''
     NEW_LST = [list(x) for x in zip(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC, CONT_TYPE)]
     THETAS = THETA_INITS
@@ -657,7 +664,7 @@ def set_up_post_arrays(THETAS, PHIS_VEC, THETA_INITS, PHASE_BOUNDARY_INITS):
         POST_THETAS[p].append(a)
     for j, b in enumerate(PHASE_BOUNDARY_INITS):
         POST_PHIS[j].append(b)
-    POST_S = [max(PHASE_BOUNDARY_INITS)-min(PHASE_BOUNDARY_INITS) + 50]
+    POST_S = [PHASE_BOUNDARY_INITS[0][1]- PHASE_BOUNDARY_INITS[-1][0] + 50]
     return POST_THETAS, POST_PHIS, POST_S
 
 def posterior_plots(ACCEPT, CONTEXT_NO, PHI_REF, PHI_ACCEPT, A, P):
@@ -695,10 +702,10 @@ def get_hpd_intervals(CONTEXT_NO, ACCEPT, PHI_ACCEPT):
     hpd_df = pd.DataFrame.from_dict(hpd_dict, orient='index')
     hpd_df.to_csv("resid_hpd_intervals_phis_correct")
 
-def gibbs_code(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT, CONT_TYPE):
+def gibbs_code(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT, CONT_TYPE, data):
     THETA_INITS = theta_init_func_n(KEY_REF, PHI_REF, RESULT_VEC, STRAT_VEC, P, CONTEXT_NO, TOPO_SORT)
     PHASE_BOUNDARY_INITS = phase_bd_init_func(KEY_REF, PHI_REF, THETA_INITS, PREV_PHASE, A, P)
-    TEST_DICT_1, POST_THETAS, POST_PHIS, SITE_DICT_TEST_1 = dict_form_func(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC, PHASE_BOUNDARY_INITS, POST_PHASE, PHI_REF, PREV_PHASE, CONT_TYPE)
+    TEST_DICT_1, POST_THETAS, POST_PHIS, SITE_DICT_TEST_1 = dict_form_func(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC, PHASE_BOUNDARY_INITS, POST_PHASE, PHI_REF, PREV_PHASE, CONT_TYPE, data) 
     STEP_1, STEP_2, STEP_3, SAMP_VEC_TRACK = how_to_phase_samp(POST_PHASE, PREV_PHASE)
     PHIS_VEC = PHASE_BOUNDARY_INITS
     THETAS = THETA_INITS.copy()
@@ -709,7 +716,7 @@ def gibbs_code(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_
     POST_S = []
     for i in range(0, iter_num):
         for k in range(len(THETA_INITS)):
-            SITE_DICT_TEST_1 = dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF)
+            SITE_DICT_TEST_1 = dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, CONTEXT_NO, PHI_REF)
             key = KEY_REF[k]
             a = [CONTEXT_NO[k] in d for d in SITE_DICT_TEST_1[key]["dates"]].index(True)
             strat_single = strat_rel(SITE_DICT_TEST_1, key, a, THETAS, CONTEXT_NO)
@@ -754,7 +761,7 @@ def step_1_squeeze(A, P, i, PREV_PROB_TEST, K, ACCEPT, SITE_DICT_TEST_1, SITE_DI
                                       P)
     for g_1 in enumerate(THETAS):
         POST_THETAS[g_1[0]].append(THETAS[g_1[0]])
-    SITE_DICT_TEST_2 = dict_update(SITE_DICT_TEST_2, POST_THETAS, POST_PHIS, i+1, i, POST_PHASE, PHI_REF)
+    SITE_DICT_TEST_2 = dict_update(SITE_DICT_TEST_2, POST_THETAS, POST_PHIS, i+1, i, CONTEXT_NO, PHI_REF)
     prob_1_test = post_h(A, P, SITE_DICT_TEST_2, THETAS, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION)[1]
     c_test = []
     for j_1, a_1 in enumerate(prob_1_test):
@@ -783,15 +790,16 @@ def step_1_squeeze(A, P, i, PREV_PROB_TEST, K, ACCEPT, SITE_DICT_TEST_1, SITE_DI
 def step_2_squeeze(i, prob_1_test, M, PHI_SAMP_DICT, POST_S, R, PHIS_VEC, SITE_DICT_TEST_3, THETAS, POST_THETAS, POST_PHIS, STEP_1, STEP_2, STEP_3, A, P, SAMP_VEC_TRACK, PHI_ACCEPT, KEY_REF, PHI_REF, CONTEXT_NO, RCD_ERR, POST_PHASE, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI, CONT_TYPE):
     m = int(random.sample(range(0, M), 1)[0])
     s1 = max(PHIS_VEC) - min(PHIS_VEC)
-    f_phi1 = (s1**(1-M))/(R-s1)
-    oldphi = PHIS_VEC[m]
+    f_phi1 = (s1**(1-(2*M)))/(R-s1)
+    phase_ind = random.getrandbits(1)
+    oldphi = PHIS_VEC[m][phase_ind]
     lims = PHI_SAMP_DICT[STEP_1[m]][STEP_2[m]][STEP_3[m]](THETAS, PHIS_VEC, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE)
-    PHIS_VEC[m] = np.random.uniform(lims[0], lims[1])
+    PHIS_VEC[m][phase_ind] = np.random.uniform(lims[0], lims[1])
     for v1, a_2 in enumerate(PHIS_VEC):
         POST_PHIS[v1].append(a_2)
-    s2 = max(PHIS_VEC) - min(PHIS_VEC)
-    f_phi2 = (s2**(1-M))/(R-s2)
-    SITE_DICT_TEST_3 = dict_update(SITE_DICT_TEST_3, POST_THETAS, POST_PHIS, i+1, i+1, POST_PHASE, PHI_REF)
+    s2 = PHIS_VEC[0][1] - PHIS_VEC[-1][0]
+    f_phi2 = (s2**(1-(2*M)))/(R-s2)
+    SITE_DICT_TEST_3 = dict_update(SITE_DICT_TEST_3, POST_THETAS, POST_PHIS, i+1, i+1, CONTEXT_NO, PHI_REF)
     step_2_prob = post_h(A, P, SITE_DICT_TEST_3, THETAS, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION)
     prob_2_test = step_2_prob[1]
     backup_b_test = step_2_prob[0]
@@ -816,26 +824,24 @@ def step_2_squeeze(i, prob_1_test, M, PHI_SAMP_DICT, POST_S, R, PHIS_VEC, SITE_D
             PHI_ACCEPT[m].append(PHIS_VEC[m])
             [ALL_SAMPS_CONT[j].append(THETAS[j]) for j in range(len(THETAS))]
             [ALL_SAMPS_PHI[j].append(PHIS_VEC[j]) for j in range(len(PHIS_VEC))]
-            if m == M-1:
-                POST_S.append(max(PHIS_VEC) - PHIS_VEC[m])
-            elif m == 0:
-                POST_S.append(PHIS_VEC[m]- min(PHIS_VEC))
+            if (m == M-1) or (m == 0):
+                POST_S.append(PHIS_VEC[0][1] - PHIS_VEC[-1][0])
         else:
             for v2 in enumerate(PHIS_VEC):
                 POST_PHIS[v2[0]][i+1] = POST_PHIS[v2[0]][i]
-            PHIS_VEC[m] = oldphi
+            PHIS_VEC[m][phase_ind] = oldphi
             prob_2_test = prob_1_test
     return backup_b_test, prob_2_test, POST_S, PHIS_VEC, SITE_DICT_TEST_3, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, ALL_SAMPS_PHI
 
 def step_3_squeeze(A, P, i, backup_b_test, prob_2_test, S, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_4, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, POST_PHASE, PHI_REF, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI):
     step = np.random.uniform(-1*S, S)
     THETAS = [x + step for x in THETAS]
-    PHIS_VEC = [x + step for x in PHIS_VEC]
+    PHIS_VEC = [[x[0] + step, x[1] + step] for x in PHIS_VEC]
     for g2, a_3 in enumerate(THETAS):
         POST_THETAS[g2].append(a_3)
     for v2, b_3 in enumerate(PHIS_VEC):
         POST_PHIS[v2].append(b_3)
-    SITE_DICT_TEST_4 = dict_update(SITE_DICT_TEST_4, POST_THETAS, POST_PHIS, i+2, i+2, POST_PHASE, PHI_REF)
+    SITE_DICT_TEST_4 = dict_update(SITE_DICT_TEST_4, POST_THETAS, POST_PHIS, i+2, i+2, CONTEXT_NO, PHI_REF)
     temp = post_h(A, P, SITE_DICT_TEST_4, THETAS, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION)
     prob_3_test = temp[1]
     b_test = temp[0]
@@ -870,7 +876,7 @@ def step_3_squeeze(A, P, i, backup_b_test, prob_2_test, S, ACCEPT, POST_S, PHIS_
             for v_3 in enumerate(PHIS_VEC):
                 POST_PHIS[v_3[0]][i+2] = POST_PHIS[v_3[0]][i+1]
             THETAS = [x - step for x in THETAS]
-            PHIS_VEC = [x - step for x in PHIS_VEC]
+            PHIS_VEC = [[x[0] - step, x[1] - step] for x in PHIS_VEC]
             prob_3_test = prob_2_test
             b_test = backup_b_test
     return b_test, prob_3_test, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_4, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, ALL_SAMPS_CONT, ALL_SAMPS_PHI
@@ -879,12 +885,12 @@ def step_4_squeeze(A, P, i, b_test, prob_3_test, ACCEPT, POST_S, R, PHIS_VEC, SI
     rho = np.random.uniform(2/3, 3/2)
     constant = (rho-1)*mean(np.concatenate([PHIS_VEC, THETAS])).item()
     THETAS = [x*rho - constant for x in THETAS]
-    PHIS_VEC = [x*rho - constant for x in PHIS_VEC]
+    PHIS_VEC = [[x[0]*rho - constant, x[1]*rho - constant] for x in PHIS_VEC]
     for s_4, a_4 in enumerate(THETAS):
         POST_THETAS[s_4].append(a_4)
     for e_4, b_4 in enumerate(PHIS_VEC):
         POST_PHIS[e_4].append(b_4)
-    SITE_DICT_TEST_5 = dict_update(SITE_DICT_TEST_5, POST_THETAS, POST_PHIS, i+3, i+3, POST_PHASE, PHI_REF)
+    SITE_DICT_TEST_5 = dict_update(SITE_DICT_TEST_5, POST_THETAS, POST_PHIS, i+3, i+3, CONTEXT_NO, PHI_REF)
     s = max(PHIS_VEC) - min(PHIS_VEC)
     const = (R - s)/((R-(rho*s))*rho)
     temp_2 = post_h(A, P, SITE_DICT_TEST_5, THETAS, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION)
@@ -902,7 +908,7 @@ def step_4_squeeze(A, P, i, b_test, prob_3_test, ACCEPT, POST_S, R, PHIS_VEC, SI
         for k_4, f_4 in enumerate(THETAS):
             ACCEPT[k_4].append(f_4)
             ALL_SAMPS_CONT[k_4].append(f_4)
-        POST_S.append(max(PHIS_VEC) - min(PHIS_VEC))
+        POST_S.append(PHIS_VEC[0][1] - PHIS_VEC[-1][0])
     else:
         u = np.random.uniform(0, 1)
         if h_4 > u:
@@ -919,17 +925,17 @@ def step_4_squeeze(A, P, i, b_test, prob_3_test, ACCEPT, POST_S, R, PHIS_VEC, SI
             for v_4 in range(len(PHIS_VEC)):
                 POST_PHIS[v_4][i+3] = POST_PHIS[v_4][i+2]
             THETAS = [(x + constant)/rho for x in THETAS]
-            PHIS_VEC = [(x + constant)/rho for x in PHIS_VEC]
+            PHIS_VEC = [[(x[0] + constant)/rho, (x[1] + constant)/rho] for x in PHIS_VEC]
             PREV_PROB_TEST = prob_3_test
     return PREV_PROB_TEST, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_5, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, ALL_SAMPS_CONT, ALL_SAMPS_PHI
 
-def squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_REF, RCD_EST, CALIBRATION, CONT_TYPE):
+def squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_REF, RCD_EST, CALIBRATION, CONT_TYPE, data):
     acept_prob = 1
     while acept_prob > 0:
         ################ setting up sampling structures######################
         sample = new_init_func(CONTEXT_NO, TOPO_SORT, A, P, RESULT_VEC)
         THETA_INITS, PHI_INITS = theta_phi_inital_samps(PHI_REF, TOPO_SORT, CONTEXT_NO, sample)  
-        SITE_DICT_TEST_1, THETAS, PHIS_VEC, TEST_DICT_1 = dict_form_func(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC, PHI_INITS, POST_PHASE, PHI_REF, PREV_PHASE, KEY_REF, CONT_TYPE)
+        SITE_DICT_TEST_1, THETAS, PHIS_VEC, TEST_DICT_1 = dict_form_func(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC, PHI_INITS, POST_PHASE, PHI_REF, PREV_PHASE, KEY_REF, CONT_TYPE, data = pd.DataFrame(columns=['group', 'contains']))
         STEP_1, STEP_2, STEP_3, SAMP_VEC_TRACK = how_to_phase_samp(POST_PHASE, PREV_PHASE)
         K = len(THETAS)
         M = len(PHIS_VEC)
@@ -943,15 +949,15 @@ def squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, 
         SITE_DICT_TEST_4 = TEST_DICT_1
         SITE_DICT_TEST_5 = TEST_DICT_1
         ACCEPT = [[] for _ in range(len(THETAS))]
-        PHI_ACCEPT = [[] for _ in range(len(PHIS_VEC))]
+        PHI_ACCEPT = [[[],[]] for _ in range(len(PHIS_VEC))]
         ALL_SAMPS_CONT = [[] for _ in range(len(THETAS))]
-        ALL_SAMPS_PHI = [[] for _ in range(len(PHIS_VEC))]
+        ALL_SAMPS_PHI = [[[],[]] for _ in range(len(PHIS_VEC))]
         i = 0
          ###START OF MCMC ALGORITHM###############
         while min([len(i) for i in ACCEPT]) < 50000:
             print(str(int((min([len(i) for i in ACCEPT])/50000)*100))+"% done")
             for l in np.linspace(0, 10002, 3335):
-                SITE_DICT_TEST_1 = dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF)
+                SITE_DICT_TEST_1 = dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, CONTEXT_NO, PHI_REF)
                 #step 1
                 prob_1_test, ACCEPT, SITE_DICT_TEST_1, SITE_DICT_TEST_2, THETAS, POST_THETAS, POST_PHIS, ALL_SAMPS_CONT = step_1_squeeze(A, P, i, PREV_PROB_TEST, K, ACCEPT, SITE_DICT_TEST_1, SITE_DICT_TEST_2, THETAS, POST_THETAS, POST_PHIS, KEY_REF, CONTEXT_NO, POST_PHASE, PHI_REF, RCD_ERR, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI, PHIS_VEC, CONT_TYPE)
                 #step 2
@@ -965,12 +971,10 @@ def squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, 
             acept_prob = len(CHECK_ACCEPT[(CHECK_ACCEPT <= 0.1) | (CHECK_ACCEPT >= 0.7)])
             if acept_prob > 0:
                 break
-          #plot code
-        CHECK_ACCEPT = accept_prob(ACCEPT, PHI_ACCEPT, i)
         return PHI_ACCEPT, ACCEPT, POST_S, ALL_SAMPS_CONT, ALL_SAMPS_PHI
 
 
-def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_REF, PREV_PHASE, POST_PHASE, TOPO_SORT, CONT_TYPE):
+def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_REF, PREV_PHASE, POST_PHASE, TOPO_SORT, CONT_TYPE, data):
 #  t0 = time.perf_counter()
     PHI_SAMP_DICT = {
         'upper' : {
@@ -1106,7 +1110,7 @@ def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_
     method = "squeeze"
     A, P, RESULT_VEC = initialise(CALIBRATION, RCD_EST, RCD_ERR)#  tot_i = 0
     if method == "squeeze":
-        PHI_ACCEPT, ACCEPT, POST_S, ALL_SAMPS_CONT, ALL_SAMPS_PHI = squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_REF, RCD_EST, CALIBRATION, CONT_TYPE)
+        PHI_ACCEPT, ACCEPT, POST_S, ALL_SAMPS_CONT, ALL_SAMPS_PHI = squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_REF, RCD_EST, CALIBRATION, CONT_TYPE, data)
     elif method == 'gibbs':
         PHI_ACCEPT, ACCEPT, POST_S, ALL_SAMPS_CONT, ALL_SAMPS_PHI = gibbs_code(5000, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT, CONT_TYPE)
 

@@ -8,6 +8,7 @@ Created on Thu Jan 14 10:09:37 2021
 
 
 import automated_mcmc_ordering_coupling_copy as mcmc
+import automated_mcmc_ordering_coupling_grouping_prototype as mcmc1
 import pandas as pd
 
 CALIBRATION = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True)
@@ -95,20 +96,22 @@ POST_PHASE = ["abuting", "end"]
 TOPO_SORT = ['1210', '813', '358', '1168', '923', '493', '925', '1235', '814', '758'] 
 TOPO_SORT.reverse()
 CONT_TYPE = ['normal','normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal']
+CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_REF, PREV_PHASE, POST_PHASE, TOPO_SORT, CONT_TYPE)
 
-CALIBRATION = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True)
-STRAT_VEC = [[[], ['814']], [['758'], ['1235']], [['814'], ['358']], [[], ['358']], [[], ['923']], [['925'], ['358']], [[], ['358']], [['1235', '493', '923', '1168'], ['813']], [['358'], ['1210']], [['813'], []]]
-STRAT_VEC = [[i[1], i[0]] for i in STRAT_VEC ]
-RCD_EST = [3275, 3270, 3400, 3190, 3420, 3435, 3160, 3340, 3270, 3200]
-RCD_ERR = [75, 80, 75, 75, 65, 60, 70, 80, 75, 70]
-KEY_REF = ['1', '1', '1', '1', '1', '1', '1', '2','2','2']
-CONTEXT_NO = ['758', '814', '1235', '493', '925', '923', '1168', '358', '813', '1210'] 
-PHI_REF = ['1', '2']
-PREV_PHASE = ["start", 'abuting']
-POST_PHASE = ["abuting", "end"]
-TOPO_SORT = ['b_2', '1210', '813', '358', 'a_2 - b_1', '1235', '1168', '923', '493', '814', '925', '758', 'a_1'] 
-TOPO_SORT.reverse() #becuase dates MUST be from oldest to youngest
-CONT_TYPE = ['normal','normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal']
+CALIBRATION1 = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True)
+STRAT_VEC1 = [[[], ['814']], [['758'], ['1235']], [['814'], ['358']], [[], ['358']], [[], ['923']], [['925'], ['358']], [[], ['358']], [['1235', '493', '923', '1168'], ['813']], [['358'], ['1210']], [['813'], []]]
+STRAT_VEC1 = [[i[1], i[0]] for i in STRAT_VEC ]
+RCD_EST1 = [3275, 3270, 3400, 3190, 3420, 3435, 3160, 3340, 3270, 3200]
+RCD_ERR1 = [75, 80, 75, 75, 65, 60, 70, 80, 75, 70]
+KEY_REF1 = ['1', '1', '1', '1', '1', '1', '1', '2','2','2']
+CONTEXT_NO1 = ['758', '814', '1235', '493', '925', '923', '1168', '358', '813', '1210'] 
+PHI_REF1 = ['1', '2']
+PREV_PHASE1 = ["start", 'abuting']
+POST_PHASE1 = ["abuting", "end"]
+TOPO_SORT1 = ['b_2', '1210', '813', '358', 'a_2 - b_1', '1235', '1168', '923', '493', '814', '925', '758', 'a_1'] 
+TOPO_SORT1.reverse() #becuase dates MUST be from oldest to youngest
+CONT_TYPE1 = ['normal','normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal']
+CONTEXT_NO1, ACCEPT1, PHI_ACCEPT1, PHI_REF1, A1, P1, ALL_SAMPS_CONT1, ALL_SAMPS_PHI1 = mcmc1.run_MCMC(CALIBRATION1, STRAT_VEC1, RCD_EST1, RCD_ERR1, KEY_REF1, CONTEXT_NO1, PHI_REF1, PREV_PHASE1, POST_PHASE1, TOPO_SORT1, CONT_TYPE1, data = pd.DataFrame(columns=['group','contains']) )
 
 
 
