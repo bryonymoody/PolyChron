@@ -13,7 +13,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
+CALIBRATION = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True)
+data = pd.read_csv('group_test.csv')
 
+
+CALIBRATION = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True)
 STRAT_VEC = [[[], ['814']], [['758'], ['1235']], [['814'], ['358']], [[], ['358']], [[], ['923']], [['925'], ['358']], [[], ['358']], [['1235', '493', '923', '1168'], ['813']], [['358'], ['1210']], [['813'], []]]
 STRAT_VEC = [[i[1], i[0]] for i in STRAT_VEC ]
 RCD_EST = [3275, 3270, 3400, 3190, 3420, 3435, 3160, 3340, 3270, 3200]
@@ -21,14 +25,11 @@ RCD_ERR = [75, 80, 75, 75, 65, 60, 70, 80, 75, 70]
 KEY_REF = ['1', '1', '1', '1', '1', '1', '1', '2','2','2']
 CONTEXT_NO = ['758', '814', '1235', '493', '925', '923', '1168', '358', '813', '1210'] 
 PHI_REF = ['1', '2']
-PREV_PHASE = ["start", 'abuting']
-POST_PHASE = ["abuting", "end"]
+PREV_PHASE = {'1': None, '2':['abuting', '1']}
+POST_PHASE = {'1': ['2', "abuting"], '2': None}
 TOPO_SORT = ['b_2', '1210', '813', '358', 'a_2 - b_1', '1235', '1168', '923', '493', '814', '925', '758', 'a_1'] 
 TOPO_SORT.reverse() #becuase dates MUST be from oldest to youngest
 CONT_TYPE = ['normal','normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal']
-
-CALIBRATION = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True)
-data = pd.read_csv('group_test.csv')
 
 def HPD_interval(x_temp, lim=0.95, probs=0):
     if probs == 0:
@@ -336,7 +337,6 @@ def post_h_theta_phi_4(site_dict):
 def dict_update(test_dict_2, post_t, post_p, inter, inter2, CONTEXT_NO, PHI_REF):
     """ updates site dictionary"""
     for i_2, j_2 in enumerate(PHI_REF):
-        print(post_p[i_2])
         test_dict_2[j_2]["boundaries"] = post_p[i_2][inter2]
         for j_up, k_up in enumerate(test_dict_2[j_2]["dates"]):
             test_dict_2[j_2]["dates"][j_up][0] = post_t[np.where(np.array(CONTEXT_NO) == test_dict_2[j_2]["dates"][j_up][2])[0][0]][inter]
@@ -447,145 +447,7 @@ def theta_init_func_n(KEY_REF1, PHI_REF1, RESULT_VEC1, STRAT_VEC, P, CONTEXT_NO,
         prev_min = min([d for d in out_vec if d != 0])
     return out_vec
 
-#sampling functions
-def upp_samp_1(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """ upper sample 1 - oldest phase and next phase abutting or gap"""
-    limits = [max([theta_samp[i] for i, j in enumerate(KEY_REF) if
-                   j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == 'normal'] + [phis_samp[m+1]]), P]
-    _ = phis_samp
-    return limits
 
-def upp_samp_2(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """ upper sample 2 - oldest phase and next phase is overlapping"""
-    in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
-                      j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == 'normal']
-    in_phase_dates.append(phis_samp[m+2])
-    limits = [max(in_phase_dates), P]
-    _ = phis_samp
-    return limits
-
-def upp_samp_3(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """ upper sample 3 - phase with prev phase abbuting and next phase abbuting or gap"""
-    limits = [max([theta_samp[i] for i, j in enumerate(KEY_REF) if
-                   j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == 'normal'] + [phis_samp[m+1]]),
-              min([theta_samp[i] for i, j in enumerate(KEY_REF)
-                   if j == PHI_REF[SAMP_VEC_TRACK[m-1]] and CONT_TYPE[i] == 'normal'] + [phis_samp[m-2]])]
-    _ = phis_samp
-    return limits
-
-def upp_samp_4(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """ upper sample 4 - phase with prev phase abbuting and next phase overlap"""
-    in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
-                      j == PHI_REF[SAMP_VEC_TRACK[m-1]] and CONT_TYPE[i] == 'normal']
-    in_phase_dates.append(phis_samp[m+2])
-    limits = [max(in_phase_dates),
-              min([theta_samp[i] for i, j in enumerate(KEY_REF) if
-                   j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == 'normal'] + [phis_samp[m-2]])]
-    return limits
-
-def upp_samp_5(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """ upper sample 5 - phase with prev phase overlap, next phase can be any relationship"""
-    in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
-                      j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == 'normal']
-    in_phase_dates.append(phis_samp[m-1])
-    limits = [max(in_phase_dates), phis_samp[m-2]]
-    return limits
-
-def upp_samp_6(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """ upper sample 6 - phase with prev phase gap next phase abbuting or gap"""
-    limits = [max([theta_samp[i] for i, j in enumerate(KEY_REF) if
-                   j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == 'normal'] + [phis_samp[m+1]]), phis_samp[m-1]]
-    return limits
-
-def upp_samp_7(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """ upper sample 7 - phase with previous phase gap and next phase overlap"""
-    in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
-                      j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == 'normal']
-    in_phase_dates.append(phis_samp[m+2])
-    limits = [max(in_phase_dates), phis_samp[m-1]]
-    return limits
-
-def upp_samp_8(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """ upper sample 8 - phase with previous 2 overlapping, same as overlap samp_2, should delete"""
-    in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
-                      j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == 'normal']
-    in_phase_dates.append(phis_samp[m-1])
-    limits = [max(in_phase_dates), phis_samp[m-3]]
-    return limits
-
-def low_samp_1(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """lower sample 1 prev phase start, abbuting or gap and next phase abbuting"""
-    limits = [max([theta_samp[i] for i, j in enumerate(KEY_REF) if
-                   j == PHI_REF[SAMP_VEC_TRACK[m+1]] and CONT_TYPE[i] == 'normal'] + [phis_samp[m+1]]),
-              min([theta_samp[i] for i, j in enumerate(KEY_REF) if j
-                   == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == 'normal']+ [phis_samp[m-1]])]
-    _ = phis_samp
-    return limits
-
-def low_samp_2(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """lower sample 2 next phase abbuting and prev phase overlapping"""
-    in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
-                      j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == 'normal']
-    in_phase_dates.append(phis_samp[m-2])
-    limits = [max([theta_samp[i] for i, j in enumerate(KEY_REF) if
-                   j == PHI_REF[SAMP_VEC_TRACK[m+1]] and CONT_TYPE[i] == 'normal'] + [phis_samp[m+1]]),
-              min(in_phase_dates)]
-    return limits
-
-def low_samp_3(theta_sampPolanski, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """lower sample 3: next phase overlapping and prev phase can be any relationship """
-    in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
-                      j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == 'normal']
-    in_phase_dates.append(phis_samp[m+1])
-    limits = [phis_samp[m+2], min(in_phase_dates)]
-    return limits
-
-def low_samp_4(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """lower sample 4 next phase gap and prev phase can be any relationship except overlap"""
-    limits = [phis_samp[m+1],
-              min([theta_samp[i] for i, j in enumerate(KEY_REF) if
-                   j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == 'normal'] + [phis_samp[m-1]])]
-    return limits
-
-def low_samp_5(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """lower sample 5"""
-    in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
-                      j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == 'normal']
-    in_phase_dates.append(phis_samp[m-2])
-    limits = [phis_samp[m+1], min(in_phase_dates)]
-    return limits
-
-def low_samp_6(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """lower sample 6"""
-    limits = [A, min([theta_samp[i] for i, j in enumerate(KEY_REF) if
-                      j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == 'normal'] + [phis_samp[m-1]])]
-    _ = phis_samp
-    return limits
-
-def low_samp_7(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """lower sample 7"""
-    in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
-                      j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == 'normal']
-    in_phase_dates.append(phis_samp[m-2])
-    limits = [A, min(in_phase_dates)]
-    return limits
-
-def overlap_samp_1(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """overlap sample 1 - if previous two samples are overlapping and next phase can be any relationship"""
-    in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
-                      j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == 'normal']
-    in_phase_dates.append(phis_samp[m-1])
-    limits = [max(in_phase_dates), phis_samp[m-3]]
-    return limits
-
-def overlap_samp_2(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    
-    """overlap sample 2"""
-    in_phase_dates = [theta_samp[i] for i, j in enumerate(KEY_REF) if
-                      j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == 'normal']
-    in_phase_dates.append(phis_samp[m+1])
-    limits = [phis_samp[m+3], min(in_phase_dates)]
-    return limits
 def initialise(CALIBRATION, RCD_EST, RCD_ERR):
 #  method  = 'squeeze'
     CALIBRATION_DATA = CALIBRATION.to_dict()
@@ -623,8 +485,8 @@ def dict_form_func(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC, PHI_INITS, PO
         test_lst = [NEW_LST[d] for d in ind]
         TRACK_VEC.append({'dates': test_lst,
                           'boundaries': PHI_INITS[PHI_REF.index(d)],
-                          'prev_phase_rel': PREV_PHASE[PHI_REF.index(d)],
-                          'post_phase_rel': POST_PHASE[PHI_REF.index(d)],
+                          'prev_phase': PREV_PHASE[d],
+                          'post_phase': POST_PHASE[d],
                           'within': insides,
                           'contains': outsides},
                          )
@@ -640,8 +502,8 @@ def dict_form_func(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC, PHI_INITS, PO
             outsides = None        
         TRACK_VEC.append({'dates': None,
                           'boundaries': PHI_INITS[PHI_REF.index(d)],
-                          'prev_phase_rel': PREV_PHASE[PHI_REF.index(d)],
-                          'post_phase_rel': POST_PHASE[PHI_REF.index(d)],
+                          'prev_phase': PREV_PHASE[d],
+                          'post_phase': POST_PHASE[d],
                           'within': [],
                           'contains':[]},
                          )
@@ -650,12 +512,6 @@ def dict_form_func(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC, PHI_INITS, PO
     SITE_DICT_TEST_1 = TEST_DICT_1
     return SITE_DICT_TEST_1, THETAS, PHI_INITS, TEST_DICT_1
 
-def how_to_phase_samp(POST_PHASE, PREV_PHASE):
-    STEP_1 = sampling_vec(POST_PHASE, PREV_PHASE)[0]
-    SAMP_VEC_TRACK = sampling_vec(POST_PHASE, PREV_PHASE)[1]
-    STEP_2 = [PREV_PHASE[i] for i in SAMP_VEC_TRACK]
-    STEP_3 = [POST_PHASE[i] for i in SAMP_VEC_TRACK]
-    return STEP_1, STEP_2, STEP_3, SAMP_VEC_TRACK
 
 def set_up_post_arrays(THETAS, PHIS_VEC, THETA_INITS, PHASE_BOUNDARY_INITS):
     POST_THETAS = [[] for _ in range(len(THETAS))]
@@ -702,46 +558,136 @@ def get_hpd_intervals(CONTEXT_NO, ACCEPT, PHI_ACCEPT):
     hpd_df = pd.DataFrame.from_dict(hpd_dict, orient='index')
     hpd_df.to_csv("resid_hpd_intervals_phis_correct")
 
-def gibbs_code(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT, CONT_TYPE, data):
-    THETA_INITS = theta_init_func_n(KEY_REF, PHI_REF, RESULT_VEC, STRAT_VEC, P, CONTEXT_NO, TOPO_SORT)
-    PHASE_BOUNDARY_INITS = phase_bd_init_func(KEY_REF, PHI_REF, THETA_INITS, PREV_PHASE, A, P)
-    TEST_DICT_1, POST_THETAS, POST_PHIS, SITE_DICT_TEST_1 = dict_form_func(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC, PHASE_BOUNDARY_INITS, POST_PHASE, PHI_REF, PREV_PHASE, CONT_TYPE, data) 
-    STEP_1, STEP_2, STEP_3, SAMP_VEC_TRACK = how_to_phase_samp(POST_PHASE, PREV_PHASE)
-    PHIS_VEC = PHASE_BOUNDARY_INITS
-    THETAS = THETA_INITS.copy()
-    ########################### figures out how to sample based on phase relationships
-    M = len(POST_PHIS)
-    P = 4000
-    POST_THETAS, POST_PHIS, POST_S = set_up_post_arrays(POST_THETAS, POST_PHIS, THETA_INITS, PHASE_BOUNDARY_INITS)
-    POST_S = []
-    for i in range(0, iter_num):
-        for k in range(len(THETA_INITS)):
-            SITE_DICT_TEST_1 = dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, CONTEXT_NO, PHI_REF)
-            key = KEY_REF[k]
-            a = [CONTEXT_NO[k] in d for d in SITE_DICT_TEST_1[key]["dates"]].index(True)
-            strat_single = strat_rel(SITE_DICT_TEST_1, key, a, THETAS, CONTEXT_NO)
-            low_bound = max(SITE_DICT_TEST_1[key]["boundaries"][0], strat_single[1])
-            up_bound = min(SITE_DICT_TEST_1[key]["boundaries"][1], strat_single[0])
-            SAMPLE_VEC = RESULT_VEC[k][0][(RESULT_VEC[k][0] < up_bound) & (RESULT_VEC[k][0] > low_bound)]
-            SAMPLE_VEC_PROB = RESULT_VEC[k][1][(RESULT_VEC[k][0] < up_bound) & (RESULT_VEC[k][0] > low_bound)]
-            THETAS[k] = random.choices(SAMPLE_VEC, weights=SAMPLE_VEC_PROB/sum(SAMPLE_VEC_PROB))[0]
-            POST_THETAS[k].append(THETAS[k])
-        for j in range(len(PHASE_BOUNDARY_INITS)):
-            k = gibbs_phis_gen(PREV_PHASE, PHI_REF)[j]
-            lims = PHI_SAMP_DICT[STEP_1[j]][STEP_2[j]][STEP_3[j]](THETAS, PHIS_VEC, j, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE)
-            bounds = SITE_DICT_TEST_1[str(k)]["boundaries"]
-            phi_vals = np.linspace(lims[0]+0.1, lims[1]-0.1, num=int((lims[1]-lims[0])*20))
-            length = len(SITE_DICT_TEST_1[k]["dates"])
-            if j == 0:
-                phase_samps = np.array([1/((i-bounds[0])**length) for i in phi_vals])
+
+def grps_start_end_outer(i, cond, test_dict):  
+    list2 = []
+    list_others = []
+    if test_dict[i]['contains'] != None:      
+        for string, number in test_dict[i]['contains']:
+            if string == cond:
+                list2.append(number)
+            else: 
+                list_others.append(number)
+    return list2, list_others
+
+def dates_from_refs(master_list, master_bounds, test_dict, bound):   
+    conts = []
+    for i in master_list:
+        for j in test_dict[i]['dates']:
+            conts.append(j[0])
+    bounds = [test_dict[i]['boundaries'][int(bound=='alpha')] for i in master_bounds]
+    samples = conts + bounds
+    return samples
+
+def samplng_lims_alpha(phase, test_dict, A, P):
+    #### inner groups #######
+    list2 = [phase]
+    master_list = list2
+    master_alphas = []
+    intra_eqs = []
+    while len(list2) != 0:
+        list3 = []
+        for i in list2:
+            grps = grps_start_end_outer(i, 'starts', test_dict)
+            list3 = list3 + grps[0]
+            master_alphas = master_alphas + grps[1]
+            intra_eqs = intra_eqs + grps[0]
+        list2 = list3
+        master_list = master_list + list2
+        
+    lowers = dates_from_refs(master_list, master_alphas, test_dict, 'alpha')
+    #### outer group# #####
+    if test_dict[phase]['within'] != None:
+        if test_dict[phase]['within'][0] == 'starts':
+            outphase = test_dict[phase]['within'][1]
+            up_outer = []
+            intra_eqs = intra_eqs + outphase
+            for j in test_dict[outphase]['prev_phase']:
+                refs = grps_start_end_outer(j[1], 'ends', test_dict)
+                up_outer = up_outer + dates_from_refs(refs[0], refs[1], test_dict, 'beta')
             else:
-                phase_samps = np.array([1/((bounds[1]-i)**length) for i in phi_vals])
-            weights = phase_samps/sum(phase_samps)
-            PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
-            POST_PHIS[j].append(PHIS_VEC[j])
-        POST_S.append(PHIS_VEC[0] - PHIS_VEC[M-1])
-    PHI_ACCEPT, ACCEPT = POST_PHIS, POST_THETAS
-    return PHI_ACCEPT, ACCEPT, POST_S
+                up_outer = test_dict[phase]['boundaries'][1]
+    else:
+        up_outer = []
+    ### between phase relationships ###
+    upper = []
+    lower = []
+    inter_eqs = []
+    if test_dict[phase]['prev_phase'] != None: 
+        for k in test_dict[phase]['prev_phase']:
+            if k[0] == 'abuting':
+                refs = grps_start_end_outer(k[1], 'ends', test_dict)
+                upper =  upper + dates_from_refs(refs[0], refs[1], test_dict, 'beta')
+                inter_eqs = inter_eqs + refs[0]
+            elif k[0] == 'gap':
+                upper.append(test_dict[k]['boundaries'][0])
+            elif k[0] == 'overlap':
+                upper.append(test_dict[k]['boundaries'][1])
+                lower.append(test_dict[k]['boundaries'][0])
+    if test_dict[phase]['post_phase'] != None:
+        for l in test_dict[phase]['post_phase']:
+            if l[0] == 'overlap':
+                lower.append(test_dict[l]['boundaries'][1])
+    tot_lower = lowers + lower + [A]
+    tot_upper= up_outer + upper   + [P]     
+    print(tot_lower, tot_upper)
+    return [min(tot_upper), max(tot_lower)], intra_eqs, inter_eqs 
+
+ 
+
+def samplng_lims_beta(phase, test_dict, A, P):
+        #### inner groups #######
+        list2 = [phase]
+        master_list = list2
+        master_betas = []
+        intra_eqs = []
+        while len(list2) != 0:
+            list3 = []
+            for i in list2:
+                grps = grps_start_end_outer(i, 'ends', test_dict)
+                list3 = list3 + grps[0]
+                master_betas = master_betas + grps[1]
+                intra_eqs = intra_eqs + grps[0]
+            list2 = list3
+            master_list = master_list + list2
+            
+        uppers = dates_from_refs(master_list, master_betas, test_dict, 'beta')
+        #### outer group# #####
+        if test_dict[phase]['within'] != None:
+            if test_dict[phase]['within'][0] == 'ends':
+                outphase = test_dict[phase]['within'][1]
+                intra_eqs = intra_eqs + outphase
+                low_outer = []
+                for j in test_dict[outphase]['post_phase']:
+                    refs = grps_start_end_outer(j[1], 'starts', test_dict)
+                    low_outer = low_outer + dates_from_refs(refs[0], refs[1], test_dict, 'alpha')                                                          
+                else:
+                    low_outer = test_dict[phase]['boundaries'][0]
+        else: 
+            low_outer = []
+        ### between phase relationships ###
+        upper = []
+        lower = []
+        inter_eqs = []
+        if test_dict[phase]['post_phase'] != None:
+            for k in test_dict[phase]['post_phase']:
+                if k[0] == 'abuting':
+                    refs = grps_start_end_outer(k[1], 'starts', test_dict)
+                    lower =  lower + dates_from_refs(refs[0], refs[1], test_dict)
+                    inter_eqs = inter_eqs + refs[0]
+                elif k[0] == 'gap':
+                    lower.append(test_dict[k]['boundaries'][1])
+                elif k[0] == 'overlap':
+                    lower.append(test_dict[k]['boundaries'][0])
+                    upper.append(test_dict[k]['boundaries'][1])
+        if test_dict[phase]['prev_phase'] != None:            
+            for l in test_dict[phase]['prev_phase']:
+                if l[0] == 'overlap':
+                    upper.append(test_dict[l]['boundaries'][0])
+        tot_lower = lower + low_outer + [A]
+        tot_upper= upper + uppers + [P]
+        print(tot_lower, tot_upper)
+        return [min(tot_upper), max(tot_lower)],  intra_eqs, inter_eqs      
 
 def step_1_squeeze(A, P, i, PREV_PROB_TEST, K, ACCEPT, SITE_DICT_TEST_1, SITE_DICT_TEST_2, THETAS, POST_THETAS, POST_PHIS, KEY_REF, CONTEXT_NO, POST_PHASE, PHI_REF, RCD_ERR, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI, PHIS_VEC, CONT_TYPE):
     k = int(random.sample(range(0, K), 1)[0])
@@ -787,18 +733,34 @@ def step_1_squeeze(A, P, i, PREV_PROB_TEST, K, ACCEPT, SITE_DICT_TEST_1, SITE_DI
             prob_1_test = PREV_PROB_TEST
     return prob_1_test, ACCEPT, SITE_DICT_TEST_1, SITE_DICT_TEST_2, THETAS, POST_THETAS, POST_PHIS, ALL_SAMPS_CONT
 
-def step_2_squeeze(i, prob_1_test, M, PHI_SAMP_DICT, POST_S, R, PHIS_VEC, SITE_DICT_TEST_3, THETAS, POST_THETAS, POST_PHIS, STEP_1, STEP_2, STEP_3, A, P, SAMP_VEC_TRACK, PHI_ACCEPT, KEY_REF, PHI_REF, CONTEXT_NO, RCD_ERR, POST_PHASE, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI, CONT_TYPE):
+def step_2_squeeze(i, prob_1_test, M, POST_S, R, PHIS_VEC, SITE_DICT_TEST_3, THETAS, POST_THETAS, POST_PHIS, A, P, PHI_ACCEPT, KEY_REF, PHI_REF, CONTEXT_NO, RCD_ERR, POST_PHASE, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI, CONT_TYPE, SITE_DICT_TEST_2):
     m = int(random.sample(range(0, M), 1)[0])
-    s1 = max(PHIS_VEC) - min(PHIS_VEC)
+    s1 = PHIS_VEC[0][1] - PHIS_VEC[-1][0]
     f_phi1 = (s1**(1-(2*M)))/(R-s1)
     phase_ind = random.getrandbits(1)
     oldphi = PHIS_VEC[m][phase_ind]
-    lims = PHI_SAMP_DICT[STEP_1[m]][STEP_2[m]][STEP_3[m]](THETAS, PHIS_VEC, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE)
+    if phase_ind == 1: 
+        lims, inter_eqs, intra_eqs = samplng_lims_alpha(PHI_REF[m], SITE_DICT_TEST_2, A, P)
+        sam = np.random.uniform(lims[0], lims[1])
+        for i in inter_eqs:
+            PHIS_VEC[i][0] = sam
+        for j in intra_eqs:
+            PHIS_VEC[j][1] = sam            
+    else:
+        lims, inter_eqs, intra_eqs  = samplng_lims_beta(PHI_REF[m], SITE_DICT_TEST_2, A, P)
+        sam = np.random.uniform(lims[0], lims[1])
+        for i in inter_eqs:
+            PHIS_VEC[i][1] = sam
+        for j in intra_eqs:
+            PHIS_VEC[j][0] = sam   
+    
     PHIS_VEC[m][phase_ind] = np.random.uniform(lims[0], lims[1])
+
     for v1, a_2 in enumerate(PHIS_VEC):
         POST_PHIS[v1].append(a_2)
     s2 = PHIS_VEC[0][1] - PHIS_VEC[-1][0]
     f_phi2 = (s2**(1-(2*M)))/(R-s2)
+    
     SITE_DICT_TEST_3 = dict_update(SITE_DICT_TEST_3, POST_THETAS, POST_PHIS, i+1, i+1, CONTEXT_NO, PHI_REF)
     step_2_prob = post_h(A, P, SITE_DICT_TEST_3, THETAS, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION)
     prob_2_test = step_2_prob[1]
@@ -810,14 +772,13 @@ def step_2_squeeze(i, prob_1_test, M, PHI_SAMP_DICT, POST_S, R, PHIS_VEC, SITE_D
         else:
             c_test.append(b_2/prob_1_test[k_2])
     h_2 = np.prod(c_test)*(f_phi2/f_phi1)
+
     if h_2 >= 1:
         PHI_ACCEPT[m].append(PHIS_VEC[m])
         [ALL_SAMPS_PHI[j].append(PHIS_VEC[j]) for j in range(len(PHIS_VEC))]
         [ALL_SAMPS_CONT[j].append(THETAS[j]) for j in range(len(THETAS))]
-        if m == M-1:
-            POST_S.append(max(PHIS_VEC) - PHIS_VEC[m])
-        elif m == 0:
-            POST_S.append(PHIS_VEC[m]-min(PHIS_VEC))
+        if (m == M-1) or (m == 0):
+            POST_S.append(PHIS_VEC[0][1] - PHIS_VEC[-1][0])
     else:
         u = np.random.uniform(0, 1)
         if h_2 > u:
@@ -859,7 +820,7 @@ def step_3_squeeze(A, P, i, backup_b_test, prob_2_test, S, ACCEPT, POST_S, PHIS_
         for k_3, e_3 in enumerate(THETAS):
             ACCEPT[k_3].append(e_3)
             ALL_SAMPS_CONT[k_3].append(e_3)
-        POST_S.append(max(PHIS_VEC) - min(PHIS_VEC))
+        POST_S.append(PHIS_VEC[0][1] - PHIS_VEC[-1][0])
     else:
         u = np.random.uniform(0, 1)
         if h_3 > u:
@@ -869,7 +830,7 @@ def step_3_squeeze(A, P, i, backup_b_test, prob_2_test, S, ACCEPT, POST_S, PHIS_
             for k_3, i_3 in enumerate(THETAS):
                 ACCEPT[k_3].append(i_3)
                 ALL_SAMPS_CONT[k_3].append(i_3)
-            POST_S.append(max(PHIS_VEC) - min(PHIS_VEC))
+            POST_S.append(PHIS_VEC[0][1] - PHIS_VEC[-1][0])
         else:
             for g_3 in enumerate(THETAS):
                 POST_THETAS[g_3[0]][i+2] = POST_THETAS[g_3[0]][i+1]
@@ -883,7 +844,8 @@ def step_3_squeeze(A, P, i, backup_b_test, prob_2_test, S, ACCEPT, POST_S, PHIS_
 
 def step_4_squeeze(A, P, i, b_test, prob_3_test, ACCEPT, POST_S, R, PHIS_VEC, SITE_DICT_TEST_5, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, POST_PHASE, PHI_REF, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI):
     rho = np.random.uniform(2/3, 3/2)
-    constant = (rho-1)*mean(np.concatenate([PHIS_VEC, THETAS])).item()
+    PHIS_UNPACKED = [i[0] for i in PHIS_VEC] + [i[1] for i in PHIS_VEC]
+    constant = (rho-1)*mean(np.concatenate([PHIS_UNPACKED, THETAS])).item()
     THETAS = [x*rho - constant for x in THETAS]
     PHIS_VEC = [[x[0]*rho - constant, x[1]*rho - constant] for x in PHIS_VEC]
     for s_4, a_4 in enumerate(THETAS):
@@ -891,7 +853,7 @@ def step_4_squeeze(A, P, i, b_test, prob_3_test, ACCEPT, POST_S, R, PHIS_VEC, SI
     for e_4, b_4 in enumerate(PHIS_VEC):
         POST_PHIS[e_4].append(b_4)
     SITE_DICT_TEST_5 = dict_update(SITE_DICT_TEST_5, POST_THETAS, POST_PHIS, i+3, i+3, CONTEXT_NO, PHI_REF)
-    s = max(PHIS_VEC) - min(PHIS_VEC)
+    s = PHIS_VEC[0][1] - PHIS_VEC[-1][0]
     const = (R - s)/((R-(rho*s))*rho)
     temp_2 = post_h(A, P, SITE_DICT_TEST_5, THETAS, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION)
     a_test = temp_2[0]
@@ -918,7 +880,7 @@ def step_4_squeeze(A, P, i, b_test, prob_3_test, ACCEPT, POST_S, R, PHIS_VEC, SI
             for k_4, i_4 in enumerate(THETAS):
                 ACCEPT[k_4].append(i_4)
                 ALL_SAMPS_CONT[k_4].append(i_4)
-            POST_S.append(max(PHIS_VEC) - min(PHIS_VEC))
+            POST_S.append(PHIS_VEC[0][1] - PHIS_VEC[-1][0])
         else:
             for g_4 in range(len(THETAS)):
                 POST_THETAS[g_4][i+3] = POST_THETAS[g_4][i+2]
@@ -929,14 +891,13 @@ def step_4_squeeze(A, P, i, b_test, prob_3_test, ACCEPT, POST_S, R, PHIS_VEC, SI
             PREV_PROB_TEST = prob_3_test
     return PREV_PROB_TEST, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_5, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, ALL_SAMPS_CONT, ALL_SAMPS_PHI
 
-def squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_REF, RCD_EST, CALIBRATION, CONT_TYPE, data):
+def squeeze_model(RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_REF, RCD_EST, CALIBRATION, CONT_TYPE, data):
     acept_prob = 1
     while acept_prob > 0:
         ################ setting up sampling structures######################
         sample = new_init_func(CONTEXT_NO, TOPO_SORT, A, P, RESULT_VEC)
         THETA_INITS, PHI_INITS = theta_phi_inital_samps(PHI_REF, TOPO_SORT, CONTEXT_NO, sample)  
         SITE_DICT_TEST_1, THETAS, PHIS_VEC, TEST_DICT_1 = dict_form_func(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC, PHI_INITS, POST_PHASE, PHI_REF, PREV_PHASE, KEY_REF, CONT_TYPE, data = pd.DataFrame(columns=['group', 'contains']))
-        STEP_1, STEP_2, STEP_3, SAMP_VEC_TRACK = how_to_phase_samp(POST_PHASE, PREV_PHASE)
         K = len(THETAS)
         M = len(PHIS_VEC)
         S = max(RCD_ERR)
@@ -959,13 +920,18 @@ def squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, 
             for l in np.linspace(0, 10002, 3335):
                 SITE_DICT_TEST_1 = dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, CONTEXT_NO, PHI_REF)
                 #step 1
+                print('init')
                 prob_1_test, ACCEPT, SITE_DICT_TEST_1, SITE_DICT_TEST_2, THETAS, POST_THETAS, POST_PHIS, ALL_SAMPS_CONT = step_1_squeeze(A, P, i, PREV_PROB_TEST, K, ACCEPT, SITE_DICT_TEST_1, SITE_DICT_TEST_2, THETAS, POST_THETAS, POST_PHIS, KEY_REF, CONTEXT_NO, POST_PHASE, PHI_REF, RCD_ERR, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI, PHIS_VEC, CONT_TYPE)
                 #step 2
-                backup_b_test, prob_2_test, POST_S, PHIS_VEC, SITE_DICT_TEST_3, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, ALL_SAMPS_PHI = step_2_squeeze(i, prob_1_test, M, PHI_SAMP_DICT, POST_S, R, PHIS_VEC, SITE_DICT_TEST_3, THETAS, POST_THETAS, POST_PHIS, STEP_1, STEP_2, STEP_3, A, P, SAMP_VEC_TRACK, PHI_ACCEPT, KEY_REF, PHI_REF, CONTEXT_NO, RCD_ERR, POST_PHASE, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI, CONT_TYPE)
+                print('step1')
+                backup_b_test, prob_2_test, POST_S, PHIS_VEC, SITE_DICT_TEST_3, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, ALL_SAMPS_PHI = step_2_squeeze(i, prob_1_test, M, POST_S, R, PHIS_VEC, SITE_DICT_TEST_3, THETAS, POST_THETAS, POST_PHIS, A, P, PHI_ACCEPT, KEY_REF, PHI_REF, CONTEXT_NO, RCD_ERR, POST_PHASE, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI, CONT_TYPE, SITE_DICT_TEST_2)
                 #step3
+                print('step2')
                 b_test, prob_3_test, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_4, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, ALL_SAMPS_CONT, ALL_SAMPS_PHI = step_3_squeeze(A, P, i, backup_b_test, prob_2_test, S, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_4, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, POST_PHASE, PHI_REF, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI)
                 #step 4
+                print('step3')
                 PREV_PROB_TEST, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_5, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, ALL_SAMPS_CONT, ALL_SAMPS_PHI = step_4_squeeze(A, P, i, b_test, prob_3_test, ACCEPT, POST_S, R, PHIS_VEC, SITE_DICT_TEST_5, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, POST_PHASE, PHI_REF, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI)
+                print('step4')
                 i = i + 3
             CHECK_ACCEPT = accept_prob(ACCEPT, PHI_ACCEPT, i)
             acept_prob = len(CHECK_ACCEPT[(CHECK_ACCEPT <= 0.1) | (CHECK_ACCEPT >= 0.7)])
@@ -975,143 +941,6 @@ def squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, 
 
 
 def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_REF, PREV_PHASE, POST_PHASE, TOPO_SORT, CONT_TYPE, data):
-#  t0 = time.perf_counter()
-    PHI_SAMP_DICT = {
-        'upper' : {
-            'start':{
-                'abuting':upp_samp_1,
-                'overlap':upp_samp_2,
-                'gap':upp_samp_1,
-                'end':upp_samp_1,
-                },
-            'abuting':{
-                'abuting':upp_samp_3,
-                'overlap':upp_samp_4,
-                'gap':upp_samp_3,
-                'end':upp_samp_3
-                },
-            'overlap':{
-                'abuting':upp_samp_5,
-                'overlap':upp_samp_5,
-                'gap':upp_samp_5,
-                'end':upp_samp_5
-               },
-            'gap':{
-                'abuting':upp_samp_6,
-                'overlap':upp_samp_7,
-                'gap':upp_samp_6,
-                'end':upp_samp_6}
-            },
-        'lower' :  {
-            'start':{
-                'abuting':low_samp_1,
-                'overlap':low_samp_3,
-                'gap':low_samp_4,
-                'end':low_samp_6
-                },
-            'abuting':{
-                'abuting':low_samp_1,
-                'overlap':low_samp_3,
-                'gap':low_samp_4,
-                'end':low_samp_6
-                },
-            'overlap':{
-                'abuting':low_samp_2,
-                'overlap':low_samp_3,
-                'gap':low_samp_5,
-                'end':low_samp_7
-                },
-            'gap':{
-                'abuting':low_samp_1,
-                'overlap':low_samp_3,
-                'gap':low_samp_4,
-                'end':low_samp_6
-                }
-            },
-        'combined' :  {
-            'start':{
-                'abuting':low_samp_1,
-                'overlap':low_samp_3,
-                'gap':low_samp_4,
-                'end':low_samp_6
-                },
-            'abuting':{
-                'abuting':low_samp_1,
-                'overlap':low_samp_3,
-                'gap':low_samp_4,
-                'end':low_samp_6
-                },
-            'overlap':{
-                'abuting':low_samp_2,
-                'overlap':low_samp_3,
-                'gap':low_samp_5,
-                'end':low_samp_7
-                },
-            'gap':{
-                'abuting':low_samp_1,
-                'overlap':low_samp_3,
-                'gap':low_samp_4,
-                'end':low_samp_6
-                }
-            },
-        'overlap_upper' :  {
-            'start':{
-                'abuting':overlap_samp_1,
-                'overlap':overlap_samp_1,
-                'gap':overlap_samp_1,
-                'end':overlap_samp_1,
-                },
-            'abuting':{
-                'abuting':overlap_samp_1,
-                'overlap':overlap_samp_1,
-                'gap':overlap_samp_1,
-                'end':overlap_samp_1,
-                },
-            'overlap':{
-                'abuting':overlap_samp_1,
-                'overlap':overlap_samp_1,
-                'gap':overlap_samp_1,
-                'end':overlap_samp_1,
-                },
-            'gap':{
-                'abuting':overlap_samp_1,
-                'overlap':overlap_samp_1,
-                'gap':overlap_samp_1,
-                'end':overlap_samp_1,
-                }
-            },
-        'overlap_beta' :  {
-            'start':{
-               'abuting':overlap_samp_2,
-               'overlap':overlap_samp_2,
-               'gap':overlap_samp_2,
-               'end':overlap_samp_2,
-                },
-            'abuting':{
-                'abuting':overlap_samp_2,
-                'overlap':overlap_samp_2,
-                'gap':overlap_samp_2,
-                'end':overlap_samp_2,
-                },
-            'overlap':{
-                'abuting':overlap_samp_2,
-                'overlap':overlap_samp_2,
-                'gap':overlap_samp_2,
-                'end':overlap_samp_2,
-                },
-            'gap':{
-                'abuting':overlap_samp_2,
-                'overlap':overlap_samp_2,
-                'gap':overlap_samp_2,
-                'end':overlap_samp_2,
-                }
-            }
-     }
-    method = "squeeze"
     A, P, RESULT_VEC = initialise(CALIBRATION, RCD_EST, RCD_ERR)#  tot_i = 0
-    if method == "squeeze":
-        PHI_ACCEPT, ACCEPT, POST_S, ALL_SAMPS_CONT, ALL_SAMPS_PHI = squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_REF, RCD_EST, CALIBRATION, CONT_TYPE, data)
-    elif method == 'gibbs':
-        PHI_ACCEPT, ACCEPT, POST_S, ALL_SAMPS_CONT, ALL_SAMPS_PHI = gibbs_code(5000, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT, CONT_TYPE)
-
+    PHI_ACCEPT, ACCEPT, POST_S, ALL_SAMPS_CONT, ALL_SAMPS_PHI = squeeze_model(RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_REF, RCD_EST, CALIBRATION, CONT_TYPE, data)
     return CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI
