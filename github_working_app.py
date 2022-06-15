@@ -7,7 +7,7 @@ Created on Sun Aug 15 17:43:25 2021
 """
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, Misc
 import copy
 import re
 import ast
@@ -544,6 +544,8 @@ class popupWindow(object):
     def __init__(self, master):
         '''initialises popupWindow'''
         self.top = tk.Toplevel(master)
+        self.top.configure(bg ='#AEC7D6')
+        self.top.geometry("1000x400")
         #pop up window to allow us to enter a context that we want to change the meta data for
         self.l = ttk.Label(self.top, text="Context Number")
         self.l.pack()
@@ -561,7 +563,8 @@ class popupWindow2(object):
     def __init__(self, master, graph, canvas):
         '''initiliases popup2'''
         self.top = tk.Toplevel(master)
-        self.top.geometry("300x300")
+        self.top.configure(bg ='#AEC7D6')
+        self.top.geometry("1000x400")
         #this popup window lets us change the metadata after popupwindow has gone
         self.graph = graph
         self.canvas2 = tk.Canvas(self.top)
@@ -580,12 +583,12 @@ class popupWindow2(object):
         self.entry6 = ttk.Entry(self.canvas2)
 #        #entry box for adding metadata
         self.entry3 = ttk.Entry(self.canvas2)
-        self.button3 = ttk.Button(self.top, text='Add Metadata to node', command=self.testcom())#need to add command
+      #  self.button3 = ttk.Button(self.top, text='Add Metadata to node', command=self.testcom())#need to add command
         self.label3 = ttk.Label(self.canvas2, text='Node')
         self.canvas2.create_window(40, 60, window=self.entry3, width=50)
         self.canvas2.create_window(40, 35, window=self.label3)
         #needs way more detail adding to this
-        self.dict = {'Find_Type': ['Find1', 'Find2', 'Find3'],
+        self.dict = {'Find Type': ['Find1', 'Find2', 'Find3'],
                      'Date': ['None', 'Input date'],
                      'Phase': ['None', 'Input phase']}
 #       #defining variables to keep track of what is being updated in the meta data
@@ -593,16 +596,16 @@ class popupWindow2(object):
         self.variable_b = tk.StringVar(self.top)
         self.variable_c = tk.StringVar(self.top)
         self.variable_d = tk.StringVar(self.top)
+        self.optionmenu_a = ttk.OptionMenu(self.top, self.variable_a, list(self.dict.keys())[0], *self.dict.keys())
+        self.optionmenu_b = ttk.OptionMenu(self.top, self.variable_b, 'None', 'None')
+        self.optionmenu_a.place(relx=0.3, rely=0.15)
+        self.optionmenu_b.place(relx=0.6, rely=0.15)
         self.variable_a.trace('w', self.update_options)
         self.variable_b.trace('w', self.testdate_input)
         self.variable_c.trace('w', self.update_options)
         self.variable_d.trace('w', self.update_options)
-        self.optionmenu_a = ttk.OptionMenu(self.top, self.variable_a, self.dict.keys()[0], *self.dict.keys())
-        self.optionmenu_b = ttk.OptionMenu(self.top, self.variable_b, 'None', 'None')
         self.variable_a.set('Date')
-        self.optionmenu_a.place(relx=0.3, rely=0.15)
-        self.optionmenu_b.place(relx=0.6, rely=0.15)
-        self.button3.place(relx=0.1, rely=0.7)
+     #   self.button3.place(relx=0.1, rely=0.7)
 
     def testdate_input(self):
         '''formats the windows so that they have the right inputs depending of if it's a date or a phase'''
@@ -643,14 +646,14 @@ class popupWindow2(object):
                 self.graph.nodes()[str(self.entry3.get())].update({"Date":self.variable_b.get()})
         elif self.variable_a.get() == "Find_Type":
             self.graph.nodes()[str(self.entry3.get())].update({"Find_Type":self.variable_b.get()})
-        self.canvas.create_window((0, 0), window=self.metatext, anchor='nw')
+    #    self.canvas2.create_window((0, 0), window=self.metatext, anchor='nw')
         self.meta1 = pd.DataFrame.from_dict(self.graph.nodes()[str(self.entry3.get())],
                                             orient='index')
         self.meta2 = self.meta1.loc["Date":"Phase",]
         self.meta2.columns = ["Data"]
         if self.meta2.loc["Date"][0] != "None":
             self.meta2.loc["Date"][0] = str(self.meta2.loc["Date"][0][0]) + " +- " + str(self.meta2.loc["Date"][0][1]) + " Carbon BP"
-        self.canvas.itemconfig(self.metatext_id, text="Metadata of node " + str(self.entry3),  font='helvetica 12 bold')
+        #self.canvas.itemconfig(self.metatext_id, text="Metadata of node " + str(self.entry3),  font='helvetica 12 bold')
         cols = list(self.meta2.columns)
         tree = ttk.Treeview(self.canvas)
         tree["columns"] = cols
@@ -681,6 +684,7 @@ class popupWindow3(object):
         self.littlecanvas2 = canvas
         self.top = tk.Toplevel(master)
         self.top.geometry("1000x400")
+        self.top.configure(bg ='#AEC7D6')
         self.graph = graph
         #makes a copy of the graph so I can edit it
         self.graphcopy = copy.deepcopy(self.graph)
@@ -835,6 +839,7 @@ class MainFrame(tk.Tk):
 class popupWindow4(object):
     def __init__(self, master, controller, resid_list, intru_list, node_track, graph):
         '''initialised window 4'''
+        self.top.configure(bg ='#AEC7D6')
         self.top = tk.Toplevel(controller)
         self.top.geometry("1000x400")
         self.node_del_tracker = node_track
@@ -893,27 +898,31 @@ class popupWindow4(object):
 class popupWindow5(object):
     def __init__(self,master):
         top=self.top=tk.Toplevel(master)
-        self.l=tk.Label(top,text="Please enter your rational for deleting this context")
-        self.l.pack()
-        self.e=tk.Entry(top)
-        self.e.pack()
+        top.configure(bg ='white')
+        self.top.geometry("1000x400")
+        self.l=tk.Label(top,text="Why are you removing this context from your stratigraphy?", bg ='white', font='helvetica 12', fg = '#2f4858')
+        self.l.place(relx = 0.3, rely = 0.1)
+        self.e=tk.Text(top, font='helvetica 11', fg = '#2f4858')
+        self.e.place(relx = 0.3, rely = 0.2, relheight= 0.5, relwidth = 0.5)
         self.b=tk.Button(top,text='OK',command=self.cleanup)
-        self.b.pack()
+        self.b.place(relx = 0.3, rely = 0.7)
     def cleanup(self):
-        self.value=self.e.get()
+        self.value=self.e.get('1.0', 'end')
         self.top.destroy()
         
 class popupWindow6(object):
     def __init__(self,master):
         top=self.top=tk.Toplevel(master)
-        self.l=tk.Label(top,text="Please enter your rational for deleting the relationship between these contexts")
-        self.l.pack()
-        self.e=tk.Entry(top)
-        self.e.pack()
+        top.configure(bg ='white')
+        self.top.geometry("1000x400")
+        self.l=tk.Label(top,text="Why are you deleting the stratigraphic relationship between these contexts?", bg ='white', font='helvetica 12', fg = '#2f4858')
+        self.l.place(relx = 0.3, rely = 0.1)
+        self.e=tk.Text(top, font='helvetica 11', fg = '#2f4858')
+        self.e.place(relx = 0.3, rely = 0.2, relheight= 0.5, relwidth = 0.5)
         self.b=tk.Button(top,text='OK',command=self.cleanup)
-        self.b.pack()
+        self.b.place(relx = 0.3, rely = 0.7)
     def cleanup(self):
-        self.value=self.e.get()
+        self.value=self.e.get('1.0', 'end')
         self.top.destroy()
         
 class popupWindow7(object):
@@ -952,15 +961,15 @@ class StartPage(tk.Frame):
         global load_check, mcmc_check
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        self.configure(background= '#0a3200')
-        self.canvas = tk.Canvas(self, bd=0, highlightthickness=0, bg = '#EDE7D9')
+        self.configure(background= 'white')
+        self.canvas = tk.Canvas(self, bd=0, highlightthickness=0, bg = '#AEC7D6')
         self.canvas.place(relx=0, rely=0.03, relwidth=1, relheight=0.97)
         
-        self.button1 = tk.Button(self, text="Stratigraphy and metadata", font='helvetica 12 bold', fg = '#0A3200',
-                                  command=lambda: controller.show_frame("StartPage"), bd=0, highlightthickness=0, bg = '#EDE7D9')
+        self.button1 = tk.Button(self, text="Stratigraphy and metadata", font='helvetica 12 bold', fg = '#2F4858',
+                                  command=lambda: controller.show_frame("StartPage"), bd=0, highlightthickness=0, bg = '#AEC7D6')
         self.button1.place(relx=0.40, rely=0.0, relwidth=0.15, relheight=0.03)
-        self.button1_a = tk.Button(self, text="Dating Results",  font='helvetica 12 bold',  fg = '#0A3200',
-                                   command=lambda: controller.show_frame("PageOne"), bd=0, highlightthickness=0, bg = '#bdb3b2')
+        self.button1_a = tk.Button(self, text="Dating Results",  font='helvetica 12 bold', fg = '#8F4300',
+                                   command=lambda: controller.show_frame("PageOne"), bd=0, highlightthickness=0, bg = '#FFE9D6')
         self.button1_a.place(relx=0.55, rely=0.0, relwidth=0.15, relheight=0.03)
         #define all variables that are used
         self.h_1 = 0
@@ -1009,7 +1018,7 @@ class StartPage(tk.Frame):
         self.all_results_dict = {}
         self.file_menubar = ttk.Menubutton(self, text = 'File')
         # Adding File Menu and commands
-        file = tk.Menu(self.file_menubar, tearoff = 0, bg = '#183a1d')#, font = ('helvetica',11))
+        file = tk.Menu(self.file_menubar, tearoff = 0, bg = 'white')#, font = ('helvetica',11))
         self.file_menubar["menu"] = file
         file.add_separator()
         
@@ -1027,7 +1036,7 @@ class StartPage(tk.Frame):
         self.file_menubar.place(relx=0.00, rely=0, relwidth=0.1, relheight=0.03)
         self.view_menubar = ttk.Menubutton(self, text = 'View')
         # Adding File Menu and commands
-        file1 = tk.Menu(self.view_menubar, tearoff = 0, bg = '#183a1d')#, font = ('helvetica',11))
+        file1 = tk.Menu(self.view_menubar, tearoff = 0, bg = 'white')#, font = ('helvetica',11))
        # file1.add_separator()
         self.view_menubar["menu"] = file1
         file1.add_command(label ='Display Stratigraphic diagram in phases', command=lambda: self.phasing(), font='helvetica 10')
@@ -1036,39 +1045,42 @@ class StartPage(tk.Frame):
         
         self.tool_menubar = ttk.Menubutton(self, text = 'Tools')
         # Adding File Menu and commands
-        file2 = tk.Menu(self.tool_menubar, tearoff = 0, bg = '#183a1d', font = ('gothic',11))
+        file2 = tk.Menu(self.tool_menubar, tearoff = 0, bg = 'white', font = ('gothic',11))
         self.tool_menubar["menu"] = file2
         #file2.add_separator()
         file2.add_command(label = 'Render chronological graph', command=lambda: self.chronograph_render_wrap(), font='helvetica 10')
         file2.add_command(label = 'Obtain date estimates', command=lambda: self.load_mcmc(), font='helvetica 10')
        # file2.add_separator()
         self.tool_menubar.place(relx=0.14, rely=0, relwidth=0.1, relheight=0.03)
-        
-        self.behindcanvas = tk.Canvas(self, bd=0, highlightthickness=0, bg = '#EDE7D9')
-
-        self.behindcanvas.place(relx=0.005, rely=0.045, relwidth=0.37, relheight=0.95)
-        self.behindcanvas_id = self.behindcanvas.create_text(10, 10, anchor="nw", fill = '#0A3200')
-
-        self.behindcanvas.itemconfig(self.behindcanvas_id, text="Stratigraphic graph",  font='helvetica 12 bold')
-        self.littlecanvas = tk.Canvas(self.behindcanvas, bd=0, bg='white', 
-                                      selectborderwidth=0,  highlightthickness=0, insertwidth=0)
-        self.littlecanvas_id = self.littlecanvas.create_text(10, 10, anchor="nw",fill = '#0A3200')
-        self.littlecanvas.place(relx=0.01, rely=0.04, relwidth=0.98, relheight=0.95)
-
+        #############################
+        self.behindcanvas = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg = '#33658a')
+        self.behindcanvas.place(relx=0.003, rely=0.038, relwidth=0.37, relheight=0.96)
+        ############################
+        self.behindcanvas2 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg = '#33658a')
+        self.behindcanvas2.place(relx=0.38, rely=0.038, relwidth=0.37, relheight=0.96)
+        ######################
+        self.labelcanvas = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg = '#33658a')
+        self.labelcanvas.place(relx=0.003, rely=0.011, relwidth=0.18, relheight=0.027)
+        self.labelcanvas1_id = self.labelcanvas.create_text(10, 3, anchor="nw", fill =  'white')
+        self.labelcanvas.itemconfig(self.labelcanvas1_id, text="Stratigraphic graph", font='helvetica 12 bold')
+        #########################
+        self.littlecanvas = tk.Canvas(self.behindcanvas, bd=0, bg='white', selectborderwidth=0,  highlightthickness=0, insertwidth=0)
+        self.littlecanvas_id = self.littlecanvas.create_text(10, 10, anchor="nw",fill =  '#2f4845')
+        self.littlecanvas.place(relx=0.005, rely=0.005, relwidth=0.99, relheight=0.99)        
         self.littlecanvas.itemconfig(self.littlecanvas_id, text="No stratigraphic graph loaded. \n \n \nTo load, go to File > Load stratigraphic diagram",  font='helvetica 12 bold')
+        ##############################
         
-        self.behindcanvas2 = tk.Canvas(self, bd=0, highlightthickness=0, bg = '#ede7d9')
-
-        self.behindcanvas2.place(relx=0.38, rely=0.045, relwidth=0.37, relheight=0.95)
-        self.behindcanvas2_id = self.behindcanvas2.create_text(10, 10, anchor="nw", fill = '#0A3200')
-
-        self.behindcanvas2.itemconfig(self.behindcanvas2_id, text="Chronological graph", font='helvetica 12 bold')
-        self.littlecanvas2 = tk.Canvas(self.behindcanvas2, bd=0, bg='white',
-                                       selectborderwidth=0, highlightthickness=0, insertwidth=0)
-        self.littlecanvas2_id = self.littlecanvas2.create_text(20, 50, anchor="nw", fill = '#0A3200')
-
+        #################
+        self.littlecanvas2 = tk.Canvas(self.behindcanvas2, bd=0, bg='white', selectborderwidth=0, highlightthickness=0, insertwidth=0)
+        self.littlecanvas2_id = self.littlecanvas2.create_text(10, 10, anchor="nw", fill = '#2f4845')
         self.littlecanvas2.itemconfig(self.littlecanvas2_id, text="No chronological graph loaded. \n \n \nYou must load a stratigraphic graph first. \nTo load, go to File > Load stratigraphic diagram \nTo load your chronological graph, go to Tools > Render chronological graph",  font='helvetica 12 bold')
-        self.littlecanvas2.place(relx=0.01, rely=0.04, relwidth=0.98, relheight=0.95)
+        self.littlecanvas2.place(relx=0.005, rely=0.005, relwidth=0.99, relheight=0.99)
+        ##########################
+        self.labelcanvas2 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg = '#33658a')
+        self.labelcanvas2.place(relx=0.38, rely=0.011, relwidth=0.18, relheight=0.027)
+        self.labelcanvas2_id = self.labelcanvas2.create_text(10, 3, anchor="nw", fill =  'white')
+        self.labelcanvas2.itemconfig(self.labelcanvas2_id, text="Chronological graph", font='helvetica 12 bold')
+        ###################
         self.littlecanvas.bind("<MouseWheel>", self.wheel)
         self.littlecanvas.bind('<Button-4>', self.wheel)# only with Linux, wheel scroll down
         self.littlecanvas.bind('<Button-5>', self.wheel)
@@ -1086,46 +1098,58 @@ class StartPage(tk.Frame):
         self.littlecanvas2.rowconfigure(0, weight=1)
         self.littlecanvas2.columnconfigure(0, weight=1)
         self.littlecanvas2.update()
-
+       
 ######node delete##########
         self.OptionList = [
-            "Delete Node",
-            "Delete Edge",
-            "Get Metadata",
-            "Combine Node",
-            "Place Above Other Context",
-            "Add Nodes",
-            "Metadata Menu",
+            "Delete context",
+            "Delete stratigraphic relationship",
+            "Get metadata for this context",
+            "Equate context with another",
+            "Place above other context",
+            "Add new contexts",
+            "Metadata menu (BROKEN)",
             ]
         self.variable = tk.StringVar(self.littlecanvas)
         self.variable.set("Node Action")
         self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, self.OptionList[0], *self.OptionList, command=self.nodes)
 #meta data table
-        self.metatext_id = self.canvas.create_text(1465, 660, anchor="nw", fill = '#0A3200')
-        self.canvas.itemconfig(self.metatext_id, text="Metadata",  font='helvetica 12 bold')
+        self.labelcanvas3 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg = '#33658a')
+        self.labelcanvas3.place(relx=0.755, rely=0.695, relwidth=0.17, relheight=0.029)
+        self.behindcanvas3 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg = '#33658a')
+        self.behindcanvas3.place(relx=0.755, rely=0.719, relwidth=0.23, relheight=0.278)
+        self.metatext_id = self.labelcanvas3.create_text(10, 5, anchor="nw", fill = 'white')
+        self.labelcanvas3.itemconfig(self.metatext_id, text="Metadata",  font='helvetica 12 bold')
         self.tree1 = ttk.Treeview(self.canvas)
         self.tree1["columns"] = ["Data"]
-        self.tree1.place(relx=0.76, rely=0.7)
+        self.tree1.place(relx=0.758, rely=0.725)
         self.tree1.column("Data", anchor="w")
         self.tree1.heading("Data", text="Data")
 #deleted contexts table
-        self.delcontext_id = self.canvas.create_text(1465, 37, anchor="nw", fill = '#0A3200')
-        self.canvas.itemconfig(self.delcontext_id, text="Deleted Contexts",  font='helvetica 12 bold')
+        self.labelcanvas4 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg = '#33658a')
+        self.labelcanvas4.place(relx=0.755, rely=0.04, relwidth=0.17, relheight=0.029)
+        self.behindcanvas4 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg = '#33658a')
+        self.behindcanvas4.place(relx=0.755, rely=0.069, relwidth=0.23, relheight=0.278)
+        self.delcontext_id = self.labelcanvas4.create_text(10, 5, anchor="nw", fill = 'white')
+        self.labelcanvas4.itemconfig(self.delcontext_id, text="Deleted Contexts",  font='helvetica 12 bold')
         self.tree2 = ttk.Treeview(self.canvas)
         
         self.tree2.heading('#0', text="Context")
         self.tree2["columns"] = ["Meta"]
-        self.tree2.place(relx=0.76, rely=0.06)
+        self.tree2.place(relx=0.758, rely=0.0729)
         self.tree2.column("Meta", anchor="w")
         self.tree2.heading("Meta", text="Reason for Deleting")
 
 #deleted edges table
-        self.deledge_id = self.canvas.create_text(1465, 350, anchor="nw", fill = '#0A3200')
-        self.canvas.itemconfig(self.deledge_id, text="Deleted Stratigraphic Relationships",  font='helvetica 12 bold')
+        self.labelcanvas5 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg = '#33658a')
+        self.labelcanvas5.place(relx=0.755, rely=0.371, relwidth=0.17, relheight=0.029)
+        self.behindcanvas5 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg = '#33658a')
+        self.behindcanvas5.place(relx=0.755, rely=0.399, relwidth=0.23, relheight=0.278)
+        self.deledge_id = self.labelcanvas5.create_text(10, 5, anchor="nw", fill = 'white')
+        self.labelcanvas5.itemconfig(self.deledge_id, text="Deleted Stratigraphic Relationships",  font='helvetica 12 bold')
         self.tree3 = ttk.Treeview(self.canvas)
         self.tree3.heading('#0', text="Stratigraphic relationship")
         self.tree3["columns"] = ["Meta"]
-        self.tree3.place(relx=0.76, rely=0.38)
+        self.tree3.place(relx=0.758, rely=0.405)
     #    self.tree3.column("Contexts", anchor="w")
         self.tree3.heading("Meta", text="Reason for deleting")
 
@@ -1214,7 +1238,7 @@ class StartPage(tk.Frame):
         try:
             with open(FILENAME, "rb") as f:
                 data = pickle.load(f)
-
+            self.littlecanvas.delete('all') #deletes everything from the canvas to get any leftover removed
             self.h_1 = data["h_1"]
             self.w_1 = data["w_1"]
             self.transx = data["transx"]
@@ -1336,17 +1360,9 @@ class StartPage(tk.Frame):
         self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
         self.bind("<Configure>", self.resize)
         self.littlecanvas.bind("<Configure>", self.resize)
-    #    self.nodescanvas.bind("<Configure>", self.resize)
-#        self.edgescanvas.bind("<Configure>", self.resize)
         self.delnodes = []
         self.delnodes_meta = []
-        self.text.delete("1.0", "end")
-   #     self.text = tk.Text(self.nodescanvas, width=120, height=40)
-   #     self.nodescanvas.create_window((0, 0), window=self.text, anchor='nw')
-   #     self.text.insert('end', 'Deleted Contexts:\n' + str(self.delnodes)[1:-1])
         self.canvas.delete('all')
-       # self.testbutton = ttk.Button(self, text='Render Chronological DAG', command=lambda: self.chronograph_render_wrap())
-       # self.testbutton.place(relx=0.75, rely=0.01, relwidth=0.15, relheight=0.03)
         self.littlecanvas.bind("<Button-3>", self.preClick)
 
     def rerender_stratdag(self):
@@ -1506,6 +1522,12 @@ class StartPage(tk.Frame):
         x_1 = edgevec[0]
         x_2 = edgevec[1]
         self.graph.add_edge(x_1, x_2)
+        self.graph_check = nx.transitive_reduction(self.graph)
+      #  print(self.graph.edges())
+      #  print(self.graph_check.edges())
+        if self.graph.edges() != self.graph_check.edges():
+            self.graph.remove_edge(x_1, x_2)
+            tk.messagebox.showerror("Redundant relationship", "That stratigraphic relationship is already implied by other relationships in the graph")
         if phase_true == 1:
             imgrender_phase(self.graph)
         else:
@@ -1633,7 +1655,7 @@ class StartPage(tk.Frame):
         self.canvas["state"] = "normal"
         return self.nodedel.value
     def edge_del_popup(self):
-        self.nodedel=popupWindow5(self.canvas)
+        self.nodedel=popupWindow6(self.canvas)
         self.canvas["state"] = "disabled" 
         self.master.wait_window(self.nodedel.top)
         self.canvas["state"] = "normal"
@@ -1642,7 +1664,7 @@ class StartPage(tk.Frame):
     def nodes(self, currentevent):
         """performs action using the node and redraws the graph"""
         self.testmenu.place_forget()
-        if self.variable.get() == "Delete Node":
+        if self.variable.get() == "Delete context":
             if self.node != "no node":
                 self.graph.remove_node(self.node)
                 self.nodedel_meta = self.node_del_popup()
@@ -1650,17 +1672,17 @@ class StartPage(tk.Frame):
                 self.delnodes_meta.append(self.nodedel_meta)
                 self.tree2.insert("", 0, text=self.node, values=self.nodedel_meta)
 
-        if self.variable.get() == "Add Nodes":
+        if self.variable.get() == "Add new contexts":
             self.w = popupWindow(self)
             self.wait_window(self.w.top)
             self.node = self.w.value
             self.graph.add_node(self.node, shape="box", fontsize="30.0",
                                 fontname="Ubuntu", penwidth="1.0")
 
-        if self.variable.get() == "Metadata Menu":
+        if self.variable.get() == "Metadata menu":
             self.w = popupWindow2(self, self.graph, self.canvas)
         if len(self.edge_nodes) == 1:
-            if self.variable.get() == "Delete Edge with "+ str(self.edge_nodes[0]):
+            if self.variable.get() == "Delete stratigraphic relationship with "+ str(self.edge_nodes[0]):
                 self.edge_nodes = np.append(self.edge_nodes, self.node)
                 self.reason = self.edge_del_popup()
                 try:
@@ -1675,49 +1697,58 @@ class StartPage(tk.Frame):
                     except (KeyError, nx.exception.NetworkXError):
                         tk.messagebox.showinfo('Error', 'An edge doesnt exist between those nodes')
 
-                self.OptionList.remove("Delete Edge with "+ str(self.edge_nodes[0]))
-                self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command=self.nodes)
+                self.OptionList.remove("Delete stratigraphic relationship with "+ str(self.edge_nodes[0]))
+                self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, self.OptionList[0],*self.OptionList, command=self.nodes)
                 self.edge_nodes = []
 
             elif self.variable.get() == ("Place "+ str(self.edge_nodes[0]) + " Above"):
                 self.edge_nodes = np.append(self.edge_nodes, self.node)
                 self.addedge(self.edge_nodes)
                 self.OptionList.remove("Place "+ str(self.edge_nodes[0]) + " Above")
-                self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command=self.nodes)
+                print(self.OptionList)
+                self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, self.OptionList[0], *self.OptionList, command=self.nodes)
                 self.edge_nodes = []
 
-        if self.variable.get() == "Delete Edge":
+        if self.variable.get() == "Delete stratigraphic relationship":
             if len(self.edge_nodes) == 1:
-                self.OptionList.remove("Delete Edge with "+ str(self.edge_nodes[0]))
+                self.OptionList.remove("Delete stratigraphic relationship with "+ str(self.edge_nodes[0]))
                 self.edge_nodes = []
             self.edge_nodes = np.append(self.edge_nodes, self.node)
-            self.OptionList.append("Delete Edge with "+ str(self.edge_nodes[0]))
+            self.OptionList.append("Delete stratigraphic relationship with "+ str(self.edge_nodes[0]))
             self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, self.OptionList[0], *self.OptionList, command=self.nodes)
 
 
         if len(self.comb_nodes) == 1:
-            if self.variable.get() == "Combine Node with "+ str(self.comb_nodes[0]):
+            if self.variable.get() == "Equate context with "+ str(self.comb_nodes[0]):
                 self.comb_nodes = np.append(self.comb_nodes, self.node)
-                self.graph = nx.contracted_nodes(self.graph, self.comb_nodes[0], self.comb_nodes[1])
-                x_nod = list(self.graph)
+                graph_temp = nx.contracted_nodes(self.graph, self.comb_nodes[0], self.comb_nodes[1])
+                x_nod = list(graph_temp)
                 newnode = str(self.comb_nodes[0]) + " = " + str(self.comb_nodes[1])
                 y_nod = [newnode if i == self.comb_nodes[0] else i for i in x_nod]
                 mapping = dict(zip(x_nod, y_nod))
-                self.graph = nx.relabel_nodes(self.graph, mapping)
-                self.OptionList.remove("Combine Node with "+ str(self.comb_nodes[0]))
+                graph_temp = nx.relabel_nodes(graph_temp, mapping)
+                try:
+                    self.graph_check = nx.transitive_reduction(graph_temp)
+                    self.graph = graph_temp
+                except Exception as e:
+                    if e.__class__.__name__ == 'NetworkXError':
+                        tk.messagebox.showinfo('Error!', 'This creates a cycle so you cannot equate these contexts')
+               # x = [i for i in self.graph_check.edges() if i not in self.graph.edges()]
+              #  print(x)
+                self.OptionList.remove("Equate context with "+ str(self.comb_nodes[0]))
                 self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, self.OptionList[0], *self.OptionList, command=self.nodes)
                 self.comb_nodes = []
 
-        if self.variable.get() == "Combine Node":
+        if self.variable.get() == "Equate context with another":
             if len(self.comb_nodes) == 1:
-                self.OptionList.remove("Combine Node with "+ str(self.comb_nodes[0]))
-                self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command=self.nodes)
+                self.OptionList.remove("Equate context with "+ str(self.comb_nodes[0]))
+                self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, self.OptionList[0], *self.OptionList, command=self.nodes)
                 self.comb_nodes = []
             self.comb_nodes = np.append(self.comb_nodes, self.node)
-            self.OptionList.append("Combine Node with "+ str(self.comb_nodes[0]))
-            self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, *self.OptionList, command=self.nodes)
+            self.OptionList.append("Equate context with "+ str(self.comb_nodes[0]))
+            self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, self.OptionList[0], *self.OptionList, command=self.nodes)
 
-        if self.variable.get() == "Get Metadata":
+        if self.variable.get() == "Get metadata for this context":
             self.stratinfo = self.stratfunc(self.node)
             self.metadict2= {}
             self.metadict = self.graph.nodes()[str(self.node)]
@@ -1732,16 +1763,16 @@ class StartPage(tk.Frame):
                 self.meta.loc["Date"][0] = str(self.meta.loc["Date"][0][0]) + " +- " + str(self.meta.loc["Date"][0][1]) + " Carbon BP"
             self.canvas.itemconfig(self.metatext_id, text="Metadata of node " + str(self.node),  font='helvetica 12 bold')
             cols = list(self.meta.columns)
-            self.tree1 = ttk.Treeview(self.canvas)
+       #     self.tree1 = ttk.Treeview(self.canvas)
             self.tree1["columns"] = cols
-            self.tree1.place(relx=0.76, rely=0.7)
+            self.tree1.place(relx=0.758, rely=0.725, relwidth = 0.225)
             self.tree1.column("Data", anchor="w")
             self.tree1.heading("Data", text="Data", anchor='w')
             for index, row in self.meta.iterrows():
                 self.tree1.insert("", 0, text=index, values=list(row))
             self.tree1.update()
 
-        if self.variable.get() == "Place Above Other Context":
+        if self.variable.get() == "Place above other context":
             if len(self.edge_nodes) == 1:
                 "tester"
                 self.OptionList.remove("Place "+ str(self.edge_nodes[0]) + " Above")
@@ -1957,15 +1988,13 @@ class PageOne(tk.Frame):
      #   label = ttk.Label(self, text="This is page 1")
    #     label.pack(side="top", fill="x", pady=10)
         self.configure(background='#fcfdfd')
-        self.canvas = tk.Canvas(self, bd=0, highlightthickness=0, bg = '#fcfdfd')
+        self.canvas = tk.Canvas(self, bd=0, highlightthickness=0, bg = '#FFE9D6')
         self.canvas.place(relx=0, rely=0.03, relwidth=1, relheight=0.97)
-        self.canvas = tk.Canvas(self, bd=0, highlightthickness=0, bg = '#c7d9e5')
-        self.canvas.place(relx=0, rely=0.03, relwidth=1, relheight=0.97)
-        self.button1 = tk.Button(self, text="Stratigraphy and meta data",  font='helvetica 12 bold',
-                                  command=lambda: controller.show_frame("StartPage"), bd=0, highlightthickness=0, bg = '#dadfcd')
+        self.button1 = tk.Button(self, text="Stratigraphy and meta data",  font='helvetica 12 bold', fg = '#2F4858',
+                                  command=lambda: controller.show_frame("StartPage"), bd=0, highlightthickness=0, bg = '#AEC7D6')
         self.button1.place(relx=0.40, rely=0.0, relwidth=0.15, relheight=0.03)
-        self.button1_a = tk.Button(self, text="Dating Results",  font='helvetica 12 bold',
-                                   command=lambda: controller.show_frame("PageOne"), bd=0, highlightthickness=0, bg = '#c7d9e5')
+        self.button1_a = tk.Button(self, text="Dating Results",  font='helvetica 12 bold', fg = '#8F4300',
+                                   command=lambda: controller.show_frame("PageOne"), bd=0, highlightthickness=0, bg = '#FFE9D6')
         self.button1_a.place(relx=0.55, rely=0.0, relwidth=0.15, relheight=0.03)
         #define all variables that are used
         self.h_1 = 0
@@ -2013,9 +2042,9 @@ class PageOne(tk.Frame):
         self.tool_menubar.place(relx=0.15, rely=0, relwidth=0.1, relheight=0.03)
         #forming and placing canvas and little canvas
    #     self.canvas.update()
-        self.behindcanvas = tk.Canvas(self, bd=0, highlightthickness=0, bg = '#aab296')
-        self.behindcanvas.place(relx=0.005, rely=0.045, relwidth=0.37, relheight=0.95)
-        self.behindcanvas_id = self.behindcanvas.create_text(10, 10, anchor="nw", fill = '#0A3200')
+        self.behindcanvas = tk.Canvas(self, bd=0, highlightthickness=0, bg = '#CC5F00')
+        self.behindcanvas.place(relx=0.38, rely=0.045, relwidth=0.57, relheight=0.95)
+        self.behindcanvas_id = self.behindcanvas.create_text(10, 10, anchor="nw", fill = '#f57200')
         self.behindcanvas.itemconfig(self.behindcanvas_id, text="Stratigraphic graph",  font='helvetica 12 bold')
         self.littlecanvas = tk.Canvas(self.behindcanvas, bd=0, bg='white',
                                       selectborderwidth=0,  highlightthickness=0, insertwidth=0)
@@ -2023,11 +2052,10 @@ class PageOne(tk.Frame):
         self.littlecanvas.place(relx=0.01, rely=0.04, relwidth=0.98, relheight=0.95)
         self.littlecanvas.itemconfig(self.littlecanvas_id, text="No stratigraphic graph loaded. \n \n \nTo load, go to File > Load stratigraphic diagram",  font='helvetica 12 bold')
         
-        self.behindcanvas2 = tk.Canvas(self, bd=0, highlightthickness=0, bg = '#aab296')
-        self.behindcanvas2.place(relx=0.38, rely=0.045, relwidth=0.37, relheight=0.95)
-        self.behindcanvas2_id = self.behindcanvas2.create_text(10, 10, anchor="nw", fill = '#0A3200')
-        self.behindcanvas2.itemconfig(self.behindcanvas2_id, text="Chronological graph", font='helvetica 12 bold')
-
+        self.behindcanvas2 = tk.Canvas(self, bd=0, highlightthickness=0, bg = '#CC5F00')
+        self.behindcanvas2.place(relx=0.005, rely=0.045, relwidth=0.37, relheight=0.95)
+        self.behindcanvas2_id = self.behindcanvas2.create_text(10, 10, anchor="nw", fill = 'white')
+        self.behindcanvas2.itemconfig(self.behindcanvas2_id, text="Chronological graph", font='helvetica 12 bold' )
         self.littlecanvas.place(relx=0.01, rely=0.01, relwidth=0.98, relheight=0.46)
         self.littlecanvas_a = tk.Canvas(self.behindcanvas, bd=0, bg='white',
                                         selectborderwidth=0, highlightthickness=0, insertwidth=0)
@@ -2228,7 +2256,7 @@ class PageOne(tk.Frame):
         USER_INP = simpledialog.askstring(title="HPD interval percentage",
                                           prompt="Please input HPD interval percentage. Note, 95% is used as standard \n \n Percentage:")
 
-        self.lim = np.float(USER_INP)/100
+        self.lim = np.float64(USER_INP)/100
         if mcmc_check == 'mcmc_loaded':
             hpd_str = ""
             columns = ('context', 'hpd_interval')
