@@ -30,9 +30,10 @@ from tkinter import simpledialog
 import tkinter.font as tkFont
 import time
 import re
+import os
 
 old_stdout = sys.stdout
-FILENAME = "save.pickle"
+FILENAME = "python_only/save.pickle"
 
 
 
@@ -69,6 +70,10 @@ def trim(im_trim):
     diff = ImageChops.add(diff, diff, 2.0, -100)
     bbox = diff.getbbox()
     return im_trim.crop(bbox)
+
+def clear_all(tree):
+   for item in tree.get_children():
+      tree.delete(item)
 
 def polygonfunc(i):
     '''finds node coords of a kite'''
@@ -129,6 +134,8 @@ def all_node_info(node_list, x_image, node_info):
 def phase_length_finder(con_1, con_2, resultsdict):
     '''finding the phase length between any two contexts or phase boundaries'''
     phase_lengths = []
+    print(con_1)
+    print(con_2)
     x_3 = resultsdict[con_1]
     x_4 = resultsdict[con_2]
     for i in range(len(x_3)):
@@ -803,27 +810,16 @@ class MainFrame(tk.Tk):
     def __init__(self, *args, **kwargs):
         """initilaises the main frame for tkinter app"""
         tk.Tk.__init__(self, *args, **kwargs)
-
+        os.chdir("/home/bryony/Documents/Pythonapp_tests/projects")
+        load_Window(self)
         # the container is where we'll stack a bunch of frames
         # on top of each other, then the one we want visible
         # will be raised above the others
-        container = tk.Frame(self)
-        container.pack(side="top", fill="both", expand=True)
-        container.grid_rowconfigure(0, weight=1)
-        container.grid_columnconfigure(0, weight=1)
-
+        self.container = tk.Frame(self)
+        self.container.pack(side="top", fill="both", expand=True)
+        self.container.grid_rowconfigure(0, weight=1)
+        self.container.grid_columnconfigure(0, weight=1)
         self.frames = {}
-        for F in (StartPage, PageOne):
-            page_name = F.__name__
-            frame = F(parent=container, controller=self)
-            self.frames[page_name] = frame
-
-            # put all of the pages in the same location;
-            # the one on the top of the stacking order
-            # will be the one that is visible.
-            frame.grid(row=0, column=0, sticky="nsew")
-
-        self.show_frame("StartPage")
 
 
     def show_frame(self, page_name):
@@ -866,6 +862,7 @@ class popupWindow4(object):
         self.phi_ref = self.popup3.phi_ref
         self.context_no = self.popup3.context_no
         self.graphcopy = self.popup3.graphcopy
+        self.node_del_tracker = self.popup3.node_del_tracker
         self.top.destroy()
 
 
@@ -955,16 +952,113 @@ class popupWindow7(object):
         self.value='cancel'
         self.top.destroy()
         
+        
+        
+class load_Window(object):
+    def __init__(self,master):
+        root_x = master.winfo_rootx()
+        root_y = master.winfo_rooty()
+        self.master = master
+    # add offset
+        win_x = root_x + 500
+        win_y = root_y + 200
+        self.top=tk.Toplevel(master)
+        self.top.attributes("-topmost", True)
+    # set toplevel in new position
+        self.top.geometry(f'1000x400+{win_x}+{win_y}') 
+        self.folderPath = tk.StringVar()
+        self.maincanvas = tk.Canvas(self.top, bg = 'white')
+        self.maincanvas.place(relx=0, rely=0, relheight = 1, relwidth = 1)
+        self.canvas = tk.Canvas(self.top, bg = '#AEC7D6')    
+        self.greeting = tk.Label(self.maincanvas, text="Welcome to PollyChron! \n\n Would you like to start a new project or load an existing one?", bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
+        self.greeting.place(relx = 0.2, rely = 0.2)
+        self.canvas.place(relx = 0, rely= 0.6, relheight = 0.4, relwidth = 1)
+        self.b=tk.Button(self.canvas, text='Load project', command=lambda: self.load_proj(), bg = '#ec9949', font = ('Helvetica 12 bold'),  fg = '#2F4858') 
+        self.b.place(relx = 0.3, rely = 0.4)
+        self.c=tk.Button(self.canvas, text='New project', command=lambda: self.new_proj(), bg = '#ec9949', font = ('Helvetica 12 bold'),  fg = '#2F4858')
+        self.c.place(relx = 0.55, rely = 0.4)
+
+    def getFolderPath(self):
+        self.top.attributes("-topmost", False)
+        folder_selected = tk.filedialog.askdirectory()
+        self.cleanup()
+        self.folderPath.set(folder_selected)
+        os.chdir(str(self.folderPath.get()))
+        
+    def load_proj(self):
+        print('h')
+        for F in (StartPage, PageOne):
+
+            page_name = F.__name__
+            frame = F(parent=self.master.container, controller=self.master)
+            self.master.frames[page_name] = frame
+            self.getFolderPath()
+
+            # put all of the pages in the same location;
+            # the one on the top of the stacking order
+            # will be the one that is visible.
+            frame.grid(row=0, column=0, sticky="nsew")
+        self.cleanup()
+        self.master.show_frame("StartPage")
+
+    def create_file(self):  
+        dirs = os.path.join("/home/bryony/Documents/Pythonapp_tests/projects", self.folder.get())
+        dirs2 = os.path.join(dirs, "stratigraphic_graph")
+        dirs3 = os.path.join(dirs, "chronological_graph")
+        dirs4 = os.path.join(dirs, "python_only")
+        dirs5 = os.path.join(dirs, "mcmc_results")
+        if not os.path.exists(dirs):
+       #     os.makedirs(dirs)
+            os.makedirs(dirs)
+            os.makedirs(dirs2)
+            os.makedirs(dirs3)
+            os.makedirs(dirs4)
+            os.makedirs(dirs5)
+            for F in (StartPage, PageOne):
+                page_name = F.__name__
+                frame = F(parent=self.master.container, controller=self.master)
+                self.master.frames[page_name] = frame
+
+                # put all of the pages in the same location;
+                # the one on the top of the stacking order
+                # will be the one that is visible.
+                frame.grid(row=0, column=0, sticky="nsew")        
+            self.master.show_frame("StartPage")
+            self.cleanup()
+            tk.messagebox.showinfo('Tips:','Project created successfully!')
+
+        else:
+            self.cleanup()
+            tk.messagebox.showerror('Tips','The folder name exists, please change it')
+        
+
+    def new_proj(self):
+        print('l')
+        self.greeting.destroy()
+        self.b.destroy()
+        self.c.destroy()
+        self.maincanvas.update()
+        self.folder = tk.StringVar() # Receiving user's folder_name selection
+        self.text_1 = tk.Label(self.maincanvas, text = "Input project name:" ,bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
+        self.text_1.place(relx=0.4, rely= 0.2)
+        self.user_input = tk.Entry(self.maincanvas, textvariable = self.folder)
+        self.user_input.place(relx=0.35, rely=0.4, relwidth = 0.3)
+        self.d = tk.Button(self.canvas, text = "Submit: ", command = lambda: self.create_file(), bg = '#ec9949', font = ('Helvetica 12 bold'),  fg = '#2F4858')
+        self.d.place(relx=0.45, rely= 0.55 )
+        
+    def cleanup(self):
+        self.top.destroy()        
+        
 class StartPage(tk.Frame):
     """ Main frame for tkinter app"""
     def __init__(self, parent, controller):
-        global load_check, mcmc_check
+        global load_check, mcmc_check, FILE_INPUT
         tk.Frame.__init__(self, parent)
+        
         self.controller = controller
         self.configure(background= 'white')
         self.canvas = tk.Canvas(self, bd=0, highlightthickness=0, bg = '#AEC7D6')
         self.canvas.place(relx=0, rely=0.03, relwidth=1, relheight=0.97)
-        
         self.button1 = tk.Button(self, text="Stratigraphy and metadata", font='helvetica 12 bold', fg = '#2F4858',
                                   command=lambda: controller.show_frame("StartPage"), bd=0, highlightthickness=0, bg = '#AEC7D6')
         self.button1.place(relx=0.40, rely=0.0, relwidth=0.15, relheight=0.03)
@@ -980,6 +1074,7 @@ class StartPage(tk.Frame):
         self.metatext = ""
         self.rad_sel = ""
         self.mode = ""
+        self.node_del_tracker= []
         ##### intial values for all the functions
         self.delnodes = []
         self.edge_nodes = []
@@ -1021,6 +1116,7 @@ class StartPage(tk.Frame):
         file = tk.Menu(self.file_menubar, tearoff = 0, bg = 'white')#, font = ('helvetica',11))
         self.file_menubar["menu"] = file
         file.add_separator()
+        FILE_INPUT = None
         
  #       self.menubar.add_cascade(label ='File', menu = file)
         file.add_command(label ='Load stratigraphic diagram file (.dot)', command=lambda: self.open_file1(), font='helvetica 10')
@@ -1029,7 +1125,7 @@ class StartPage(tk.Frame):
         file.add_command(label ='Load context grouping file (.csv)', command=lambda: self.open_file4(), font='helvetica 10')
         file.add_command(label ='Load group relationship file (.csv)', command=lambda: self.open_file5(), font='helvetica 10')
         file.add_command(label ='Load context equalities file (.csv)', command=lambda: self.open_file6(), font='helvetica 10')
-        file.add_command(label ='Save', command = lambda: self.save_state, font='helvetica 10')
+        file.add_command(label ='Save', command = lambda: self.save_state_1(), font='helvetica 10')
         file.add_command(label ='Reload previous project', command = lambda: self.restore_state(), font='helvetica 10')
         file.add_separator()
         file.add_command(label ='Exit', command = lambda: self.destroy1)
@@ -1152,6 +1248,9 @@ class StartPage(tk.Frame):
         self.tree3.place(relx=0.758, rely=0.405)
     #    self.tree3.column("Contexts", anchor="w")
         self.tree3.heading("Meta", text="Reason for deleting")
+        f = dir(self)
+        self.f_1 = [var for var in f if ('__' or 'grid' or 'get') not in var]
+       
 
     def destroy1(self):
         '''destroys self.testmenu'''
@@ -1177,119 +1276,54 @@ class StartPage(tk.Frame):
             self.destroy()
             self.testmenu.place_forget()
             self.variable.set("Node Action")
-
-    def save_state(self):
-        '''saves all the variables I need to be able to reload the app later on'''
+    def save_state_1(self):
         global mcmc_check, load_check, FILE_INPUT
-        try:
-            data = {
-                "file_input":  FILE_INPUT,
-                "h_1": self.h_1,
-                "w_1": self.w_1,
-                "transx": self.transx,
-                "transy":self.transy,
-                "meta1": self.meta1,
-                "metatext": self.metatext,
-                "rad_sel": self.rad_sel,
-                "mode": self.mode,
-                "del_nodes": self.delnodes,
-                "edge_nodes": self.edge_nodes,
-                "comb_nodes": self.comb_nodes,
-                "edges_del": self.edges_del,
-                "temp": self.temp,
-                "x_1": self.x_1,
-                "image": self.image,
-                "phase_rels": self.phase_rels,
-                "chrono_dag": self.chrono_dag,
-                "imscale": self.imscale,
-                "graph": self.graph,
-                "littlecanvas_img": self.littlecanvas_img,
-                "width" : self.width,
-                "height" : self.height,
-                "delta" : self.delta,
-                "container" : self.container,
-                "datefile" : self.datefile,
-                "context_no" : self.CONTEXT_NO,
-                "accept" : self.ACCEPT,
-                "phi_accept": self.PHI_ACCEPT,
-                "A" : self.A,
-                "P" : self.P,
-                'all_samps_cont' : self.ALL_SAMPS_CONT,
-                'all_samps_phi' : self.ALL_SAMPS_PHI,
-                'load_check': load_check,
-                'mcmc_check' : mcmc_check,
-                'phasefile' : self.phasefile,
-                'phi_ref': self.PHI_REF,
-                'prev_phase' : self.prev_phase,
-                'post_phase' : self.post_phase,
-                'resultsdict' : self.resultsdict,
-                'all_results_dict' : self.all_results_dict
-            }
-            with open(FILENAME, "wb") as f:
-                pickle.dump(data, f)
-
-        except Exception as e:
-            print
-            "error saving state:", str(e)
-
+        vars_list_1 = dir(self)
+        var_list = [var for var in vars_list_1 if (('__' and 'grid' and 'get' and 'tkinter' and 'children') not in var) and (var[0] != '_')]          
+        data = {}
+        check_list = ["tkinter", "method", "__main__", 'PIL']
+        for i in var_list:
+            v = getattr(self, i)
+            if not any(x in str(type(v)) for x in check_list):
+               data[i] = v
+        data['all_vars'] = list(data.keys())
+        data['load_check'] = load_check
+        data['mcmc_check'] = mcmc_check
+        data["file_input"] = FILE_INPUT
+        with open(FILENAME, "wb") as f:
+             pickle.dump(data, f)
+      #  print(data)
+        # except Exception as e:
+        #          print
+        #          "error saving state:", str(e)
+                
     def restore_state(self):
-        '''reloads all the variables from the last time save_state was loaded'''
-        global load_check, mcmc_check, FILE_INPUT
-        try:
-            with open(FILENAME, "rb") as f:
-                data = pickle.load(f)
-            self.littlecanvas.delete('all') #deletes everything from the canvas to get any leftover removed
-            self.h_1 = data["h_1"]
-            self.w_1 = data["w_1"]
-            self.transx = data["transx"]
-            self.transy = data["transy"]
-            self.meta1 = data["meta1"]
-            self.metatext = data["metatext"]
-            self.rad_sel = data["rad_sel"]
-            self.mode = data["mode"]
-            self.delnodes = data["del_nodes"]
-            self.edge_nodes = data["edge_nodes"]
-            self.comb_nodes = data["comb_nodes"]
-            self.edges_del = data["edges_del"]
-            self.temp = data["temp"]
-            self.x_1 = data["x_1"]
-            self.image = data["image"]
-            self.phase_rels = data["phase_rels"]
-            self.chrono_dag = data["chrono_dag"]
-            self.imscale = data["imscale"]
-            self.graph = data["graph"]
-            self.littlecanvas_img = data["littlecanvas_img"]
-            self.width = data["width"]
-            self.height = data["height"]
-            self.delta = data["delta"]
-            self.container = data["container"]
-            self.datefile = data["datefile"]
-            self.CONTEXT_NO = data["context_no"]
-            self.ACCEPT = data["accept"]
-            self.ALL_SAMPS_CONT = data['all_samps_cont']
-            self.ALL_SAMPS_PHI = data['all_samps_phi']
-            self.PHI_ACCEPT = data["phi_accept"]
-            self.A = data["A"]
-            self.P = data["P"]
+        global mcmc_check, load_check, FILE_INPUT
+        with open(FILENAME, "rb") as f:
+            data = pickle.load(f)
+            vars_list = data['all_vars']
+            for i in vars_list:
+                setattr(self, i, data[i])
             FILE_INPUT = data['file_input']
             load_check = data['load_check']
             mcmc_check = data['mcmc_check']
-            self.resultsdict = data['resultsdict']
-            self.phasefile = data['phasefile']
-            self.phi_ref = data['phi_ref']
-            self.prev_phase = data['prev_phase']
-            self.post_phase = data['post_phase']
-            self.all_results_dict = data['all_results_dict']
-            if type(self.graph) != 'NoneType':
-                self.rerender_stratdag()
-            if load_check == 'loaded':
-                FILE_INPUT = None
-                self.chronograph_render_wrap()
+        if type(self.graph) != 'NoneType':
+            self.rerender_stratdag()
+        if load_check == 'loaded':
+            FILE_INPUT = None
+            self.image2 = imgrender2()
+            if self.image2 != 'No_image':
+                self.littlecanvas2.delete('all')
+                self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
+                self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
+                                                                         image=self.littlecanvas2.img)
 
-
-        except Exception as e:
-            print
-            "error loading saved state:", str(e)
+                self.width2, self.height2 = self.image2.size
+                self.imscale2 = 1.0  # scale for the canvaas image
+                self.delta2 = 1.1  # zoom magnitude
+                # Put image into container rectangle and use it to set proper coordinates to the image
+                self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
+                self.littlecanvas2.bind("<Configure>", self.resize2)
 
 
     def onRight(self, *args):
@@ -1366,7 +1400,7 @@ class StartPage(tk.Frame):
         self.littlecanvas.bind("<Button-3>", self.preClick)
 
     def rerender_stratdag(self):
-        '''rerenders chronodag after reloading previous project'''
+        '''rerenders stratdag after reloading previous project'''
         if phase_true == 1:
             self.image = imgrender_phase(self.graph)
         else:
@@ -1395,6 +1429,14 @@ class StartPage(tk.Frame):
         else: 
             self.littlecanvas2.delete('all')
             self.chrono_dag = self.chronograph_render()
+            startpage = self.controller.get_page('StartPage')
+            startpage.CONT_TYPE = self.popup3.CONT_TYPE
+            startpage.prev_phase = self.popup3.prev_phase
+            startpage.post_phase = self.popup3.post_phase
+            startpage.phi_ref = self.popup3.phi_ref
+            startpage.context_no = self.popup3.context_no
+            startpage.graphcopy = self.popup3.graphcopy
+            startpage.node_del_tracker = self.popup3.node_del_tracker
     def open_file2(self):
         '''opens plain text strat file'''
         global FILE_INPUT        
@@ -1499,7 +1541,7 @@ class StartPage(tk.Frame):
         '''loads mcmc loading page'''
         global mcmc_check
         self.top = tk.Toplevel(self.littlecanvas)
-        self.backcanvas = tk.Canvas(self.top, bg = 'red')
+        self.backcanvas = tk.Canvas(self.top)
         self.backcanvas.place(relx = 0, rely = 0, relwidth = 1, relheight = 1)
         self.top.geometry("700x300")
         self.l = ttk.Label(self.backcanvas, text="MCMC in progress", font = ('helvetica 14 bold'))
@@ -1514,6 +1556,10 @@ class StartPage(tk.Frame):
         mcmc_check = 'mcmc_loaded'
         sys.stdout = old_stdout
         self.controller.show_frame('PageOne')
+        f = dir(self)
+        self.f_2 = [var for var in f if ('__' or 'grid' or 'get') not in var]
+        self.newvars = [var for var in self.f_2 if var not in self.f_1]
+        print(self.newvars)
         self.cleanup()
 
     def addedge(self, edgevec):
@@ -1572,23 +1618,27 @@ class StartPage(tk.Frame):
                     below = np.append(below, rellist[i[0]][1])
                 elif str(node) == rellist[i[0]][1]:
                     above = np.append(above, rellist[i[0]][0])
-                    
-        str1 = above[0]
-        for i in above[1:]: 
-            str1 = str1 + ", " + i
-        
-        str2 = below[0]
-        for j in below[1:]:
-            str2 = str2 + ", " + j
+        if len(above) == 0:
+            str1 = ""
+        else:            
+            str1 = above[0]
+            for i in above[1:]: 
+                str1 = str1 + ", " + i
+        if len(below) == 0:
+            str2 = ""
+        else:
+            str2 = below[0]
+            for j in below[1:]:
+                str2 = str2 + ", " + j
         return [str1, str2]
 
 
     def MCMC_func(self):
         '''gathers all the inputs for the mcmc module and then runs it and returns resuslts dictionaries'''
-        context_no = [x for x in list(self.popup3.context_no) if x not in self.popup3.node_del_tracker]
+        context_no = [x for x in list(self.context_no) if x not in self.node_del_tracker]
         TOPO = list(nx.topological_sort(self.chrono_dag))
 
-        TOPO_SORT = [x for x in TOPO if (x not in self.popup3.node_del_tracker) and (x in context_no)]
+        TOPO_SORT = [x for x in TOPO if (x not in self.node_del_tracker) and (x in context_no)]
         TOPO_SORT.reverse()
         context_no = TOPO_SORT
         self.key_ref = [list(self.phasefile["phase"])[list(self.phasefile["context"]).index(i)] for i in context_no]
@@ -1597,9 +1647,9 @@ class StartPage(tk.Frame):
         self.RCD_ERR = [int(list(self.datefile["error"])[list(self.datefile["context"]).index(i)]) for i in context_no]
         rcd_est = self.RCD_EST
         rcd_err = self.RCD_ERR
-        self.prev_phase, self.post_phase = self.popup3.prev_phase, self.popup3.post_phase
-        CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.popup3.phi_ref, self.popup3.prev_phase, self.popup3.post_phase, TOPO_SORT, self.popup3.CONT_TYPE)
-        phase_nodes, resultsdict, all_results_dict = phase_labels(PHI_REF, self.popup3.post_phase, PHI_ACCEPT, ALL_SAMPS_PHI)
+        self.prev_phase, self.post_phase = self.prev_phase, self.post_phase
+        CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.phi_ref, self.prev_phase, self.post_phase, TOPO_SORT, self.CONT_TYPE)
+        phase_nodes, resultsdict, all_results_dict = phase_labels(PHI_REF, self.post_phase, PHI_ACCEPT, ALL_SAMPS_PHI)
         for i, j in enumerate(CONTEXT_NO):
             resultsdict[j] = ACCEPT[i]
         for k, l in enumerate(CONTEXT_NO):
@@ -1764,6 +1814,7 @@ class StartPage(tk.Frame):
             self.canvas.itemconfig(self.metatext_id, text="Metadata of node " + str(self.node),  font='helvetica 12 bold')
             cols = list(self.meta.columns)
        #     self.tree1 = ttk.Treeview(self.canvas)
+            clear_all(self.tree1)
             self.tree1["columns"] = cols
             self.tree1.place(relx=0.758, rely=0.725, relwidth = 0.225)
             self.tree1.column("Data", anchor="w")
@@ -2013,6 +2064,7 @@ class PageOne(tk.Frame):
         self.edges_del = []
         self.temp = []
         self.results_list = []
+        self.cont_canvas_list = ""
         self.x_1 = 1
         self.image = "noimage"
         self.phase_rels = None
@@ -2027,7 +2079,7 @@ class PageOne(tk.Frame):
         self.file_menubar["menu"] = file
         file.add_separator()
      #   file.add_command(label ='Load context equalities file (.csv)', command=lambda: self.open_file6())
-        file.add_command(label ='Save', command = lambda: startpage.save_state, font = ('helvetica 10 bold'))
+        file.add_command(label ='Save', command = lambda: startpage.save_state_1(), font = ('helvetica 10 bold'))
         file.add_command(label ='Reload previous project', command = lambda: startpage.restore_state(), font = ('helvetica 10 bold'))
         self.file_menubar.place(relx=0.0, rely=0, relwidth=0.1, relheight=0.03)
         self.view_menubar = ttk.Menubutton(self, text = 'View')
@@ -2042,32 +2094,63 @@ class PageOne(tk.Frame):
         self.tool_menubar.place(relx=0.15, rely=0, relwidth=0.1, relheight=0.03)
         #forming and placing canvas and little canvas
    #     self.canvas.update()
-        self.behindcanvas = tk.Canvas(self, bd=0, highlightthickness=0, bg = '#CC5F00')
-        self.behindcanvas.place(relx=0.38, rely=0.045, relwidth=0.57, relheight=0.95)
-        self.behindcanvas_id = self.behindcanvas.create_text(10, 10, anchor="nw", fill = '#f57200')
-        self.behindcanvas.itemconfig(self.behindcanvas_id, text="Stratigraphic graph",  font='helvetica 12 bold')
+        self.behindcanvas = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg = '#CC5F00')
+        self.behindcanvas.place(relx=0.6, rely=0.038, relwidth=0.39, relheight=0.96)
+        #######################
+        self.littlecanvas2_label = tk.Canvas(self.canvas, bd=0, bg='#CC5F00',
+                                      selectborderwidth=0,  highlightthickness=0, insertwidth=0)
+        self.littlecanvas2_label.place(relx=0.003, rely=0.011, relwidth=0.18, relheight=0.027)
+        self.littlecanvas2_label_id = self.littlecanvas2_label.create_text(10, 5, anchor="nw", fill = 'white')
+        self.littlecanvas2_label.itemconfig(self.littlecanvas2_label_id, text="Chronological graph", font='helvetica 12 bold' )
+        #######################
         self.littlecanvas = tk.Canvas(self.behindcanvas, bd=0, bg='white',
                                       selectborderwidth=0,  highlightthickness=0, insertwidth=0)
-        self.littlecanvas_id = self.littlecanvas.create_text(10, 10, anchor="nw",fill = '#0A3200')
-        self.littlecanvas.place(relx=0.01, rely=0.04, relwidth=0.98, relheight=0.95)
-        self.littlecanvas.itemconfig(self.littlecanvas_id, text="No stratigraphic graph loaded. \n \n \nTo load, go to File > Load stratigraphic diagram",  font='helvetica 12 bold')
-        
-        self.behindcanvas2 = tk.Canvas(self, bd=0, highlightthickness=0, bg = '#CC5F00')
-        self.behindcanvas2.place(relx=0.005, rely=0.045, relwidth=0.37, relheight=0.95)
-        self.behindcanvas2_id = self.behindcanvas2.create_text(10, 10, anchor="nw", fill = 'white')
-        self.behindcanvas2.itemconfig(self.behindcanvas2_id, text="Chronological graph", font='helvetica 12 bold' )
-        self.littlecanvas.place(relx=0.01, rely=0.01, relwidth=0.98, relheight=0.46)
-        self.littlecanvas_a = tk.Canvas(self.behindcanvas, bd=0, bg='white',
+        self.littlecanvas.place(relx=0.005, rely=0.005, relwidth=0.99, relheight=0.99)
+        ##########################################
+        self.behindcanvas2 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg = '#CC5F00')
+        self.behindcanvas2.place(relx=0.003, rely=0.038, relwidth=0.37, relheight=0.96)
+        ##########################################
+        self.littlecanvas_label = tk.Canvas(self.canvas, bd=0, bg='#CC5F00',
+                                      selectborderwidth=0,  highlightthickness=0, insertwidth=0)
+        self.littlecanvas_label.place(relx=0.6, rely=0.011, relwidth=0.18, relheight=0.027)
+        self.littlecanvas_label_id = self.littlecanvas_label.create_text(10, 5, anchor="nw", fill = 'white')
+        self.littlecanvas_label.itemconfig(self.littlecanvas_label_id, text='Posterior densities', font='helvetica 12 bold' )
+        #########################################
+        self.littlecanvas_a_label = tk.Canvas(self.canvas, bd=0, bg='#CC5F00',
+                                      selectborderwidth=0,  highlightthickness=0, insertwidth=0)
+        self.littlecanvas_a_label.place(relx=0.38, rely=0.518, relwidth=0.08, relheight=0.027)
+        self.littlecanvas_a_label_id = self.littlecanvas_a_label.create_text(10, 5, anchor="nw", fill = 'white')
+        self.littlecanvas_a_label.itemconfig(self.littlecanvas_a_label_id, text='Context list', font='helvetica 12 bold' )
+        ############################################
+        self.behindcanvas_a = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg = '#CC5F00')
+        self.behindcanvas_a.place(relx=0.38, rely=0.038, relwidth=0.21, relheight=0.45)
+        ######################################
+        self.littlecanvas_a = tk.Canvas(self.behindcanvas_a, bd=0, bg='white',
                                         selectborderwidth=0, highlightthickness=0, insertwidth=0)
-        self.littlecanvas_a.place(relx=0.01, rely=0.55, relwidth=0.98, relheight=0.46)
+        self.littlecanvas_a.place(relx=0.005, rely=0.005, relwidth=0.99, relheight=0.99)
+        #####################################################
+        self.behindcanvas_3 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg = '#CC5F00')
+        self.behindcanvas_3.place(relx=0.38, rely=0.545, relwidth=0.21, relheight=0.45)
+        ########################################3
         self.littlecanvas2 = tk.Canvas(self.behindcanvas2, bd=0, bg='white',
                                        selectborderwidth=0, highlightthickness=0, insertwidth=0)
-        self.littlecanvas2.place(relx=0.01, rely=0.03, relwidth=0.98, relheight=0.96)
-        self.littlecanvas3 = tk.Canvas(self.canvas, bd=0, bg='white',
+        self.littlecanvas2.place(relx=0.005, rely=0.005, relwidth=0.99, relheight=0.99)
+        #######################################################
+        ################################
+        self.littlecanvas3 = tk.Canvas(self.behindcanvas_3, bd=0, bg='white',
                                        selectborderwidth=0, highlightthickness=0, insertwidth=0)
-        self.littlecanvas3.place(relx=0.77, rely=0.25, relwidth=0.2, relheight=0.5)
-
-
+        self.littlecanvas3.place(relx=0.005, rely=0.005, relwidth=0.99, relheight=0.901)
+        self.littlecanvas3_id = self.littlecanvas3.create_text(10, 10, anchor="nw",fill = '#0A3200')
+        self.littlecanvas3.itemconfig(self.littlecanvas3_id, text="No contexts chosen for results. \n\nTo add a context to the results list right click on \nthe context you want then select 'add to list'",  font='helvetica 12 bold')
+       
+        ###############################################
+        self.littlecanvas3_label = tk.Canvas(self.canvas, bd=0, bg='#CC5F00',
+                                      selectborderwidth=0,  highlightthickness=0, insertwidth=0)
+        self.littlecanvas3_label.place(relx=0.38, rely=0.011, relwidth=0.14, relheight=0.027)
+        self.littlecanvas3_label_id = self.littlecanvas3_label.create_text(10, 5, anchor="nw", fill = 'white')
+        self.littlecanvas3_label.itemconfig(self.littlecanvas3_label_id, text='Calendar date range estimates', font='helvetica 12 bold' )
+        
+        #################################
         self.littlecanvas2.bind("<MouseWheel>", self.wheel2)
         self.littlecanvas2.bind('<Button-4>', self.wheel2)# only with Linux, wheel scroll down
         self.littlecanvas2.bind('<Button-5>', self.wheel2)
@@ -2085,15 +2168,15 @@ class PageOne(tk.Frame):
 
 
         #########deleted nodes##################
-        self.button2 = ttk.Button(self, text="Plot posterior density plots",
+        self.button2 = ttk.Button(self.behindcanvas_3, text="Get posterior densities",
                                   command=self.mcmc_output)
-        self.button2.place(relx=0.78, rely=0.15, relwidth=0.1, relheight=0.03)
-        self.button2a = ttk.Button(self, text="Get HPD intervals",
+        self.button2.place(relx=0.008, rely=0.92, relwidth=0.42, relheight=0.07)
+        self.button2a = ttk.Button(self.behindcanvas_3, text="Get HPD intervals",
                                    command=self.get_hpd_interval)
-        self.button2a.place(relx=0.78, rely=0.19, relwidth=0.1, relheight=0.03)
-        self.button3 = ttk.Button(self, text="Clear list",
+        self.button2a.place(relx=0.438, rely=0.92, relwidth=0.33, relheight=0.07)
+        self.button3 = ttk.Button(self.behindcanvas_3, text="Clear list",
                                   command=self.clear_results_list)
-        self.button3.place(relx=0.88, rely=0.15, relwidth=0.1, relheight=0.03)
+        self.button3.place(relx=0.78, rely=0.92, relwidth=0.2, relheight=0.07)
         self.ResultList = [
             "Add to results list",
             "Get time elapsed",
@@ -2129,17 +2212,17 @@ class PageOne(tk.Frame):
                 if self.canvas_plt != None:
                     self.canvas_plt.get_tk_widget().pack_forget()
                 self.fig = Figure()
-                LENGTHS = phase_length_finder(self.phase_len_nodes[0], startpage.CONTEXT_NO, startpage.all_results_dict)
+                LENGTHS = phase_length_finder(self.phase_len_nodes[0], self.phase_len_nodes[1], startpage.all_results_dict)
                 plot1 = self.fig.add_subplot(111)
                 plot1.hist(LENGTHS, bins='auto', color='#0504aa',
-                           alpha=0.7, rwidth=0.85, density=True)
+                           alpha=0.7, rwidth=1, density=True)
                 plot1.title.set_text('Posterior density plot for time elapsed between ' + str(self.phase_len_nodes[0]) + ' and '+ str(self.phase_len_nodes[1]))
                 interval = list(mcmc.HPD_interval(np.array(LENGTHS[1000:])))
                 columns = ('context_1', 'context_2', 'hpd_interval')
                 self.fig.set_tight_layout(True)
                 self.canvas_plt = FigureCanvasTkAgg(self.fig,
                                                     master=self.littlecanvas)
-                self.canvas_plt.get_tk_widget().pack()
+                self.canvas_plt.get_tk_widget().place(relx = 0, rely = 0, relwidth = 1)
                 self.canvas_plt.draw_idle()
                 #show hpd intervlls -----------
                 self.tree_phases = ttk.Treeview(self.littlecanvas_a, columns=columns, show='headings')
@@ -2156,7 +2239,7 @@ class PageOne(tk.Frame):
                 intervals.append((self.phase_len_nodes[0], self.phase_len_nodes[1], hpd_str))
                 for contact in intervals:
                     self.tree_phases.insert('', tk.END, values=contact)
-                self.tree_phases.grid(row=0, column=0, sticky='nsew')
+                self.tree_phases.place(relx = 0, rely = 0, relwidth = 1)
                 # add a scrollbar
                 scrollbar = ttk.Scrollbar(self.littlecanvas_a, orient=tk.VERTICAL, command=self.tree_phases.yview)
                 self.tree_phases.configure(yscroll=scrollbar.set)
@@ -2173,7 +2256,13 @@ class PageOne(tk.Frame):
             self.phase_len_nodes = np.append(self.phase_len_nodes, x)
             self.ResultList.append("Get time elapsed between "+ str(self.phase_len_nodes[0]) + ' and another context')
             self.testmenu2 = ttk.OptionMenu(self.littlecanvas2, self.variable, self.ResultList[0], *self.ResultList, command=self.node_finder)
-        self.results_text = self.littlecanvas3.create_text(100, 10, text=self.results_list, fill = '#0A3200')
+        self.littlecanvas3.delete(self.results_text)
+        self.littlecanvas3.delete(self.littlecanvas3_id) 
+        print(self.results_list)
+        self.cont_canvas_list = ''
+        for i in set(self.results_list):
+            self.cont_canvas_list = self.cont_canvas_list + str(i) + '\n'
+        self.results_text = self.littlecanvas3.create_text(5, 10, anchor="nw", text=self.cont_canvas_list, fill = '#0A3200', font = ('Helvetica 12 bold'))
         self.variable.set("Add to results list")
 
     def onRight(self, *args):
@@ -2252,36 +2341,37 @@ class PageOne(tk.Frame):
     def get_hpd_interval(self):
         '''loads hpd intervals into the results page'''
         global mcmc_check
-        startpage = self.controller.get_page('StartPage')
-        USER_INP = simpledialog.askstring(title="HPD interval percentage",
-                                          prompt="Please input HPD interval percentage. Note, 95% is used as standard \n \n Percentage:")
-
-        self.lim = np.float64(USER_INP)/100
-        if mcmc_check == 'mcmc_loaded':
-            hpd_str = ""
-            columns = ('context', 'hpd_interval')
-            self.tree_phases = ttk.Treeview(self.littlecanvas_a, columns=columns, show='headings')
-            self.tree_phases.heading('context', text='Context')
-            self.tree_phases.heading('hpd_interval', text=str(USER_INP) + '% HPD interval')
-            intervals = []
-            for i, j  in enumerate(list(set(self.results_list))):
-                node = str(j)
-                interval = list(mcmc.HPD_interval(np.array(startpage.resultsdict[j][1000:]), lim=self.lim))
-            # define headings
+        if len(self.results_list) != 0:
+            startpage = self.controller.get_page('StartPage')
+            USER_INP = simpledialog.askstring(title="HPD interval percentage",
+                                              prompt="Please input HPD interval percentage. Note, 95% is used as standard \n \n Percentage:")
+    
+            self.lim = np.float64(USER_INP)/100
+            if mcmc_check == 'mcmc_loaded':
                 hpd_str = ""
-                refs = [k for k in range(len(interval)) if k %2]
-                for i in refs:
-                    hpd_str = hpd_str + str(np.abs(interval[i-1])) + " - " + str(np.abs(interval[i])) + " Cal BP "
-                # add data to the treeview
-                intervals.append((node, hpd_str))
-            for contact in intervals:
-                self.tree_phases.insert('', tk.END, values=contact)
-            self.tree_phases.grid(row=0, column=0, sticky='nsew')
-            # add a scrollbar
-            scrollbar = ttk.Scrollbar(self.littlecanvas_a, orient=tk.VERTICAL, command=self.tree_phases.yview)
-            self.tree_phases.configure(yscroll=scrollbar.set)
-            scrollbar.grid(row=0, column=1, sticky='nsew')
-            self.littlecanvas_a.create_text(150, 80, text=hpd_str, fill = '#0A3200')
+                columns = ('context', 'hpd_interval')
+                self.tree_phases = ttk.Treeview(self.littlecanvas_a, columns=columns, show='headings')
+                self.tree_phases.heading('context', text='Context')
+                self.tree_phases.heading('hpd_interval', text=str(USER_INP) + '% HPD interval')
+                intervals = []
+                for i, j  in enumerate(list(set(self.results_list))):
+                    node = str(j)
+                    interval = list(mcmc.HPD_interval(np.array(startpage.resultsdict[j][1000:]), lim=self.lim))
+                # define headings
+                    hpd_str = ""
+                    refs = [k for k in range(len(interval)) if k %2]
+                    for i in refs:
+                        hpd_str = hpd_str + str(np.abs(interval[i-1])) + " - " + str(np.abs(interval[i])) + " Cal BP "
+                    # add data to the treeview
+                    intervals.append((node, hpd_str))
+                for contact in intervals:
+                    self.tree_phases.insert('', tk.END, values=contact)
+                self.tree_phases.place(relx = 0, rely = 0, relwidth = 1)
+                # add a scrollbar
+                scrollbar = ttk.Scrollbar(self.littlecanvas_a, orient=tk.VERTICAL, command=self.tree_phases.yview)
+                self.tree_phases.configure(yscroll=scrollbar.set)
+                scrollbar.grid(row=0, column=1, sticky='nsew')
+                self.littlecanvas_a.create_text(150, 80, text=hpd_str, fill = '#0A3200')
 
     def chronograph_render_post(self):
         global load_check
