@@ -5,7 +5,8 @@ Created on Sun Aug 15 17:43:25 2021
 
 @author: bryony
 """
-
+import os
+os.chdir("/home/bryony/Documents/Pythonapp_tests/projects")
 import tkinter as tk
 from tkinter import ttk, Misc
 import copy
@@ -30,12 +31,10 @@ from tkinter import simpledialog
 import tkinter.font as tkFont
 import time
 import re
-import os
+
 
 old_stdout = sys.stdout
 FILENAME = "python_only/save.pickle"
-
-
 
 class StdoutRedirector(object):
     def __init__(self, text_area, pb1):
@@ -951,8 +950,8 @@ class popupWindow7(object):
     def cleanup2(self):
         self.value='cancel'
         self.top.destroy()
-        
-        
+ 
+
         
 class load_Window(object):
     def __init__(self,master):
@@ -980,27 +979,45 @@ class load_Window(object):
 
     def getFolderPath(self):
         self.top.attributes("-topmost", False)
-        folder_selected = tk.filedialog.askdirectory()
-        self.cleanup()
+        folder_selected = tk.filedialog.askdirectory()        
         self.folderPath.set(folder_selected)
-        os.chdir(str(self.folderPath.get()))
+        os.chdir(self.folderPath.get())
+  
         
     def load_proj(self):
         print('h')
-        for F in (StartPage, PageOne):
+        self.greeting.destroy()
+        self.b.destroy()
+        self.c.destroy()
+        self.maincanvas.update()
 
-            page_name = F.__name__
-            frame = F(parent=self.master.container, controller=self.master)
-            self.master.frames[page_name] = frame
-            self.getFolderPath()
+        self.l=tk.Label(self.maincanvas, text="Project list", bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
+        self.l.pack()
+       # myList_all = os.listdir("/home/bryony/Documents/Pythonapp_tests/projects")
+        myList = [d for d in os.listdir("/home/bryony/Documents/Pythonapp_tests/projects") if os.path.isdir(d)]
+        mylist_var = tk.StringVar(value = myList)
+        self.MyListBox = tk.Listbox(self.maincanvas, listvariable = mylist_var, bg = 'white', font = ('helvetica 12 bold'), fg = '#2F4858', selectmode = 'browse')  
+        scrollbar = ttk.Scrollbar(
+            self.maincanvas,
+            orient='vertical',
+            command=self.MyListBox.yview)
+        self.MyListBox['yscrollcommand'] = scrollbar.set
+        self.MyListBox.pack()
+        self.MyListBox.bind('<<ListboxSelect>>', self.items_selected)
+        self.b=tk.Button(self.canvas,text='Load project', command=lambda: self.cleanup2(), bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
+        self.b.pack()
+       # self.getFolderPath() 
 
-            # put all of the pages in the same location;
-            # the one on the top of the stacking order
-            # will be the one that is visible.
-            frame.grid(row=0, column=0, sticky="nsew")
-        self.cleanup()
-        self.master.show_frame("StartPage")
+    def items_selected(self, event):
+        """ handle item selected event
+        """
+        # get selected indices
+        selected_indices = self.MyListBox.curselection()
+        # get selected items
+        self.selected_langs = ",".join([self.MyListBox.get(i) for i in selected_indices])
 
+  
+        
     def create_file(self):  
         dirs = os.path.join("/home/bryony/Documents/Pythonapp_tests/projects", self.folder.get())
         dirs2 = os.path.join(dirs, "stratigraphic_graph")
@@ -1024,13 +1041,14 @@ class load_Window(object):
                 # will be the one that is visible.
                 frame.grid(row=0, column=0, sticky="nsew")        
             self.master.show_frame("StartPage")
-            self.cleanup()
+            
             tk.messagebox.showinfo('Tips:','Project created successfully!')
+            self.cleanup()
 
         else:
-            self.cleanup()
+            
             tk.messagebox.showerror('Tips','The folder name exists, please change it')
-        
+            self.cleanup()
 
     def new_proj(self):
         print('l')
@@ -1047,14 +1065,30 @@ class load_Window(object):
         self.d.place(relx=0.45, rely= 0.55 )
         
     def cleanup(self):
-        self.top.destroy()        
+        self.top.destroy()
+        
+    def cleanup2(self):
+        path = os.getcwd() + "/" + self.selected_langs 
+        os.chdir(path)
+        print("Current working directory: {0}".format(os.getcwd()))
+        
+        for F in (StartPage, PageOne):
+
+            page_name = F.__name__
+            frame = F(parent=self.master.container, controller=self.master)
+            self.master.frames[page_name] = frame
+            # put all of the pages in the same location;
+            # the one on the top of the stacking order
+            # will be the one that is visible.
+            frame.grid(row=0, column=0, sticky="nsew")    
+        self.master.show_frame("StartPage")        
+        self.top.destroy()
         
 class StartPage(tk.Frame):
     """ Main frame for tkinter app"""
     def __init__(self, parent, controller):
         global load_check, mcmc_check, FILE_INPUT
         tk.Frame.__init__(self, parent)
-        
         self.controller = controller
         self.configure(background= 'white')
         self.canvas = tk.Canvas(self, bd=0, highlightthickness=0, bg = '#AEC7D6')
@@ -1112,6 +1146,10 @@ class StartPage(tk.Frame):
         self.resultsdict = {}
         self.all_results_dict = {}
         self.file_menubar = ttk.Menubutton(self, text = 'File')
+        self.strat_check = False
+        self.phase_check = False
+        self.phase_rel_check = False
+        self.date_check = False
         # Adding File Menu and commands
         file = tk.Menu(self.file_menubar, tearoff = 0, bg = 'white')#, font = ('helvetica',11))
         self.file_menubar["menu"] = file
@@ -1246,12 +1284,77 @@ class StartPage(tk.Frame):
         self.tree3.heading('#0', text="Stratigraphic relationship")
         self.tree3["columns"] = ["Meta"]
         self.tree3.place(relx=0.758, rely=0.405)
-    #    self.tree3.column("Contexts", anchor="w")
+    #    self.tree3.column("Contexts", anchor="fsacvfw")
         self.tree3.heading("Meta", text="Reason for deleting")
         f = dir(self)
         self.f_1 = [var for var in f if ('__' or 'grid' or 'get') not in var]
-       
+        try: 
+            self.restore_state()
+        except FileNotFoundError:
+            print("empty project")
+            
+        
+        self.databutton = tk.Button(self, text="Data loaded  ↙", font='helvetica 12 bold', fg = 'white',
+                                  command=lambda: self.display_data_func(), bd=0, highlightthickness=0, bg = '#33658a')
+        self.databutton.place(relx=0.303, rely=0.038, relwidth=0.07, relheight=0.028)
+        self.datacanvas = tk.Canvas(self.behindcanvas, bd=0, highlightthickness = 0, bg = '#33658a')
+        self.datacanvas.place(relx=0.55, rely=0.0, relwidth=0.45, relheight=0.2)
+        self.datalittlecanvas = tk.Canvas(self.datacanvas, bd=8, bg = 'white', highlightbackground= '#33658a', highlightthickness = 5)
+        self.datalittlecanvas.place(relx=0.015, rely=0.015, relwidth=0.97, relheight=0.97)
+        tk.Misc.lift(self.littlecanvas)
+        self.display_data_var = 'hidden'
+        self.check_list_gen()
+        
+        
+        
+    def display_data_func(self):
+        print('hello')
+        if self.display_data_var == 'hidden':
+            tk.Misc.lift(self.datacanvas)
+            self.databutton['text'] = "Data loaded ↗"
+            self.display_data_var = 'onshow'
+        else: 
+            if self.display_data_var == 'onshow':
+                tk.Misc.lift(self.littlecanvas)
+                self.databutton['text'] = "Data loaded  ↙"
+                self.display_data_var = 'hidden'
+    
+    def check_list_gen(self):
+        if self.strat_check:
+            strat = '‣ Stratigraphic relationships'
+            col1 = 'green'
+        else:
+            strat ='‣ Stratigraphic relationships'
+            col1 = 'black'
+        if self.date_check:
+            date = '‣ Radiocarbon dates'
+            col2 = 'green'
+        else:
+            date = '‣ Radiocarbon dates'
+            col2 = 'black'
+        if self.phase_check:
+            phase = '‣ Groups for contexts'
+            col3 = 'green'
+        else:
+            phase = '‣ Groups for contexts'  
+            col3 = 'black'                 
+        if self.phase_rel_check:
+            rels = '‣ Relationships between groups'
+            col4 = 'green'
+        else:    
+            rels = '‣ Relationships between groups'
+            col4 = 'black'
+        self.datalittlecanvas.delete('all')
+        self.datalittlecanvas.create_text(10, 20, anchor = 'nw', text=strat + "\n\n" , font=('Helvetica 12 bold'), fill = col1)
+        self.datalittlecanvas.pack()
+        self.datalittlecanvas.create_text(10, 50, anchor = 'nw', text=date + "\n\n" , font=('Helvetica 12 bold'), fill = col2)
+        self.datalittlecanvas.pack()
+        self.datalittlecanvas.create_text(10, 80, anchor = 'nw', text=phase + "\n\n" , font=('Helvetica 12 bold'), fill = col3)
+        self.datalittlecanvas.pack()
+        self.datalittlecanvas.create_text(10, 110, anchor = 'nw', text=rels, font=('Helvetica 12 bold'), fill = col4)
+        self.datalittlecanvas.pack()
 
+            
     def destroy1(self):
         '''destroys self.testmenu'''
         self.menubar.place_forget()
@@ -1290,7 +1393,8 @@ class StartPage(tk.Frame):
         data['load_check'] = load_check
         data['mcmc_check'] = mcmc_check
         data["file_input"] = FILE_INPUT
-        with open(FILENAME, "wb") as f:
+        path = os.getcwd() + "/" + FILENAME
+        with open(path, "wb") as f:
              pickle.dump(data, f)
       #  print(data)
         # except Exception as e:
@@ -1308,6 +1412,7 @@ class StartPage(tk.Frame):
             load_check = data['load_check']
             mcmc_check = data['mcmc_check']
         if type(self.graph) != 'NoneType':
+            self.littlecanvas.delete('all')
             self.rerender_stratdag()
         if load_check == 'loaded':
             FILE_INPUT = None
@@ -1447,6 +1552,7 @@ class StartPage(tk.Frame):
             self.stratfile = pd.read_csv(file, dtype=str)
             load_it = self.file_popup(self.stratfile)
             if load_it == 'load':
+                self.strat_check = True
                 G = nx.DiGraph()
                 for i in set(self.stratfile.iloc[:, 0]):
                     G.add_node(i, shape="box", fontname="Ubuntu", fontsize="30.0", penwidth="1.0", color='black')
@@ -1477,7 +1583,8 @@ class StartPage(tk.Frame):
                     self.delnodes = []
                     self.delnodes_meta = []
                     self.littlecanvas.bind("<Button-3>", self.preClick)
-
+            self.check_list_gen()
+    
     def open_file3(self):
         '''opens scientific dating file'''
         file = askopenfile(mode='r', filetypes=[('Python Files', '*.csv')])
@@ -1489,6 +1596,8 @@ class StartPage(tk.Frame):
                 for i, j in enumerate(self.datefile["context"]):
                     self.graph.nodes()[str(j)].update({"Date":[self.datefile["date"][i], self.datefile["error"][i]]})
                 self.context_no = list(self.graph.nodes())
+            self.date_check = True
+            self.check_list_gen()
 
 
     def open_file4(self):
@@ -1502,6 +1611,8 @@ class StartPage(tk.Frame):
                 for i, j in enumerate(self.phasefile["context"]):
                     self.graph.nodes()[str(j)].update({"Phase":self.phasefile["phase"][i]})
              #   self.phase_list = set(self.phasefile["phase"])
+            self.phase_check = True
+            self.check_list_gen()
 
     def open_file5(self):
         '''opens phase relationship files'''
@@ -1510,7 +1621,8 @@ class StartPage(tk.Frame):
             phase_rel_df = pd.read_csv(file)
             self.phase_rels = [(str(phase_rel_df['above'][i]), str(phase_rel_df['below'][i])) for i in range(len(phase_rel_df))]
             self.file_popup(pd.DataFrame(self.phase_rels, columns = ['Younger group', 'Older group']))
-
+            self.phase_rel_check = True
+            self.check_list_gen()
     def open_file6(self):
         '''opens files determining equal contexts (in time)'''
         file = askopenfile(mode='r', filetypes=[('Python Files', '*.csv')])
@@ -2184,6 +2296,7 @@ class PageOne(tk.Frame):
         self.variable = tk.StringVar(self.littlecanvas)
         self.variable.set("Add to results list")
         self.testmenu2 = ttk.OptionMenu(self.littlecanvas2, self.variable, self.ResultList[0], *self.ResultList, command=self.node_finder)
+
 
     def clear_results_list(self):
         '''deletes nodes from results lists'''
