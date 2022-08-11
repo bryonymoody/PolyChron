@@ -1,0 +1,70 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Aug 11 13:11:25 2022
+
+@author: bryony
+"""
+
+post_samps_all = pd.read_csv('full_results_df')
+import numpy as np
+def bayes_fact_likelihood(results_vec, theta):
+    if len(np.where(results_vec[0:][0] == int(theta))[0]) == 0:
+        x_temp = 0
+    else:
+        ind_dic = np.where(results_vec[0:][0] == int(theta))[0][0]
+        li_vec = results_vec[0:][0][ind_dic:ind_dic+11]
+        res = min(enumerate(li_vec), key=lambda x: abs(theta - x[1]))
+        c_vec = np.where(results_vec[0:][0] == res[1])
+        x_temp = results_vec[1:][0][c_vec[0]][0]   
+    return(x_temp)
+
+col_refs = post_samps_all.columns[8:]
+post_samps_theta = [list(post_samps_all[i]) for i in col_refs]
+prior_samps_theta = x[0]
+j_f = len(prior_samps_theta[0])
+j_h = len(post_samps_theta[0])
+j = j_f + j_h
+
+def Ex_f(prior_samps_theta, j_h, j_f, j, results_vector, r):
+    sums_vec = []
+    for i in range(len(prior_samps_theta[0])):
+        prior_samps_row = [prior_samps_theta[d][i] for d in range(len(prior_samps_theta))]
+        llhd = []
+        for j, k in enumerate(prior_samps_row):
+            llhd.append(bayes_fact_likelihood(results_vector[j], k))
+        tot_llh = np.prod(llhd)    
+        llhd = tot_llh/(j_h*tot_llh + j_f*r) 
+        sums_vec.append(llhd)
+    expec = (j/j_f)*sum(sums_vec)
+    return expec
+        
+            
+        
+def Ex_h(post_samps_theta, j_h, j_f, j, results_vector, r):
+    sums_vec = []
+    for i in range(len(post_samps_theta[0])):
+        post_samps_row = [post_samps_theta[d][i] for d in range(len(post_samps_theta))]
+        llhd = []
+        for j, k in enumerate(post_samps_row):
+            llhd.append(bayes_fact_likelihood(results_vector[j], k))
+        tot_llh = np.prod(llhd)    
+        llhd = 1/(j_h*tot_llh + j_f*r) 
+        sums_vec.append(llhd)
+    expec = (j/j_h)*sum(sums_vec)
+    return expec     
+    
+r_0 = 0.05
+
+def r_seq(r_0, post_samps_theta, prior_samps_theta, j, j_f, j_h, iters, results_vec):
+    r_vec = [r_0]
+    for i in range(iters):
+        print(i)
+        r = r_vec[i]
+        r_new =  Ex_f(prior_samps_theta, j_h, j_f, j, results_vec, r)/Ex_h(post_samps_theta, j_h, j_f, j, results_vec, r)
+        r_vec.append(r_new)
+        
+    return r_vec, r_vec[iters-1]    
+
+
+test = r_seq(r_0, post_samps_theta, prior_samps_theta, j, j_f, j_h, 100, RESULT_VEC)
