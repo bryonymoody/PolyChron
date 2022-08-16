@@ -93,32 +93,32 @@ llh_vec_prior = pre_sum_cal(prior_samps_theta, CONTEXT_NO, CALIBRATION_DATA)
 llh_vec_post_1 = pre_sum_cal(post_samps_m1, CONTEXT_NO, CALIBRATION_DATA)
 def Ex_h_test(j_h, j_f, j, r, llh_vec):
     llhd_fin = [1/((j_h*k) + (j_f*r)) for k in llh_vec] 
-    expec = (1/j_h)*sum(llhd_fin)
+    expec = (j/j_h)*sum(llhd_fin)
     return expec   
 
 def Ex_f_test(j_h, j_f, j, r, llh_vec):
     llhd_fin = [k/(j_h*k + j_f*r) for k in llh_vec] 
-    expec = (1/j_f)*sum(llhd_fin)
+    expec = (j/j_f)*sum(llhd_fin)
     return expec   
     
     
 r_0 = 0.000000000000005
 
-def r_seq(r_0, post_samps_theta, prior_samps_theta, j, j_f, j_h, iters, results_vec,dates, CALIBRATION_DATA, CONTEXT_NO):
+def r_seq(r_0, post_samps_theta, prior_samps_theta, j, j_f, j_h, iters, results_vec,dates, CALIBRATION_DATA, CONTEXT_NO, llh_post):
     r_vec = [r_0]
     for i in range(iters):
         print(i)
         r = r_vec[i]
         e_f = Ex_f_test(j_h, j_f, j, r, llh_vec_prior)
-        e_h = Ex_h_test(j_h, j_f, j, r, llh_vec_post_1)
+        e_h = Ex_h_test(j_h, j_f, j, r, llh_post)
         r_new =  e_f/e_h
         r_vec.append(r_new)
     return r_vec, r_vec[iters-1]    
         
 
 
-test = r_seq(r_0, post_samps_theta, prior_samps_theta, j, j_f, j_h, 50, RESULT_VEC, dates, CALIBRATION_DATA, CONTEXT_NO)
-test1 = r_seq(r_0, post_samps_m1, prior_samps_theta, j, j_f, j_h, 50, RESULT_VEC, dates, CALIBRATION_DATA, CONTEXT_NO)
+test = r_seq(r_0, post_samps_theta, prior_samps_theta, j, j_f, j_h, 50, RESULT_VEC, dates, CALIBRATION_DATA, CONTEXT_NO, llh_vec_post)
+test1 = r_seq(r_0, post_samps_m1, prior_samps_theta, j, j_f, j_h, 50, RESULT_VEC, dates, CALIBRATION_DATA, CONTEXT_NO, llh_vec_post_1)
 
 test[1]/test1[1]
 plt.plot(test[0])

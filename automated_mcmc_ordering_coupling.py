@@ -657,23 +657,25 @@ def gibbs_code_prior(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CO
   POST_S = []
   for i in range(0, iter_num):
         print(i)
+        SITE_DICT_TEST_1 = dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF) 
         for j in range(len(PHASE_BOUNDARY_INITS)):
-        #      SITE_DICT_TEST_1 = dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF) #update the dictionary so we ge tthe right beta
+              #update the dictionary so we ge tthe right beta
               k = gibbs_phis_gen(PREV_PHASE, PHI_REF)[j]
+       #       print(k)
               rc_dates = [i[0] for i in SITE_DICT_TEST_1[k]['dates']]
               #tells us which phase the paramter is from
               n_m = len(SITE_DICT_TEST_1[k]["dates"]) #number of dates in this phase
               if j == 0: 
                   beta = SITE_DICT_TEST_1[k]["boundaries"][0]
-                  phi_vals = np.linspace(P - 0.1, max(rc_dates) + 0.1, num=max(int(P - A)*50, 10))
-                  phase_samps = np.array([(((k-POST_PHIS[-1][i-1])**(1 - M))/(R - (k - POST_PHIS[-1][i-1])))*(1/(k-beta)**n_m) for k in phi_vals]) #*(1/(k-beta))**n_m
+                  phi_vals = np.linspace(P - 0.1, max(rc_dates) + 0.1, num=max(int(P - max(rc_dates))*50, 10))
+                  phase_samps = np.array([(1/(R - (k - PHIS_VEC[M-1])))*(1/(k-beta)**n_m) for k in phi_vals]) #*(1/(k-beta))**n_m
                   weights = phase_samps/sum(phase_samps)
               #    print(weights)
               #    print(phi_vals)
                   PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
               elif j == M - 1:
-                  phi_vals = np.linspace(min(rc_dates)-0.1, A+0.1, num=max(int(PHIS_VEC[j-1] - A)*50, 10))
-                  phase_samps = np.array([(((PHIS_VEC[0] - k)**(1 - M))/(R - (PHIS_VEC[0] - k)))*(1/(PHIS_VEC[j-1]-k)**n_m) for k in phi_vals])
+                  phi_vals = np.linspace(min(rc_dates)-0.1, A+0.1, num=max(int(min(rc_dates) - A)*50, 10))
+                  phase_samps = np.array([(1/(R - (PHIS_VEC[0] - k)))*(1/(PHIS_VEC[j-1]-k)**n_m) for k in phi_vals])
                   weights = phase_samps/sum(phase_samps)
                #   print(weights)
                 #  print(phi_vals)
@@ -682,18 +684,17 @@ def gibbs_code_prior(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CO
                   k_nxt_phase = gibbs_phis_gen(PREV_PHASE, PHI_REF)[j+1] 
                   rc_dates_nxt_phase = [i[0] for i in SITE_DICT_TEST_1[k_nxt_phase]['dates']]
                   phi_vals = np.linspace(min(rc_dates) - 0.1, max(rc_dates_nxt_phase)+ 0.1, num=max(int(min(rc_dates) - max(rc_dates_nxt_phase))*50, 10))
-                  k_1 = gibbs_phis_gen(PREV_PHASE, PHI_REF)[j+1]
-                  n_m_1 = len(SITE_DICT_TEST_1[k_1]["dates"])
-                  beta = SITE_DICT_TEST_1[k_1]["boundaries"][0]
-                  phase_samps = np.array([(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1) for k in phi_vals]) #/(PHIS_VEC[j-1]-k)**n_m
+                  n_m_1 = len(SITE_DICT_TEST_1[k_nxt_phase]["dates"])
+                  beta = SITE_DICT_TEST_1[k_nxt_phase]["boundaries"][0]
+                  phase_samps = np.array([(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1) for k in phi_vals]) #(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1)
                   weights = phase_samps/sum(phase_samps)
              #     print(weights)
               #    print(phi_vals)
                   PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
               POST_PHIS[j].append(PHIS_VEC[j])
         POST_S.append(PHIS_VEC[0] - PHIS_VEC[M-1])
+        SITE_DICT_TEST_1 = dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF) #updates dictionary to stash all the samples
         for k in range(len(THETA_INITS)):
-              SITE_DICT_TEST_1 = dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF) #updates dictionary to stash all the samples
               key = KEY_REF[k] #which phase the theta is in
               a = [CONTEXT_NO[k] in d for d in SITE_DICT_TEST_1[key]["dates"]].index(True) #finds where in dict date is
               strat_single = strat_rel(SITE_DICT_TEST_1, key, a, THETAS, CONTEXT_NO) #gets upper and lower bounds based on any strat rels
@@ -702,8 +703,77 @@ def gibbs_code_prior(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CO
               THETAS[k] = random.uniform(low_bound, up_bound)
               POST_THETAS[k].append(THETAS[k]) 
   PHI_ACCEPT, ACCEPT = POST_PHIS, POST_THETAS
+  plt.plot(ACCEPT[5])
   return PHI_ACCEPT, ACCEPT, POST_S
 
+def gibbs_code_post(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT): 
+  A = 450
+  P = 950  
+  THETA_INITS = theta_init_func_n(KEY_REF, PHI_REF, RESULT_VEC, STRAT_VEC, P, CONTEXT_NO, TOPO_SORT)
+  PHASE_BOUNDARY_INITS = phase_bd_init_func(KEY_REF, PHI_REF, THETA_INITS, PREV_PHASE, A, P)
+  TEST_DICT_1, POST_THETAS, POST_PHIS, SITE_DICT_TEST_1 = dict_form_func(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC, PHASE_BOUNDARY_INITS, POST_PHASE, PHI_REF, PREV_PHASE, KEY_REF)
+  STEP_1, STEP_2, STEP_3, SAMP_VEC_TRACK = how_to_phase_samp(POST_PHASE, PREV_PHASE)
+  PHIS_VEC = PHASE_BOUNDARY_INITS
+  THETAS = THETA_INITS.copy()
+ ########################### figures out how to sample based on phase relationships
+ # K = len(THETAS)
+  M = len(POST_PHIS)
+ # S = max(RCD_ERR)
+  R = P - A 
+  POST_THETAS, POST_PHIS, POST_S = set_up_post_arrays(POST_THETAS, POST_PHIS, THETA_INITS, PHASE_BOUNDARY_INITS)
+  POST_S = []
+  for i in range(0, iter_num):
+   #     print(i)
+        SITE_DICT_TEST_1 = dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF) 
+        for j in range(len(PHASE_BOUNDARY_INITS)):
+              #update the dictionary so we ge tthe right beta
+              k = gibbs_phis_gen(PREV_PHASE, PHI_REF)[j]
+       #       print(k)
+              rc_dates = [i[0] for i in SITE_DICT_TEST_1[k]['dates']]
+              #tells us which phase the paramter is from
+              n_m = len(SITE_DICT_TEST_1[k]["dates"]) #number of dates in this phase
+              if j == 0: 
+                  beta = SITE_DICT_TEST_1[k]["boundaries"][0]
+                  phi_vals = np.linspace(P - 0.1, max(rc_dates) + 0.1, num=max(int(P - max(rc_dates))*50, 10))
+                  phase_samps = np.array([1/(k-beta)**n_m for k in phi_vals]) #*(1/(k-beta))**n_m
+                  weights = phase_samps/sum(phase_samps)
+              #    print(weights)
+              #    print(phi_vals)
+                  PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
+              elif j == M - 1:
+                  phi_vals = np.linspace(min(rc_dates)-0.1, A+0.1, num=max(int(min(rc_dates) - A)*50, 10))
+                  phase_samps = np.array([1/(PHIS_VEC[j-1]-k)**n_m for k in phi_vals])
+                  weights = phase_samps/sum(phase_samps)
+               #   print(weights)
+                #  print(phi_vals)
+                  PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
+              else:
+                  k_nxt_phase = gibbs_phis_gen(PREV_PHASE, PHI_REF)[j+1] 
+                  rc_dates_nxt_phase = [i[0] for i in SITE_DICT_TEST_1[k_nxt_phase]['dates']]
+                  phi_vals = np.linspace(min(rc_dates) - 0.1, max(rc_dates_nxt_phase)+ 0.1, num=max(int(min(rc_dates) - max(rc_dates_nxt_phase))*50, 10))
+                  n_m_1 = len(SITE_DICT_TEST_1[k_nxt_phase]["dates"])
+                  beta = SITE_DICT_TEST_1[k_nxt_phase]["boundaries"][0]
+                  phase_samps = np.array([(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1) for k in phi_vals]) #(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1)
+                  weights = phase_samps/sum(phase_samps)
+             #     print(weights)
+              #    print(phi_vals)
+                  PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
+              POST_PHIS[j].append(PHIS_VEC[j])
+        POST_S.append(PHIS_VEC[0] - PHIS_VEC[M-1])
+        SITE_DICT_TEST_1 = dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF) #updates dictionary to stash all the samples
+        for k in range(len(THETA_INITS)):
+              key = KEY_REF[k] #which phase the theta is in
+              a = [CONTEXT_NO[k] in d for d in SITE_DICT_TEST_1[key]["dates"]].index(True) #finds where in dict date is
+              strat_single = strat_rel(SITE_DICT_TEST_1, key, a, THETAS, CONTEXT_NO) #gets upper and lower bounds based on any strat rels
+              low_bound = max(SITE_DICT_TEST_1[key]["boundaries"][0], strat_single[1]) #lower bound for sampling
+              up_bound = min(SITE_DICT_TEST_1[key]["boundaries"][1], strat_single[0]) #upper bound for samping
+              SAMPLE_VEC = RESULT_VEC[k][0][(RESULT_VEC[k][0] < up_bound) & (RESULT_VEC[k][0] > low_bound)] #restricts result vec between these boundaries                  
+              SAMPLE_VEC_PROB = RESULT_VEC[k][1][(RESULT_VEC[k][0] < up_bound) & (RESULT_VEC[k][0] > low_bound)]  #gets probs too between boundaries
+              THETAS[k] = random.choices(SAMPLE_VEC, weights=SAMPLE_VEC_PROB/sum(SAMPLE_VEC_PROB))[0]
+              POST_THETAS[k].append(THETAS[k]) 
+  PHI_ACCEPT1, ACCEPT1 = POST_PHIS, POST_THETAS
+  plt.plot(ACCEPT1[5])
+  return PHI_ACCEPT1, ACCEPT1, POST_S
 
 
 def gibbs_code(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT): 
