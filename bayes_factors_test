@@ -5,12 +5,19 @@ Created on Thu Aug 11 13:11:25 2022
 
 @author: bryony
 """
-
+import pandas as pd
 post_samps_all = pd.read_csv('full_results_df')
+dates = pd.read_csv('dates')
 import numpy as np
+import math
+import time
+import matplotlib.pyplot as plt
+CALIBRATION_DATA = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True)
 def bayes_fact_likelihood(results_vec, theta):
     if len(np.where(results_vec[0:][0] == int(theta))[0]) == 0:
+        #print('theta')
         x_temp = 0
+        print('oh no')
     else:
         ind_dic = np.where(results_vec[0:][0] == int(theta))[0][0]
         li_vec = results_vec[0:][0][ind_dic:ind_dic+11]
@@ -19,52 +26,103 @@ def bayes_fact_likelihood(results_vec, theta):
         x_temp = results_vec[1:][0][c_vec[0]][0]   
     return(x_temp)
 
+
+def likeli(x_val, s_err, theta, CALIBRATION_DATA):
+    """ calculates likelihood for a single value"""
+    data = CALIBRATION_DATA.iloc[theta]
+    value_theta = np.exp(-((x_val-data["Carbon_year"])**2)/
+                           (2*(s_err**2 + data["Carbon_error"]**2)))
+    like_val = value_theta/((2*3.14*(s_err**2 + data["Carbon_error"]**2))**0.5)
+    return like_val
 col_refs = post_samps_all.columns[8:]
-post_samps_theta = [list(post_samps_all[i]) for i in col_refs]
-prior_samps_theta = x[0]
+post_samps_theta = [list(post_samps_all[i])[10000:20000] for i in col_refs]
+prior_samps_theta = [i for i in ACCEPT]# x[1]
+post_samps_m1 = [i for i in ACCEPT1]#
+j_h_1 = len(post_samps_m1[0])
 j_f = len(prior_samps_theta[0])
 j_h = len(post_samps_theta[0])
 j = j_f + j_h
 
-def Ex_f(prior_samps_theta, j_h, j_f, j, results_vector, r):
+def Ex_f(prior_samps_theta, j_h, j_f, j, results_vector, r, dates, cal_data, CONTEXT_NO):
     sums_vec = []
     for i in range(len(prior_samps_theta[0])):
         prior_samps_row = [prior_samps_theta[d][i] for d in range(len(prior_samps_theta))]
         llhd = []
-        for j, k in enumerate(prior_samps_row):
-            llhd.append(bayes_fact_likelihood(results_vector[j], k))
+        for jj, k in enumerate(prior_samps_row):
+            context = CONTEXT_NO[jj]
+            rc_data = dates[dates['context'] == int(context)]
+            llhd.append(likeli(rc_data['date'], rc_data['error'], int(k), cal_data))
         tot_llh = np.prod(llhd)    
-        llhd = tot_llh/(j_h*tot_llh + j_f*r) 
-        sums_vec.append(llhd)
-    expec = (j/j_f)*sum(sums_vec)
+        llhd_fin = tot_llh/(j_h*tot_llh + j_f*r) 
+        sums_vec.append(llhd_fin)        
+    expec = (1/j_f)*sum(sums_vec)
     return expec
-        
-            
-        
-def Ex_h(post_samps_theta, j_h, j_f, j, results_vector, r):
+def Ex_h(post_samps_theta, j_h, j_f, j, results_vector, r,  dates, cal_data, CONTEXT_NO):
     sums_vec = []
     for i in range(len(post_samps_theta[0])):
         post_samps_row = [post_samps_theta[d][i] for d in range(len(post_samps_theta))]
         llhd = []
-        for j, k in enumerate(post_samps_row):
-            llhd.append(bayes_fact_likelihood(results_vector[j], k))
+        for jj, k in enumerate(post_samps_row):
+            context = CONTEXT_NO[jj]
+            rc_data = dates[dates['context'] == int(context)]
+            llhd.append(likeli(rc_data['date'], rc_data['error'], int(k), cal_data))
         tot_llh = np.prod(llhd)    
-        llhd = 1/(j_h*tot_llh + j_f*r) 
-        sums_vec.append(llhd)
-    expec = (j/j_h)*sum(sums_vec)
+        llhd_fin = 1/(j_h*tot_llh + j_f*r) 
+        sums_vec.append(llhd_fin)
+    expec = (1/j_h)*sum(sums_vec)
+    print(tot_llh)
     return expec     
-    
-r_0 = 0.05
 
-def r_seq(r_0, post_samps_theta, prior_samps_theta, j, j_f, j_h, iters, results_vec):
+def pre_sum_cal(samples, CONTEXT_NO, cal_data):
+    sums_vec = []
+    for i in range(len(post_samps_theta[0])):
+        print(i)
+        post_samps_row = [samples[d][i] for d in range(len(samples))]
+        llhd = []
+        for jj, k in enumerate(post_samps_row):
+            context = CONTEXT_NO[jj]
+            rc_data = dates[dates['context'] == int(context)]
+            llhd.append(likeli(rc_data['date'], rc_data['error'], int(k), cal_data))
+        tot_llh = np.prod(llhd)
+        sums_vec.append(tot_llh)
+    return sums_vec
+    
+
+llh_vec_post = pre_sum_cal(post_samps_theta, CONTEXT_NO, CALIBRATION_DATA)
+llh_vec_prior = pre_sum_cal(prior_samps_theta, CONTEXT_NO, CALIBRATION_DATA)
+llh_vec_post_1 = pre_sum_cal(post_samps_m1, CONTEXT_NO, CALIBRATION_DATA)
+def Ex_h_test(j_h, j_f, j, r, llh_vec):
+    llhd_fin = [1/((j_h*k) + (j_f*r)) for k in llh_vec] 
+    expec = (1/j_h)*sum(llhd_fin)
+    return expec   
+
+def Ex_f_test(j_h, j_f, j, r, llh_vec):
+    llhd_fin = [k/(j_h*k + j_f*r) for k in llh_vec] 
+    expec = (1/j_f)*sum(llhd_fin)
+    return expec   
+    
+    
+r_0 = 0.000000000000005
+
+def r_seq(r_0, post_samps_theta, prior_samps_theta, j, j_f, j_h, iters, results_vec,dates, CALIBRATION_DATA, CONTEXT_NO):
     r_vec = [r_0]
     for i in range(iters):
         print(i)
         r = r_vec[i]
-        r_new =  Ex_f(prior_samps_theta, j_h, j_f, j, results_vec, r)/Ex_h(post_samps_theta, j_h, j_f, j, results_vec, r)
+        e_f = Ex_f_test(j_h, j_f, j, r, llh_vec_prior)
+        e_h = Ex_h_test(j_h, j_f, j, r, llh_vec_post_1)
+        r_new =  e_f/e_h
         r_vec.append(r_new)
-        
     return r_vec, r_vec[iters-1]    
+        
 
 
-test = r_seq(r_0, post_samps_theta, prior_samps_theta, j, j_f, j_h, 100, RESULT_VEC)
+test = r_seq(r_0, post_samps_theta, prior_samps_theta, j, j_f, j_h, 50, RESULT_VEC, dates, CALIBRATION_DATA, CONTEXT_NO)
+test1 = r_seq(r_0, post_samps_m1, prior_samps_theta, j, j_f, j_h, 50, RESULT_VEC, dates, CALIBRATION_DATA, CONTEXT_NO)
+
+test[1]/test1[1]
+plt.plot(test[0])
+test[1]
+
+
+
