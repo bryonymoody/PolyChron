@@ -764,7 +764,7 @@ class popupWindow3(object):
             msg = tk.Label(self.canvas, text = str(i))
             msg.config(bg=self.COLORS[ind], font=('times', 24, 'italic'))
             msg.bind('<B1-Motion>',self.on_move)
-            msg.place(x=10*ind - 100*(ind -1) , y=20*ind - 100*(ind-1), relwidth = min(1/len(self.phase_labels) - 0.05, 0.25))
+            msg.place(x=10*ind - 50*(ind -1) , y=20*ind - 50*(ind-1), relwidth = min(1/len(self.phase_labels) - 0.05, 0.25))
             self.label_dict[i] = msg
         self.button1 = tk.Button(self.top, text = "Finish", command = lambda: self.get_coords()) 
         self.button1.place(relx = 0, rely = 0)   
