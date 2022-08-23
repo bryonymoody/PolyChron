@@ -8,13 +8,13 @@ Created on Sun Aug 15 17:43:25 2021
 import os
 os.chdir("/home/bryony/Documents/Pythonapp_tests/projects")
 import tkinter as tk
-from tkinter import ttk, Misc
+from tkinter import ttk
 import copy
 import re
 import ast
 import matplotlib as plt
 from PIL import Image, ImageTk, ImageChops
-from networkx.drawing.nx_pydot import read_dot, write_dot, to_pydot
+from networkx.drawing.nx_pydot import read_dot, write_dot
 import networkx as nx
 import pydot
 import numpy as np
@@ -29,8 +29,7 @@ from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationTool
 import pickle
 from tkinter import simpledialog
 import tkinter.font as tkFont
-import time
-import re
+
 
 
 old_stdout = sys.stdout
@@ -258,7 +257,7 @@ def phase_labels(phi_ref, POST_PHASE, phi_accept, all_samps_phi):
     all_results_dict = {labels[0]: all_samps_phi[i]}
     for a_val in enumerate(POST_PHASE):
         i = i + 1
-        if a_val[1] == "abuting":
+        if a_val[1] == "abutting":
             labels.append('b_' + str(phi_ref[a_val[0]]) + ' = a_' + str(phi_ref[a_val[0]+1]))
             results_dict['a_' + str(phi_ref[a_val[0]+1])  + ' = b_' + str(phi_ref[a_val[0]])] = phi_accept[i]
             all_results_dict['a_' + str(phi_ref[a_val[0]+1])  + ' = b_' + str(phi_ref[a_val[0]])] = all_samps_phi[i]
@@ -345,7 +344,7 @@ def phase_rels_delete_empty(file_graph, new_phase_rels, p_list, phasedict, phase
                 null_phases.append(p)
             else:
                 file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[0]), arrowhead='none')
-        if relation == "abuting":
+        if relation == "abutting":
             if (p[0] in graph_data[1][2]) == False:
                 null_phases.append(p)
             elif (p[1] in graph_data[1][2]) == False:
@@ -384,9 +383,10 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck, post_d
         phase_nodes.append('a_'+ str(p_list[0][0]))
         up_phase = [i[0] for i in p_list]
         low_phase = [i[1] for i in p_list]
-        act_phases = set(up_phase + low_phase) #actual ohases we are working with
+        act_phases = set(up_phase + low_phase) #actual phases we are working with
         del_phase = act_phases - set(graph_data[1][2])
         graph = nx.DiGraph(graph_attr={'splines':'ortho'})
+        print(phase_trck)
         if len(phase_trck) != 0:
             graph.add_edges_from(phase_trck, arrows = "none")
             phi_ref = list(reversed(list(nx.topological_sort(graph))))
@@ -580,6 +580,7 @@ class popupWindow2(object):
     def __init__(self, master, graph, canvas):
         '''initiliases popup2'''
         self.top = tk.Toplevel(master)
+        self.top.title("Adding new metadata")
         self.top.configure(bg ='#AEC7D6')
         self.top.geometry("1000x400")
         #this popup window lets us change the metadata after popupwindow has gone
@@ -695,20 +696,21 @@ class popupWindow2(object):
         self.top.destroy()
 
 class popupWindow3(object):
-    def __init__(self, master, graph, canvas, phase_rels, dropdown_ns=[], dropdown_intru=[], resid_list=[], intru_list=[]):
+    def __init__(self, master, graph, canvas, phase_rels, phase_list, dropdown_ns=[], dropdown_intru=[], resid_list=[], intru_list=[]):
         '''initialises popup3'''
         #set up the canvas for checking if contexts are residual or intrusive
         self.littlecanvas2 = canvas
         self.top = tk.Toplevel(master)
         self.top.geometry("1000x400")
         self.top.configure(bg ='#AEC7D6')
+        self.top.title("Adding group relationships")
         self.graph = graph
-        #makes a copy of the graph so I can edit it
+        #makes a copy of the graph so I can edit it to chrnograph
         self.graphcopy = copy.deepcopy(self.graph)
-        phasedict = nx.get_node_attributes(self.graphcopy, 'Phase')
-        datadict = nx.get_node_attributes(self.graphcopy, 'Date')
-        nodes = self.graphcopy.nodes()
-        self.node_del_tracker = []
+        phasedict = nx.get_node_attributes(self.graphcopy, 'Phase') #get all the phases for each node
+        datadict = nx.get_node_attributes(self.graphcopy, 'Date') # get all dates for each notes
+        nodes = self.graphcopy.nodes() #all contexts
+        self.node_del_tracker = [] #empty node tracker 
         #checks for each context and if there isn't node or phase info, it deletes it
         for i in nodes:
             if phasedict[i] == None:
@@ -718,16 +720,16 @@ class popupWindow3(object):
         for j in self.node_del_tracker:
             self.graphcopy.remove_node(j)
         #sets up all the vairables we need for this class
-        self.context_no = [x for x in list(self.graph.nodes()) if x not in self.node_del_tracker]
-        self.CONT_TYPE = ['normal' for i in self.context_no]
-        self.variable_1 = tk.StringVar(self.top)
+        self.context_no = [x for x in list(self.graph.nodes()) if x not in self.node_del_tracker] # sets up a context list
+        self.CONT_TYPE = ['normal' for i in self.context_no] #set up context types
+        self.variable_1 = tk.StringVar(self.top) 
         self.variable_2 = tk.StringVar(self.top)
         self.phases = phase_rels
-        self.menu_list1 = []
-        self.menudict = {}
-        self.prev_dict = {}
-        self.post_dict = {}
-        self.menu_list2 = ["abuting", "gap", "overlap"]
+        # self.menu_list1 = []
+        # self.menudict = {}
+        # self.prev_dict = {}
+        # self.post_dict = {}
+        # self.menu_list2 = ["abutting", "gap", "overlap"]
         self.resid_list3 = resid_list
         self.intru_list3 = intru_list
         self.dropdown_ns = dropdown_ns
@@ -752,22 +754,89 @@ class popupWindow3(object):
                 self.context_no.remove(self.intru_list3[j])
         self.button_b = ttk.Button(self.top, text='Render Chronological graph', command=lambda: self.full_chronograph_func())
         self.step_1 = chrono_edge_remov(self.graphcopy)
-
         self.button_b.place(relx=0.4, rely=0.55)
-        if self.phases != None:
-            for i in self.phases:
-                self.menu_list1.append("Relationship between start of phase " + str(i[0]) + " and end of phase " + str(i[1]))
-            self.button_a = ttk.Button(self.top, text='Add Phase Relationship', command=lambda: self.phase_rel_func())
-            self.optionmenu_b = ttk.OptionMenu(self.top, self.variable_2, self.menu_list2[0], *self.menu_list2)
-            self.optionmenu_a = ttk.OptionMenu(self.top, self.variable_1, self.menu_list1[0], *self.menu_list1)
-            self.optionmenu_a.place(relx=0.1, rely=0.15)
-            self.optionmenu_b.place(relx=0.6, rely=0.15)
-            self.button_a.place(relx=0.7, rely=0.15)
-        else:
-            self.menudict = None
+        self.phase_labels = list(self.step_1[0][1][2])
+        self.COLORS = ['LavenderBlush2', 'powder blue', 'LavenderBlush3', 'LemonChiffon4', 'dark khaki', 'LightGoldenrod1', 'aquamarine2', 'hot pink', 'DarkOrchid4', 'pale turquoise', 'LightSteelBlue2', 'DeepPink4', 'firebrick4', 'khaki4', 'turquoise3', 'alice blue', 'DarkOrange4', 'LavenderBlush4', 'misty rose', 'pink1', 'OrangeRed2', 'chocolate2', 'OliveDrab2', 'LightSteelBlue3', 'firebrick2', 'dark orange', 'ivory2', 'yellow2', 'DeepPink3', 'aquamarine', 'LightPink2', 'DeepSkyBlue2', 'LightCyan4', 'RoyalBlue3', 'SeaGreen3', 'SlateGray1', 'IndianRed3', 'DarkGoldenrod3', 'HotPink1', 'navy', 'tan2', 'orange4', 'tomato', 'LightSteelBlue1', 'coral1', 'MediumOrchid4', 'light grey', 'DarkOrchid3', 'RosyBrown2', 'LightSkyBlue1', 'medium sea green', 'deep pink', 'OrangeRed3', 'sienna2', 'thistle2', 'linen', 'tan4', 'bisque2', 'MediumPurple4', 'DarkSlateGray4', 'mint cream', 'sienna3', 'lemon chiffon', 'ivory3', 'chocolate1', 'peach puff', 'DeepSkyBlue3', 'khaki2', 'SlateGray2', 'dark turquoise', 'deep sky blue', 'light sky blue', 'lime green', 'yellow', 'burlywood3', 'tomato4', 'orange3', 'wheat2', 'olive drab', 'brown3', 'burlywood1', 'LightPink1', 'light cyan', 'saddle brown', 'SteelBlue3', 'SpringGreen3', 'goldenrod4', 'dark salmon', 'DodgerBlue3', 'MediumPurple3', 'azure2', 'lavender blush', 'SteelBlue4', 'honeydew3', 'LightBlue1', 'DeepSkyBlue4', 'medium aquamarine', 'turquoise1', 'thistle', 'DarkGoldenrod2', 'wheat3', 'LemonChiffon2', 'turquoise', 'light sea green', 'maroon3', 'green4', 'SlateBlue1', 'DarkOliveGreen3', 'dark violet', 'LightYellow3', 'DarkGoldenrod1', 'PeachPuff3', 'DarkOrange1', 'goldenrod2', 'goldenrod1', 'SkyBlue4', 'ivory4', 'DarkSeaGreen3', 'aquamarine4', 'VioletRed3', 'orange red', 'CadetBlue3', 'DarkSlateGray2', 'seashell2', 'DarkOliveGreen4', 'SkyBlue2', 'DarkOrchid2', 'maroon1', 'orchid1', 'red3', 'LightSkyBlue4', 'HotPink4', 'LightBlue2', 'coral3', 'magenta4', 'bisque4', 'SteelBlue1', 'cornsilk3', 'dark sea green', 'RosyBrown3', 'salmon3', 'NavajoWhite2', 'PaleTurquoise4', 'SteelBlue2', 'OliveDrab1', 'ghost white', 'HotPink3', 'salmon', 'maroon', 'khaki3', 'AntiqueWhite1', 'PaleVioletRed2', 'maroon2', 'cyan3', 'MistyRose4', 'thistle3', 'gold3', 'tomato3', 'tan1', 'LightGoldenrod3', 'blue violet', 'tomato2', 'RoyalBlue4', 'pink3', 'cadet blue', 'slate gray', 'medium slate blue', 'PaleGreen3', 'DodgerBlue2', 'LightSkyBlue3', 'lawn green', 'PaleGreen1', 'forest green', 'thistle1', 'snow', 'LightSteelBlue4', 'medium violet red', 'pink2', 'PaleVioletRed4', 'VioletRed1', 'gainsboro', 'navajo white', 'DarkOliveGreen1', 'IndianRed2', 'RoyalBlue2', 'dark olive green', 'AntiqueWhite3', 'DarkSlateGray1', 'LightSalmon3', 'salmon4', 'plum3', 'orchid3', 'azure', 'bisque3', 'turquoise4', 'SeaGreen1', 'sienna4', 'pink', 'MediumOrchid1', 'thistle4', 'PaleVioletRed3', 'blanched almond', 'DarkOrange2', 'royal blue', 'blue2', 'chartreuse4', 'LightGoldenrod4', 'NavajoWhite4', 'dark orchid', 'plum1', 'SkyBlue1', 'OrangeRed4', 'khaki', 'PaleGreen2', 'yellow4', 'maroon4', 'turquoise2', 'firebrick3', 'bisque', 'LightCyan2', 'burlywood4', 'PaleTurquoise3', 'azure4', 'gold', 'yellow3', 'chartreuse3', 'RosyBrown1', 'white smoke', 'PaleVioletRed1', 'papaya whip', 'medium spring green', 'AntiqueWhite4', 'SlateGray4', 'LightYellow4', 'coral2', 'MediumOrchid3', 'CadetBlue2', 'LightBlue3', 'snow2', 'purple1', 'magenta3', 'OliveDrab4', 'DarkOrange3', 'seashell3', 'magenta2', 'green2', 'snow4', 'DarkSeaGreen4', 'slate blue', 'PaleTurquoise1', 'red2', 'LightSkyBlue2', 'snow3', 'green yellow', 'DeepPink2', 'orange2', 'cyan', 'light goldenrod', 'light pink', 'honeydew4', 'RoyalBlue1', 'sea green', 'pale violet red', 'AntiqueWhite2', 'blue', 'LightSalmon2', 'SlateBlue4', 'orchid4', 'dark slate gray', 'dark slate blue', 'purple', 'chartreuse2', 'khaki1', 'LightBlue4', 'light yellow', 'indian red', 'VioletRed2', 'gold4', 'light goldenrod yellow', 'rosy brown', 'IndianRed4', 'azure3', 'orange', 'VioletRed4', 'salmon2', 'SeaGreen2', 'pale goldenrod', 'pale green', 'plum2', 'dark green', 'coral4', 'LightGoldenrod2', 'goldenrod3', 'NavajoWhite3', 'MistyRose2', 'wheat1', 'medium turquoise', 'floral white', 'red4', 'firebrick1', 'burlywood2', 'DarkGoldenrod4', 'goldenrod', 'sienna1', 'MediumPurple1', 'purple2', 'LightPink4', 'dim gray', 'LemonChiffon3', 'light steel blue', 'seashell4', 'brown1', 'wheat4', 'MediumOrchid2', 'DarkOrchid1', 'RosyBrown4', 'blue4', 'cyan2', 'salmon1', 'MistyRose3', 'chocolate3', 'light salmon', 'coral', 'honeydew2', 'light blue', 'sandy brown', 'LightCyan3', 'brown2', 'midnight blue', 'CadetBlue1', 'LightYellow2', 'cornsilk4', 'cornsilk2', 'SpringGreen4', 'PeachPuff4', 'PaleGreen4', 'SlateBlue2', 'orchid2', 'purple3', 'light slate blue', 'purple4', 'lavender', 'cornflower blue', 'CadetBlue4', 'DodgerBlue4', 'SlateBlue3', 'DarkSlateGray3', 'medium orchid', 'gold2', 'pink4', 'DarkOliveGreen2', 'spring green', 'dodger blue', 'IndianRed1', 'violet red', 'MediumPurple2', 'old lace', 'LightSalmon4', 'brown4', 'SpringGreen2', 'yellow green', 'plum4', 'SlateGray3', 'steel blue', 'HotPink2', 'medium purple', 'LightPink3', 'PeachPuff2', 'sky blue', 'dark goldenrod', 'PaleTurquoise2']
+        self.canvas = tk.Canvas(self.top, bg = 'white')
+        self.canvas.place(relx = 0.1, rely = 0.1, relheight = 0.8, relwidth = 0.8)
+        self.label_dict = {}
+        for ind, i in enumerate(self.phase_labels):    
+            msg = tk.Label(self.canvas, text = str(i))
+            msg.config(bg=self.COLORS[ind], font=('times', 24, 'italic'))
+            msg.bind('<B1-Motion>',self.on_move)
+            msg.place(x=10*ind - 100*(ind -1) , y=20*ind - 100*(ind-1), relwidth = min(1/len(self.phase_labels) - 0.05, 0.25))
+            self.label_dict[i] = msg
+        self.button1 = tk.Button(self.top, text = "Finish", command = lambda: self.get_coords()) 
+        self.button1.place(relx = 0, rely = 0)   
+        # if self.phases != None:
+        #     for i in self.phases:
+        #         self.menu_list1.append("Relationship between start of phase " + str(i[0]) + " and end of phase " + str(i[1]))
+        #     self.button_a = ttk.Button(self.top, text='Add Phase Relationship', command=lambda: self.phase_rel_func())
+        #     self.optionmenu_b = ttk.OptionMenu(self.top, self.variable_2, self.menu_list2[0], *self.menu_list2)
+        #     self.optionmenu_a = ttk.OptionMenu(self.top, self.variable_1, self.menu_list1[0], *self.menu_list1)
+        #     self.optionmenu_a.place(relx=0.1, rely=0.15)
+        #     self.optionmenu_b.place(relx=0.6, rely=0.15)
+        #     self.button_a.place(relx=0.7, rely=0.15)
+        # else:
+        #     self.menudict = None
         master.wait_window(self.top)
 
+    def get_coords(self):
+        y_list = []
+        for i in self.label_dict.keys():
+            yx = self.label_dict[i].winfo_y()
+            my = self.label_dict[i].winfo_height()
+            y_cent = yx + 0.5*my
+            y_list.append((i, y_cent))
+        y_final = sorted(y_list, key=lambda x: x[1]) 
+        ref_y = y_final[0][1]
+        ref_h = self.label_dict[y_final[0][0]].winfo_height()
+        ref_w = self.label_dict[y_final[0][0]].winfo_width()
+        ref_gap = 0.25*ref_w
+        orig_x = [self.label_dict[j[0]].winfo_x() for j in y_final[1:]]
+        orig_x_prev = [self.label_dict[j[0]].winfo_x() + ref_w for j in y_final[:-1]] 
+        self.prev_dict = {}
+        self.post_dict = {}
+        self.menudict = {}
+        for ind, j in enumerate(y_final[1:]):
+            x = orig_x[ind]
+            x_prev = orig_x_prev[ind]
+          #  print(ind)
+         #   print(len(y_final))
+            if ind < len(y_final)-1:
+                x_prev_curr = self.label_dict[y_final[ind][0]].winfo_x() + ref_w
+                if x - x_prev < -15:
+                    x = x_prev_curr - ref_gap
+                    self.prev_dict[str(j[0])] = 'overlap'
+                    self.post_dict[str(y_final[ind][0])] = 'overlap'
+                    self.menudict[(str(j[0]),str(y_final[ind][0]))] = 'overlap'
+                    
+                elif x - x_prev > 15:
+                    x = x_prev_curr + ref_gap
+                    self.prev_dict[str(j[0])] = 'gap'
+                    self.post_dict[str(y_final[ind][0])] = 'gap'
+                    self.menudict[(str(j[0]),str(y_final[ind][0]))] = 'gap'
+                else:
+                    x = x_prev_curr
+                    self.prev_dict[str(j[0])] = 'abutting'
+                    self.post_dict[str(y_final[ind][0])] = 'abutting'
+                    self.menudict[(str(j[0]),str(y_final[ind][0]))] = 'abutting'
+                y = ref_y + (0.5 + ind)*ref_h #ceter of top box + (half and scalefactor) times height   
+                self.label_dict[j[0]].place(x = x, y = y)
+                self.canvas.update()
+        self.full_chronograph_func()
+    def on_move(self, event):
+        component=event.widget
+        locx, locy = component.winfo_x(), component.winfo_y() #top left coords for where the object is
+      #  print(locx, locy)
+        w, h = self.canvas.winfo_width(), self.canvas.winfo_height() #width of master canvas
+        mx, my = component.winfo_width(), component.winfo_height() #width of boxes
+        xpos=(locx+event.x)-(15)
+        ypos=(locy+event.y)-int(my/2)
+        if xpos>=0 and ypos>=0 and w-abs(xpos)>=0 and xpos <= (w - mx) and h-abs(ypos)>=0 and ypos<=(h-my):
+           component.place(x=xpos,y=ypos)
 
+ 
     def phase_rel_func(self):
         '''changes the menu display as you add phase relationships'''
         n = re.search('start of phase (.+?) and end', self.variable_1.get()).group(1)
@@ -787,6 +856,9 @@ class popupWindow3(object):
         self.prev_phase = ["start"]
         self.post_phase = []
         phase_list = self.step_1[2]
+        print(self.menudict)
+        print(self.post_dict)
+        print(self.prev_dict)
         if len(self.step_1[0][1][3]) != 0:
             self.graphcopy, self.phi_ref, self.null_phases = chrono_edge_add(self.graphcopy, self.step_1[0],
                                                                              self.step_1[1], self.menudict, self.phases,
@@ -848,6 +920,7 @@ class popupWindow4(object):
         '''initialised window 4'''
         self.top.configure(bg ='#AEC7D6')
         self.top = tk.Toplevel(controller)
+        self.top.title("Managing intrusive and residual contexts")
         self.top.geometry("1000x400")
         self.node_del_tracker = node_track
         self.controller = controller
@@ -908,6 +981,7 @@ class popupWindow5(object):
         top=self.top=tk.Toplevel(master)
         top.configure(bg ='white')
         self.top.geometry("1000x400")
+        self.top.title("Removal of context")
         self.l=tk.Label(top,text="Why are you removing this context from your stratigraphy?", bg ='white', font='helvetica 12', fg = '#2f4858')
         self.l.place(relx = 0.3, rely = 0.1)
         self.e=tk.Text(top, font='helvetica 11', fg = '#2f4858')
@@ -923,6 +997,7 @@ class popupWindow6(object):
         top=self.top=tk.Toplevel(master)
         top.configure(bg ='white')
         self.top.geometry("1000x400")
+        self.top.title("Removal of stratigraphic relationship")
         self.l=tk.Label(top,text="Why are you deleting the stratigraphic relationship between these contexts?", bg ='white', font='helvetica 12', fg = '#2f4858')
         self.l.place(relx = 0.3, rely = 0.1)
         self.e=tk.Text(top, font='helvetica 11', fg = '#2f4858')
@@ -937,6 +1012,7 @@ class popupWindow7(object):
     def __init__(self,master, df):
         top=self.top=tk.Toplevel(master)
         self.canvas = tk.Canvas(top, bg = 'white')
+        top.title("Data preview")
         self.canvas.pack()
         self.l=tk.Label(self.canvas, text="Data Preview")
         self.l.pack()
@@ -983,6 +1059,7 @@ class popupWindow8(object):
              
          self.top=tk.Toplevel(master)
          self.top.configure(bg ='white')
+         self.top.title("Model calibration")
          self.top.geometry("1000x400")
          self.l=tk.Label(self.top,text="Which model/s would you like calibrate?", bg ='white', font='helvetica 12', fg = '#2f4858')
          self.l.place(relx = 0.3, rely = 0.1)
@@ -1000,6 +1077,7 @@ class popupWindow8(object):
     
      def save_state_1(self, j):
         global mcmc_check, load_check, FILE_INPUT
+        
         vars_list_1 = dir(self)
         var_list = [var for var in vars_list_1 if (('__' and 'grid' and 'get' and 'tkinter' and 'children') not in var) and (var[0] != '_')]          
         data = {}
@@ -1048,32 +1126,43 @@ class load_Window(object):
         win_y = root_y + 200
         self.top=tk.Toplevel(master)
         self.top.attributes("-topmost", True)
+        self.top.title("Polychron loading page")
     # set toplevel in new position
         self.top.geometry(f'1000x400+{win_x}+{win_y}') 
         self.folderPath = tk.StringVar()
         self.maincanvas = tk.Canvas(self.top, bg = 'white')
         self.maincanvas.place(relx=0, rely=0, relheight = 1, relwidth = 1)       
         self.canvas = tk.Canvas(self.top, bg = '#AEC7D6') 
-        self.canvas.place(relx = 0, rely= 0.6, relheight = 0.4, relwidth = 1) 
+        self.canvas.place(relx =0, rely= 0, relheight = 1, relwidth = 0.2) 
         self.greeting = None
         self.b = None
         self.c = None
         self.back = None
+        self.back1 = None
         self.l = None
+        self.selected_langs = None
         self.MyListBox = None
         self.text_1 = None
         self.user_input = None
+        self.folder = None
         self.initscreen()
         
     def initscreen(self):
-        [x.destroy() for x in [self.greeting, self.b, self.c, self.back, self.l, self.MyListBox, self.text_1, self.user_input] if x != None]
+        [x.destroy() for x in [self.greeting, self.b, self.c, self.back, self.back1, self.l, self.MyListBox, self.text_1, self.user_input] if x != None]
         self.maincanvas.update() 
-        self.greeting = tk.Label(self.maincanvas, text="Welcome to PollyChron! \n\n Would you like to start a new project or load an existing one?", bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
-        self.greeting.place(relx = 0.2, rely = 0.2)
-        self.b=tk.Button(self.canvas, text='Load project', command=lambda: self.load_proj(), bg = '#ec9949', font = ('Helvetica 12 bold'),  fg = '#2F4858') 
-        self.b.place(relx = 0.3, rely = 0.4)
-        self.c=tk.Button(self.canvas, text='New project', command=lambda: self.new_proj(), bg = '#ec9949', font = ('Helvetica 12 bold'),  fg = '#2F4858')
-        self.c.place(relx = 0.55, rely = 0.4)
+        image1 = Image.open("/home/bryony/Documents/Pythonapp_tests/projects/logo.png")
+        logo = ImageTk.PhotoImage(image1.resize((360, 70)))
+ #       self.imagetk2 = ImageTk.PhotoImage(image2.resize((int(x_2 - x_1), int(y_2 - y_1))))
+        self.label1 = tk.Label(self.maincanvas, image=logo, bg = 'white')
+        self.label1.image = logo        
+        # Position image
+        self.label1.place(relx = 0.2, rely = 0.2,  relheight = 0.2, relwidth = 0.4)
+        self.greeting = tk.Label(self.maincanvas, text="Welcome to PolyChron, how would you like to proceed?", bg = 'white', font = ('helvetica 12 bold'), fg = '#2F4858', anchor = 'w' )
+        self.greeting.place(relx = 0.22, rely = 0.45)
+        self.b=tk.Button(self.maincanvas, text='Load existing project', command=lambda: self.load_proj(), bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6') 
+        self.b.place(relx = 0.8, rely = 0.9)
+        self.c=tk.Button(self.maincanvas, text='Create new project', command=lambda: self.new_proj(), bg = '#eff3f6', font = ('Helvetica 12 bold'),  fg = '#2F4858')
+        self.c.place(relx = 0.62, rely = 0.9)
 
     def getFolderPath(self):
         self.top.attributes("-topmost", False)
@@ -1083,55 +1172,67 @@ class load_Window(object):
   
         
     def load_proj(self):
+        global proj_dir
         os.chdir("/home/bryony/Documents/Pythonapp_tests/projects")
-        [x.destroy() for x in [self.greeting, self.b, self.c, self.back, self.l, self.MyListBox, self.text_1, self.user_input] if x != None]
+        [x.destroy() for x in [self.label1, self.greeting, self.b, self.c, self.back, self.l, self.back1, self.MyListBox, self.text_1, self.user_input] if x != None]
         self.maincanvas.update()
 
-        self.l=tk.Label(self.maincanvas, text="Project list", bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
-        self.l.place(relx = 0.43, rely = 0.02)
+        self.l=tk.Label(self.maincanvas, text="Select project", bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
+        self.l.place(relx = 0.36, rely = 0.1)
+    #    self.linecanvas = tk.Canvas(self.maincanvas, bg = '#ec9949')
+    #    self.linecanvas.place(relx=0.36, rely=0.16, relheight = 0.01, relwidth = 0.19)  
+    #    self.line2canvas = tk.Canvas(self.maincanvas, bg = '#ec9949')
+    #    self.line2canvas.place(relx=0.36, rely=0.58, relheight = 0.01, relwidth = 0.19)
        # myList_all = os.listdir("/home/bryony/Documents/Pythonapp_tests/projects")
         myList = [d for d in os.listdir("/home/bryony/Documents/Pythonapp_tests/projects") if os.path.isdir(d)]
         myList = [d for d in myList if d != '__pycache__']
         mylist_var = tk.StringVar(value = myList)
-        self.MyListBox = tk.Listbox(self.maincanvas, listvariable = mylist_var, bg = 'white', font = ('helvetica 12 bold'), fg = '#2F4858', selectmode = 'browse')  
+        self.MyListBox = tk.Listbox(self.maincanvas, listvariable = mylist_var, bg = '#eff3f6', font = ('Helvetica 11 bold'),  fg = '#2F4858', selectmode = 'browse')  
         scrollbar = ttk.Scrollbar(
             self.maincanvas,
             orient='vertical',
             command=self.MyListBox.yview)
         self.MyListBox['yscrollcommand'] = scrollbar.set
-        self.MyListBox.place(relx = 0.4, rely = 0.1)
+        self.MyListBox.place(relx = 0.36, rely = 0.17, relheight=0.4, relwidth = 0.28)
         self.MyListBox.bind('<<ListboxSelect>>', self.items_selected)
-        self.b=tk.Button(self.canvas,text='Load project', command=lambda: self.load_model(), bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
-        self.b.place(relx = 0.31, rely = 0.2)
-        self.back=tk.Button(self.canvas,text='Back', command=lambda: self.initscreen(), bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
-        self.back.place(relx = 0.51, rely = 0.2)
-       # self.getFolderPath() 
-    def load_model(self):
+        self.b=tk.Button(self.maincanvas,text='Load project', command=lambda: self.load_model(proj_dir),  bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6') 
+        self.b.place(relx = 0.8, rely = 0.9, relwidth = 0.19)
+        self.back=tk.Button(self.maincanvas,text='Back', command=lambda: self.initscreen(),  bg = '#eff3f6', font = ('Helvetica 12 bold'),  fg = '#2F4858')
+        self.back.place(relx = 0.21, rely = 0.01)
+         
+    
+    def load_model(self, direc):
         global proj_dir
-        path = os.getcwd() + "/" + self.selected_langs 
+        [x.destroy() for x in [self.greeting, self.label1, self.b, self.c, self.back, self.back1, self.l, self.MyListBox] if x != None] 
+        if self.selected_langs == None:
+            path = direc
+        else:    
+            path = os.getcwd() + "/" + self.selected_langs 
         os.chdir(path)
-        [x.destroy() for x in [self.greeting, self.b, self.c, self.back, self.l, self.MyListBox] if x != None]
+        print(path)
         self.maincanvas.update()
 
         self.l=tk.Label(self.maincanvas, text="Model list", bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
-        self.l.place(relx = 0.43, rely = 0.02)
+        self.l.place(relx = 0.36, rely = 0.1)
        # myList_all = os.listdir("/home/bryony/Documents/Pythonapp_tests/projects")
         myList = [d for d in os.listdir(path) if os.path.isdir(d)]
         print(os.path.isdir(os.listdir(path)[0]))
         self.model_list = tk.StringVar(value = myList)
-        self.MyListBox = tk.Listbox(self.maincanvas, listvariable = self.model_list, bg = 'white', font = ('helvetica 12 bold'), fg = '#2F4858', selectmode = 'browse')  
+        self.MyListBox = tk.Listbox(self.maincanvas, listvariable = self.model_list, bg = '#eff3f6', font = ('Helvetica 11 bold'),  fg = '#2F4858', selectmode = 'browse')  
         scrollbar = ttk.Scrollbar(
             self.maincanvas,
             orient='vertical',
             command=self.MyListBox.yview)
         self.MyListBox['yscrollcommand'] = scrollbar.set
-        self.MyListBox.place(relx = 0.4, rely = 0.1)
+        self.MyListBox.place(relx = 0.36, rely = 0.17, relheight=0.4, relwidth = 0.28)
         self.MyListBox.bind('<<ListboxSelect>>', self.items_selected)
-        self.b=tk.Button(self.canvas,text='Load model', command=lambda: self.cleanup2(), bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
-        self.b.place(relx = 0.31, rely = 0.2)
-        self.back=tk.Button(self.canvas,text='Back', command=lambda: self.load_proj(), bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
-        self.back.place(relx = 0.51, rely = 0.2)
-        proj_dir = path 
+        self.b=tk.Button(self.maincanvas,text='Load selected model', command=lambda: self.cleanup2(),  bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6') 
+        self.b.place(relx = 0.8, rely = 0.9, relwidth = 0.195)
+        self.back=tk.Button(self.maincanvas,text='Back', command=lambda: self.initscreen(), bg = '#eff3f6', font = ('Helvetica 12 bold'),  fg = '#2F4858')
+        self.back.place(relx = 0.21, rely = 0.01)
+        self.back1=tk.Button(self.maincanvas,text='Create new model', command=lambda: self.new_model(path),  bg = '#eff3f6', font = ('Helvetica 12 bold'),  fg = '#2F4858')
+        self.back1.place(relx = 0.62, rely = 0.9, relwidth = 0.17)
+        proj_dir = path
 
     def items_selected(self, event):
         """ handle item selected event    """
@@ -1142,8 +1243,9 @@ class load_Window(object):
 
   
         
-    def create_file(self):  
-        dirs = os.path.join("/home/bryony/Documents/Pythonapp_tests/projects", self.folder.get(), "model_1")
+    def create_file(self, folder_dir, load, top_tracker):  
+        global proj_dir
+        dirs = os.path.join("/home/bryony/Documents/Pythonapp_tests/projects", folder_dir, self.model.get())
         dirs2 = os.path.join(dirs, "stratigraphic_graph")
         dirs3 = os.path.join(dirs, "chronological_graph")
         dirs4 = os.path.join(dirs, "python_only")
@@ -1155,19 +1257,24 @@ class load_Window(object):
             os.makedirs(dirs3)
             os.makedirs(dirs4)
             os.makedirs(dirs5)
-            for F in (StartPage, PageOne):
-                page_name = F.__name__
-                frame = F(parent=self.master.container, controller=self.master)
-                self.master.frames[page_name] = frame
-
-                # put all of the pages in the same location;
-                # the one on the top of the stacking order
-                # will be the one that is visible.
-                frame.grid(row=0, column=0, sticky="nsew")        
-            self.master.show_frame("StartPage")
+            os.chdir(dirs)
+            proj_dir = os.path.join("/home/bryony/Documents/Pythonapp_tests/projects", folder_dir)
+            if load == True:
+                for F in (StartPage, PageOne):
+                    page_name = F.__name__
+                    frame = F(parent=self.master.container, controller=self.master)
+                    self.master.frames[page_name] = frame
+    
+                    # put all of the pages in the same location;
+                    # the one on the top of the stacking order
+                    # will be the one that is visible.
+                    frame.grid(row=0, column=0, sticky="nsew")        
+                    self.master.show_frame("StartPage")   
+            self.cleanup(top_tracker)
+            tk.messagebox.showinfo('Tips:','model created successfully!')
+            print(os.chdir)
+        
             
-            tk.messagebox.showinfo('Tips:','Project created successfully!')
-            self.cleanup()
 
         else:
             
@@ -1175,19 +1282,35 @@ class load_Window(object):
             self.cleanup()
 
     def new_proj(self):
-        [x.destroy() for x in [self.greeting, self.b, self.c, self.back, self.l, self.MyListBox, self.text_1, self.user_input] if x != None]
+        [x.destroy() for x in [self.greeting, self.label1, self.b, self.back1, self.c, self.back, self.l, self.MyListBox, self.text_1, self.user_input] if x != None]
         self.maincanvas.update()
         self.folder = tk.StringVar() # Receiving user's folder_name selection
         self.text_1 = tk.Label(self.maincanvas, text = "Input project name:" ,bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
         self.text_1.place(relx=0.4, rely= 0.2)
         self.user_input = tk.Entry(self.maincanvas, textvariable = self.folder)
-        self.user_input.place(relx=0.35, rely=0.4, relwidth = 0.3)
-        self.b = tk.Button(self.canvas, text = "Submit: ", command = lambda: self.create_file(), bg = '#ec9949', font = ('Helvetica 12 bold'),  fg = '#2F4858')
-        self.b.place(relx = 0.31, rely = 0.2)
-        self.back=tk.Button(self.canvas,text='Back', command=lambda: self.initscreen(), bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
-        self.back.place(relx = 0.51, rely = 0.2)
+        self.user_input.place(relx=0.35, rely=0.4, relwidth = 0.3, relheight = 0.08)
+        self.b = tk.Button(self.maincanvas, text = "Submit ", command = lambda: self.new_model(self.folder.get()), bg = '#ec9949', font = ('Helvetica 12 bold'),  fg = '#2F4858')
+        self.b.place(relx = 0.66, rely = 0.4)
+        self.back=tk.Button(self.maincanvas,text='Back', command=lambda: self.initscreen(), bg = '#dcdcdc', font = ('helvetica 12 bold'), fg = '#2F4858' )
+        self.back.place(relx = 0.21, rely = 0.01)
         
-    def cleanup(self):
+    def new_model(self, folder_dir, load = True):
+        [x.destroy() for x in [self.greeting, self.label1, self.b, self.c, self.back, self.back1, self.l, self.MyListBox, self.text_1, self.user_input] if x != None]
+        self.maincanvas.update()
+        self.model = tk.StringVar() # Receiving user's folder_name selection
+        self.text_1 = tk.Label(self.maincanvas, text = "Input model name:" ,bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
+        self.text_1.place(relx=0.4, rely= 0.2)
+        self.user_input = tk.Entry(self.maincanvas, textvariable = self.model)
+        self.user_input.place(relx=0.35, rely=0.4, relwidth = 0.3, relheight = 0.08)
+        self.b = tk.Button(self.maincanvas, text = "Submit ", command = lambda: self.create_file(folder_dir, load), bg = '#ec9949', font = ('Helvetica 12 bold'),  fg = '#2F4858')
+        self.b.place(relx = 0.66, rely = 0.4)
+        self.back=tk.Button(self.maincanvas,text='Back', command=lambda: self.new_proj(), bg = '#dcdcdc', font = ('helvetica 12 bold'), fg = '#2F4858' )
+        self.back.place(relx = 0.21, rely = 0.01)    
+        return self.top
+    
+    def cleanup(self, top_tracker):
+        if top_tracker != None:
+            top_tracker.destroy()
         self.top.destroy()
         
     def cleanup2(self):
@@ -1276,7 +1399,7 @@ class StartPage(tk.Frame):
         self.file_menubar["menu"] = file
         file.add_separator()
         FILE_INPUT = None
-        
+        print(proj_dir)
  #       self.menubar.add_cascade(label ='File', menu = file)
         file.add_command(label ='Load stratigraphic diagram file (.dot)', command=lambda: self.open_file1(), font='helvetica 10')
         file.add_command(label ='Load stratigraphic relationship file (.csv)', command=lambda: self.open_file2(),font='helvetica 10')
@@ -1284,7 +1407,10 @@ class StartPage(tk.Frame):
         file.add_command(label ='Load context grouping file (.csv)', command=lambda: self.open_file4(), font='helvetica 10')
         file.add_command(label ='Load group relationship file (.csv)', command=lambda: self.open_file5(), font='helvetica 10')
         file.add_command(label ='Load context equalities file (.csv)', command=lambda: self.open_file6(), font='helvetica 10')
-        file.add_command(label ='Save project progress', command = lambda: self.save_state_1(), font='helvetica 10')
+        file.add_command(label ='Load new project', command = lambda: load_Window(MAIN_FRAME) , font='helvetica 10')
+        file.add_command(label ='Load existing model', command = lambda: load_Window.load_model(load_Window(MAIN_FRAME), proj_dir), font='helvetica 10')
+        file.add_command(label ='Save changes as current model', command = lambda: self.save_state_1(), font='helvetica 10')
+        file.add_command(label ='Save changes as new model', command = lambda: self.refresh_4_new_model(controller, proj_dir, load = False), font='helvetica 10')
   #      file.add_command(label ='Reload previous project', command = lambda: self.restore_state(), font='helvetica 10')
         file.add_separator()
         file.add_command(label ='Exit', command = lambda: self.destroy1)
@@ -1305,7 +1431,7 @@ class StartPage(tk.Frame):
         #file2.add_separator()
         file2.add_command(label = 'Render chronological graph', command=lambda: self.chronograph_render_wrap(), font='helvetica 10')
         file2.add_command(label = 'Calibrate model', command=lambda: self.load_mcmc(), font='helvetica 10')
-        file2.add_command(label = 'Calibrate multiple projects from project', command=lambda: popupWindow8(self, proj_dir))
+        file2.add_command(label = 'Calibrate multiple projects from project', command=lambda: popupWindow8(self, proj_dir), font='helvetica 10')
        # file2.add_separator()
         self.tool_menubar.place(relx=0.14, rely=0, relwidth=0.1, relheight=0.03)
         #############################
@@ -1418,7 +1544,7 @@ class StartPage(tk.Frame):
         
         self.databutton = tk.Button(self, text="Data loaded  ↙", font='helvetica 12 bold', fg = 'white',
                                   command=lambda: self.display_data_func(), bd=0, highlightthickness=0, bg = '#33658a')
-        self.databutton.place(relx=0.303, rely=0.038, relwidth=0.07, relheight=0.028)
+        self.databutton.place(relx=0.303, rely=0.04, relwidth=0.07, relheight=0.028)
         self.datacanvas = tk.Canvas(self.behindcanvas, bd=0, highlightthickness = 0, bg = '#33658a')
         self.datacanvas.place(relx=0.55, rely=0.0, relwidth=0.45, relheight=0.2)
         self.datalittlecanvas = tk.Canvas(self.datacanvas, bd=8, bg = 'white', highlightbackground= '#33658a', highlightthickness = 5)
@@ -1426,8 +1552,12 @@ class StartPage(tk.Frame):
         tk.Misc.lift(self.littlecanvas)
         self.display_data_var = 'hidden'
         self.check_list_gen()
+        self.save_state_1()
         
-        
+    def refresh_4_new_model(self, controller, proj_dir, load):
+        extra_top = load_Window.new_model(load_Window(MAIN_FRAME), proj_dir, load)
+        self.wait_window(extra_top)
+        self.save_state_1()
         
     def display_data_func(self):
         print('hello')
@@ -1503,6 +1633,7 @@ class StartPage(tk.Frame):
             self.variable.set("Node Action")
     def save_state_1(self):
         global mcmc_check, load_check, FILE_INPUT
+        print('hi')
         vars_list_1 = dir(self)
         var_list = [var for var in vars_list_1 if (('__' and 'grid' and 'get' and 'tkinter' and 'children') not in var) and (var[0] != '_')]          
         data = {}
@@ -1515,13 +1646,29 @@ class StartPage(tk.Frame):
         data['load_check'] = load_check
         data['mcmc_check'] = mcmc_check
         data["file_input"] = FILE_INPUT
+        if mcmc_check == 'mcmc_loaded': 
+            results = data["all_results_dict"]
+            df = pd.DataFrame()
+            for i in results.keys():
+                df[i] = results[i][10000:]  
+            results_path = os.getcwd() + "/mcmc_results/full_results_df"    
+            df.to_csv(results_path)
+            phasefile = data['phasefile']
+            context_no = data['context_no']
+            key_ref = [list(phasefile["phase"])[list(phasefile["context"]).index(i)] for i in context_no]
+            df1 = pd.DataFrame(key_ref)   
+            df1.to_csv('mcmc_results/key_ref.csv') 
+            df2 = pd.DataFrame(context_no)
+            df2.to_csv('mcmc_results/context_no.csv') 
         path = os.getcwd() + "/python_only/save.pickle"
+        print(path)
         with open(path, "wb") as f:
              pickle.dump(data, f)
       #  print(data)
         # except Exception as e:
         #          print
         #          "error saving state:", str(e)
+
                 
     def restore_state(self):
         global mcmc_check, load_check, FILE_INPUT
@@ -1533,7 +1680,7 @@ class StartPage(tk.Frame):
             FILE_INPUT = data['file_input']
             load_check = data['load_check']
             mcmc_check = data['mcmc_check']
-        if type(self.graph) != 'NoneType':
+        if self.graph is not None:
             self.littlecanvas.delete('all')
             self.rerender_stratdag()
         if load_check == 'loaded':
@@ -1870,8 +2017,10 @@ class StartPage(tk.Frame):
     def MCMC_func(self):
         '''gathers all the inputs for the mcmc module and then runs it and returns resuslts dictionaries'''
         context_no = [x for x in list(self.context_no) if x not in self.node_del_tracker]
+        print(context_no)
+        
         TOPO = list(nx.topological_sort(self.chrono_dag))
-
+        print(TOPO)
         TOPO_SORT = [x for x in TOPO if (x not in self.node_del_tracker) and (x in context_no)]
         TOPO_SORT.reverse()
         context_no = TOPO_SORT
@@ -1882,7 +2031,9 @@ class StartPage(tk.Frame):
         rcd_est = self.RCD_EST
         rcd_err = self.RCD_ERR
         self.prev_phase, self.post_phase = self.prev_phase, self.post_phase
+        print(context_no)
         CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.phi_ref, self.prev_phase, self.post_phase, TOPO_SORT, self.CONT_TYPE)
+        print(CONTEXT_NO)
         phase_nodes, resultsdict, all_results_dict = phase_labels(PHI_REF, self.post_phase, PHI_ACCEPT, ALL_SAMPS_PHI)
         for i, j in enumerate(CONTEXT_NO):
             resultsdict[j] = ACCEPT[i]
@@ -3037,4 +3188,5 @@ f = tkFont.Font(family='helvetica', size=10, weight='bold')
 s = ttk.Style()
 s.configure('.', font=f)
 MAIN_FRAME.geometry("2000x1000")
+MAIN_FRAME.title("PolyChron")
 MAIN_FRAME.mainloop() 
