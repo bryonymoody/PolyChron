@@ -516,8 +516,8 @@ def phase_info_func(file_graph):
 
 def alp_beta_node_add(x, graph):
     '''adds an alpha and beta node to node x'''
-    graph.add_node("a_" + str(x), shape="diamond", fontsize="20.0", fontname="Ubuntu", penwidth="1.0")
-    graph.add_node("b_" + str(x), shape="diamond", fontsize="20.0", fontname="Ubuntu", penwidth="1.0")
+    graph.add_node("a_" + str(x), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
+    graph.add_node("b_" + str(x), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
 
 def rank_func(tes, file_content):
   #  t0 = time.time()
@@ -755,16 +755,23 @@ class popupWindow3(object):
         self.button_b = ttk.Button(self.top, text='Render Chronological graph', command=lambda: self.full_chronograph_func())
         self.step_1 = chrono_edge_remov(self.graphcopy)
         self.button_b.place(relx=0.4, rely=0.55)
-        self.phase_labels = list(self.step_1[0][1][2])
         self.COLORS = ['LavenderBlush2', 'powder blue', 'LavenderBlush3', 'LemonChiffon4', 'dark khaki', 'LightGoldenrod1', 'aquamarine2', 'hot pink', 'DarkOrchid4', 'pale turquoise', 'LightSteelBlue2', 'DeepPink4', 'firebrick4', 'khaki4', 'turquoise3', 'alice blue', 'DarkOrange4', 'LavenderBlush4', 'misty rose', 'pink1', 'OrangeRed2', 'chocolate2', 'OliveDrab2', 'LightSteelBlue3', 'firebrick2', 'dark orange', 'ivory2', 'yellow2', 'DeepPink3', 'aquamarine', 'LightPink2', 'DeepSkyBlue2', 'LightCyan4', 'RoyalBlue3', 'SeaGreen3', 'SlateGray1', 'IndianRed3', 'DarkGoldenrod3', 'HotPink1', 'navy', 'tan2', 'orange4', 'tomato', 'LightSteelBlue1', 'coral1', 'MediumOrchid4', 'light grey', 'DarkOrchid3', 'RosyBrown2', 'LightSkyBlue1', 'medium sea green', 'deep pink', 'OrangeRed3', 'sienna2', 'thistle2', 'linen', 'tan4', 'bisque2', 'MediumPurple4', 'DarkSlateGray4', 'mint cream', 'sienna3', 'lemon chiffon', 'ivory3', 'chocolate1', 'peach puff', 'DeepSkyBlue3', 'khaki2', 'SlateGray2', 'dark turquoise', 'deep sky blue', 'light sky blue', 'lime green', 'yellow', 'burlywood3', 'tomato4', 'orange3', 'wheat2', 'olive drab', 'brown3', 'burlywood1', 'LightPink1', 'light cyan', 'saddle brown', 'SteelBlue3', 'SpringGreen3', 'goldenrod4', 'dark salmon', 'DodgerBlue3', 'MediumPurple3', 'azure2', 'lavender blush', 'SteelBlue4', 'honeydew3', 'LightBlue1', 'DeepSkyBlue4', 'medium aquamarine', 'turquoise1', 'thistle', 'DarkGoldenrod2', 'wheat3', 'LemonChiffon2', 'turquoise', 'light sea green', 'maroon3', 'green4', 'SlateBlue1', 'DarkOliveGreen3', 'dark violet', 'LightYellow3', 'DarkGoldenrod1', 'PeachPuff3', 'DarkOrange1', 'goldenrod2', 'goldenrod1', 'SkyBlue4', 'ivory4', 'DarkSeaGreen3', 'aquamarine4', 'VioletRed3', 'orange red', 'CadetBlue3', 'DarkSlateGray2', 'seashell2', 'DarkOliveGreen4', 'SkyBlue2', 'DarkOrchid2', 'maroon1', 'orchid1', 'red3', 'LightSkyBlue4', 'HotPink4', 'LightBlue2', 'coral3', 'magenta4', 'bisque4', 'SteelBlue1', 'cornsilk3', 'dark sea green', 'RosyBrown3', 'salmon3', 'NavajoWhite2', 'PaleTurquoise4', 'SteelBlue2', 'OliveDrab1', 'ghost white', 'HotPink3', 'salmon', 'maroon', 'khaki3', 'AntiqueWhite1', 'PaleVioletRed2', 'maroon2', 'cyan3', 'MistyRose4', 'thistle3', 'gold3', 'tomato3', 'tan1', 'LightGoldenrod3', 'blue violet', 'tomato2', 'RoyalBlue4', 'pink3', 'cadet blue', 'slate gray', 'medium slate blue', 'PaleGreen3', 'DodgerBlue2', 'LightSkyBlue3', 'lawn green', 'PaleGreen1', 'forest green', 'thistle1', 'snow', 'LightSteelBlue4', 'medium violet red', 'pink2', 'PaleVioletRed4', 'VioletRed1', 'gainsboro', 'navajo white', 'DarkOliveGreen1', 'IndianRed2', 'RoyalBlue2', 'dark olive green', 'AntiqueWhite3', 'DarkSlateGray1', 'LightSalmon3', 'salmon4', 'plum3', 'orchid3', 'azure', 'bisque3', 'turquoise4', 'SeaGreen1', 'sienna4', 'pink', 'MediumOrchid1', 'thistle4', 'PaleVioletRed3', 'blanched almond', 'DarkOrange2', 'royal blue', 'blue2', 'chartreuse4', 'LightGoldenrod4', 'NavajoWhite4', 'dark orchid', 'plum1', 'SkyBlue1', 'OrangeRed4', 'khaki', 'PaleGreen2', 'yellow4', 'maroon4', 'turquoise2', 'firebrick3', 'bisque', 'LightCyan2', 'burlywood4', 'PaleTurquoise3', 'azure4', 'gold', 'yellow3', 'chartreuse3', 'RosyBrown1', 'white smoke', 'PaleVioletRed1', 'papaya whip', 'medium spring green', 'AntiqueWhite4', 'SlateGray4', 'LightYellow4', 'coral2', 'MediumOrchid3', 'CadetBlue2', 'LightBlue3', 'snow2', 'purple1', 'magenta3', 'OliveDrab4', 'DarkOrange3', 'seashell3', 'magenta2', 'green2', 'snow4', 'DarkSeaGreen4', 'slate blue', 'PaleTurquoise1', 'red2', 'LightSkyBlue2', 'snow3', 'green yellow', 'DeepPink2', 'orange2', 'cyan', 'light goldenrod', 'light pink', 'honeydew4', 'RoyalBlue1', 'sea green', 'pale violet red', 'AntiqueWhite2', 'blue', 'LightSalmon2', 'SlateBlue4', 'orchid4', 'dark slate gray', 'dark slate blue', 'purple', 'chartreuse2', 'khaki1', 'LightBlue4', 'light yellow', 'indian red', 'VioletRed2', 'gold4', 'light goldenrod yellow', 'rosy brown', 'IndianRed4', 'azure3', 'orange', 'VioletRed4', 'salmon2', 'SeaGreen2', 'pale goldenrod', 'pale green', 'plum2', 'dark green', 'coral4', 'LightGoldenrod2', 'goldenrod3', 'NavajoWhite3', 'MistyRose2', 'wheat1', 'medium turquoise', 'floral white', 'red4', 'firebrick1', 'burlywood2', 'DarkGoldenrod4', 'goldenrod', 'sienna1', 'MediumPurple1', 'purple2', 'LightPink4', 'dim gray', 'LemonChiffon3', 'light steel blue', 'seashell4', 'brown1', 'wheat4', 'MediumOrchid2', 'DarkOrchid1', 'RosyBrown4', 'blue4', 'cyan2', 'salmon1', 'MistyRose3', 'chocolate3', 'light salmon', 'coral', 'honeydew2', 'light blue', 'sandy brown', 'LightCyan3', 'brown2', 'midnight blue', 'CadetBlue1', 'LightYellow2', 'cornsilk4', 'cornsilk2', 'SpringGreen4', 'PeachPuff4', 'PaleGreen4', 'SlateBlue2', 'orchid2', 'purple3', 'light slate blue', 'purple4', 'lavender', 'cornflower blue', 'CadetBlue4', 'DodgerBlue4', 'SlateBlue3', 'DarkSlateGray3', 'medium orchid', 'gold2', 'pink4', 'DarkOliveGreen2', 'spring green', 'dodger blue', 'IndianRed1', 'violet red', 'MediumPurple2', 'old lace', 'LightSalmon4', 'brown4', 'SpringGreen2', 'yellow green', 'plum4', 'SlateGray3', 'steel blue', 'HotPink2', 'medium purple', 'LightPink3', 'PeachPuff2', 'sky blue', 'dark goldenrod', 'PaleTurquoise2']
         self.canvas = tk.Canvas(self.top, bg = 'white')
         self.canvas.place(relx = 0.1, rely = 0.1, relheight = 0.8, relwidth = 0.8)
+        self.canvas.update()
         self.label_dict = {}
+        phases = []
+        for i in phase_rels:
+            phases.append(i[0])
+            phases.append(i[1])
+        self.phase_labels = list(set(phases))
+        w, h = self.canvas.winfo_width(), self.canvas.winfo_height()
+        m = len(self.phase_labels)
         for ind, i in enumerate(self.phase_labels):    
             msg = tk.Label(self.canvas, text = str(i))
-            msg.config(bg=self.COLORS[ind], font=('times', 24, 'italic'))
+            msg.config(bg=self.COLORS[ind], font=('helvetica', 14, 'bold'))
             msg.bind('<B1-Motion>',self.on_move)
-            msg.place(x=10*ind - 50*(ind -1) , y=20*ind - 50*(ind-1), relwidth = min(1/len(self.phase_labels) - 0.05, 0.25))
+            msg.place(x= 0.05*w + (w/(2*m))*ind, y= 0.85*h - ((0.95*h)/m)*ind, relwidth = 0.76/m, relheight = min(0.1, 0.9/m))
             self.label_dict[i] = msg
         self.button1 = tk.Button(self.top, text = "Finish", command = lambda: self.get_coords()) 
         self.button1.place(relx = 0, rely = 0)   
@@ -788,7 +795,8 @@ class popupWindow3(object):
             my = self.label_dict[i].winfo_height()
             y_cent = yx + 0.5*my
             y_list.append((i, y_cent))
-        y_final = sorted(y_list, key=lambda x: x[1]) 
+        y_final = sorted(y_list, key=lambda x: x[1])
+        y_final.reverse()
         ref_y = y_final[0][1]
         ref_h = self.label_dict[y_final[0][0]].winfo_height()
         ref_w = self.label_dict[y_final[0][0]].winfo_width()
@@ -798,6 +806,7 @@ class popupWindow3(object):
         self.prev_dict = {}
         self.post_dict = {}
         self.menudict = {}
+        print(y_final)
         for ind, j in enumerate(y_final[1:]):
             x = orig_x[ind]
             x_prev = orig_x_prev[ind]
@@ -821,10 +830,10 @@ class popupWindow3(object):
                     self.prev_dict[str(j[0])] = 'abutting'
                     self.post_dict[str(y_final[ind][0])] = 'abutting'
                     self.menudict[(str(j[0]),str(y_final[ind][0]))] = 'abutting'
-                y = ref_y + (0.5 + ind)*ref_h #ceter of top box + (half and scalefactor) times height   
+                y = ref_y - (0.5 + ind + 1)*ref_h #ceter of top box + (half and scalefactor) times height   
                 self.label_dict[j[0]].place(x = x, y = y)
                 self.canvas.update()
-        self.full_chronograph_func()
+     #   self.full_chronograph_func()
     def on_move(self, event):
         component=event.widget
         locx, locy = component.winfo_x(), component.winfo_y() #top left coords for where the object is
@@ -1197,6 +1206,7 @@ class load_Window(object):
         self.MyListBox.bind('<<ListboxSelect>>', self.items_selected)
         self.b=tk.Button(self.maincanvas,text='Load project', command=lambda: self.load_model(proj_dir),  bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6') 
         self.b.place(relx = 0.8, rely = 0.9, relwidth = 0.19)
+        self.top.bind('<Return>', (lambda event: self.load_model(proj_dir)))
         self.back=tk.Button(self.maincanvas,text='Back', command=lambda: self.initscreen(),  bg = '#eff3f6', font = ('Helvetica 12 bold'),  fg = '#2F4858')
         self.back.place(relx = 0.21, rely = 0.01)
          
@@ -1227,6 +1237,7 @@ class load_Window(object):
         self.MyListBox.place(relx = 0.36, rely = 0.17, relheight=0.4, relwidth = 0.28)
         self.MyListBox.bind('<<ListboxSelect>>', self.items_selected)
         self.b=tk.Button(self.maincanvas,text='Load selected model', command=lambda: self.cleanup2(),  bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6') 
+        self.top.bind('<Return>', (lambda event: self.cleanup2()))
         self.b.place(relx = 0.8, rely = 0.9, relwidth = 0.195)
         self.back=tk.Button(self.maincanvas,text='Back', command=lambda: self.initscreen(), bg = '#eff3f6', font = ('Helvetica 12 bold'),  fg = '#2F4858')
         self.back.place(relx = 0.21, rely = 0.01)
@@ -1243,7 +1254,7 @@ class load_Window(object):
 
   
         
-    def create_file(self, folder_dir, load, top_tracker):  
+    def create_file(self, folder_dir, load):  
         global proj_dir
         dirs = os.path.join("/home/bryony/Documents/Pythonapp_tests/projects", folder_dir, self.model.get())
         dirs2 = os.path.join(dirs, "stratigraphic_graph")
@@ -1270,7 +1281,7 @@ class load_Window(object):
                     # will be the one that is visible.
                     frame.grid(row=0, column=0, sticky="nsew")        
                     self.master.show_frame("StartPage")   
-            self.cleanup(top_tracker)
+            self.cleanup()
             tk.messagebox.showinfo('Tips:','model created successfully!')
             print(os.chdir)
         
@@ -1308,9 +1319,7 @@ class load_Window(object):
         self.back.place(relx = 0.21, rely = 0.01)    
         return self.top
     
-    def cleanup(self, top_tracker):
-        if top_tracker != None:
-            top_tracker.destroy()
+    def cleanup(self):
         self.top.destroy()
         
     def cleanup2(self):
@@ -1426,7 +1435,7 @@ class StartPage(tk.Frame):
         
         self.tool_menubar = ttk.Menubutton(self, text = 'Tools')
         # Adding File Menu and commands
-        file2 = tk.Menu(self.tool_menubar, tearoff = 0, bg = 'white', font = ('gothic',11))
+        file2 = tk.Menu(self.tool_menubar, tearoff = 0, bg = 'white', font = ('helvetica',11))
         self.tool_menubar["menu"] = file2
         #file2.add_separator()
         file2.add_command(label = 'Render chronological graph', command=lambda: self.chronograph_render_wrap(), font='helvetica 10')
@@ -1824,7 +1833,7 @@ class StartPage(tk.Frame):
                 self.strat_check = True
                 G = nx.DiGraph(graph_attr={'splines':'ortho'})
                 for i in set(self.stratfile.iloc[:, 0]):
-                    G.add_node(i, shape="box", fontname="Ubuntu", fontsize="30.0", penwidth="1.0", color='black')
+                    G.add_node(i, shape="box", fontname="helvetica", fontsize="30.0", penwidth="1.0", color='black')
                     G.nodes()[i].update({"Date": [None, None]})
                     G.nodes()[i].update({"Phase": None})
                 edges = []
@@ -2112,7 +2121,7 @@ class StartPage(tk.Frame):
             self.wait_window(self.w.top)
             self.node = self.w.value
             self.graph.add_node(self.node, shape="box", fontsize="30.0",
-                                fontname="Ubuntu", penwidth="1.0")
+                                fontname="helvetica", penwidth="1.0")
 
         if self.variable.get() == "Metadata menu":
             self.w = popupWindow2(self, self.graph, self.canvas)
