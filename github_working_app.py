@@ -698,9 +698,10 @@ class popupWindow3(object):
         #set up the canvas for checking if contexts are residual or intrusive
         self.littlecanvas2 = canvas
         self.top = tk.Toplevel(master)
-        self.top.geometry("1000x400")
+        self.top.geometry("1500x400")
         self.maincanvas = tk.Canvas(self.top, bg ='#AEC7D6')
         self.maincanvas.place(relx = 0, rely = 0, relwidth = 1, relheight =1)
+        self.maincanvas.update()
         self.top.title("Adding group relationships")
         self.graph = graph
         #makes a copy of the graph so I can edit it to chrnograph
@@ -749,11 +750,15 @@ class popupWindow3(object):
         self.step_1 = chrono_edge_remov(self.graphcopy)
         self.COLORS = ['LavenderBlush2', 'powder blue', 'LavenderBlush3', 'LemonChiffon4', 'dark khaki', 'LightGoldenrod1', 'aquamarine2', 'hot pink', 'DarkOrchid4', 'pale turquoise', 'LightSteelBlue2', 'DeepPink4', 'firebrick4', 'khaki4', 'turquoise3', 'alice blue', 'DarkOrange4', 'LavenderBlush4', 'misty rose', 'pink1', 'OrangeRed2', 'chocolate2', 'OliveDrab2', 'LightSteelBlue3', 'firebrick2', 'dark orange', 'ivory2', 'yellow2', 'DeepPink3', 'aquamarine', 'LightPink2', 'DeepSkyBlue2', 'LightCyan4', 'RoyalBlue3', 'SeaGreen3', 'SlateGray1', 'IndianRed3', 'DarkGoldenrod3', 'HotPink1', 'navy', 'tan2', 'orange4', 'tomato', 'LightSteelBlue1', 'coral1', 'MediumOrchid4', 'light grey', 'DarkOrchid3', 'RosyBrown2', 'LightSkyBlue1', 'medium sea green', 'deep pink', 'OrangeRed3', 'sienna2', 'thistle2', 'linen', 'tan4', 'bisque2', 'MediumPurple4', 'DarkSlateGray4', 'mint cream', 'sienna3', 'lemon chiffon', 'ivory3', 'chocolate1', 'peach puff', 'DeepSkyBlue3', 'khaki2', 'SlateGray2', 'dark turquoise', 'deep sky blue', 'light sky blue', 'lime green', 'yellow', 'burlywood3', 'tomato4', 'orange3', 'wheat2', 'olive drab', 'brown3', 'burlywood1', 'LightPink1', 'light cyan', 'saddle brown', 'SteelBlue3', 'SpringGreen3', 'goldenrod4', 'dark salmon', 'DodgerBlue3', 'MediumPurple3', 'azure2', 'lavender blush', 'SteelBlue4', 'honeydew3', 'LightBlue1', 'DeepSkyBlue4', 'medium aquamarine', 'turquoise1', 'thistle', 'DarkGoldenrod2', 'wheat3', 'LemonChiffon2', 'turquoise', 'light sea green', 'maroon3', 'green4', 'SlateBlue1', 'DarkOliveGreen3', 'dark violet', 'LightYellow3', 'DarkGoldenrod1', 'PeachPuff3', 'DarkOrange1', 'goldenrod2', 'goldenrod1', 'SkyBlue4', 'ivory4', 'DarkSeaGreen3', 'aquamarine4', 'VioletRed3', 'orange red', 'CadetBlue3', 'DarkSlateGray2', 'seashell2', 'DarkOliveGreen4', 'SkyBlue2', 'DarkOrchid2', 'maroon1', 'orchid1', 'red3', 'LightSkyBlue4', 'HotPink4', 'LightBlue2', 'coral3', 'magenta4', 'bisque4', 'SteelBlue1', 'cornsilk3', 'dark sea green', 'RosyBrown3', 'salmon3', 'NavajoWhite2', 'PaleTurquoise4', 'SteelBlue2', 'OliveDrab1', 'ghost white', 'HotPink3', 'salmon', 'maroon', 'khaki3', 'AntiqueWhite1', 'PaleVioletRed2', 'maroon2', 'cyan3', 'MistyRose4', 'thistle3', 'gold3', 'tomato3', 'tan1', 'LightGoldenrod3', 'blue violet', 'tomato2', 'RoyalBlue4', 'pink3', 'cadet blue', 'slate gray', 'medium slate blue', 'PaleGreen3', 'DodgerBlue2', 'LightSkyBlue3', 'lawn green', 'PaleGreen1', 'forest green', 'thistle1', 'snow', 'LightSteelBlue4', 'medium violet red', 'pink2', 'PaleVioletRed4', 'VioletRed1', 'gainsboro', 'navajo white', 'DarkOliveGreen1', 'IndianRed2', 'RoyalBlue2', 'dark olive green', 'AntiqueWhite3', 'DarkSlateGray1', 'LightSalmon3', 'salmon4', 'plum3', 'orchid3', 'azure', 'bisque3', 'turquoise4', 'SeaGreen1', 'sienna4', 'pink', 'MediumOrchid1', 'thistle4', 'PaleVioletRed3', 'blanched almond', 'DarkOrange2', 'royal blue', 'blue2', 'chartreuse4', 'LightGoldenrod4', 'NavajoWhite4', 'dark orchid', 'plum1', 'SkyBlue1', 'OrangeRed4', 'khaki', 'PaleGreen2', 'yellow4', 'maroon4', 'turquoise2', 'firebrick3', 'bisque', 'LightCyan2', 'burlywood4', 'PaleTurquoise3', 'azure4', 'gold', 'yellow3', 'chartreuse3', 'RosyBrown1', 'white smoke', 'PaleVioletRed1', 'papaya whip', 'medium spring green', 'AntiqueWhite4', 'SlateGray4', 'LightYellow4', 'coral2', 'MediumOrchid3', 'CadetBlue2', 'LightBlue3', 'snow2', 'purple1', 'magenta3', 'OliveDrab4', 'DarkOrange3', 'seashell3', 'magenta2', 'green2', 'snow4', 'DarkSeaGreen4', 'slate blue', 'PaleTurquoise1', 'red2', 'LightSkyBlue2', 'snow3', 'green yellow', 'DeepPink2', 'orange2', 'cyan', 'light goldenrod', 'light pink', 'honeydew4', 'RoyalBlue1', 'sea green', 'pale violet red', 'AntiqueWhite2', 'blue', 'LightSalmon2', 'SlateBlue4', 'orchid4', 'dark slate gray', 'dark slate blue', 'purple', 'chartreuse2', 'khaki1', 'LightBlue4', 'light yellow', 'indian red', 'VioletRed2', 'gold4', 'light goldenrod yellow', 'rosy brown', 'IndianRed4', 'azure3', 'orange', 'VioletRed4', 'salmon2', 'SeaGreen2', 'pale goldenrod', 'pale green', 'plum2', 'dark green', 'coral4', 'LightGoldenrod2', 'goldenrod3', 'NavajoWhite3', 'MistyRose2', 'wheat1', 'medium turquoise', 'floral white', 'red4', 'firebrick1', 'burlywood2', 'DarkGoldenrod4', 'goldenrod', 'sienna1', 'MediumPurple1', 'purple2', 'LightPink4', 'dim gray', 'LemonChiffon3', 'light steel blue', 'seashell4', 'brown1', 'wheat4', 'MediumOrchid2', 'DarkOrchid1', 'RosyBrown4', 'blue4', 'cyan2', 'salmon1', 'MistyRose3', 'chocolate3', 'light salmon', 'coral', 'honeydew2', 'light blue', 'sandy brown', 'LightCyan3', 'brown2', 'midnight blue', 'CadetBlue1', 'LightYellow2', 'cornsilk4', 'cornsilk2', 'SpringGreen4', 'PeachPuff4', 'PaleGreen4', 'SlateBlue2', 'orchid2', 'purple3', 'light slate blue', 'purple4', 'lavender', 'cornflower blue', 'CadetBlue4', 'DodgerBlue4', 'SlateBlue3', 'DarkSlateGray3', 'medium orchid', 'gold2', 'pink4', 'DarkOliveGreen2', 'spring green', 'dodger blue', 'IndianRed1', 'violet red', 'MediumPurple2', 'old lace', 'LightSalmon4', 'brown4', 'SpringGreen2', 'yellow green', 'plum4', 'SlateGray3', 'steel blue', 'HotPink2', 'medium purple', 'LightPink3', 'PeachPuff2', 'sky blue', 'dark goldenrod', 'PaleTurquoise2']
         self.canvas = tk.Canvas(self.top, bg = 'white')
-        self.canvas.place(relx = 0.2, rely = 0.05, relheight = 0.85, relwidth = 0.8)
+        self.canvas.place(relx = 0.135, rely = 0.05, relheight = 0.85, relwidth = 0.53)
         self.canvas.update()
         self.instruc_label = tk.Label(self.maincanvas, text = "Instructions: \n Place the oldest phase in the bottom left corner then for each subseqent phase, place it directly above and move it to be overlapping, abutting or to have a gap.")
-        self.instruc_label.config(bg='white', font=('helvetica', 11, 'bold'), wraplength=130)
-        self.instruc_label.place(relx = 0.01, rely = 0.05, relwidth = 0.18, relheight = 0.85)
+        self.instruc_label.config(bg='white', font=('helvetica', 11, 'bold'),fg = '#2f4858', wraplength=130)
+        self.instruc_label.place(relx = 0.01, rely = 0.05, relwidth = 0.12, relheight = 0.85)
+        self.instruc_label2 = tk.Label(self.maincanvas, text = "User defined group relationships")
+        self.instruc_label2.config(bg='white', font=('helvetica', 11, 'bold'), fg = '#2f4858')
+        self.instruc_label2.place(relx = 0.67, rely = 0.17, relwidth = 0.32, relheight = 0.1)
+
         self.label_dict = {}
         phases = []
         for i in phase_rels:
@@ -770,15 +775,35 @@ class popupWindow3(object):
             self.label_dict[i] = msg
         self.button1 = tk.Button(self.maincanvas, text = "Confirm groups", command = lambda: self.get_coords(),  bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6') 
         self.button1.place(relx = 0.8, rely = 0.91)   
+        self.df = pd.DataFrame(phase_rels, columns = ['Younger group', 'Older group'])
+        self.frmtreeborder = tk.LabelFrame(self.maincanvas, bg = 'white')
+        self.frmtreeborder.columnconfigure(0, weight=1)
+        self.frmtreeborder.rowconfigure(0, weight=1)
+        cols = list(self.df.columns)
+        self.tree = ttk.Treeview(self.frmtreeborder)
+        self.frmtreeborder.place(relx = 0.67, rely = 0.25, relheight = 0.65, relwidth = 0.32)
+        self.tree.grid(column=0,row=0,sticky='nsew',padx=6,pady=6)      
+        self.tree["columns"] = cols
+        for i in cols:
+            self.tree.column(i, anchor="w")
+            self.tree.heading(i, text=i, anchor='w')
+        
+        for index, row in self.df.iterrows():
+            self.tree.insert("",0,text=index,values=list(row))
+        self.tree['show'] = 'headings'
         master.wait_window(self.top)
 
     def get_coords(self):
         self.instruc_label.destroy()
         self.button1.destroy()
+        self.tree.destroy()
+        self.frmtreeborder.destroy()
+        self.maincanvas.columnconfigure(0, weight=1)
+        self.maincanvas.rowconfigure(0, weight=1)
         self.maincanvas.update()
-        self.instruc_label = tk.Label(self.maincanvas, text = "Once you're happy with your group relationships, click the Render Chronological Graph button")
+        self.instruc_label = tk.Label(self.maincanvas, text = "If you're happy with your group relationships, click the Render Chronological Graph button.")
         self.instruc_label.config(bg='white', font=('helvetica', 11, 'bold'), wraplength=130)
-        self.instruc_label.place(relx = 0.01, rely = 0.05, relwidth = 0.18, relheight = 0.85)
+        self.instruc_label.place(relx = 0.01, rely = 0.05, relwidth = 0.12, relheight = 0.85)
         
         y_list = []
         for i in self.label_dict.keys():
@@ -821,15 +846,40 @@ class popupWindow3(object):
                 y = ref_y - (0.5 + ind + 1)*ref_h #ceter of top box + (half and scalefactor) times height   
                 self.label_dict[j[0]].place(x = x, y = y)
                 self.canvas.update()
+        print(self.menudict)
+        col1, col2, col3 = [], [], []
+        rels_df = pd.DataFrame()
+        for i in self.menudict.keys():
+            col1.append(i[0])
+            col2.append(i[1])
+            col3.append(self.menudict[i])
+        rels_df['Younger group'] = col1
+        rels_df['Older group'] = col2
+        rels_df['Relationship'] = col3   
+        cols = list(rels_df.columns)
+        self.frmtreeborder = tk.LabelFrame(self.maincanvas, bg = 'white')
+        self.frmtreeborder.columnconfigure(0, weight=1)
+        self.frmtreeborder.rowconfigure(0, weight=1)
+        self.tree = ttk.Treeview(self.frmtreeborder)
+        self.frmtreeborder.place(relx = 0.67, rely = 0.25, relheight = 0.65, relwidth = 0.32)
+        self.tree.grid(column=0,row=0,sticky='nsew',padx=6,pady=6)    
+        self.tree["columns"] = cols
+        for i in cols:
+            self.tree.column(i, anchor="w", width = 100)
+            self.tree.heading(i, text=i, anchor='w')
+        
+        for index, row in rels_df.iterrows():
+            self.tree.insert("",0,text=index,values=list(row))
+        self.tree['show'] = 'headings'         
         self.button_b = tk.Button(self.maincanvas, text='Render Chronological graph', command=lambda: self.full_chronograph_func(), bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6')
         self.button_b.place(relx=0.75, rely=0.91)
         self.button_a = tk.Button(self.maincanvas, text='Change relationships', command=lambda: self.back_func(), bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6')
-        self.button_a.place(relx=0.75, rely=0.91)
+        self.button_a.place(relx=0.55, rely=0.91)
     
     def back_func(self):
-        self.button_a.destroy()
         self.button_b.destroy()
-        self.intruc_labe.destroy()
+        self.instruc_label.destroy()
+        self.button_a.destroy()
         self.maincanvas.update()
         self.button1 = tk.Button(self.maincanvas, text = "Confirm groups", command = lambda: self.get_coords(),  bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6') 
         self.button1.place(relx = 0.8, rely = 0.91)  
@@ -1985,9 +2035,11 @@ class StartPage(tk.Frame):
             load_check = 'loaded'
         except (RuntimeError, TypeError, NameError):
             load_check = 'not_loaded'
-        self.image2 = imgrender2()
-        if self.image2 != 'No_image':
+        self.image_ws = imgrender2()
+        if self.image_ws != 'No_image':
             self.littlecanvas2.delete('all')
+            scale_factor = min(self.littlecanvas.winfo_width()/self.image_ws.size[0], self.littlecanvas.winfo_height()/self.image_ws.size[1])                       
+            self.image2 = self.image_ws.resize((int(self.image_ws.size[0]*scale_factor), int(self.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
             self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
             self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
                                                                      image=self.littlecanvas2.img)
