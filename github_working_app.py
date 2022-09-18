@@ -1674,10 +1674,18 @@ class StartPage(tk.Frame):
             self.variable.set("Node Action")
     def save_state_1(self):
         global mcmc_check, load_check, FILE_INPUT
+        #converting metadata treeview to dataframe
+        row_list = []
+        columns = ('context', 'Reason for deleting')
+        for child in self.tree2.get_children():
+            row_list.append((self.tree2.item(child)['text'],self.tree2.item(child)['values']))
+        self.treeview_df = pd.DataFrame(row_list, columns=columns)
         vars_list_1 = dir(self)
         var_list = [var for var in vars_list_1 if (('__' and 'grid' and 'get' and 'tkinter' and 'children') not in var) and (var[0] != '_')]          
         data = {}
         check_list = ["tkinter", "method", "__main__", 'PIL']
+        
+
         for i in var_list:
             v = getattr(self, i)
             if not any(x in str(type(v)) for x in check_list):
@@ -1701,6 +1709,8 @@ class StartPage(tk.Frame):
             df2 = pd.DataFrame(context_no)
             df2.to_csv('mcmc_results/context_no.csv') 
         path = os.getcwd() + "/python_only/save.pickle"
+        path2 = os.getcwd() + "/stratigraphic_graph/deleted_contexts_meta"
+        self.treeview_df.to_csv(path2)
         try:
             with open(path, "wb") as f:
                  pickle.dump(data, f)
@@ -1721,6 +1731,8 @@ class StartPage(tk.Frame):
         if self.graph is not None:
             self.littlecanvas.delete('all')
             self.rerender_stratdag()
+            for i, j in enumerate(self.treeview_df['context']):
+                 self.tree2.insert("", 'end', text=j, values=self.treeview_df['Reason for deleting'][i])
 
         if load_check == 'loaded':
             FILE_INPUT = None
@@ -1880,6 +1892,7 @@ class StartPage(tk.Frame):
                             edges.append(a)
                     G.add_edges_from(edges, arrowhead="none")
                     self.graph = G
+                    print(nx.degree_centrality(self.graph))
                     if phase_true == 1:
                         self.image = imgrender_phase(self.graph)
                     else:
@@ -2154,7 +2167,7 @@ class StartPage(tk.Frame):
                 self.nodedel_meta = self.node_del_popup()
                 self.delnodes = np.append(self.delnodes, self.node)
                 self.delnodes_meta.append(self.nodedel_meta)
-                self.tree2.insert("", 'end', text=self.node, values=self.nodedel_meta)
+                self.tree2.insert("", 'end', text=self.node, values=[self.nodedel_meta])
 
         if self.variable.get() == "Add new contexts":
             self.w = popupWindow(self)
