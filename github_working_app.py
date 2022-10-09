@@ -29,7 +29,7 @@ from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationTool
 import pickle
 from tkinter import simpledialog
 import tkinter.font as tkFont
-
+from tkinter.messagebox import askyesno, askquestion
 
 
 old_stdout = sys.stdout
@@ -409,7 +409,7 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck, post_d
 
 
 
-def imgrender(file):
+def imgrender(file, canv_width, canv_height):
     """renders png from dotfile""" 
     file.graph['graph']={'splines':'ortho'}
     write_dot(file, 'fi_new')    
@@ -423,18 +423,23 @@ def imgrender(file):
     render('dot', 'png', 'fi_new')
     inp = Image.open("fi_new.png")
     inp = trim(inp)
-    inp.save("testdag.png")
+    scale_factor = min(canv_width/inp.size[0], canv_height/inp.size[1])  
+            
+    inp_final = inp.resize((int(inp.size[0]*scale_factor), int(inp.size[1]*scale_factor)), Image.ANTIALIAS)       
+    inp_final.save("testdag.png")
     outp = Image.open("testdag.png")
     return outp
 
-def imgrender2():
+def imgrender2(canv_width, canv_height):
     """renders png from dotfile"""
     global load_check
     if load_check == 'loaded':
         render('dot', 'png', 'fi_new_chrono')
         inp = Image.open("fi_new_chrono.png")
         inp = trim(inp)
-        inp.save("testdag_chrono.png")
+        scale_factor = min(canv_width/inp.size[0], canv_height/inp.size[1])                 
+        inp_final = inp.resize((int(inp.size[0]*scale_factor), int(inp.size[1]*scale_factor)), Image.ANTIALIAS)  
+        inp_final.save("testdag_chrono.png")
         outp = Image.open("testdag_chrono.png")
     else:
         outp = 'No_image'
@@ -977,17 +982,17 @@ class MainFrame(tk.Tk):
 class popupWindow4(object):
     def __init__(self, master, controller, resid_list, intru_list, node_track, graph):
         '''initialised window 4'''
-        self.top.configure(bg ='#AEC7D6')
         self.top = tk.Toplevel(controller)
+        self.top.configure(bg ='#AEC7D6')
         self.top.title("Managing intrusive and residual contexts")
         self.top.geometry("1000x400")
         self.node_del_tracker = node_track
         self.controller = controller
         self.resid_list = resid_list
         self.intru_list = intru_list
-        self.button = ttk.Button(self.top, text='Go back', command=lambda: self.top.destroy(),  bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6')
+        self.button = tk.Button(self.top, text='Go back', command=lambda: self.top.destroy(),  bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6')
         self.button.grid(column=30, row=4)
-        self.button2 = ttk.Button(self.top, text='Proceed to render chronological graph', command=lambda: self.move_to_graph(),  bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6')
+        self.button2 = tk.Button(self.top, text='Proceed to render chronological graph', command=lambda: self.move_to_graph(),  bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6')
         self.button2.grid(column=30, row=6)
         self.test(resid_list, intru_list)
         controller.wait_window(self.top)
@@ -1439,6 +1444,7 @@ class StartPage(tk.Frame):
         self.image2 = 'noimage'
         self.resultsdict = {}
         self.all_results_dict = {}
+        self.treeview_df = pd.DataFrame()
         self.file_menubar = ttk.Menubutton(self, text = 'File')
         self.strat_check = False
         self.phase_check = False
@@ -1655,6 +1661,7 @@ class StartPage(tk.Frame):
     def resid_check(self):
         '''Loads a text box to check if the user thinks any samples are residual'''
         global load_check
+        print("do we get here?")
         MsgBox = tk.messagebox.askquestion('Residual and Intrusive Contexts', 'Do you suspect any of your samples are residual or intrusive?', icon='warning')
         if MsgBox == 'yes':
             pagetwo = PageTwo(self, self.controller)
@@ -1736,7 +1743,10 @@ class StartPage(tk.Frame):
 
         if load_check == 'loaded':
             FILE_INPUT = None
-            self.image2 = imgrender2()
+            #manaually work this out as canvas hasn't rendered enough at this point to have a height and width in pixels
+            height = 0.96*0.99*0.97*1000*0.96
+            width = 0.99*0.37*2000*0.96  
+            self.image2 = imgrender2(width, height)
             if self.image2 != 'No_image':
                 self.littlecanvas2.delete('all')
                 self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
@@ -1826,16 +1836,15 @@ class StartPage(tk.Frame):
 
     def rerender_stratdag(self):
         '''rerenders stratdag after reloading previous project'''
-           
-        if phase_true == 1:
-            self.image_ws = imgrender_phase(self.graph)
-        else:
-            self.image_ws = imgrender(self.graph)
         height = 0.96*0.99*0.97*1000*0.96
-        width = 0.99*0.37*2000*0.96
-        scale_factor = min(width/self.image_ws.size[0], height/self.image_ws.size[1])                 
-        self.image = self.image_ws.resize((int(self.image_ws.size[0]*scale_factor), int(self.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
-       
+        width = 0.99*0.37*2000*0.96   
+        if phase_true == 1:
+            self.image = imgrender_phase(self.graph)
+        else:
+            self.image = imgrender(self.graph, width, height)
+        
+    #    scale_factor = min(width/self.image_ws.size[0], height/self.image_ws.size[1])                 
+ #       self.image = self.image_ws.resize((int(self.image_ws.size[0]*scale_factor), int(self.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
         self.littlecanvas.img = ImageTk.PhotoImage(self.image)
         self.littlecanvas_img = self.littlecanvas.create_image(0, 0, anchor="nw",
                                                                image=self.littlecanvas.img)
@@ -1851,8 +1860,25 @@ class StartPage(tk.Frame):
 
     def chronograph_render_wrap(self):
         '''wraps chronograph render so we can assign a variable when runing the func using a button'''
+        global load_check
+        print(load_check)
         if (self.phase_rels is None) or (self.phasefile is None) or (self.datefile is None):
             tk.messagebox.showinfo("Error", "You haven't loaded in all the data required for a chronological graph")
+        if load_check == "loaded":
+            answer = askquestion('Warning!', 'Chronological DAG already loaded, are you sure you want to write over it? You can copy this model in the file menu if you want to consider multiple models')
+            print(answer)
+            if answer == 'yes':
+                load_check = 'not_loaded'
+                self.littlecanvas2.delete('all')
+                self.chrono_dag = self.chronograph_render()
+                startpage = self.controller.get_page('StartPage')
+                startpage.CONT_TYPE = self.popup3.CONT_TYPE
+                startpage.prev_phase = self.popup3.prev_phase
+                startpage.post_phase = self.popup3.post_phase
+                startpage.phi_ref = self.popup3.phi_ref
+                startpage.context_no = self.popup3.context_no
+                startpage.graphcopy = self.popup3.graphcopy
+                startpage.node_del_tracker = self.popup3.node_del_tracker
         else: 
             self.littlecanvas2.delete('all')
             self.chrono_dag = self.chronograph_render()
@@ -1896,9 +1922,9 @@ class StartPage(tk.Frame):
                     if phase_true == 1:
                         self.image = imgrender_phase(self.graph)
                     else:
-                        self.image_ws = imgrender(self.graph)
-                        scale_factor = min(self.littlecanvas.winfo_width()/self.image_ws.size[0], self.littlecanvas.winfo_height()/self.image_ws.size[1])                       
-                        self.image = self.image_ws.resize((int(self.image_ws.size[0]*scale_factor), int(self.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
+                        self.image = imgrender(self.graph, self.littlecanvas.winfo_width(), self.littlecanvas.winfo_height())
+                   #     scale_factor = min(self.littlecanvas.winfo_width()/self.image_ws.size[0], self.littlecanvas.winfo_height()/self.image_ws.size[1])                       
+                   #     self.image = self.image_ws.resize((int(self.image_ws.size[0]*scale_factor), int(self.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
                         self.littlecanvas.img = ImageTk.PhotoImage(self.image)
                         self.littlecanvas_img = self.littlecanvas.create_image(0, 0, anchor="nw",
                                                                                image=self.littlecanvas.img)                       
@@ -1985,10 +2011,10 @@ class StartPage(tk.Frame):
                 if phase_true == 1:
                     imgrender_phase(self.graph)
                 else:
-                    imgrender(self.graph)
-                self.image_ws = Image.open('testdag.png')
-                scale_factor = min(self.littlecanvas.winfo_width()/self.image_ws.size[0], self.littlecanvas.winfo_height()/self.image_ws.size[1])                       
-                self.image = self.image_ws.resize((int(self.image_ws.size[0]*scale_factor), int(self.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
+                    imgrender(self.graph, self.littlecanvas.winfo_width(), self.littlecanvas.winfo_height())
+                self.image = Image.open('testdag.png')
+             #   scale_factor = min(self.littlecanvas.winfo_width()/self.image_ws.size[0], self.littlecanvas.winfo_height()/self.image_ws.size[1])                       
+             #   self.image = self.image_ws.resize((int(self.image_ws.size[0]*scale_factor), int(self.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
                 self.width, self.height = self.image.size
                 self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
                 self.show_image()
@@ -2035,7 +2061,7 @@ class StartPage(tk.Frame):
         if phase_true == 1:
             imgrender_phase(self.graph)
         else:
-            imgrender(self.graph)
+            imgrender(self.graph, self.littlecanvas.winfo_width(), self.littlecanvas.winfo_height())
         self.image = Image.open('testdag.png')
         self.show_image()
 
@@ -2043,27 +2069,25 @@ class StartPage(tk.Frame):
         '''initiates residual checking function then renders the graph when thats done'''
         global load_check
         if load_check != 'loaded':
+            load_check = 'loaded'
             self.resid_check()
-        try:
-            load_check = 'loaded'
-        except (RuntimeError, TypeError, NameError):
-            load_check = 'not_loaded'
-        self.image_ws = imgrender2()
-        if self.image_ws != 'No_image':
-            self.littlecanvas2.delete('all')
-            scale_factor = min(self.littlecanvas.winfo_width()/self.image_ws.size[0], self.littlecanvas.winfo_height()/self.image_ws.size[1])                       
-            self.image2 = self.image_ws.resize((int(self.image_ws.size[0]*scale_factor), int(self.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
-            self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
-            self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
-                                                                     image=self.littlecanvas2.img)
-
-            self.width2, self.height2 = self.image2.size
-            self.imscale2 = 1.0  # scale for the canvaas image
-            self.delta2 = 1.1  # zoom magnitude
-            # Put image into container rectangle and use it to set proper coordinates to the image
-            self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
-            self.littlecanvas2.bind("<Configure>", self.resize2)
-            load_check = 'loaded'
+            self.image2 = imgrender2(self.littlecanvas2.winfo_width(), self.littlecanvas2.winfo_height())
+            print(self.image2)
+            if self.image2 != 'No_image':
+                try:
+                    self.littlecanvas2.delete('all')
+                    self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
+                    self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
+                                                                             image=self.littlecanvas2.img)
+        
+                    self.width2, self.height2 = self.image2.size
+                    self.imscale2 = 1.0  # scale for the canvaas image
+                    self.delta2 = 1.1  # zoom magnitude
+                    # Put image into container rectangle and use it to set proper coordinates to the image
+                    self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
+                    self.littlecanvas2.bind("<Configure>", self.resize2)
+                except (RuntimeError, TypeError, NameError):
+                    load_check = 'not_loaded'
         return self.popup3.graphcopy
 
 
@@ -2160,28 +2184,47 @@ class StartPage(tk.Frame):
         
     def nodes(self, currentevent):
         """performs action using the node and redraws the graph"""
+        global load_check
         self.testmenu.place_forget()
+        #deleting a single context
         if self.variable.get() == "Delete context":
             if self.node != "no node":
+                if load_check == 'loaded':
+                    load_check = 'not_loaded'
+                    answer = askquestion('Warning!', 'Chronological DAG already loaded, do you want to save this as a new model first? \n\n Click Yes to save as new model and No to overwrite existing model')
+                    if answer == 'yes':
+                        self.refresh_4_new_model(self.controller, proj_dir, load = False)
+                    self.littlecanvas2.delete('all')       
                 self.graph.remove_node(self.node)
                 self.nodedel_meta = self.node_del_popup()
                 self.delnodes = np.append(self.delnodes, self.node)
                 self.delnodes_meta.append(self.nodedel_meta)
                 self.tree2.insert("", 'end', text=self.node, values=[self.nodedel_meta])
-
+        #presents popup list to label new context
         if self.variable.get() == "Add new contexts":
+            if load_check == 'loaded':
+                answer = askquestion('Warning!', 'Chronological DAG already loaded, do you want to save this as a new model first? \n Click YES to save as new model and NO to overwrite existing model')
+                if answer == 'yes':
+                    self.refresh_4_new_model(self.controller, proj_dir, load = False)
+                self.littlecanvas2.delete('all')
+                load_check = 'not_loaded'
             self.w = popupWindow(self)
             self.wait_window(self.w.top)
             self.node = self.w.value
             self.graph.add_node(self.node, shape="box", fontsize="30.0",
                                 fontname="helvetica", penwidth="1.0")
-
-        if self.variable.get() == "Metadata menu":
-            self.w = popupWindow2(self, self.graph, self.canvas)
+       #checks if any nodes are in edge node to see if we want to add/delete a context
         if len(self.edge_nodes) == 1:
+            #first case deletes strat relationships
             if self.variable.get() == "Delete stratigraphic relationship with "+ str(self.edge_nodes[0]):
                 self.edge_nodes = np.append(self.edge_nodes, self.node)
                 self.reason = self.edge_del_popup()
+                if load_check == 'loaded':
+                    answer = askquestion('Warning!', 'Chronological DAG already loaded, do you want to save this as a new model first? \n Click YES to save as new model and NO to overwrite existing model')
+                    if answer == 'yes':
+                        self.refresh_4_new_model(self.controller, proj_dir, load = False)
+                    self.littlecanvas2.delete('all')
+                    load_check = 'not_loaded'
                 try:
                     self.graph.remove_edge(self.edge_nodes[0], self.edge_nodes[1])
                     self.edge_render()
@@ -2197,14 +2240,20 @@ class StartPage(tk.Frame):
                 self.OptionList.remove("Delete stratigraphic relationship with "+ str(self.edge_nodes[0]))
                 self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, self.OptionList[0],*self.OptionList, command=self.nodes)
                 self.edge_nodes = []
-
+            #second case is adding a strat relationship
             elif self.variable.get() == ("Place "+ str(self.edge_nodes[0]) + " Above"):
-                self.edge_nodes = np.append(self.edge_nodes, self.node)
-                self.addedge(self.edge_nodes)
-                self.OptionList.remove("Place "+ str(self.edge_nodes[0]) + " Above")
-                self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, self.OptionList[0], *self.OptionList, command=self.nodes)
-                self.edge_nodes = []
-
+                    if load_check == 'loaded':
+                     answer = askquestion('Warning!', 'Chronological DAG already loaded, do you want to save this as a new model first? \n Click YES to save as new model and NO to overwrite existing model')
+                     if answer == 'yes':
+                         self.refresh_4_new_model(self.controller, proj_dir, load = False)
+                    self.littlecanvas2.delete('all')
+                    load_check = 'not_loaded'
+                    self.edge_nodes = np.append(self.edge_nodes, self.node)
+                    self.addedge(self.edge_nodes)
+                    self.OptionList.remove("Place "+ str(self.edge_nodes[0]) + " Above")
+                    self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, self.OptionList[0], *self.OptionList, command=self.nodes)
+                    self.edge_nodes = []
+        #sets up the menu to delete the strat relationship once user picks next node
         if self.variable.get() == "Delete stratigraphic relationship":
             if len(self.edge_nodes) == 1:
                 self.OptionList.remove("Delete stratigraphic relationship with "+ str(self.edge_nodes[0]))
@@ -2212,10 +2261,12 @@ class StartPage(tk.Frame):
             self.edge_nodes = np.append(self.edge_nodes, self.node)
             self.OptionList.append("Delete stratigraphic relationship with "+ str(self.edge_nodes[0]))
             self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, self.OptionList[0], *self.OptionList, command=self.nodes)
-
-
+        #equates too contexts
         if len(self.comb_nodes) == 1:
             if self.variable.get() == "Equate context with "+ str(self.comb_nodes[0]):
+                if load_check == 'loaded':
+                    answer = askquestion('Warning!', 'Chronological DAG already loaded, do you want to save this as a new model first? \n Click YES to save as new model and NO to overwrite existing model')
+                    print(answer)
                 self.comb_nodes = np.append(self.comb_nodes, self.node)
                 graph_temp = nx.contracted_nodes(self.graph, self.comb_nodes[0], self.comb_nodes[1])
                 x_nod = list(graph_temp)
@@ -2232,7 +2283,7 @@ class StartPage(tk.Frame):
                 self.OptionList.remove("Equate context with "+ str(self.comb_nodes[0]))
                 self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, self.OptionList[0], *self.OptionList, command=self.nodes)
                 self.comb_nodes = []
-
+        #sets up menu to equate context for when user picks next node
         if self.variable.get() == "Equate context with another":
             if len(self.comb_nodes) == 1:
                 self.OptionList.remove("Equate context with "+ str(self.comb_nodes[0]))
@@ -2241,7 +2292,9 @@ class StartPage(tk.Frame):
             self.comb_nodes = np.append(self.comb_nodes, self.node)
             self.OptionList.append("Equate context with "+ str(self.comb_nodes[0]))
             self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, self.OptionList[0], *self.OptionList, command=self.nodes)
-
+        
+        if self.variable.get() == "Metadata menu":
+            self.w = popupWindow2(self, self.graph, self.canvas)
         if self.variable.get() == "Get metadata for this context":
             self.stratinfo = self.stratfunc(self.node)
             self.metadict2= {}
@@ -2266,10 +2319,9 @@ class StartPage(tk.Frame):
             for index, row in self.meta.iterrows():
                 self.tree1.insert("", 0, text=index, values=list(row))
             self.tree1.update()
-
+        #sets up menu to add strat relationships for when user picks next node
         if self.variable.get() == "Place above other context":
             if len(self.edge_nodes) == 1:
-                "tester"
                 self.OptionList.remove("Place "+ str(self.edge_nodes[0]) + " Above")
                 self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, self.OptionList[0], *self.OptionList, command=self.nodes)
                 self.edge_nodes = []
@@ -2281,7 +2333,7 @@ class StartPage(tk.Frame):
         if phase_true == 1:
             imgrender_phase(self.graph)
         else:
-            imgrender(self.graph)
+            imgrender(self.graph, self.littlecanvas.winfo_width(), self.littlecanvas.winfo_height())
         self.image = Image.open('testdag.png')
         self.width, self.height = self.image.size
         self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
@@ -2385,8 +2437,8 @@ class StartPage(tk.Frame):
             bbox[1] = bbox1[1]
             bbox[3] = bbox1[3]
         self.littlecanvas.configure(scrollregion=bbox)  # set scroll region
-        x_1 = min(bbox2[0] - bbox1[0], 0)  # get coordinates (x1,y1,x2,y2) of the image tile
-        y_1 = min(bbox2[1] - bbox1[1], 0)
+        x_1 = max(bbox2[0] - bbox1[0], 0)  # get coordinates (x1,y1,x2,y2) of the image tile
+        y_1 = max(bbox2[1] - bbox1[1], 0)
         x_2 = min(bbox2[2], bbox1[2]) - bbox1[0]
         y_2 = min(bbox2[3], bbox1[3]) - bbox1[1]
         if int(x_2 - x_1) > 0 and int(y_2 - y_1) > 0:  # show image if it in the visible area
@@ -2800,7 +2852,7 @@ class PageOne(tk.Frame):
                     intervals.append((node, hpd_str))
                 for contact in intervals:
                     self.tree_phases.insert('', tk.END, values=contact)
-                self.tree_phases.place(relx = 0, rely = 0, relwidth = 0.9)
+                self.tree_phases.place(relx = 0, rely = 0, relwidth = 0.99)
                 # add a scrollbar
                 scrollbar = ttk.Scrollbar(self.littlecanvas_a, orient=tk.VERTICAL, command=self.tree_phases.yview)
                 self.tree_phases.configure(yscroll=scrollbar.set)
@@ -2810,9 +2862,9 @@ class PageOne(tk.Frame):
     def chronograph_render_post(self):
         global load_check
         if load_check == 'loaded':
-            self.image_ws = imgrender2()
-            scale_factor = min(self.littlecanvas.winfo_width()/self.image_ws.size[0], self.littlecanvas.winfo_height()/self.image_ws.size[1])                       
-            self.image2 = self.image_ws.resize((int(self.image_ws.size[0]*scale_factor), int(self.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
+            self.image2 = imgrender2(self.littlecanvas2.winfo_width(), self.littlecanvas2.winfo_height())
+        #    scale_factor = min(self.littlecanvas2.winfo_width()/self.image_ws.size[0], self.littlecanvas2.winfo_height()/self.image_ws.size[1])                       
+        #    self.image2 = self.image_ws.resize((int(self.image_ws.size[0]*scale_factor), int(self.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
            
             self.littlecanvas2.img = ImageTk.PhotoImage(self.image2)
             self.littlecanvas2_img = self.littlecanvas2.create_image(0, 0, anchor="nw",
@@ -2972,6 +3024,7 @@ class PageTwo(object):
         label.place(relx=0.4, rely=0.05)
         label2 = ttk.Label(self.canvas, text='Residual Contexts')
         label2.place(relx=0.4, rely=0.4)
+        self.graphcanvas.update()
         self.residcanvas = tk.Canvas(self.canvas, bd=0, bg='white',
                                      selectborderwidth=0, highlightthickness=0, insertwidth=0)
         self.residcanvas.place(relx=0.4, rely=0.42, relwidth=0.35, relheight=0.08)
@@ -2996,10 +3049,10 @@ class PageTwo(object):
         button = ttk.Button(self.top, text="Proceed",
                             command=lambda: self.popup4_wrapper(controller))
 
-        button1 = ttk.Button(self.top, text="Residual mode",
+        button1 = tk.Button(self.top, text="Residual mode",
                              command=lambda: self.mode_set('resid'))
         button1.place(relx=0.44, rely=0.35, relwidth=0.09, relheight=0.03)
-        button3 = ttk.Button(self.top, text="Intrusive mode",
+        button3 = tk.Button(self.top, text="Intrusive mode",
                              command=lambda: self.mode_set('intru'))
         button.place(relx=0.48, rely=0.65, relwidth=0.09, relheight=0.03)
         button3.place(relx=0.54, rely=0.35, relwidth=0.09, relheight=0.03)
@@ -3020,17 +3073,17 @@ class PageTwo(object):
         '''sets the mode to residual or intrusive and highlights the colour of the  button'''
         self.modevariable = var_set
         if var_set == 'resid':
-            button1 = ttk.Button(self.top, text="Residual mode",
+            button1 = tk.Button(self.top, text="Residual mode",
                                  command=lambda: self.mode_set('resid'), background='orange')
             button1.place(relx=0.44, rely=0.35, relwidth=0.09, relheight=0.03)
-            button3 = ttk.Button(self.top, text="Intrusive mode",
+            button3 = tk.Button(self.top, text="Intrusive mode",
                                  command=lambda: self.mode_set('intru'))
             button3.place(relx=0.54, rely=0.35, relwidth=0.09, relheight=0.03)
         if var_set == 'intru':
-            button1 = ttk.Button(self.top, text="Residual mode",
+            button1 = tk.Button(self.top, text="Residual mode",
                                  command=lambda: self.mode_set('resid'))
             button1.place(relx=0.44, rely=0.35, relwidth=0.09, relheight=0.03)
-            button3 = ttk.Button(self.top, text="Intrusive mode",
+            button3 = tk.Button(self.top, text="Intrusive mode",
                                  command=lambda: self.mode_set('intru'), background='lightgreen')
             button3.place(relx=0.54, rely=0.35, relwidth=0.09, relheight=0.03)
 
@@ -3058,14 +3111,14 @@ class PageTwo(object):
         nx.set_node_attributes(self.graphcopy, color, 'color')
         nx.set_node_attributes(self.graphcopy, fill, 'fontcolor')
         if phase_true == 1:
-            self.image_ws = imgrender_phase(self.graphcopy)
+            self.image = imgrender_phase(self.graphcopy)
         else:
-            self.image_ws = imgrender(self.graphcopy)
-        scale_factor = min(self.graphcanvas.winfo_width()/self.image_ws.size[0], self.graphcanvas.winfo_height()/self.image_ws.size[1])                       
-        self.image = self.image_ws.resize((int(self.image_ws.size[0]*scale_factor), int(self.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
+            self.image = imgrender(self.graphcopy, self.graphcanvas.winfo_width(), self.graphcanvas.winfo_height())
+    #    scale_factor = min(self.graphcanvas.winfo_width()/self.image_ws.size[0], self.graphcanvas.winfo_height()/self.image_ws.size[1])                       
+   #     self.image = self.image_ws.resize((int(self.image_ws.size[0]*scale_factor), int(self.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
         self.icon = ImageTk.PhotoImage(self.image)
         self.graphcanvas_img = self.graphcanvas.create_image(0, 0, anchor="nw",
-                                                             image=self.icon)
+                                                            image=self.icon)
         self.width2, self.height2 = self.image.size
         self.imscale2 = 1.0  # scale for the canvaas image
         self.delta2 = 1.1  # zoom magnitude
@@ -3224,7 +3277,7 @@ class PageTwo(object):
         if phase_true == 1:
             imgrender_phase(self.graphcopy)
         else:
-            imgrender(self.graphcopy)
+            imgrender(self.graphcopy, self.graphcanvas.winfo_width(), self.graphcanvas.winfo_height())
         #rerends the image of the strat DAG with right colours
         self.image = Image.open('testdag.png')
         self.width2, self.height2 = self.image.size
