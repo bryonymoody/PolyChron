@@ -5,26 +5,58 @@ Created on Thu Aug 11 13:11:25 2022
 
 @author: bryony
 """
+
+#modules
 import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import automated_mcmc_ordering_coupling_copy as mcmc
+import random
+import csv
+from scipy.interpolate import interp1d
+#data neaded
 post_samps_all = pd.read_csv('full_results_df')
 dates = pd.read_csv('dates')
-import numpy as np
-import math
-import time
-import matplotlib.pyplot as plt
-CALIBRATION_DATA = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True)
-def bayes_fact_likelihood(results_vec, theta):
-    if len(np.where(results_vec[0:][0] == int(theta))[0]) == 0:
-        #print('theta')
-        x_temp = 0
-        print('oh no')
-    else:
-        ind_dic = np.where(results_vec[0:][0] == int(theta))[0][0]
-        li_vec = results_vec[0:][0][ind_dic:ind_dic+11]
-        res = min(enumerate(li_vec), key=lambda x: abs(theta - x[1]))
-        c_vec = np.where(results_vec[0:][0] == res[1])
-        x_temp = results_vec[1:][0][c_vec[0]][0]   
-    return(x_temp)
+
+#calibration curve
+CALIBRATION_1 = pd.read_csv('intcal98.csv', delim_whitespace=True)
+cal_df_1 = interp1d(CALIBRATION_1['Calendar_year'], CALIBRATION_1['Carbon_year'], kind = 'cubic')
+cal_df_2 = interp1d(CALIBRATION_1['Calendar_year'], CALIBRATION_1['Carbon_error'], kind = 'cubic')
+
+x_1 = np.linspace(1, 24000, num=24000, endpoint=True)
+x_2 = cal_df_1(x_1)
+x_3 = cal_df_2(x_2)
+CALIBRATION_DATA = pd.DataFrame()
+CALIBRATION_DATA['Calendar_year'] = x_1
+CALIBRATION_DATA['Carbon_year'] = x_2
+CALIBRATION_DATA['Carbon_error'] = x_3
+
+
+
+#small test to show means aren't very helpful 
+x = post_samps_all['2589']
+np.mean(x)
+np.std(x)
+plt.hist(x, bins='auto', color='#0504aa',
+           alpha=0.7, rwidth=0.85, density=True)
+
+#data for nicholls and jones:
+A = 450
+P = 950
+#CALIBRATION = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True)
+STRAT_VEC = [[[], []], [[], []], [[], []], [[], []], [[], []], [[], []], [[], []]]
+RCD_EST = [660, 630, 646, 670, 537, 600, 580]
+RCD_ERR = [46, 35, 47, 47, 44, 50, 47]
+KEY_REF = ["6", "5", "5", "4", "3", "2", "1"]
+CONTEXT_NO = ["7771", "2589", "7755", "7756", "7757", "7761", "7758"]
+PHI_REF = ["6", "5", "4", "3", "2", "1"]
+CONT_TYPE = ['normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal']
+PREV_PHASE = ["start", "abutting", "abutting", "abutting", "abutting", "abutting"]
+POST_PHASE = ["abutting", "abutting", "abutting", "abutting", "abutting", "end"]
+TOPO_SORT = CONTEXT_NO
+
+# =============================================================================
+# Obtaining data for model 1 and defining fucntions needed to get that data
 
 
 def likeli(x_val, s_err, theta, CALIBRATION_DATA):
@@ -34,49 +66,362 @@ def likeli(x_val, s_err, theta, CALIBRATION_DATA):
                            (2*(s_err**2 + data["Carbon_error"]**2)))
     like_val = value_theta/((2*3.14*(s_err**2 + data["Carbon_error"]**2))**0.5)
     return like_val
-col_refs = post_samps_all.columns[8:]
-post_samps_theta = [list(post_samps_all[i])[10000:20000] for i in col_refs]
-prior_samps_theta = [i for i in ACCEPT]# x[1]
-post_samps_m1 = [i for i in ACCEPT1]#
-j_h_1 = len(post_samps_m1[0])
-j_f = len(prior_samps_theta[0])
-j_h = len(post_samps_theta[0])
-j = j_f + j_h
 
-def Ex_f(prior_samps_theta, j_h, j_f, j, results_vector, r, dates, cal_data, CONTEXT_NO):
-    sums_vec = []
-    for i in range(len(prior_samps_theta[0])):
-        prior_samps_row = [prior_samps_theta[d][i] for d in range(len(prior_samps_theta))]
-        llhd = []
-        for jj, k in enumerate(prior_samps_row):
-            context = CONTEXT_NO[jj]
-            rc_data = dates[dates['context'] == int(context)]
-            llhd.append(likeli(rc_data['date'], rc_data['error'], int(k), cal_data))
-        tot_llh = np.prod(llhd)    
-        llhd_fin = tot_llh/(j_h*tot_llh + j_f*r) 
-        sums_vec.append(llhd_fin)        
-    expec = (1/j_f)*sum(sums_vec)
-    return expec
-def Ex_h(post_samps_theta, j_h, j_f, j, results_vector, r,  dates, cal_data, CONTEXT_NO):
-    sums_vec = []
-    for i in range(len(post_samps_theta[0])):
-        post_samps_row = [post_samps_theta[d][i] for d in range(len(post_samps_theta))]
-        llhd = []
-        for jj, k in enumerate(post_samps_row):
-            context = CONTEXT_NO[jj]
-            rc_data = dates[dates['context'] == int(context)]
-            llhd.append(likeli(rc_data['date'], rc_data['error'], int(k), cal_data))
-        tot_llh = np.prod(llhd)    
-        llhd_fin = 1/(j_h*tot_llh + j_f*r) 
-        sums_vec.append(llhd_fin)
-    expec = (1/j_h)*sum(sums_vec)
-    print(tot_llh)
-    return expec     
+
+PHI_SAMP_DICT = {
+            'upper' : {
+                'start':{
+                    'abuting':mcmc.upp_samp_1,
+                    'overlap':mcmc.upp_samp_2,
+                    'gap':mcmc.upp_samp_1,
+                    'end':mcmc.upp_samp_1,
+                    },
+                'abuting':{
+                    'abuting':mcmc.upp_samp_3,
+                    'overlap':mcmc.upp_samp_4,
+                    'gap':mcmc.upp_samp_3,
+                    'end':mcmc.upp_samp_3
+                    },
+                'overlap':{
+                    'abuting':mcmc.upp_samp_5,
+                    'overlap':mcmc.upp_samp_5,
+                    'gap':mcmc.upp_samp_5,
+                    'end':mcmc.upp_samp_5
+                    },
+                'gap':{
+                    'abuting':mcmc.upp_samp_6,
+                    'overlap':mcmc.upp_samp_7,
+                    'gap':mcmc.upp_samp_6,
+                    'end':mcmc.upp_samp_6}
+                    },
+            'lower' :  {
+                'start':{
+                    'abuting':mcmc.low_samp_1,
+                    'overlap':mcmc.low_samp_3,
+                    'gap':mcmc.low_samp_4,
+                    'end':mcmc.low_samp_6
+                    },
+                'abuting':{
+                    'abuting':mcmc.low_samp_1,
+                    'overlap':mcmc.low_samp_3,
+                    'gap':mcmc.low_samp_4,
+                    'end':mcmc.low_samp_6
+                    },
+                'overlap':{
+                    'abuting':mcmc.low_samp_2,
+                    'overlap':mcmc.low_samp_3,
+                    'gap':mcmc.low_samp_5,
+                    'end':mcmc.low_samp_7
+                    },
+                'gap':{
+                    'abuting':mcmc.low_samp_1,
+                    'overlap':mcmc.low_samp_3,
+                    'gap':mcmc.low_samp_4,
+                    'end':mcmc.low_samp_6
+                    }
+                },
+            'combined' :  {
+                'start':{
+                    'abuting':mcmc.low_samp_1,
+                    'overlap':mcmc.low_samp_3,
+                    'gap':mcmc.low_samp_4,
+                    'end':mcmc.low_samp_6
+                    },
+                'abuting':{
+                    'abuting':mcmc.low_samp_1,
+                    'overlap':mcmc.low_samp_3,
+                    'gap':mcmc.low_samp_4,
+                    'end':mcmc.low_samp_6
+                    },
+                'overlap':{
+                    'abuting':mcmc.low_samp_2,
+                    'overlap':mcmc.low_samp_3,
+                    'gap':mcmc.low_samp_5,
+                    'end':mcmc.low_samp_7
+                    },
+                'gap':{
+                    'abuting':mcmc.low_samp_1,
+                    'overlap':mcmc.low_samp_3,
+                    'gap':mcmc.low_samp_4,
+                    'end':mcmc.low_samp_6
+                    }
+                },
+            'overlap_upper' :  {
+                'start':{
+                    'abuting':mcmc.overlap_samp_1,
+                    'overlap':mcmc.overlap_samp_1,
+                    'gap':mcmc.overlap_samp_1,
+                    'end':mcmc.overlap_samp_1,
+                    },   
+                'abuting':{
+                    'abuting':mcmc.overlap_samp_1,
+                    'overlap':mcmc.overlap_samp_1,
+                    'gap':mcmc.overlap_samp_1,
+                    'end':mcmc.overlap_samp_1,
+                    },
+                'overlap':{
+                    'abuting':mcmc.overlap_samp_1,
+                    'overlap':mcmc.overlap_samp_1,
+                    'gap':mcmc.overlap_samp_1,
+                    'end':mcmc.overlap_samp_1,
+                    },
+                'gap':{
+                    'abuting':mcmc.overlap_samp_1,
+                    'overlap':mcmc.overlap_samp_1,
+                    'gap':mcmc.overlap_samp_1,
+                    'end':mcmc.overlap_samp_1,
+                    }
+                },
+            'overlap_beta' :  {
+                'start':{
+                    'abuting':mcmc.overlap_samp_2,
+                    'overlap':mcmc.overlap_samp_2,
+                    'gap':mcmc.overlap_samp_2,
+                    'end':mcmc.overlap_samp_2,
+                    },
+                'abuting':{
+                    'abuting':mcmc.overlap_samp_2,
+                    'overlap':mcmc.overlap_samp_2,
+                    'gap':mcmc.overlap_samp_2,
+                    'end':mcmc.overlap_samp_2,
+                    },
+                'overlap':{
+                    'abuting':mcmc.overlap_samp_2,
+                    'overlap':mcmc.overlap_samp_2,
+                    'gap':mcmc.overlap_samp_2,
+                    'end':mcmc.overlap_samp_2,
+                    },
+                'gap':{
+                    'abuting':mcmc.overlap_samp_2,
+                    'overlap':mcmc.overlap_samp_2,
+                    'gap':mcmc.overlap_samp_2,
+                    'end':mcmc.overlap_samp_2,
+                    }
+                }
+            }
+
+def initialise_prior(CALIBRATION, RCD_EST, RCD_ERR):
+#  method  = 'squeeze'
+  CALIBRATION_DATA = CALIBRATION.to_dict()
+  x_min = min(RCD_EST)
+  s = max(RCD_ERR)
+  x_max = max(RCD_EST)
+  mydict = CALIBRATION_DATA['Carbon_year']
+  a = list(mydict.values())
+  p = min(range(len(a)), key=lambda i: abs(a[i]-x_min))
+  l = min(range(len(a)), key=lambda i: abs(a[i]-x_max))
+  A = max(p - 10*s, 0)
+  P = min(l + 10*s, 50000)
+  ##############################################
+  ##initiating  likelihoods
+  RCD_S = [list(x) for x in zip(RCD_EST, RCD_ERR)]
+  RESULT_VEC = [mcmc.likelihood_func(date[0], date[1], A, P, CALIBRATION_DATA) for date in RCD_S]
+  return A, P, RESULT_VEC
+
+
+def gibbs_code_prior(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT): 
+  THETA_INITS = mcmc.theta_init_func_n(KEY_REF, PHI_REF, RESULT_VEC, STRAT_VEC, P, CONTEXT_NO, TOPO_SORT)
+  PHASE_BOUNDARY_INITS = mcmc.phase_bd_init_func(KEY_REF, PHI_REF, THETA_INITS, PREV_PHASE, A, P)
+  TEST_DICT_1, POST_THETAS, POST_PHIS, SITE_DICT_TEST_1 = mcmc.dict_form_func(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC, PHASE_BOUNDARY_INITS, POST_PHASE, PHI_REF, PREV_PHASE, KEY_REF, CONT_TYPE)
+  STEP_1, STEP_2, STEP_3, SAMP_VEC_TRACK = mcmc.how_to_phase_samp(POST_PHASE, PREV_PHASE)
+  PHIS_VEC = PHASE_BOUNDARY_INITS
+  THETAS = THETA_INITS.copy()
+ ########################### figures out how to sample based on phase relationships
+ # K = len(THETAS)
+  M = len(POST_PHIS)
+ # S = max(RCD_ERR)
+  R = P - A 
+  POST_THETAS, POST_PHIS, POST_S = mcmc.set_up_post_arrays(POST_THETAS, POST_PHIS, THETA_INITS, PHASE_BOUNDARY_INITS)
+  POST_S = []
+  for i in range(0, iter_num):
+        print(i)
+        SITE_DICT_TEST_1 = mcmc.dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF) 
+        for j in range(len(PHASE_BOUNDARY_INITS)):
+              #update the dictionary so we ge tthe right beta
+              k = mcmc.gibbs_phis_gen(PREV_PHASE, PHI_REF)[j]
+              rc_dates = [i[0] for i in SITE_DICT_TEST_1[k]['dates']]
+              #tells us which phase the paramter is from
+              n_m = len(SITE_DICT_TEST_1[k]["dates"]) #number of dates in this phase
+              if j == 0: 
+                  beta = SITE_DICT_TEST_1[k]["boundaries"][0]
+                  phi_vals = np.linspace(P - 0.1, max(rc_dates) + 0.1, num=max(int(P - max(rc_dates))*50, 10))
+                  phase_samps = np.array([(((k - PHIS_VEC[M-1])**(1-M))/(R - (k - PHIS_VEC[M-1])))*(1/(k-beta)**n_m) for k in phi_vals]) #*(1/(k-beta))**n_m
+                  weights = phase_samps/sum(phase_samps)
+                  PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
+              elif j == M - 1:
+                  phi_vals = np.linspace(min(rc_dates)-0.1, A+0.1, num=max(int(min(rc_dates) - A)*50, 10))
+                  phase_samps = np.array([(((PHIS_VEC[0] - k)**(1-M))/(R - (PHIS_VEC[0] - k)))*(1/(PHIS_VEC[j-1]-k)**n_m) for k in phi_vals])
+                  weights = phase_samps/sum(phase_samps)
+                  PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
+              else:
+                  k_nxt_phase = mcmc.gibbs_phis_gen(PREV_PHASE, PHI_REF)[j+1] 
+                  rc_dates_nxt_phase = [i[0] for i in SITE_DICT_TEST_1[k_nxt_phase]['dates']]
+                  phi_vals = np.linspace(min(rc_dates) - 0.1, max(rc_dates_nxt_phase)+ 0.1, num=max(int(min(rc_dates) - max(rc_dates_nxt_phase))*50, 10))
+                  n_m_1 = len(SITE_DICT_TEST_1[k_nxt_phase]["dates"])
+                  beta = SITE_DICT_TEST_1[k_nxt_phase]["boundaries"][0]
+                  phase_samps = np.array([(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1) for k in phi_vals]) #(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1)
+                  weights = phase_samps/sum(phase_samps)
+                  PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
+              POST_PHIS[j].append(PHIS_VEC[j])
+        POST_S.append(PHIS_VEC[0] - PHIS_VEC[M-1])
+        SITE_DICT_TEST_1 = mcmc.dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i+1, POST_PHASE, PHI_REF) #updates dictionary to stash all the samples
+        for k in range(len(THETA_INITS)):
+              key = KEY_REF[k] #which phase the theta is in
+              a = [CONTEXT_NO[k] in d for d in SITE_DICT_TEST_1[key]["dates"]].index(True) #finds where in dict date is
+              strat_single = mcmc.strat_rel(SITE_DICT_TEST_1, key, a, THETAS, CONTEXT_NO) #gets upper and lower bounds based on any strat rels
+              low_bound = max(SITE_DICT_TEST_1[key]["boundaries"][0], strat_single[1]) #lower bound for sampling
+              up_bound = min(SITE_DICT_TEST_1[key]["boundaries"][1], strat_single[0]) #upper bound for samping
+              THETAS[k] = random.uniform(low_bound, up_bound)
+              POST_THETAS[k].append(THETAS[k]) 
+  PHI_ACCEPT, ACCEPT = POST_PHIS, POST_THETAS
+  return PHI_ACCEPT, ACCEPT, POST_S
+
+def gibbs_code_prior_1(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT): 
+  THETA_INITS = mcmc.theta_init_func_n(KEY_REF, PHI_REF, RESULT_VEC, STRAT_VEC, P, CONTEXT_NO, TOPO_SORT)
+  PHASE_BOUNDARY_INITS = mcmc.phase_bd_init_func(KEY_REF, PHI_REF, THETA_INITS, PREV_PHASE, A, P)
+  TEST_DICT_1, POST_THETAS, POST_PHIS, SITE_DICT_TEST_1 = mcmc.dict_form_func(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC, PHASE_BOUNDARY_INITS, POST_PHASE, PHI_REF, PREV_PHASE, KEY_REF, CONT_TYPE)
+  STEP_1, STEP_2, STEP_3, SAMP_VEC_TRACK = mcmc.how_to_phase_samp(POST_PHASE, PREV_PHASE)
+  PHIS_VEC = PHASE_BOUNDARY_INITS
+  THETAS = THETA_INITS.copy()
+ ########################### figures out how to sample based on phase relationships
+ # K = len(THETAS)
+  M = len(POST_PHIS)
+ # S = max(RCD_ERR)
+  R = P - A 
+  POST_THETAS, POST_PHIS, POST_S = mcmc.set_up_post_arrays(POST_THETAS, POST_PHIS, THETA_INITS, PHASE_BOUNDARY_INITS)
+  POST_S = []
+  for i in range(0, iter_num):
+        print(i)
+        SITE_DICT_TEST_1 = mcmc.dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF) 
+        for j in range(len(PHASE_BOUNDARY_INITS)):
+              #update the dictionary so we ge tthe right beta
+              k = mcmc.gibbs_phis_gen(PREV_PHASE, PHI_REF)[j]
+              rc_dates = [i[0] for i in SITE_DICT_TEST_1[k]['dates']]
+              #tells us which phase the paramter is from
+              n_m = len(SITE_DICT_TEST_1[k]["dates"]) #number of dates in this phase
+              if j == 0: 
+                  beta = SITE_DICT_TEST_1[k]["boundaries"][0]
+                  phi_vals = np.linspace(P - 0.1, max(rc_dates) + 0.1, num=max(int(P - max(rc_dates))*50, 10))
+                  phase_samps = np.array([1/((k-beta)**n_m) for k in phi_vals]) #*(1/(k-beta))**n_m
+                  weights = phase_samps/sum(phase_samps)
+                  PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
+              elif j == M - 1:
+                  phi_vals = np.linspace(min(rc_dates)-0.1, A+0.1, num=max(int(min(rc_dates) - A)*50, 10))
+                  phase_samps = np.array([(1/(PHIS_VEC[j-1]-k)**n_m) for k in phi_vals])
+                  weights = phase_samps/sum(phase_samps)
+                  PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
+              else:
+                  k_nxt_phase = mcmc.gibbs_phis_gen(PREV_PHASE, PHI_REF)[j+1] 
+                  rc_dates_nxt_phase = [i[0] for i in SITE_DICT_TEST_1[k_nxt_phase]['dates']]
+                  phi_vals = np.linspace(min(rc_dates) - 0.1, max(rc_dates_nxt_phase)+ 0.1, num=max(int(min(rc_dates) - max(rc_dates_nxt_phase))*50, 10))
+                  n_m_1 = len(SITE_DICT_TEST_1[k_nxt_phase]["dates"])
+                  beta = SITE_DICT_TEST_1[k_nxt_phase]["boundaries"][0]
+                  phase_samps = np.array([(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1) for k in phi_vals]) #(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1)
+                  weights = phase_samps/sum(phase_samps)
+                  PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
+              POST_PHIS[j].append(PHIS_VEC[j])
+        POST_S.append(PHIS_VEC[0] - PHIS_VEC[M-1])
+        SITE_DICT_TEST_1 = mcmc.dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i+1, POST_PHASE, PHI_REF) #updates dictionary to stash all the samples
+        for k in range(len(THETA_INITS)):
+              key = KEY_REF[k] #which phase the theta is in
+              a = [CONTEXT_NO[k] in d for d in SITE_DICT_TEST_1[key]["dates"]].index(True) #finds where in dict date is
+              strat_single = mcmc.strat_rel(SITE_DICT_TEST_1, key, a, THETAS, CONTEXT_NO) #gets upper and lower bounds based on any strat rels
+              low_bound = max(SITE_DICT_TEST_1[key]["boundaries"][0], strat_single[1]) #lower bound for sampling
+              up_bound = min(SITE_DICT_TEST_1[key]["boundaries"][1], strat_single[0]) #upper bound for samping
+              THETAS[k] = random.uniform(low_bound, up_bound)
+              POST_THETAS[k].append(THETAS[k]) 
+  PHI_ACCEPT, ACCEPT = POST_PHIS, POST_THETAS
+  return PHI_ACCEPT, ACCEPT, POST_S
+
+
+def gibbs_code_post(iter_num, RESULT_VEC1, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT): 
+    THETA_INITS = mcmc.theta_init_func_n(KEY_REF, PHI_REF, RESULT_VEC1, STRAT_VEC, P, CONTEXT_NO, TOPO_SORT)
+    PHASE_BOUNDARY_INITS = mcmc.phase_bd_init_func(KEY_REF, PHI_REF, THETA_INITS, PREV_PHASE, A, P)
+    TEST_DICT_1, POST_THETAS, POST_PHIS, SITE_DICT_TEST_1 = mcmc.dict_form_func(THETA_INITS, RESULT_VEC1, CONTEXT_NO, STRAT_VEC, PHASE_BOUNDARY_INITS, POST_PHASE, PHI_REF, PREV_PHASE, KEY_REF, CONT_TYPE)
+    STEP_1, STEP_2, STEP_3, SAMP_VEC_TRACK = mcmc.how_to_phase_samp(POST_PHASE, PREV_PHASE)
+    PHIS_VEC = PHASE_BOUNDARY_INITS
+    THETAS = THETA_INITS.copy()
+   ########################### figures out how to sample based on phase relationships
+    M = len(POST_PHIS)
+    POST_THETAS, POST_PHIS, POST_S = mcmc.set_up_post_arrays(POST_THETAS, POST_PHIS, THETA_INITS, PHASE_BOUNDARY_INITS)
+    POST_S = []
+    for i in range(0, iter_num):
+          print(i)
+          SITE_DICT_TEST_1 = mcmc.dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF) 
+          for j in range(len(PHASE_BOUNDARY_INITS)):
+                #update the dictionary so we ge tthe right beta
+                k = mcmc.gibbs_phis_gen(PREV_PHASE, PHI_REF)[j]
+         #       print(k)
+                rc_dates = [i[0] for i in SITE_DICT_TEST_1[k]['dates']]
+                #tells us which phase the paramter is from
+                n_m = len(SITE_DICT_TEST_1[k]["dates"]) #number of dates in this phase
+                if j == 0: 
+                    beta = SITE_DICT_TEST_1[k]["boundaries"][0]
+                    phi_vals = np.linspace(P - 0.1, max(rc_dates) + 0.1, num=max(int(P - max(rc_dates))*50, 10))
+                    phase_samps = np.array([1/(k-beta)**n_m for k in phi_vals]) #*(1/(k-beta))**n_m
+                    weights = phase_samps/sum(phase_samps)
+                    PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
+                elif j == M - 1:
+                    phi_vals = np.linspace(min(rc_dates)-0.1, A+0.1, num=max(int(min(rc_dates) - A)*50, 10))
+                    phase_samps = np.array([1/(PHIS_VEC[j-1]-k)**n_m for k in phi_vals])
+                    weights = phase_samps/sum(phase_samps)
+                    PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
+                else:
+                    k_nxt_phase = mcmc.gibbs_phis_gen(PREV_PHASE, PHI_REF)[j+1] 
+                    rc_dates_nxt_phase = [i[0] for i in SITE_DICT_TEST_1[k_nxt_phase]['dates']]
+                    phi_vals = np.linspace(min(rc_dates) - 0.1, max(rc_dates_nxt_phase) + 0.1, num=max(int(min(rc_dates) - max(rc_dates_nxt_phase))*50, 10))
+                    n_m_1 = len(SITE_DICT_TEST_1[k_nxt_phase]["dates"])
+                    beta = SITE_DICT_TEST_1[k_nxt_phase]["boundaries"][0]
+                    phase_samps = np.array([(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1) for k in phi_vals]) #(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1)
+                    weights = phase_samps/sum(phase_samps)
+                    PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
+                POST_PHIS[j].append(PHIS_VEC[j])
+          POST_S.append(PHIS_VEC[0] - PHIS_VEC[M-1])
+          SITE_DICT_TEST_1 = mcmc.dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i+1, POST_PHASE, PHI_REF) #updates dictionary to stash all the samples
+          for k in range(len(THETA_INITS)):
+                key = KEY_REF[k] #which phase the theta is in
+                a = [CONTEXT_NO[k] in d for d in SITE_DICT_TEST_1[key]["dates"]].index(True) #finds where in dict date is
+                strat_single = mcmc.strat_rel(SITE_DICT_TEST_1, key, a, THETAS, CONTEXT_NO) #gets upper and lower bounds based on any strat rels
+                low_bound = max(SITE_DICT_TEST_1[key]["boundaries"][0], strat_single[1]) #lower bound for sampling
+                up_bound = min(SITE_DICT_TEST_1[key]["boundaries"][1], strat_single[0])#upper bound for samping
+                SAMPLE_VEC = RESULT_VEC1[k][0][(RESULT_VEC1[k][0] < up_bound) & (RESULT_VEC1[k][0] > low_bound)] #restricts result vec between these boundaries                  
+                SAMPLE_VEC_PROB = RESULT_VEC1[k][1][(RESULT_VEC1[k][0] < up_bound) & (RESULT_VEC1[k][0] > low_bound)]  #gets probs too between boundaries
+                THETAS[k] = random.choices(SAMPLE_VEC, weights=SAMPLE_VEC_PROB/sum(SAMPLE_VEC_PROB))[0]
+                POST_THETAS[k].append(THETAS[k]) 
+    PHI_ACCEPT1, ACCEPT1 = POST_PHIS, POST_THETAS
+    return PHI_ACCEPT1, ACCEPT1, POST_S
+
+#optaining prior samples and posterior samples without squeezing model
+A, P, RESULT_VEC = initialise_prior(CALIBRATION_DATA, RCD_EST, RCD_ERR) # gets likelihood vector for prior
+A, P, RESULT_VEC1 = mcmc.initialise(CALIBRATION_DATA, RCD_EST, RCD_ERR)
+A, P = 450, 950
+PHI_ACCEPT, ACCEPT, POST_S = gibbs_code_prior(5000, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT)
+PHI_ACCEPT1, ACCEPT1, POST_S = gibbs_code_post(5000, RESULT_VEC1, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT)
+PHI_ACCEPT_2, ACCEPT_2, POST_S_2 = gibbs_code_prior_1(10000, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT)
+
+df = pd.DataFrame()
+for i,j in enumerate(CONTEXT_NO):
+    df[j] = ACCEPT[i]
+df.to_csv("ACCEPT.csv")
+
+df1 = pd.DataFrame()
+for i,j in enumerate(CONTEXT_NO):
+    df1[j] = ACCEPT1[i]
+df1.to_csv("ACCEPT1.csv")
+
+df2 = pd.DataFrame()
+for i,j in enumerate(CONTEXT_NO):
+    df2[j] = ACCEPT_2[i]
+df2.to_csv("ACCEPT_2.csv")
+
+
+# =============================================================================
+  
 
 def pre_sum_cal(samples, CONTEXT_NO, cal_data):
+    #calculates the likelihood of each theta in the sample, then takes the product to give a full likelihood
     sums_vec = []
-    for i in range(len(post_samps_theta[0])):
-        print(i)
+    for i in range(len(samples[0])):
         post_samps_row = [samples[d][i] for d in range(len(samples))]
         llhd = []
         for jj, k in enumerate(post_samps_row):
@@ -86,11 +431,6 @@ def pre_sum_cal(samples, CONTEXT_NO, cal_data):
         tot_llh = np.prod(llhd)
         sums_vec.append(tot_llh)
     return sums_vec
-    
-
-llh_vec_post = pre_sum_cal(post_samps_theta, CONTEXT_NO, CALIBRATION_DATA)
-llh_vec_prior = pre_sum_cal(prior_samps_theta, CONTEXT_NO, CALIBRATION_DATA)
-llh_vec_post_1 = pre_sum_cal(post_samps_m1, CONTEXT_NO, CALIBRATION_DATA)
 def Ex_h_test(j_h, j_f, j, r, llh_vec):
     llhd_fin = [1/((j_h*k) + (j_f*r)) for k in llh_vec] 
     expec = (j/j_h)*sum(llhd_fin)
@@ -100,14 +440,12 @@ def Ex_f_test(j_h, j_f, j, r, llh_vec):
     llhd_fin = [k/(j_h*k + j_f*r) for k in llh_vec] 
     expec = (j/j_f)*sum(llhd_fin)
     return expec   
-    
-    
-r_0 = 0.000000000000005
 
-def r_seq(r_0, post_samps_theta, prior_samps_theta, j, j_f, j_h, iters, results_vec,dates, CALIBRATION_DATA, CONTEXT_NO, llh_post):
+#equal to r_GM in  N&J
+def r_seq(r_0, j, j_f, j_h, iters, llh_post, llh_vec_prior):
+    '''Estimates the Gelman estimtor'''
     r_vec = [r_0]
     for i in range(iters):
-        print(i)
         r = r_vec[i]
         e_f = Ex_f_test(j_h, j_f, j, r, llh_vec_prior)
         e_h = Ex_h_test(j_h, j_f, j, r, llh_post)
@@ -117,12 +455,54 @@ def r_seq(r_0, post_samps_theta, prior_samps_theta, j, j_f, j_h, iters, results_
         
 
 
-test = r_seq(r_0, post_samps_theta, prior_samps_theta, j, j_f, j_h, 50, RESULT_VEC, dates, CALIBRATION_DATA, CONTEXT_NO, llh_vec_post)
-test1 = r_seq(r_0, post_samps_m1, prior_samps_theta, j, j_f, j_h, 50, RESULT_VEC, dates, CALIBRATION_DATA, CONTEXT_NO, llh_vec_post_1)
-
-test[1]/test1[1]
-plt.plot(test[0])
-test[1]
 
 
+# for i,j in enumerate(CONTEXT_NO):
+#     print(j)
+#     print(mcmc.HPD_interval(ACCEPT1[i]))
+df_a2 = pd.read_csv('ACCEPT_2.csv')
+#getting samples ready for Bayes factor estimations
+col_refs = post_samps_all.columns[8:] # contexts in your model
+post_samps_theta = [list(post_samps_all[i])[10000:15000] for i in col_refs] #takes 10000 posterior samples for each context
+prior_samps_theta = [i for i in ACCEPT]# gets a list of samples from the prior
+post_samps_m1 = [i for i in ACCEPT1]#list of posterior samples  when squeezing not included
+prior_samps_m1 = [list(df_a2[i]) for i in col_refs]
+#part of the estimator for the Bayes facotr (see N and J 2002)
+j_h_1 = len(post_samps_m1[0])
+j_f_1 = len(prior_samps_m1[0])
+j_f = len(prior_samps_theta[0])
+j_h = len(post_samps_theta[0])
+j = j_f + j_h
+j_1 = j_f_1 + j_h_1
 
+llh_vec_post = pre_sum_cal(post_samps_theta, CONTEXT_NO, CALIBRATION_DATA)
+llh_vec_prior = pre_sum_cal(prior_samps_theta, CONTEXT_NO, CALIBRATION_DATA)
+llh_vec_post_1 = pre_sum_cal(post_samps_m1, CONTEXT_NO, CALIBRATION_DATA)
+llh_vec_prior_1 = pre_sum_cal(prior_samps_m1, CONTEXT_NO, CALIBRATION_DATA)
+r_0 = 0.0000000000000000000005
+
+
+test = r_seq(r_0, j, j_f, j_h, 50, llh_vec_post, llh_vec_prior)
+test1 = r_seq(r_0, j_1, j_f_1, j_h_1, 50, llh_vec_post_1, llh_vec_prior_1)
+print(test[1])
+print(test1[1])
+print(test[1]/test1[1])
+# plt.plot(test1[0])
+
+#### plots for checking mcmc results are giving the right results
+
+# for x,y in enumerate(prior_samps_theta):   
+#     fig = plt.figure(figsize=(13, 8))
+#     ax = plt.subplot(111)
+#     ax.hist(y, bins=100, color='#0504aa',
+#             alpha=0.7, density=True)
+#     ax.invert_xaxis()
+#     print(mcmc.HPD_interval(y))
+    
+
+# fig, axs = plt.subplots(4)
+# fig.suptitle('Vertically stacked subplots')
+# for x,y in enumerate(post_samps_theta[3:7]):
+#     axs[x].hist(y, bins='auto', color='#0504aa',
+#            alpha=0.7, rwidth=0.85, density=True)
+#     print(mcmc.HPD_interval(y))
