@@ -233,33 +233,70 @@ def gibbs_code_prior(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CO
   R = P - A 
   POST_THETAS, POST_PHIS, POST_S = mcmc.set_up_post_arrays(POST_THETAS, POST_PHIS, THETA_INITS, PHASE_BOUNDARY_INITS)
   POST_S = []
-  for i in range(0, iter_num):
+  for i in range(0, iter_num):   
         print(i)
-        SITE_DICT_TEST_1 = mcmc.dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF) 
         for j in range(len(PHASE_BOUNDARY_INITS)):
+              SITE_DICT_TEST_1 = mcmc.dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF)
               #update the dictionary so we ge tthe right beta
               k = mcmc.gibbs_phis_gen(PREV_PHASE, PHI_REF)[j]
               rc_dates = [i[0] for i in SITE_DICT_TEST_1[k]['dates']]
               #tells us which phase the paramter is from
-              n_m = len(SITE_DICT_TEST_1[k]["dates"]) #number of dates in this phase
+              n_m = len(SITE_DICT_TEST_1[k]["dates"]) #number of dates in this phase             
               if j == 0: 
                   beta = SITE_DICT_TEST_1[k]["boundaries"][0]
-                  phi_vals = np.linspace(P - 0.1, max(rc_dates) + 0.1, num=max(int(P - max(rc_dates))*50, 10))
-                  phase_samps = np.array([(((k - PHIS_VEC[M-1])**(1-M))/(R - (k - PHIS_VEC[M-1])))*(1/(k-beta)**n_m) for k in phi_vals]) #*(1/(k-beta))**n_m
+                  phi_vals = np.linspace(round(max(rc_dates) + 0.1, 1), round(P - 0.1, 1), int(round(P - 0.1 - max(rc_dates) - 0.1, 1)*10) + 1)
+                  # cum_probs_final = np.array([1]*len(phi_vals))
+                  # for theta_val in SITE_DICT_TEST_1[k]["dates"]:
+                  #       probs = np.array(theta_val[1][1])
+                  #       cum_probs = np.round(np.cumsum(probs))
+                  #       up_ref = np.where(np.round(theta_val[1][0],1) == round(max(rc_dates)+0.1,1))[0][0]
+                  #       low_ref = np.where(np.round(theta_val[1][0],1) == round(P - 0.1, 1))[0][0]
+                  #       x_probs = cum_probs[up_ref:low_ref+1]
+                  #       cum_probs_final = x_probs*cum_probs_final
+                  phase_samps = np.array([(((alpha - PHIS_VEC[M-1])**(2-M))/(R - (alpha - PHIS_VEC[M-1])))*(1/(alpha-beta)**n_m) for alpha in phi_vals]) #*(1/(k-beta))**n_m
+                  # phase_samps = phase_samps_temp * cum_probs_final
                   weights = phase_samps/sum(phase_samps)
                   PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
               elif j == M - 1:
-                  phi_vals = np.linspace(min(rc_dates)-0.1, A+0.1, num=max(int(min(rc_dates) - A)*50, 10))
-                  phase_samps = np.array([(((PHIS_VEC[0] - k)**(1-M))/(R - (PHIS_VEC[0] - k)))*(1/(PHIS_VEC[j-1]-k)**n_m) for k in phi_vals])
+                  phi_vals = np.linspace(round(A+0.1, 1), round(min(rc_dates) - 0.1, 1), int(round(min(rc_dates) - 0.1 - A - 0.1, 1)*10) + 1)
+                  # cum_probs_final = np.array([1]*len(phi_vals))
+                  # for theta_val in SITE_DICT_TEST_1[k]["dates"]:
+                  #       probs = np.flip(theta_val[1][1])
+                  #       cum_probs_inverted = np.round(np.cumsum(probs),1)
+                  #       cum_probs = np.flip(cum_probs_inverted)
+                  #       low_ref = np.where(np.round(theta_val[1][0], 1) == round(min(rc_dates) - 0.1,1))[0][0]
+                  #       up_ref = np.where(np.round(theta_val[1][0], 1) == round(A+0.1, 1))[0][0]
+                  #       x_probs = cum_probs[up_ref:low_ref+1]
+                  #       cum_probs_final = x_probs*cum_probs_final
+                  phase_samps = np.array([(((PHIS_VEC[0] - beta)**(2-M))/(R - (PHIS_VEC[0] - beta)))*(1/(PHIS_VEC[j-1]-beta)**n_m) for beta in phi_vals])
+                  # phase_samps = phase_samps_temp * cum_probs_final
                   weights = phase_samps/sum(phase_samps)
                   PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
               else:
                   k_nxt_phase = mcmc.gibbs_phis_gen(PREV_PHASE, PHI_REF)[j+1] 
                   rc_dates_nxt_phase = [i[0] for i in SITE_DICT_TEST_1[k_nxt_phase]['dates']]
-                  phi_vals = np.linspace(min(rc_dates) - 0.1, max(rc_dates_nxt_phase)+ 0.1, num=max(int(min(rc_dates) - max(rc_dates_nxt_phase))*50, 10))
+                  phi_vals = np.linspace(round(max(rc_dates_nxt_phase)+ 0.1, 1), round(min(rc_dates) - 0.1, 1), num=max(10, int(round(round(min(rc_dates), 1) - round(max(rc_dates_nxt_phase),1) - 0.2, 1)*10) + 1))
+                  # cum_probs_final = np.array([1]*len(phi_vals))
+                  # if len(phi_vals) != 10:
+                  #     for theta_val in SITE_DICT_TEST_1[k]["dates"]:
+                  #           probs = np.flip(theta_val[1][1])
+                  #           cum_probs_inverted = np.round(np.cumsum(probs),1)
+                  #           cum_probs = np.flip(cum_probs_inverted)
+                  #           low_ref = np.where(np.round(theta_val[1][0], 1) == round(min(rc_dates) - 0.1,1))[0][0]
+                  #           up_ref = np.where(np.round(theta_val[1][0], 1) == round(max(rc_dates_nxt_phase) + 0.1, 1))[0][0]
+                  #           x_probs = cum_probs[up_ref:low_ref+1]
+                  #           cum_probs_final = x_probs*cum_probs_final
+                  #     for theta_val1 in SITE_DICT_TEST_1[k_nxt_phase]["dates"]:
+                  #             probs1 = np.array(theta_val1[1][1])
+                  #             cum_probs1 = np.round(np.cumsum(probs1))
+                  #             up_ref1 = np.where(np.round(theta_val1[1][0],1) == round(max(rc_dates_nxt_phase) + 0.1, 1))[0][0]
+                  #             low_ref1 = np.where(np.round(theta_val1[1][0],1) == round(min(rc_dates) - 0.1,1))[0][0]
+                  #             x_probs1 = cum_probs1[up_ref1:low_ref1+1]
+                  #             cum_probs_final = x_probs1*cum_probs_final    
                   n_m_1 = len(SITE_DICT_TEST_1[k_nxt_phase]["dates"])
                   beta = SITE_DICT_TEST_1[k_nxt_phase]["boundaries"][0]
                   phase_samps = np.array([(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1) for k in phi_vals]) #(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1)
+                  # phase_samps = phase_samps_temp * cum_probs_final    
                   weights = phase_samps/sum(phase_samps)
                   PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
               POST_PHIS[j].append(PHIS_VEC[j])
@@ -287,36 +324,72 @@ def gibbs_code_prior_1(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, 
  # K = len(THETAS)
   M = len(POST_PHIS)
  # S = max(RCD_ERR)
-  R = P - A 
   POST_THETAS, POST_PHIS, POST_S = mcmc.set_up_post_arrays(POST_THETAS, POST_PHIS, THETA_INITS, PHASE_BOUNDARY_INITS)
   POST_S = []
-  for i in range(0, iter_num):
+  for i in range(0, iter_num):   
         print(i)
-        SITE_DICT_TEST_1 = mcmc.dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF) 
         for j in range(len(PHASE_BOUNDARY_INITS)):
+              SITE_DICT_TEST_1 = mcmc.dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF)
               #update the dictionary so we ge tthe right beta
               k = mcmc.gibbs_phis_gen(PREV_PHASE, PHI_REF)[j]
               rc_dates = [i[0] for i in SITE_DICT_TEST_1[k]['dates']]
               #tells us which phase the paramter is from
-              n_m = len(SITE_DICT_TEST_1[k]["dates"]) #number of dates in this phase
+              n_m = len(SITE_DICT_TEST_1[k]["dates"]) #number of dates in this phase             
               if j == 0: 
                   beta = SITE_DICT_TEST_1[k]["boundaries"][0]
-                  phi_vals = np.linspace(P - 0.1, max(rc_dates) + 0.1, num=max(int(P - max(rc_dates))*50, 10))
-                  phase_samps = np.array([1/((k-beta)**n_m) for k in phi_vals]) #*(1/(k-beta))**n_m
+                  phi_vals = np.linspace(round(max(rc_dates) + 0.1, 1), round(P - 0.1, 1), int(round(P - 0.1 - max(rc_dates) - 0.1, 1)*10) + 1)
+                  # cum_probs_final = np.array([1]*len(phi_vals))
+                  # for theta_val in SITE_DICT_TEST_1[k]["dates"]:
+                  #       probs = np.array(theta_val[1][1])
+                  #       cum_probs = np.round(np.cumsum(probs))
+                  #       up_ref = np.where(np.round(theta_val[1][0],1) == round(max(rc_dates)+0.1,1))[0][0]
+                  #       low_ref = np.where(np.round(theta_val[1][0],1) == round(P - 0.1, 1))[0][0]
+                  #       x_probs = cum_probs[up_ref:low_ref+1]
+                  #       cum_probs_final = x_probs*cum_probs_final
+                  phase_samps = np.array([1/(alpha-beta)**n_m for alpha in phi_vals]) #*(1/(k-beta))**n_m
+                  # phase_samps = phase_samps_temp * cum_probs_final
                   weights = phase_samps/sum(phase_samps)
                   PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
               elif j == M - 1:
-                  phi_vals = np.linspace(min(rc_dates)-0.1, A+0.1, num=max(int(min(rc_dates) - A)*50, 10))
-                  phase_samps = np.array([(1/(PHIS_VEC[j-1]-k)**n_m) for k in phi_vals])
+                  phi_vals = np.linspace(round(A+0.1, 1), round(min(rc_dates) - 0.1, 1), int(round(min(rc_dates) - 0.1 - A - 0.1, 1)*10) + 1)
+                  # cum_probs_final = np.array([1]*len(phi_vals))
+                  # for theta_val in SITE_DICT_TEST_1[k]["dates"]:
+                  #       probs = np.flip(theta_val[1][1])
+                  #       cum_probs_inverted = np.round(np.cumsum(probs),1)
+                  #       cum_probs = np.flip(cum_probs_inverted)
+                  #       low_ref = np.where(np.round(theta_val[1][0], 1) == round(min(rc_dates) - 0.1,1))[0][0]
+                  #       up_ref = np.where(np.round(theta_val[1][0], 1) == round(A+0.1, 1))[0][0]
+                  #       x_probs = cum_probs[up_ref:low_ref+1]
+                  #       cum_probs_final = x_probs*cum_probs_final
+                  phase_samps = np.array([1/(PHIS_VEC[j-1]-beta)**n_m for beta in phi_vals])
+                  # phase_samps = phase_samps_temp * cum_probs_final
                   weights = phase_samps/sum(phase_samps)
                   PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
               else:
                   k_nxt_phase = mcmc.gibbs_phis_gen(PREV_PHASE, PHI_REF)[j+1] 
                   rc_dates_nxt_phase = [i[0] for i in SITE_DICT_TEST_1[k_nxt_phase]['dates']]
-                  phi_vals = np.linspace(min(rc_dates) - 0.1, max(rc_dates_nxt_phase)+ 0.1, num=max(int(min(rc_dates) - max(rc_dates_nxt_phase))*50, 10))
+                  phi_vals = np.linspace(round(max(rc_dates_nxt_phase)+ 0.1, 1), round(min(rc_dates) - 0.1, 1), num=max(10, int(round(round(min(rc_dates), 1) - round(max(rc_dates_nxt_phase),1) - 0.2, 1)*10) + 1))
+                  # cum_probs_final = np.array([1]*len(phi_vals))
+                  # if len(phi_vals) != 10:
+                  #     for theta_val in SITE_DICT_TEST_1[k]["dates"]:
+                  #           probs = np.flip(theta_val[1][1])
+                  #           cum_probs_inverted = np.round(np.cumsum(probs),1)
+                  #           cum_probs = np.flip(cum_probs_inverted)
+                  #           low_ref = np.where(np.round(theta_val[1][0], 1) == round(min(rc_dates) - 0.1,1))[0][0]
+                  #           up_ref = np.where(np.round(theta_val[1][0], 1) == round(max(rc_dates_nxt_phase) + 0.1, 1))[0][0]
+                  #           x_probs = cum_probs[up_ref:low_ref+1]
+                  #           cum_probs_final = x_probs*cum_probs_final
+                  #     for theta_val1 in SITE_DICT_TEST_1[k_nxt_phase]["dates"]:
+                  #             probs1 = np.array(theta_val1[1][1])
+                  #             cum_probs1 = np.round(np.cumsum(probs1))
+                  #             up_ref1 = np.where(np.round(theta_val1[1][0],1) == round(max(rc_dates_nxt_phase) + 0.1, 1))[0][0]
+                  #             low_ref1 = np.where(np.round(theta_val1[1][0],1) == round(min(rc_dates) - 0.1,1))[0][0]
+                  #             x_probs1 = cum_probs1[up_ref1:low_ref1+1]
+                  #             cum_probs_final = x_probs1*cum_probs_final    
                   n_m_1 = len(SITE_DICT_TEST_1[k_nxt_phase]["dates"])
                   beta = SITE_DICT_TEST_1[k_nxt_phase]["boundaries"][0]
-                  phase_samps = np.array([(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1) for k in phi_vals]) #(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1)
+                  phase_samps= np.array([(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1) for k in phi_vals]) #(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1)
+                  # phase_samps = phase_samps_temp * cum_probs_final    
                   weights = phase_samps/sum(phase_samps)
                   PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
               POST_PHIS[j].append(PHIS_VEC[j])
@@ -333,7 +406,6 @@ def gibbs_code_prior_1(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, 
   PHI_ACCEPT, ACCEPT = POST_PHIS, POST_THETAS
   return PHI_ACCEPT, ACCEPT, POST_S
 
-
 def gibbs_code_post(iter_num, RESULT_VEC1, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT): 
     THETA_INITS = mcmc.theta_init_func_n(KEY_REF, PHI_REF, RESULT_VEC1, STRAT_VEC, P, CONTEXT_NO, TOPO_SORT)
     PHASE_BOUNDARY_INITS = mcmc.phase_bd_init_func(KEY_REF, PHI_REF, THETA_INITS, PREV_PHASE, A, P)
@@ -349,33 +421,70 @@ def gibbs_code_post(iter_num, RESULT_VEC1, A, P, KEY_REF, PHI_REF, STRAT_VEC, CO
           print(i)
           SITE_DICT_TEST_1 = mcmc.dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF) 
           for j in range(len(PHASE_BOUNDARY_INITS)):
-                #update the dictionary so we ge tthe right beta
-                k = mcmc.gibbs_phis_gen(PREV_PHASE, PHI_REF)[j]
-         #       print(k)
-                rc_dates = [i[0] for i in SITE_DICT_TEST_1[k]['dates']]
-                #tells us which phase the paramter is from
-                n_m = len(SITE_DICT_TEST_1[k]["dates"]) #number of dates in this phase
-                if j == 0: 
-                    beta = SITE_DICT_TEST_1[k]["boundaries"][0]
-                    phi_vals = np.linspace(P - 0.1, max(rc_dates) + 0.1, num=max(int(P - max(rc_dates))*50, 10))
-                    phase_samps = np.array([1/(k-beta)**n_m for k in phi_vals]) #*(1/(k-beta))**n_m
-                    weights = phase_samps/sum(phase_samps)
-                    PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
-                elif j == M - 1:
-                    phi_vals = np.linspace(min(rc_dates)-0.1, A+0.1, num=max(int(min(rc_dates) - A)*50, 10))
-                    phase_samps = np.array([1/(PHIS_VEC[j-1]-k)**n_m for k in phi_vals])
-                    weights = phase_samps/sum(phase_samps)
-                    PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
-                else:
-                    k_nxt_phase = mcmc.gibbs_phis_gen(PREV_PHASE, PHI_REF)[j+1] 
-                    rc_dates_nxt_phase = [i[0] for i in SITE_DICT_TEST_1[k_nxt_phase]['dates']]
-                    phi_vals = np.linspace(min(rc_dates) - 0.1, max(rc_dates_nxt_phase) + 0.1, num=max(int(min(rc_dates) - max(rc_dates_nxt_phase))*50, 10))
-                    n_m_1 = len(SITE_DICT_TEST_1[k_nxt_phase]["dates"])
-                    beta = SITE_DICT_TEST_1[k_nxt_phase]["boundaries"][0]
-                    phase_samps = np.array([(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1) for k in phi_vals]) #(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1)
-                    weights = phase_samps/sum(phase_samps)
-                    PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
-                POST_PHIS[j].append(PHIS_VEC[j])
+              SITE_DICT_TEST_1 = mcmc.dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF)
+              #update the dictionary so we ge tthe right beta
+              k = mcmc.gibbs_phis_gen(PREV_PHASE, PHI_REF)[j]
+              rc_dates = [i[0] for i in SITE_DICT_TEST_1[k]['dates']]
+              #tells us which phase the paramter is from
+              n_m = len(SITE_DICT_TEST_1[k]["dates"]) #number of dates in this phase             
+              if j == 0: 
+                  beta = SITE_DICT_TEST_1[k]["boundaries"][0]
+                  phi_vals = np.linspace(round(max(rc_dates) + 0.1, 1), round(P - 0.1, 1), int(round(P - 0.1 - max(rc_dates) - 0.1, 1)*10) + 1)
+                  # cum_probs_final = np.array([1]*len(phi_vals))
+                  # for theta_val in SITE_DICT_TEST_1[k]["dates"]:
+                  #       probs = np.array(theta_val[1][1])
+                  #       cum_probs = np.round(np.cumsum(probs))
+                  #       up_ref = np.where(np.round(theta_val[1][0],1) == round(max(rc_dates)+0.1,1))[0][0]
+                  #       low_ref = np.where(np.round(theta_val[1][0],1) == round(P - 0.1, 1))[0][0]
+                  #       x_probs = cum_probs[up_ref:low_ref+1]
+                  #       cum_probs_final = x_probs*cum_probs_final
+                  phase_samps = np.array([1/(alpha-beta)**n_m for alpha in phi_vals]) #*(1/(k-beta))**n_m
+                  # phase_samps = phase_samps_temp * cum_probs_final
+                  weights = phase_samps/sum(phase_samps)
+                  PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
+              elif j == M - 1:
+                  phi_vals = np.linspace(round(A+0.1, 1), round(min(rc_dates) - 0.1, 1), int(round(min(rc_dates) - 0.1 - A - 0.1, 1)*10) + 1)
+                  # cum_probs_final = np.array([1]*len(phi_vals))
+                  # for theta_val in SITE_DICT_TEST_1[k]["dates"]:
+                  #       probs = np.flip(theta_val[1][1])
+                  #       cum_probs_inverted = np.round(np.cumsum(probs),1)
+                  #       cum_probs = np.flip(cum_probs_inverted)
+                  #       low_ref = np.where(np.round(theta_val[1][0], 1) == round(min(rc_dates) - 0.1,1))[0][0]
+                  #       up_ref = np.where(np.round(theta_val[1][0], 1) == round(A+0.1, 1))[0][0]
+                  #       x_probs = cum_probs[up_ref:low_ref+1]
+                  #       cum_probs_final = x_probs*cum_probs_final
+                  phase_samps = np.array([1/(PHIS_VEC[j-1]-beta)**n_m for beta in phi_vals])
+                  # phase_samps = phase_samps_temp * cum_probs_final
+                  weights = phase_samps/sum(phase_samps)
+                  PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
+              else:
+                  k_nxt_phase = mcmc.gibbs_phis_gen(PREV_PHASE, PHI_REF)[j+1] 
+                  rc_dates_nxt_phase = [i[0] for i in SITE_DICT_TEST_1[k_nxt_phase]['dates']]
+                  phi_vals = np.linspace(round(max(rc_dates_nxt_phase)+ 0.1, 1), round(min(rc_dates) - 0.1, 1), num=max(10, int(round(round(min(rc_dates), 1) - round(max(rc_dates_nxt_phase),1) - 0.2, 1)*10) + 1))
+                  # cum_probs_final = np.array([1]*len(phi_vals))
+                  # if len(phi_vals) != 10:
+                  #     for theta_val in SITE_DICT_TEST_1[k]["dates"]:
+                  #           probs = np.flip(theta_val[1][1])
+                  #           cum_probs_inverted = np.round(np.cumsum(probs),1)
+                  #           cum_probs = np.flip(cum_probs_inverted)
+                  #           low_ref = np.where(np.round(theta_val[1][0], 1) == round(min(rc_dates) - 0.1,1))[0][0]
+                  #           up_ref = np.where(np.round(theta_val[1][0], 1) == round(max(rc_dates_nxt_phase) + 0.1, 1))[0][0]
+                  #           x_probs = cum_probs[up_ref:low_ref+1]
+                  #           cum_probs_final = x_probs*cum_probs_final
+                  #     for theta_val1 in SITE_DICT_TEST_1[k_nxt_phase]["dates"]:
+                  #             probs1 = np.array(theta_val1[1][1])
+                  #             cum_probs1 = np.round(np.cumsum(probs1))
+                  #             up_ref1 = np.where(np.round(theta_val1[1][0],1) == round(max(rc_dates_nxt_phase) + 0.1, 1))[0][0]
+                  #             low_ref1 = np.where(np.round(theta_val1[1][0],1) == round(min(rc_dates) - 0.1,1))[0][0]
+                  #             x_probs1 = cum_probs1[up_ref1:low_ref1+1]
+                  #             cum_probs_final = x_probs1*cum_probs_final    
+                  n_m_1 = len(SITE_DICT_TEST_1[k_nxt_phase]["dates"])
+                  beta = SITE_DICT_TEST_1[k_nxt_phase]["boundaries"][0]
+                  phase_samps= np.array([(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1) for k in phi_vals]) #(1/(PHIS_VEC[j-1]-k)**n_m)*(1/(k-beta)**n_m_1)
+                  # phase_samps = phase_samps_temp * cum_probs_final    
+                  weights = phase_samps/sum(phase_samps)
+                  PHIS_VEC[j] = random.choices(phi_vals, weights)[0]
+              POST_PHIS[j].append(PHIS_VEC[j])
           POST_S.append(PHIS_VEC[0] - PHIS_VEC[M-1])
           SITE_DICT_TEST_1 = mcmc.dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i+1, POST_PHASE, PHI_REF) #updates dictionary to stash all the samples
           for k in range(len(THETA_INITS)):
@@ -395,8 +504,8 @@ def gibbs_code_post(iter_num, RESULT_VEC1, A, P, KEY_REF, PHI_REF, STRAT_VEC, CO
 A, P, RESULT_VEC = initialise_prior(CALIBRATION_DATA, RCD_EST, RCD_ERR) # gets likelihood vector for prior
 A, P, RESULT_VEC1 = mcmc.initialise(CALIBRATION_DATA, RCD_EST, RCD_ERR)
 A, P = 450, 950
-PHI_ACCEPT, ACCEPT, POST_S = gibbs_code_prior(5000, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT)
-PHI_ACCEPT1, ACCEPT1, POST_S = gibbs_code_post(5000, RESULT_VEC1, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT)
+PHI_ACCEPT, ACCEPT, POST_S = gibbs_code_prior(10000, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT)
+PHI_ACCEPT1, ACCEPT1, POST_S = gibbs_code_post(10000, RESULT_VEC1, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT)
 PHI_ACCEPT_2, ACCEPT_2, POST_S_2 = gibbs_code_prior_1(10000, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT)
 
 df = pd.DataFrame()
@@ -437,6 +546,8 @@ def Ex_h_test(j_h, j_f, j, r, llh_vec):
     return expec   
 
 def Ex_f_test(j_h, j_f, j, r, llh_vec):
+    print(len(llh_vec))
+    print(j_f)
     llhd_fin = [k/(j_h*k + j_f*r) for k in llh_vec] 
     expec = (j/j_f)*sum(llhd_fin)
     return expec   
@@ -447,6 +558,7 @@ def r_seq(r_0, j, j_f, j_h, iters, llh_post, llh_vec_prior):
     r_vec = [r_0]
     for i in range(iters):
         r = r_vec[i]
+        print(r)
         e_f = Ex_f_test(j_h, j_f, j, r, llh_vec_prior)
         e_h = Ex_h_test(j_h, j_f, j, r, llh_post)
         r_new =  e_f/e_h
@@ -479,7 +591,7 @@ llh_vec_post = pre_sum_cal(post_samps_theta, CONTEXT_NO, CALIBRATION_DATA)
 llh_vec_prior = pre_sum_cal(prior_samps_theta, CONTEXT_NO, CALIBRATION_DATA)
 llh_vec_post_1 = pre_sum_cal(post_samps_m1, CONTEXT_NO, CALIBRATION_DATA)
 llh_vec_prior_1 = pre_sum_cal(prior_samps_m1, CONTEXT_NO, CALIBRATION_DATA)
-r_0 = 0.0000000000000000000005
+r_0 = 0.00000000000000005
 
 
 test = r_seq(r_0, j, j_f, j_h, 50, llh_vec_post, llh_vec_prior)
@@ -487,17 +599,18 @@ test1 = r_seq(r_0, j_1, j_f_1, j_h_1, 50, llh_vec_post_1, llh_vec_prior_1)
 print(test[1])
 print(test1[1])
 print(test[1]/test1[1])
-# plt.plot(test1[0])
+plt.plot(test[0])
 
 #### plots for checking mcmc results are giving the right results
 
-# for x,y in enumerate(prior_samps_theta):   
-#     fig = plt.figure(figsize=(13, 8))
-#     ax = plt.subplot(111)
-#     ax.hist(y, bins=100, color='#0504aa',
-#             alpha=0.7, density=True)
-#     ax.invert_xaxis()
-#     print(mcmc.HPD_interval(y))
+for x,y in enumerate(post_samps_theta):   
+    fig = plt.figure(figsize=(13, 8))
+    ax = plt.subplot(111)
+    ax.hist(y, bins=100, color='#0504aa',
+            alpha=0.7, density=True)
+    ax.invert_xaxis()
+    ax.set_xlim(950, 450)
+    print(mcmc.HPD_interval(y))
     
 
 # fig, axs = plt.subplots(4)
