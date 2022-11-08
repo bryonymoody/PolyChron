@@ -30,7 +30,7 @@ import pickle
 from tkinter import simpledialog
 import tkinter.font as tkFont
 from tkinter.messagebox import askyesno, askquestion
-
+import math
 
 old_stdout = sys.stdout
 
@@ -851,7 +851,6 @@ class popupWindow3(object):
                 y = ref_y - (0.5 + ind + 1)*ref_h #ceter of top box + (half and scalefactor) times height   
                 self.label_dict[j[0]].place(x = x, y = y)
                 self.canvas.update()
-        print(self.menudict)
         col1, col2, col3 = [], [], []
         rels_df = pd.DataFrame()
         for i in self.menudict.keys():
@@ -949,6 +948,32 @@ class popupWindow3(object):
             self.prev_phase[i] = 'gap'
             self.post_phase[i] = 'gap'
         self.graphcopy.graph['graph']={'splines':'ortho'}    
+        atribs = nx.get_node_attributes(self.graphcopy, 'Group')
+        nodes = self.graphcopy.nodes()
+        edge_add = []
+        edge_remove = []
+        for i,j in enumerate(self.context_no):
+            ####find paths in that phase
+            if self.CONT_TYPE[i] == 'residual':
+                phase = atribs[j]
+                root = [i for i in nodes if "b_" + str(phase) in i][0]
+                leaf = [i for i in nodes if "a_" + str(phase) in i][0]
+                all_paths = []
+                all_paths.extend(nx.all_simple_paths(self.graphcopy, source = root, target = leaf))
+                for f in all_paths:
+                    ind = np.where(np.array(f) == str(j))[0][0]
+                    edge_add.append((f[ind - 1], f[ind+ 1]))
+                for k in self.graphcopy.edges():
+                    if k[0] == j:
+                        edge_remove.append((k[0], k[1]))
+            elif self.CONT_TYPE[i] == 'intrusive':
+                for k in self.graphcopy.edges():
+                    if k[1] == j:
+                        edge_remove.append((k[0], k[1]))
+        for a in edge_add:
+            self.graphcopy.add_edge(a[0], a[1], arrowhead = 'none')
+        for b in edge_remove:
+            self.graphcopy.remove_edge(b[0], b[1])
         write_dot(self.graphcopy, 'fi_new_chrono')
         self.top.destroy()
 
@@ -1005,6 +1030,7 @@ class popupWindow4(object):
                                    startpage.phase_rels, self.dropdown_ns, self.dropdown_intru, self.resid_list, self.intru_list)
         #inputs for MCMC function
         self.CONT_TYPE = self.popup3.CONT_TYPE
+        print(self.popup3.CONT_TYPE)
         self.prev_phase = self.popup3.prev_phase
         self.post_phase = self.popup3.post_phase
         self.phi_ref = self.popup3.phi_ref
@@ -1181,6 +1207,190 @@ class popupWindow8(object):
              self.save_state_1(i)
          self.top.destroy()
          
+class popupWindow9(object):
+      def __init__(self, master, path):
+          global mcmc_check
+          self.master = master
+          self.path = path
+          model_list_labels = [(str(path) + '/graph_theory_tests_' + str(i), i, 'graph_theory_tests_' + str(i)) for i in self.master.graph.nodes()]
+  #        model_list = []
+          base_cont_type =  self.master.CONT_TYPE
+          base_key_ref = self.master.key_ref
+          base_context_no = self.master.CONTEXT_NO
+          base_graph = self.master.graph
+          base_chrono_graph = self.master.chrono_dag
+          base_phi_ref = self.master.phi_ref
+          base_prev_phase = self.master.prev_phase
+          base_post_phase = self.master.post_phase
+          RCD_EST = [int(list(self.master.datefile["date"])[list(self.master.datefile["context"]).index(i)]) for i in base_context_no]
+          RCD_ERR = [int(list(self.master.datefile["error"])[list(self.master.datefile["context"]).index(i)]) for i in base_context_no]
+          A = max(min(RCD_EST) - 4*max(RCD_EST), 0)
+          P = min(max(RCD_EST) + 4*max(RCD_EST), 50000)
+          self.rc_llhds_dict = {}
+          for i, j in enumerate(base_context_no):
+              self.rc_llhds_dict[j] = mcmc.likelihood_func(RCD_EST[i], RCD_ERR[i], A,  P, CALIBRATION)
+          #centrality of original graph
+          centrality_vals = self.node_importance(base_graph)
+          
+        #  print(centrality_vals)
+          for i, j, k in model_list_labels:
+   #           print(j)
+              if k not in os.listdir(path):
+                  self.master.CONT_TYPE = base_cont_type.copy()
+                  self.master.key_ref = base_key_ref.copy()
+                  self.master.CONTEXT_NO = base_context_no.copy()
+                  self.master.graph = base_graph.copy()
+                  self.master.chrono_dag = base_chrono_graph.copy()
+                  self.master.phi_ref = base_phi_ref.copy()
+                  self.master.prev_phase = base_prev_phase.copy()
+                  self.master.post_phase = base_post_phase.copy()       
+                  #remove_node_section
+                  self.master.chrono_dag.remove_node(j)     
+                  self.master.graph.remove_node(j)   
+                  ref = np.where(np.array(base_context_no) == str(j))[0][0] 
+                  phase = self.master.key_ref[ref]              
+                  phase_ref = np.where(np.array(base_phi_ref) == str(phase))[0][0]
+                  self.master.CONT_TYPE.pop(ref)
+                  self.master.key_ref.pop(ref)
+                  self.master.CONTEXT_NO.pop(ref)
+            #####correcting phases for removed nodes
+            #change to new phase rels
+                  self.graph_adjust(phase, phase_ref)
+    #############################    setting up the directorys
+                  dirs4 = self.make_directories(i)
+                  write_dot(self.master.chrono_dag, 'fi_new_chrono')
+                  imgrender2(self.master.littlecanvas2.winfo_width(), self.master.littlecanvas2.winfo_height())  
+                  imgrender(self.master.graph, self.master.littlecanvas.winfo_width(), self.master.littlecanvas.winfo_height())
+                  self.master.CONTEXT_NO, self.master.ACCEPT, self.master.PHI_ACCEPT, self.master.PHI_REF, self.master.A, self.master.P, self.master.ALL_SAMPS_CONT, self.master.ALL_SAMPS_PHI, self.master.resultsdict, self.master.all_results_dict = self.master.MCMC_func()
+            #      print(self.prob_from_samples(self.master.ACCEPT[0], A, P))
+                  mcmc_check = 'mcmc_loaded'
+                  self.save_state_1(self.master, dirs4)
+
+      def prob_overlap(self, ll1, ll2):
+        ### hellenger distance
+          dist_probs = np.array([(np.sqrt(ll2[1][i])-np.sqrt(j))**2 for i,j in enumerate(ll1[1])])
+          h = 1 - 1/np.sqrt(2)*(np.sqrt(np.sum(dist_probs)))
+          return h
+      
+      def prob_from_samples(self, x_temp, A, P, lim=0.95, probs=0):
+        if probs == 0:
+            x_temp = np.array(x_temp)
+            n = P - A + 1
+            probs, x_vals = np.histogram(x_temp, range = (A, P), bins=n, density=1)
+        df = pd.DataFrame({'Theta':x_vals[1:], 'Posterior':probs})
+        y = df.sort_values(by=['Theta'], ascending=False)
+        posterior_x = np.array(y['Posterior'])
+        posterior_theta = np.array(y['Theta']) 
+        return posterior_theta
+        
+      def node_importance(self, graph):
+           G = graph.to_undirected() # setting up undirected graph          
+           df_prob_overlap = pd.concat([pd.DataFrame([[i, j, self.prob_overlap(self.rc_llhds_dict[j], self.rc_llhds_dict[i])]], columns = ['node', 'neighbour', 'overlap_measure']) for i in G.nodes() for j in list(G.neighbors(i))])
+          #katz
+           df_prob_overlap.to_csv('overlap_df.csv')
+           dd = nx.pagerank(G, alpha=0.85, personalization=None, max_iter=100, tol=1e-06, nstart=None, weight='weight', dangling=None)
+           df = pd.DataFrame.from_dict(dd, orient = 'index')
+           df.to_csv("katz_centr.csv")
+           return(df)
+       
+      def graph_adjust(self, phase, phase_ref):
+              if (phase in self.master.key_ref) == False:
+                  self.master.phi_ref.pop(phase_ref)
+                  self.master.prev_phase.pop(phase_ref)
+                  self.master.post_phase.pop(phase_ref)                                   
+                  self.master.prev_phase[phase_ref] = 'gap'
+                  self.master.post_phase[phase_ref] = 'gap'
+              self.master.chrono_dag.graph['graph']={'splines':'ortho'}    
+              atribs = nx.get_node_attributes(self.master.chrono_dag, 'Group')
+              nodes = self.master.chrono_dag.nodes()
+              edge_add = []
+              edge_remove = []
+              for v,w in enumerate(self.master.CONTEXT_NO):
+                    ####find paths in that phase
+                    if self.master.CONT_TYPE[v] == 'residual':
+                        phase = atribs[w]
+                        root = [i for i in nodes if "b_" + str(phase) in i][0]
+                        leaf = [i for i in nodes if "a_" + str(phase) in i][0]
+                        all_paths = []
+                        all_paths.extend(nx.all_simple_paths(self.master.chrono_dag, source = root, target = leaf))
+                        for f in all_paths:
+                            ind = np.where(np.array(f) == str(w))[0][0]
+                            edge_add.append((f[ind - 1], f[ind+ 1]))
+                        for k in self.master.chrono_dag.edges():
+                            if k[0] == w:
+                                edge_remove.append((k[0], k[1]))
+                    elif self.master.CONT_TYPE[v] == 'intrusive':
+                        for k in self.master.chrono_graph.edges():
+                            if k[1] == w:
+                                edge_remove.append((k[0], k[1]))
+              for a in edge_add:
+                    self.master.chrono_graph.add_edge(a[0], a[1], arrowhead = 'none')
+              for b in edge_remove:
+                    self.master.chrono_graph.remove_edge(b[0], b[1])
+
+
+      def make_directories(self, i):
+              dirs2 = os.path.join(i, "stratigraphic_graph")
+              dirs3 = os.path.join(i, "chronological_graph")
+              dirs4 = os.path.join(i, "python_only")
+              dirs5 = os.path.join(i, "mcmc_results")
+              os.makedirs(dirs2)
+              os.makedirs(dirs3)
+              os.makedirs(dirs4)
+              os.makedirs(dirs5)
+              os.chdir(i)
+              return dirs4
+      def selectall(self):
+          self.e.select_set(0, 'end')
+    
+      def save_state_1(self, master, j):
+         global mcmc_check, load_check, FILE_INPUT
+        
+         vars_list_1 = dir(self.master)
+         var_list = [var for var in vars_list_1 if (('__' and 'grid' and 'get' and 'tkinter' and 'children') not in var) and (var[0] != '_')]          
+         data = {}
+         check_list = ["tkinter", "method", "__main__", 'PIL']
+         for i in var_list:
+             v = getattr(master, i)
+             if not any(x in str(type(v)) for x in check_list):
+                data[i] = v
+         data['all_vars'] = list(data.keys())
+         data['load_check'] = load_check
+         data['mcmc_check'] = mcmc_check
+         data["file_input"] = FILE_INPUT
+         path = j + "/save.pickle"
+         if mcmc_check == 'mcmc_loaded': 
+                results = data["all_results_dict"]
+                df = pd.DataFrame()
+                for i in results.keys():
+                    df[i] = results[i][10000:]  
+                results_path = os.getcwd() + "/mcmc_results/full_results_df"    
+                df.to_csv(results_path)
+                phasefile = data['phasefile']
+                context_no = data['context_no']
+                key_ref = [list(phasefile["Group"])[list(phasefile["context"]).index(i)] for i in context_no]
+                df1 = pd.DataFrame(key_ref)   
+                df1.to_csv('mcmc_results/key_ref.csv') 
+                df2 = pd.DataFrame(context_no)
+                df2.to_csv('mcmc_results/context_no.csv') 
+
+         try:
+             with open(path, "wb") as f:
+                  pickle.dump(data, f)
+         except Exception:
+             tk.messagebox.showerror('Error', 'File not saved')        
+             
+      def load_cal_data(self, j):
+         global mcmc_check, load_check, FILE_INPUT
+         with open(self.path + "/" + str(j) + '/python_only/save.pickle', "rb") as f:
+             data = pickle.load(f)
+             vars_list = data['all_vars']
+             for i in vars_list:
+                 setattr(self, i, data[i])
+             FILE_INPUT = data['file_input']
+             load_check = data['load_check']
+             mcmc_check = data['mcmc_check']
+            
 class load_Window(object):
     def __init__(self,master):
         root_x = master.winfo_rootx()
@@ -1483,7 +1693,9 @@ class StartPage(tk.Frame):
         file2.add_command(label = 'Render chronological graph', command=lambda: self.chronograph_render_wrap(), font='helvetica 11')
         file2.add_command(label = 'Calibrate model', command=lambda: self.load_mcmc(), font='helvetica 11')
         file2.add_command(label = 'Calibrate multiple projects from project', command=lambda: popupWindow8(self, proj_dir), font='helvetica 11')
-       # file2.add_separator()
+        file2.add_command(label = 'Calibrate node delete variations (alpha)', command=lambda: popupWindow9(self, proj_dir), font='helvetica 11')
+      
+        # file2.add_separator()
         self.tool_menubar.place(relx=0.14, rely=0, relwidth=0.1, relheight=0.03)
         #############################
         self.behindcanvas = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg = '#33658a')
@@ -1861,12 +2073,10 @@ class StartPage(tk.Frame):
     def chronograph_render_wrap(self):
         '''wraps chronograph render so we can assign a variable when runing the func using a button'''
         global load_check
-        print(load_check)
         if (self.phase_rels is None) or (self.phasefile is None) or (self.datefile is None):
             tk.messagebox.showinfo("Error", "You haven't loaded in all the data required for a chronological graph")
         if load_check == "loaded":
             answer = askquestion('Warning!', 'Chronological DAG already loaded, are you sure you want to write over it? You can copy this model in the file menu if you want to consider multiple models')
-            print(answer)
             if answer == 'yes':
                 load_check = 'not_loaded'
                 self.littlecanvas2.delete('all')
@@ -2072,7 +2282,6 @@ class StartPage(tk.Frame):
             load_check = 'loaded'
             self.resid_check()
             self.image2 = imgrender2(self.littlecanvas2.winfo_width(), self.littlecanvas2.winfo_height())
-            print(self.image2)
             if self.image2 != 'No_image':
                 try:
                     self.littlecanvas2.delete('all')
@@ -2266,7 +2475,6 @@ class StartPage(tk.Frame):
             if self.variable.get() == "Equate context with "+ str(self.comb_nodes[0]):
                 if load_check == 'loaded':
                     answer = askquestion('Warning!', 'Chronological DAG already loaded, do you want to save this as a new model first? \n Click YES to save as new model and NO to overwrite existing model')
-                    print(answer)
                 self.comb_nodes = np.append(self.comb_nodes, self.node)
                 graph_temp = nx.contracted_nodes(self.graph, self.comb_nodes[0], self.comb_nodes[1])
                 x_nod = list(graph_temp)
@@ -2788,6 +2996,7 @@ class PageOne(tk.Frame):
         except Exception:
             pass
 
+
     def mcmc_output(self):
         '''loads posterior density plots into the graph'''
         global mcmc_check
@@ -3273,7 +3482,7 @@ class PageTwo(object):
         scroll_bar2 = ttk.Scrollbar(self.intrucanvas)
         scroll_bar2.pack(side=tk.RIGHT)
         #updates the node outline colour
-    #    nx.set_node_attributes(self.graphcopy, outline, 'color')
+        nx.set_node_attributes(self.graphcopy, outline, 'color')
         if phase_true == 1:
             imgrender_phase(self.graphcopy)
         else:
