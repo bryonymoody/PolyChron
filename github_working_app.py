@@ -29,8 +29,7 @@ from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationTool
 import pickle
 from tkinter import simpledialog
 import tkinter.font as tkFont
-from tkinter.messagebox import askyesno, askquestion
-import math
+from tkinter.messagebox import askquestion
 
 old_stdout = sys.stdout
 
@@ -170,17 +169,20 @@ def phase_relabel(graph):
     '''relabels the phase labels to be alphas and betas, for display only,
     still refer to them with a's and b's'''
     label_dict = {}
-    for i in graph.nodes():
-        if str(i)[0] == 'a':
-            label_str = '<&alpha;<SUB>' + str(i[2:]) + '</SUB>>'
-            label_dict[i] = label_str
-        elif str(i)[0] == 'b':
-            label_str = '<&beta;<SUB>' + str(i[2:]) + '</SUB>>'
-            label_dict[i] = label_str
-        else:
-            label_str = str(i)
+    for i in graph.nodes():  
+        if 'a_' in i:
+            if 'b_' in i:           
+                label_str = i.replace("a_", "<&alpha;<SUB>")
+                label_str = label_str.replace(" = b_", '</SUB> = &beta;<SUB>') + '</SUB>>' 
+                label_dict[i] = label_str 
+            else:
+                label_str = i.replace("a_", "<&alpha;<SUB> ")  + '</SUB>>' 
+                label_dict[i] = label_str
+        elif ('b_' in i) and ('a_' not in i):
+            label_str = i.replace("b_", "<&beta;<SUB>") + '</SUB>>'
             label_dict[i] = label_str
     #sets the new phase labels to the node attribute labels
+    print(label_dict)
     nx.set_node_attributes(graph, label_dict, 'label')
     return graph
 
@@ -1030,7 +1032,6 @@ class popupWindow4(object):
                                    startpage.phase_rels, self.dropdown_ns, self.dropdown_intru, self.resid_list, self.intru_list)
         #inputs for MCMC function
         self.CONT_TYPE = self.popup3.CONT_TYPE
-        print(self.popup3.CONT_TYPE)
         self.prev_phase = self.popup3.prev_phase
         self.post_phase = self.popup3.post_phase
         self.phi_ref = self.popup3.phi_ref
@@ -1214,6 +1215,7 @@ class popupWindow9(object):
           self.path = path
           model_list_labels = [(str(path) + '/graph_theory_tests_' + str(i), i, 'graph_theory_tests_' + str(i)) for i in self.master.graph.nodes()]
   #        model_list = []
+          ref_wd = os.getcwd()
           base_cont_type =  self.master.CONT_TYPE
           base_key_ref = self.master.key_ref
           base_context_no = self.master.CONTEXT_NO
@@ -1230,12 +1232,11 @@ class popupWindow9(object):
           for i, j in enumerate(base_context_no):
               self.rc_llhds_dict[j] = mcmc.likelihood_func(RCD_EST[i], RCD_ERR[i], A,  P, CALIBRATION)
           #centrality of original graph
-          centrality_vals = self.node_importance(base_graph)
-          
-        #  print(centrality_vals)
+    #      centrality_vals = self.node_importance(base_graph)
           for i, j, k in model_list_labels:
-   #           print(j)
               if k not in os.listdir(path):
+                  os.chdir(ref_wd)
+                  self.master.restore_state()
                   self.master.CONT_TYPE = base_cont_type.copy()
                   self.master.key_ref = base_key_ref.copy()
                   self.master.CONTEXT_NO = base_context_no.copy()
@@ -1262,7 +1263,6 @@ class popupWindow9(object):
                   imgrender2(self.master.littlecanvas2.winfo_width(), self.master.littlecanvas2.winfo_height())  
                   imgrender(self.master.graph, self.master.littlecanvas.winfo_width(), self.master.littlecanvas.winfo_height())
                   self.master.CONTEXT_NO, self.master.ACCEPT, self.master.PHI_ACCEPT, self.master.PHI_REF, self.master.A, self.master.P, self.master.ALL_SAMPS_CONT, self.master.ALL_SAMPS_PHI, self.master.resultsdict, self.master.all_results_dict = self.master.MCMC_func()
-            #      print(self.prob_from_samples(self.master.ACCEPT[0], A, P))
                   mcmc_check = 'mcmc_loaded'
                   self.save_state_1(self.master, dirs4)
 
@@ -1279,7 +1279,6 @@ class popupWindow9(object):
             probs, x_vals = np.histogram(x_temp, range = (A, P), bins=n, density=1)
         df = pd.DataFrame({'Theta':x_vals[1:], 'Posterior':probs})
         y = df.sort_values(by=['Theta'], ascending=False)
-        posterior_x = np.array(y['Posterior'])
         posterior_theta = np.array(y['Theta']) 
         return posterior_theta
         
@@ -1295,11 +1294,37 @@ class popupWindow9(object):
        
       def graph_adjust(self, phase, phase_ref):
               if (phase in self.master.key_ref) == False:
-                  self.master.phi_ref.pop(phase_ref)
-                  self.master.prev_phase.pop(phase_ref)
-                  self.master.post_phase.pop(phase_ref)                                   
-                  self.master.prev_phase[phase_ref] = 'gap'
-                  self.master.post_phase[phase_ref] = 'gap'
+                  self.master.phi_ref.pop(phase_ref)                                
+                  if self.master.prev_phase[phase_ref] == 'start':
+                      phase_node = [i for i in self.master.chrono_dag.nodes() if "b_"+str(phase) in i]
+                      self.master.chrono_dag.remove_node("a_" + str(phase))       
+                      old_label = str(phase_node[0])
+                      new_label = "a_"+ str(self.master.phi_ref[phase_ref + 1])
+                      mapping = {old_label: new_label}
+                      self.master.prev_phase.pop(phase_ref)
+                      self.master.post_phase.pop(phase_ref)   
+                      self.master.prev_phase[phase_ref] = 'start'
+                  elif self.master.post_phase[phase_ref] == 'end':
+                      phase_node = [i for i in self.master.chrono_dag.nodes() if "a_"+str(phase) in i]
+                      self.master.chrono_dag.remove_node("b_" + str(phase))     
+                      old_label = str(phase_node[0])
+                      new_label = "b_"+ str(self.master.phi_ref[phase_ref -1])
+                      mapping = {old_label: new_label}
+                      self.master.prev_phase.pop(phase_ref)
+                      self.master.post_phase.pop(phase_ref)   
+                      self.master.post_phase[phase_ref] = 'end'
+                  else:
+                      phase_nodes = [i for i in self.master.chrono_dag.nodes() if phase in i]
+                      self.master.chrono_dag = nx.contracted_nodes(self.master.chrono_dag, phase_nodes[0], phase_nodes[1]) 
+                      new_label_1 = str(phase_nodes[0])
+                      new_label = new_label_1.replace("a_"+str(phase), "a_"+ str(self.master.phi_ref[phase_ref + 1]))
+                      mapping = {phase_nodes[0]: new_label}
+                      self.master.prev_phase.pop(phase_ref)
+                      self.master.post_phase.pop(phase_ref)   
+                      self.master.prev_phase[phase_ref] = 'gap'
+                      self.master.post_phase[phase_ref] = 'gap'
+                  self.master.chrono_dag = nx.relabel_nodes(self.master.chrono_dag, mapping)
+                  self.master.chrono_dag = phase_relabel(self.master.chrono_dag)
               self.master.chrono_dag.graph['graph']={'splines':'ortho'}    
               atribs = nx.get_node_attributes(self.master.chrono_dag, 'Group')
               nodes = self.master.chrono_dag.nodes()
@@ -2128,7 +2153,6 @@ class StartPage(tk.Frame):
                             edges.append(a)
                     G.add_edges_from(edges, arrowhead="none")
                     self.graph = G
-                    print(nx.degree_centrality(self.graph))
                     if phase_true == 1:
                         self.image = imgrender_phase(self.graph)
                     else:
@@ -2340,6 +2364,7 @@ class StartPage(tk.Frame):
         rcd_est = self.RCD_EST
         rcd_err = self.RCD_ERR
         self.prev_phase, self.post_phase = self.prev_phase, self.post_phase
+        print(strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.phi_ref, self.prev_phase, self.post_phase, TOPO_SORT, self.CONT_TYPE)
         CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.phi_ref, self.prev_phase, self.post_phase, TOPO_SORT, self.CONT_TYPE)
         phase_nodes, resultsdict, all_results_dict = phase_labels(PHI_REF, self.post_phase, PHI_ACCEPT, ALL_SAMPS_PHI)
         for i, j in enumerate(CONTEXT_NO):
