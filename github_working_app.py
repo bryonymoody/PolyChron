@@ -30,7 +30,7 @@ import pickle
 from tkinter import simpledialog
 import tkinter.font as tkFont
 from tkinter.messagebox import askquestion
-
+import csv
 old_stdout = sys.stdout
 
 
@@ -95,10 +95,16 @@ def ellipsefunc(i):
 
 def node_coords_fromjson(graph):
     """Gets coordinates of each node"""
-    graphs = nx.nx_pydot.to_pydot(graph)
+    global phase_true
+    if ('pydot' in str(type(graph))) == True:
+        graphs = graph
+    else:   
+        graphs = nx.nx_pydot.to_pydot(graph)
+    print(type(graphs))
     svg_string = str(graphs.create_svg())
     scale_info = re.search('points=(.*?)/>', svg_string).group(1).replace(' ', ',')
     scale_info = scale_info.split(",")
+    print('now?')
     scale = [float(scale_info[4]), -1*float(scale_info[3])]
     coords_x = re.findall(r'id="node(.*?)</text>', svg_string)
     coords_temp = [polygonfunc(i) if "points" in i else ellipsefunc(i) for i in coords_x]
@@ -108,6 +114,7 @@ def node_coords_fromjson(graph):
     new_pos = dict(zip(node_list, coords_temp))
     df = pd.DataFrame.from_dict(new_pos, orient='index',
                                 columns=['x_lower', 'x_upper', 'y_lower', 'y_upper'])
+    print('or here?')   
     return df, scale
 
 def all_node_info(node_list, x_image, node_info):
@@ -412,6 +419,7 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck, post_d
 
 
 def imgrender(file, canv_width, canv_height):
+    global node_df
     """renders png from dotfile""" 
     file.graph['graph']={'splines':'ortho'}
     write_dot(file, 'fi_new')    
@@ -430,11 +438,12 @@ def imgrender(file, canv_width, canv_height):
     inp_final = inp.resize((int(inp.size[0]*scale_factor), int(inp.size[1]*scale_factor)), Image.ANTIALIAS)       
     inp_final.save("testdag.png")
     outp = Image.open("testdag.png")
+    node_df = node_coords_fromjson(file)
     return outp
 
 def imgrender2(canv_width, canv_height):
     """renders png from dotfile"""
-    global load_check
+    global load_check, node_df
     if load_check == 'loaded':
         render('dot', 'png', 'fi_new_chrono')
         inp = Image.open("fi_new_chrono.png")
@@ -541,6 +550,7 @@ def rank_func(tes, file_content):
     return new_string
 
 def imgrender_phase(file):
+    global node_df
   #  t0 = time.time()
     """Renders image from dot file with all nodes of the same phase collected together"""
     write_dot(file, 'fi_new.txt')
@@ -557,6 +567,7 @@ def imgrender_phase(file):
             # Call the real .tkraise
     inp.save("testdag.png")
     outp = Image.open("testdag.png")
+    node_df = node_coords_fromjson(graph)
     return outp
 
 
@@ -647,43 +658,43 @@ class popupWindow2(object):
             self.canvas2.create_window(90, 90, window=self.label6)
 
 
-    def testcom(self):
-        """metadata menu 2 update"""
-        #these if loops clean up after user input for chaging meta data
-        if self.variable_a.get() == "Group":
-            if self.variable_b.get() == "Input Group":
-                self.graph.nodes()[str(self.entry3.get())].update({"Group":self.entry6.get()})
-                self.label6.destroy()
-                self.entry6.destroy()
-            else:
-                self.graph.nodes()[str(self.entry3.get())].update({"Group":self.variable_b.get()})
-        elif self.variable_a.get() == "Date":
-            if self.variable_b.get() == "Input date":
-                self.graph.nodes()[str(self.entry3.get())].update({"Date": [self.entry4.get(), self.entry5.get()]})
-                self.label4.destroy()
-                self.entry4.destroy()
-                self.label5.destroy()
-                self.entry5.destroy()
-            else:
-                self.graph.nodes()[str(self.entry3.get())].update({"Date":self.variable_b.get()})
-        elif self.variable_a.get() == "Find_Type":
-            self.graph.nodes()[str(self.entry3.get())].update({"Find_Type":self.variable_b.get()})
-    #    self.canvas2.create_window((0, 0), window=self.metatext, anchor='nw')
-        self.meta1 = pd.DataFrame.from_dict(self.graph.nodes()[str(self.entry3.get())],
-                                            orient='index')
-        self.meta2 = self.meta1.loc["Date":"Group",]
-        self.meta2.columns = ["Data"]
-        if self.meta2.loc["Date"][0] != "None":
-            self.meta2.loc["Date"][0] = str(self.meta2.loc["Date"][0][0]) + " +- " + str(self.meta2.loc["Date"][0][1]) + " Carbon BP"
-        #self.canvas.itemconfig(self.metatext_id, text="Metadata of node " + str(self.entry3),  font='helvetica 12 bold')
-        cols = list(self.meta2.columns)
-        tree = ttk.Treeview(self.canvas)
-        tree["columns"] = cols
-        tree.place(relx=0.76, rely=0.65)
-        tree.column("Data", anchor="w")
-        tree.heading("Data", text="Data", anchor='w')
-        for index, row in self.meta2.iterrows():
-            tree.insert("", 0, text=index, values=list(row))
+    # def testcom(self):
+    #     """metadata menu 2 update"""
+    #     #these if loops clean up after user input for chaging meta data
+    #     if self.variable_a.get() == "Group":
+    #         if self.variable_b.get() == "Input Group":
+    #             self.graph.nodes()[str(self.entry3.get())].update({"Group":self.entry6.get()})
+    #             self.label6.destroy()
+    #             self.entry6.destroy()
+    #         else:
+    #             self.graph.nodes()[str(self.entry3.get())].update({"Group":self.variable_b.get()})
+    #     elif self.variable_a.get() == "Date":
+    #         if self.variable_b.get() == "Input date":
+    #             self.graph.nodes()[str(self.entry3.get())].update({"Date": [self.entry4.get(), self.entry5.get()]})
+    #             self.label4.destroy()
+    #             self.entry4.destroy()
+    #             self.label5.destroy()
+    #             self.entry5.destroy()
+    #         else:
+    #             self.graph.nodes()[str(self.entry3.get())].update({"Date":self.variable_b.get()})
+    #     elif self.variable_a.get() == "Find_Type":
+    #         self.graph.nodes()[str(self.entry3.get())].update({"Find_Type":self.variable_b.get()})
+    # #    self.canvas2.create_window((0, 0), window=self.metatext, anchor='nw')
+    #     self.meta1 = pd.DataFrame.from_dict(self.graph.nodes()[str(self.entry3.get())],
+    #                                         orient='index')
+    #     self.meta2 = self.meta1.loc["Date":"Group",]
+    #     self.meta2.columns = ["Data"]
+    #     if self.meta2.loc["Date"][0] != "None":
+    #         self.meta2.loc["Date"][0] = str(self.meta2.loc["Date"][0][0]) + " +- " + str(self.meta2.loc["Date"][0][1]) + " Carbon BP"
+    #     #self.canvas.itemconfig(self.metatext_id, text="Metadata of node " + str(self.entry3),  font='helvetica 12 bold')
+    #     cols = list(self.meta2.columns)
+    #     tree = ttk.Treeview(self.canvas)
+    #     tree["columns"] = cols
+    #     tree.place(relx=0.76, rely=0.65)
+    #     tree.column("Data", anchor="w")
+    #     tree.heading("Data", text="Data", anchor='w')
+    #     for index, row in self.meta2.iterrows():
+    #         tree.insert("", 0, text=index, values=list(row))
 
 
     def update_options(self, *args):
@@ -728,15 +739,11 @@ class popupWindow3(object):
         #sets up all the vairables we need for this class
         self.context_no = [x for x in list(self.graph.nodes()) if x not in self.node_del_tracker] # sets up a context list
         self.CONT_TYPE = ['normal' for i in self.context_no] #set up context types
-        self.variable_1 = tk.StringVar(self.top) 
-        self.variable_2 = tk.StringVar(self.top)
         self.phases = phase_rels
         self.resid_list3 = resid_list
         self.intru_list3 = intru_list
         self.dropdown_ns = dropdown_ns
         self.dropdown_intru = dropdown_intru
-        self.edges_master = []
-        self.edges_master_meta = []
         #checks if contexts are residual or intrusive and if we want to keep them or exclude from modelling
         for i in range(len(self.resid_list3)):
             if self.dropdown_ns[self.resid_list3[i]].get() == "Treat as TPQ":
@@ -903,21 +910,6 @@ class popupWindow3(object):
         ypos=(locy+event.y)-int(my/2)
         if xpos>=0 and ypos>=0 and w-abs(xpos)>=0 and xpos <= (w - mx) and h-abs(ypos)>=0 and ypos<=(h-my):
            component.place(x=xpos,y=ypos)
-
- 
-    def phase_rel_func(self):
-        '''changes the menu display as you add phase relationships'''
-        n = re.search('start of phase (.+?) and end', self.variable_1.get()).group(1)
-        m = re.search('and end of phase (.+?)', self.variable_1.get()).group(1)
-        self.menudict[(n, m)] = self.variable_2.get()
-        self.prev_dict[n] = self.variable_2.get()
-        self.post_dict[m] = self.variable_2.get()
-        self.menu_list1.remove(self.variable_1.get())
-        self.optionmenu_a['menu'].delete(self.variable_1.get())
-        if len(self.menu_list1) > 0:
-            self.variable_1.set(self.menu_list1[0])
-        else:
-            self.variable_1.set("No Phases Left")
 
     def full_chronograph_func(self):
         '''renders the chronological graph and forms the prev_phase and past_phase vectors'''
@@ -1228,15 +1220,18 @@ class popupWindow9(object):
           RCD_ERR = [int(list(self.master.datefile["error"])[list(self.master.datefile["context"]).index(i)]) for i in base_context_no]
           A = max(min(RCD_EST) - 4*max(RCD_EST), 0)
           P = min(max(RCD_EST) + 4*max(RCD_EST), 50000)
+
           self.rc_llhds_dict = {}
-          for i, j in enumerate(base_context_no):
-              self.rc_llhds_dict[j] = mcmc.likelihood_func(RCD_EST[i], RCD_ERR[i], A,  P, CALIBRATION)
-          #centrality of original graph
-    #      centrality_vals = self.node_importance(base_graph)
+          for a, b in enumerate(base_context_no):
+              print(a)
+              self.rc_llhds_dict[b] = mcmc.likelihood_func(RCD_EST[a], RCD_ERR[a], A,  P, CALIBRATION)
+          self.node_importance(base_graph)
           for i, j, k in model_list_labels:
+              print(k)
               if k not in os.listdir(path):
                   os.chdir(ref_wd)
-                  self.master.restore_state()
+                  print('3')
+             #     self.master.restore_state()
                   self.master.CONT_TYPE = base_cont_type.copy()
                   self.master.key_ref = base_key_ref.copy()
                   self.master.CONTEXT_NO = base_context_no.copy()
@@ -1254,15 +1249,28 @@ class popupWindow9(object):
                   self.master.CONT_TYPE.pop(ref)
                   self.master.key_ref.pop(ref)
                   self.master.CONTEXT_NO.pop(ref)
-            #####correcting phases for removed nodes
+            ## ###correcting phases for removed nodes
             #change to new phase rels
                   self.graph_adjust(phase, phase_ref)
+                  ######## sorting floating nodes
+                  group_conts = [self.master.CONTEXT_NO[i] for i,j in enumerate(self.master.key_ref) if j == phase]
+                  print('heeeey')
+                  for m in group_conts:
+                      if len(self.master.chrono_dag.out_edges(m)) == 0:
+                         alph = [i for i in self.master.chrono_dag.nodes() if "a_" + phase in i]
+                         print(alph)
+                         self.master.chrono_dag.add_edge(m, alph[0], arrowhead = 'none')
+                      if len(self.master.chrono_dag.in_edges(m)) == 0:
+                          bet = [i for i in self.master.chrono_dag.nodes() if "b_" + phase in i]
+                          self.master.chrono_dag.add_edge(bet[0], m, arrowhead = 'none')
     #############################    setting up the directorys
                   dirs4 = self.make_directories(i)
                   write_dot(self.master.chrono_dag, 'fi_new_chrono')
                   imgrender2(self.master.littlecanvas2.winfo_width(), self.master.littlecanvas2.winfo_height())  
                   imgrender(self.master.graph, self.master.littlecanvas.winfo_width(), self.master.littlecanvas.winfo_height())
-                  self.master.CONTEXT_NO, self.master.ACCEPT, self.master.PHI_ACCEPT, self.master.PHI_REF, self.master.A, self.master.P, self.master.ALL_SAMPS_CONT, self.master.ALL_SAMPS_PHI, self.master.resultsdict, self.master.all_results_dict = self.master.MCMC_func()
+                  self.master.ACCEPT = [[]]
+                  while min([len(i) for i in self.master.ACCEPT]) < 5000:
+                          self.master.CONTEXT_NO, self.master.ACCEPT, self.master.PHI_ACCEPT, self.master.PHI_REF, self.master.A, self.master.P, self.master.ALL_SAMPS_CONT, self.master.ALL_SAMPS_PHI, self.master.resultsdict, self.master.all_results_dict = self.master.MCMC_func()
                   mcmc_check = 'mcmc_loaded'
                   self.save_state_1(self.master, dirs4)
 
@@ -1272,25 +1280,26 @@ class popupWindow9(object):
           h = 1 - 1/np.sqrt(2)*(np.sqrt(np.sum(dist_probs)))
           return h
       
-      def prob_from_samples(self, x_temp, A, P, lim=0.95, probs=0):
-        if probs == 0:
-            x_temp = np.array(x_temp)
-            n = P - A + 1
-            probs, x_vals = np.histogram(x_temp, range = (A, P), bins=n, density=1)
-        df = pd.DataFrame({'Theta':x_vals[1:], 'Posterior':probs})
-        y = df.sort_values(by=['Theta'], ascending=False)
-        posterior_theta = np.array(y['Theta']) 
-        return posterior_theta
+      # def prob_from_samples(self, x_temp, A, P, lim=0.95, probs=0):
+      #   if probs == 0:
+      #       x_temp = np.array(x_temp)
+      #       n = P - A + 1
+      #       probs, x_vals = np.histogram(x_temp, range = (A, P), bins=n, density=1)
+      #   df = pd.DataFrame({'Theta':x_vals[1:], 'Posterior':probs})
+      #   y = df.sort_values(by=['Theta'], ascending=False)
+      #   posterior_theta = np.array(y['Theta']) 
+      #   return posterior_theta
         
       def node_importance(self, graph):
            G = graph.to_undirected() # setting up undirected graph          
-           df_prob_overlap = pd.concat([pd.DataFrame([[i, j, self.prob_overlap(self.rc_llhds_dict[j], self.rc_llhds_dict[i])]], columns = ['node', 'neighbour', 'overlap_measure']) for i in G.nodes() for j in list(G.neighbors(i))])
+           df_prob_overlap = pd.concat([pd.DataFrame([[str(i), str(j), self.prob_overlap(self.rc_llhds_dict[j], self.rc_llhds_dict[i])]], columns = ['node', 'neighbour', 'overlap_measure']) for i in G.nodes() for j in list(G.neighbors(i))])
           #katz
            df_prob_overlap.to_csv('overlap_df.csv')
            dd = nx.pagerank(G, alpha=0.85, personalization=None, max_iter=100, tol=1e-06, nstart=None, weight='weight', dangling=None)
            df = pd.DataFrame.from_dict(dd, orient = 'index')
+           df.reset_index(inplace=True)
+           df.columns = ['context', 'pagerank']
            df.to_csv("katz_centr.csv")
-           return(df)
        
       def graph_adjust(self, phase, phase_ref):
               if (phase in self.master.key_ref) == False:
@@ -1464,11 +1473,11 @@ class load_Window(object):
         self.c=tk.Button(self.maincanvas, text='Create new project', command=lambda: self.new_proj(), bg = '#eff3f6', font = ('Helvetica 12 bold'),  fg = '#2F4858')
         self.c.place(relx = 0.62, rely = 0.9)
 
-    def getFolderPath(self):
-        self.top.attributes("-topmost", False)
-        folder_selected = tk.filedialog.askdirectory()        
-        self.folderPath.set(folder_selected)
-        os.chdir(self.folderPath.get())
+    # def getFolderPath(self):
+    #     self.top.attributes("-topmost", False)
+    #     folder_selected = tk.filedialog.askdirectory()        
+    #     self.folderPath.set(folder_selected)
+    #     os.chdir(self.folderPath.get())
   
         
     def load_proj(self):
@@ -1636,11 +1645,10 @@ class StartPage(tk.Frame):
         #define all variables that are used
         self.h_1 = 0
         self.w_1 = 0
+        
         self.transx = 0
         self.transy = 0
         self.meta1 = ""
-        self.metatext = ""
-        self.rad_sel = ""
         self.mode = ""
         self.node_del_tracker= []
         ##### intial values for all the functions
@@ -1648,8 +1656,6 @@ class StartPage(tk.Frame):
         self.edge_nodes = []
         self.comb_nodes = []
         self.edges_del = []
-        self.edges_master = []
-        self.edges_master_meta = []
         self.temp = []
         self.x_1 = 1
         self.image = "noimage"
@@ -2047,7 +2053,7 @@ class StartPage(tk.Frame):
 
     def open_file1(self):
         '''opens dot file'''
-        global node_df, FILE_INPUT
+        global node_df, FILE_INPUT, phase_true
         file = askopenfile(mode='r', filetypes=[('Python Files', '*.dot')])
         FILE_INPUT = file.name
         self.graph = nx.DiGraph(imagefunc(file.name), graph_attr={'splines':'ortho'})
@@ -2072,6 +2078,7 @@ class StartPage(tk.Frame):
         self.littlecanvas.bind("<Button-3>", self.preClick)
 
     def rerender_stratdag(self):
+        global phase_true
         '''rerenders stratdag after reloading previous project'''
         height = 0.96*0.99*0.97*1000*0.96
         width = 0.99*0.37*2000*0.96   
@@ -2127,7 +2134,7 @@ class StartPage(tk.Frame):
             startpage.node_del_tracker = self.popup3.node_del_tracker
     def open_file2(self):
         '''opens plain text strat file'''
-        global FILE_INPUT        
+        global FILE_INPUT, phase_true       
         file = askopenfile(mode='r', filetypes=[('Python Files', '*.csv')])
         if file is not None:
             try:
@@ -2172,7 +2179,7 @@ class StartPage(tk.Frame):
                         self.delnodes = []
                         self.delnodes_meta = []
                         self.littlecanvas.bind("<Button-3>", self.preClick)
-                    self.message = tk.messagebox.showinfo("Success", "Stratigraphic data loaded")
+                    tk.messagebox.showinfo("Success", "Stratigraphic data loaded")
                     self.check_list_gen()
             except ValueError:
                 tk.messagebox.showerror("showerror", "Data not loaded, please try again")
@@ -2191,7 +2198,7 @@ class StartPage(tk.Frame):
                     self.context_no = list(self.graph.nodes())
                 self.date_check = True
                 self.check_list_gen()
-                self.message = tk.messagebox.showinfo("Success", "Scientific dating data loaded")
+                tk.messagebox.showinfo("Success", "Scientific dating data loaded")
             except ValueError:
                 tk.messagebox.showerror("showerror", "Data not loaded, please try again")
 
@@ -2208,7 +2215,7 @@ class StartPage(tk.Frame):
                         self.graph.nodes()[str(j)].update({"Group":self.phasefile["Group"][i]})
                 self.phase_check = True
                 self.check_list_gen()
-                self.message = tk.messagebox.showinfo("Success", "Grouping data loaded")
+                tk.messagebox.showinfo("Success", "Grouping data loaded")
             except ValueError:
                 tk.messagebox.showerror("showerror", "Data not loaded, please try again")
 
@@ -2222,12 +2229,13 @@ class StartPage(tk.Frame):
                 self.file_popup(pd.DataFrame(self.phase_rels, columns = ['Younger group', 'Older group']))
                 self.phase_rel_check = True
                 self.check_list_gen()
-                self.message = tk.messagebox.showinfo("Success", "Group relationships data loaded")
+                tk.messagebox.showinfo("Success", "Group relationships data loaded")
             except ValueError:
                 tk.messagebox.showerror("showerror", "Data not loaded, please try again")
                 
     def open_file6(self):
         '''opens files determining equal contexts (in time)'''
+        global phase_true
         file = askopenfile(mode='r', filetypes=[('Python Files', '*.csv')])
         if file is not None:
             try:
@@ -2252,7 +2260,7 @@ class StartPage(tk.Frame):
                 self.width, self.height = self.image.size
                 self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
                 self.show_image()
-                self.message = tk.messagebox.showinfo("Success", "Equal contexts data loaded")
+                tk.messagebox.showinfo("Success", "Equal contexts data loaded")
             except ValueError:
                 tk.messagebox.showerror("showerror", "Data not loaded, please try again")
     def cleanup(self):
@@ -2273,7 +2281,9 @@ class StartPage(tk.Frame):
         pb1.place(relx = 0.2, rely = 0.56)
         old_stdout = sys.stdout
         sys.stdout = StdoutRedirector(outputPanel, pb1)
-        self.CONTEXT_NO, self.ACCEPT, self.PHI_ACCEPT, self.PHI_REF, self.A, self.P, self.ALL_SAMPS_CONT, self.ALL_SAMPS_PHI, self.resultsdict, self.all_results_dict = self.MCMC_func()
+        self.ACCEPT = [[]]
+        while min([len(i) for i in self.ACCEPT]) < 50000:
+            self.CONTEXT_NO, self.ACCEPT, self.PHI_ACCEPT, self.PHI_REF, self.A, self.P, self.ALL_SAMPS_CONT, self.ALL_SAMPS_PHI, self.resultsdict, self.all_results_dict = self.MCMC_func()
         mcmc_check = 'mcmc_loaded'
         sys.stdout = old_stdout
         self.controller.show_frame('PageOne')
@@ -2284,7 +2294,7 @@ class StartPage(tk.Frame):
 
     def addedge(self, edgevec):
         '''adds an edge relationship (edgevec) to graph and rerenders the graph'''
-        global node_df
+        global node_df, phase_true
         x_1 = edgevec[0]
         x_2 = edgevec[1]
         self.graph.add_edge(x_1, x_2, arrowhead='none')
@@ -2354,9 +2364,9 @@ class StartPage(tk.Frame):
         '''gathers all the inputs for the mcmc module and then runs it and returns resuslts dictionaries'''
         context_no = [x for x in list(self.context_no) if x not in self.node_del_tracker]
         TOPO = list(nx.topological_sort(self.chrono_dag))
-        TOPO_SORT = [x for x in TOPO if (x not in self.node_del_tracker) and (x in context_no)]
-        TOPO_SORT.reverse()
-        context_no = TOPO_SORT
+        self.TOPO_SORT = [x for x in TOPO if (x not in self.node_del_tracker) and (x in context_no)]
+        self.TOPO_SORT.reverse()
+        context_no = self.TOPO_SORT
         self.key_ref = [list(self.phasefile["Group"])[list(self.phasefile["context"]).index(i)] for i in context_no]
         strat_vec = [[list(self.graph.predecessors(i)), list(self.graph.successors(i))] for i in context_no]
         self.RCD_EST = [int(list(self.datefile["date"])[list(self.datefile["context"]).index(i)]) for i in context_no]
@@ -2364,8 +2374,13 @@ class StartPage(tk.Frame):
         rcd_est = self.RCD_EST
         rcd_err = self.RCD_ERR
         self.prev_phase, self.post_phase = self.prev_phase, self.post_phase
-        print(strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.phi_ref, self.prev_phase, self.post_phase, TOPO_SORT, self.CONT_TYPE)
-        CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.phi_ref, self.prev_phase, self.post_phase, TOPO_SORT, self.CONT_TYPE)
+        input_1 = [strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.phi_ref, self.prev_phase, self.post_phase, self.TOPO_SORT, self.CONT_TYPE]
+        f = open('input_file', 'w')
+        writer = csv.writer(f)
+        #for i in input_1:
+        writer.writerow(input_1)
+        f.close()
+        CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.phi_ref, self.prev_phase, self.post_phase, self.TOPO_SORT, self.CONT_TYPE)
         phase_nodes, resultsdict, all_results_dict = phase_labels(PHI_REF, self.post_phase, PHI_ACCEPT, ALL_SAMPS_PHI)
         for i, j in enumerate(CONTEXT_NO):
             resultsdict[j] = ACCEPT[i]
@@ -2375,11 +2390,17 @@ class StartPage(tk.Frame):
         return CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI, resultsdict, all_results_dict
 
     def nodecheck(self, x_current, y_current):
-        """ returns the node that corresponds to the mouse cooridinates"""
-        
+        """ returns the node that corresponds to the mouse cooridinates"""     
         node_inside = "no node"
-        node_df_con = node_coords_fromjson(self.graph)
+        if phase_true == 1:
+            (graph,) = pydot.graph_from_dot_file('fi_new.txt')
+            node_df_con = node_coords_fromjson(graph)
+        else:
+            node_df_con = node_coords_fromjson(self.graph)
+        print(node_df_con[0])
+        print(node_df_con[1])
         node_df = node_df_con[0]
+        
         xmax, ymax = node_df_con[1]
         #forms a dataframe from the dicitonary of coords
         x, y = self.image.size
@@ -2418,7 +2439,7 @@ class StartPage(tk.Frame):
         
     def nodes(self, currentevent):
         """performs action using the node and redraws the graph"""
-        global load_check
+        global load_check, phase_true
         self.testmenu.place_forget()
         #deleting a single context
         if self.variable.get() == "Delete context":
@@ -2727,12 +2748,23 @@ class StartPage(tk.Frame):
     def phasing(self):
         """runs image render function with phases on seperate levels"""
         global phase_true, node_df
-        imgrender_phase(self.graph)
-        self.image = Image.open('testdag.png')
         phase_true = 1
+        self.image = imgrender_phase(self.graph)
+        self.littlecanvas.img = ImageTk.PhotoImage(self.image)
+        self.littlecanvas_img = self.littlecanvas.create_image(0, 0, anchor="nw",
+                                                               image=self.littlecanvas.img)
+        self.width, self.height = self.image.size
+        self.imscale = 1.0  # scale for the canvaas image
+        self.delta = 1.1  # zoom magnitude
+        # Put image into container rectangle and use it to set proper coordinates to the image
+        self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
+        self.bind("<Configure>", self.resize)
+        self.littlecanvas.bind("<Configure>", self.resize)
+        self.delnodes = []
+        self.delnodes_meta = []
+        self.canvas.delete('all')
+        self.littlecanvas.bind("<Button-3>", self.preClick)
         self.show_image()
-        node_df = node_coords_fromjson("fi_new.txt")
-        return node_df
 
 
     def resize(self, event):
@@ -2776,8 +2808,7 @@ class PageOne(tk.Frame):
         self.transx2 = 0
         self.transy2 = 0
         self.meta1 = ""
-        self.metatext = ""
-        self.rad_sel = ""
+#        self.metatext = ""
         self.mode = ""
         ##### intial values for all the functions
         self.delnodes = []
@@ -2931,15 +2962,20 @@ class PageOne(tk.Frame):
                 self.phase_len_nodes = np.append(self.phase_len_nodes, x)
                 if self.canvas_plt != None:
                     self.canvas_plt.get_tk_widget().pack_forget()
+                font = {'size': 11}
+                # using rc function
+                self.fig.rc('font', **font)
                 self.fig = Figure()
                 LENGTHS = phase_length_finder(self.phase_len_nodes[0], self.phase_len_nodes[1], startpage.all_results_dict)
                 plot1 = self.fig.add_subplot(111)
-                plot1.hist(LENGTHS, bins='auto', color='#0504aa',
-                           alpha=0.7, rwidth=1, density=True)
-                plot1.title.set_text('Posterior density plot for time elapsed between ' + str(self.phase_len_nodes[0]) + ' and '+ str(self.phase_len_nodes[1]))
+                plot1.hist(LENGTHS, bins='auto', color='#0504aa', rwidth = 1, density=True)
+                plot1.spines['right'].set_visible(False)
+                plot1.spines['top'].set_visible(False)
+                plot1.set_ylim([0, 0.05])
+                plot1.title.set_text('Time elapsed between ' + str(self.phase_len_nodes[0]) + ' and '+ str(self.phase_len_nodes[1]))
                 interval = list(mcmc.HPD_interval(np.array(LENGTHS[1000:])))
                 columns = ('context_1', 'context_2', 'hpd_interval')
-                self.fig.set_tight_layout(True)
+         #       self.fig.set_tight_layout(True)
                 self.canvas_plt = FigureCanvasTkAgg(self.fig,
                                                     master=self.littlecanvas)
                 self.canvas_plt.get_tk_widget().place(relx = 0, rely = 0, relwidth = 1)
@@ -3030,24 +3066,42 @@ class PageOne(tk.Frame):
             if self.canvas_plt != None:
                 self.canvas_plt.get_tk_widget().pack_forget()
                 self.toolbar.destroy()
-            fig = Figure(figsize=(5, 5),
-                         dpi=100)
+            print(min(40, len(self.results_list)*8))
+            fig = Figure(figsize=(8, min(30, len(self.results_list)*3)),
+                             dpi=100)
             for i, j in enumerate(self.results_list):
+                if len(self.results_list) < 10:
+                    n = len(self.results_list)
+                else:
+                    n = 10
                 plt.rcParams['text.usetex']
-                plot_index = int(str(51) + str(i+1))
+                
+                plot_index = int(str(n) + str(1) + str(i+1))
                 plot1 = fig.add_subplot(plot_index)
                 plot1.hist(startpage.resultsdict[j], bins='auto', color='#0504aa',
-                           alpha=0.7, rwidth=0.85, density=True)
+                           alpha=0.7, rwidth=1, density=True)
+                plot1.spines['right'].set_visible(False)
+                plot1.spines['top'].set_visible(False)
                 fig.gca().invert_xaxis()
-                plot1.set_xlim(startpage.A, startpage.P)
+                plot1.set_ylim([0, 0.02])
+                nodes = list(nx.topological_sort(startpage.chrono_dag))
+                uplim = nodes[0]
+                lowlim = nodes[-1]
+                min_plot = min(startpage.resultsdict[uplim])
+                max_plot = max(startpage.resultsdict[lowlim])
+                print(min_plot, max_plot)
+                plot1.set_xlim(min_plot, max_plot)
                 node = str(j)
-                if 'a' in node:
-                    node = node.replace('a_', r'\alpha_{')
-                if 'b' in node:
-                    node = node.replace('b_', r'\beta_{')
-                if '=' in node:
-                    node = node.replace('=', '} = ')
-                plot1.title.set_text(r"Posterior density plot for context " +  r"$" + node + "}$")
+                if ('a' in node) or ('b' in node):
+                    if 'a' in node:
+                        node = node.replace('a_', r'\alpha_{')
+                    if 'b' in node:
+                        node = node.replace('b_', r'\beta_{')
+                    if '=' in node:
+                        node = node.replace('=', '} = ')
+                    plot1.title.set_text(r"Group boundary " +  r"$" + node + "}$")
+                else: 
+                    plot1.title.set_text(r"Context " +  r"$" + node + "}$")
 
             fig.set_tight_layout(True)
             self.canvas_plt = FigureCanvasTkAgg(fig, master=self.littlecanvas)
@@ -3230,8 +3284,7 @@ class PageTwo(object):
         self.transy2 = 0
         self.modevariable = None
         self.meta1 = ""
-        self.metatext = ""
-        self.rad_sel = ""
+#        self.metatext = ""
         self.mode = ""
         ##### intial values for all the functions
         self.delnodes = []
