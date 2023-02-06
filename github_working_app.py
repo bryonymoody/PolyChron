@@ -100,11 +100,11 @@ def node_coords_fromjson(graph):
         graphs = graph
     else:   
         graphs = nx.nx_pydot.to_pydot(graph)
-    print(type(graphs))
+ #   print(type(graphs))
     svg_string = str(graphs.create_svg())
     scale_info = re.search('points=(.*?)/>', svg_string).group(1).replace(' ', ',')
     scale_info = scale_info.split(",")
-    print('now?')
+  #  print('now?')
     scale = [float(scale_info[4]), -1*float(scale_info[3])]
     coords_x = re.findall(r'id="node(.*?)</text>', svg_string)
     coords_temp = [polygonfunc(i) if "points" in i else ellipsefunc(i) for i in coords_x]
@@ -114,7 +114,7 @@ def node_coords_fromjson(graph):
     new_pos = dict(zip(node_list, coords_temp))
     df = pd.DataFrame.from_dict(new_pos, orient='index',
                                 columns=['x_lower', 'x_upper', 'y_lower', 'y_upper'])
-    print('or here?')   
+  #  print('or here?')   
     return df, scale
 
 def all_node_info(node_list, x_image, node_info):
@@ -189,7 +189,7 @@ def phase_relabel(graph):
             label_str = i.replace("b_", "<&beta;<SUB>") + '</SUB>>'
             label_dict[i] = label_str
     #sets the new phase labels to the node attribute labels
-    print(label_dict)
+#    print(label_dict)
     nx.set_node_attributes(graph, label_dict, 'label')
     return graph
 
@@ -737,30 +737,31 @@ class popupWindow3(object):
         for j in self.node_del_tracker:
             self.graphcopy.remove_node(j)
         #sets up all the vairables we need for this class
-        self.context_no = [x for x in list(self.graph.nodes()) if x not in self.node_del_tracker] # sets up a context list
-        self.CONT_TYPE = ['normal' for i in self.context_no] #set up context types
+        self.context_no_unordered = [x for x in list(self.graph.nodes()) if x not in self.node_del_tracker] # sets up a context list
+        self.CONT_TYPE = ['normal' for i in self.context_no_unordered] #set up context types
         self.phases = phase_rels
         self.resid_list3 = resid_list
         self.intru_list3 = intru_list
         self.dropdown_ns = dropdown_ns
         self.dropdown_intru = dropdown_intru
         #checks if contexts are residual or intrusive and if we want to keep them or exclude from modelling
-        for i in range(len(self.resid_list3)):
-            if self.dropdown_ns[self.resid_list3[i]].get() == "Treat as TPQ":
-                self.CONT_TYPE[np.where(np.array(self.context_no) == self.resid_list3[i])[0][0]] = "residual"
-            elif self.dropdown_ns[self.resid_list3[i]].get() == "Exclude from modelling":
-                self.graphcopy.remove_node(self.resid_list3[i])
-                self.CONT_TYPE.pop(np.where(np.array(self.context_no) == self.resid_list3[i])[0][0])
-                self.context_no.remove(self.resid_list3[i])
+        for i in self.resid_list3:
+            if self.dropdown_ns[i].get() == "Treat as TPQ":
+                self.CONT_TYPE[np.where(np.array(self.context_no_unordered) == self.resid_list3[i])[0][0]] = "residual"
+            elif self.dropdown_ns[i].get() == "Exclude from modelling":
+                self.graphcopy.remove_node(i)
+                self.CONT_TYPE.pop(np.where(np.array(self.context_no_unordered) == i)[0][0])
+                self.context_no_unordered.remove(self.resid_list3[i])
 
-        for j in range(len(self.intru_list3)):
-            if self.dropdown_intru[self.intru_list3[j]].get() == "Treat as TAQ":
-                self.CONT_TYPE[np.where(np.array(self.context_no) == self.intru_list3[j])[0][0]] = "intrusive"
-            elif self.dropdown_intru[self.intru_list3[j]].get() == "Exclude from modelling":
-                self.graphcopy.remove_node(self.intru_list3[j])
-                self.CONT_TYPE.pop(np.where(np.array(self.context_no) == self.intru_list3[j])[0][0])
-                self.context_no.remove(self.intru_list3[j])
-
+        for j in self.intru_list3:
+            if self.dropdown_intru[j].get() == "Treat as TAQ":
+                self.CONT_TYPE[np.where(np.array(self.context_no_unordered) == j)[0][0]] = "intrusive"
+            elif self.dropdown_intru[j].get() == "Exclude from modelling":
+                self.graphcopy.remove_node(j)
+                self.CONT_TYPE.pop(np.where(np.array(self.context_no_unordered) == j)[0][0])
+                self.context_no_unordered.remove(j)
+        print(self.context_no_unordered)
+        print(self.CONT_TYPE)
         self.step_1 = chrono_edge_remov(self.graphcopy)
         self.COLORS = ['LavenderBlush2', 'powder blue', 'LavenderBlush3', 'LemonChiffon4', 'dark khaki', 'LightGoldenrod1', 'aquamarine2', 'hot pink', 'DarkOrchid4', 'pale turquoise', 'LightSteelBlue2', 'DeepPink4', 'firebrick4', 'khaki4', 'turquoise3', 'alice blue', 'DarkOrange4', 'LavenderBlush4', 'misty rose', 'pink1', 'OrangeRed2', 'chocolate2', 'OliveDrab2', 'LightSteelBlue3', 'firebrick2', 'dark orange', 'ivory2', 'yellow2', 'DeepPink3', 'aquamarine', 'LightPink2', 'DeepSkyBlue2', 'LightCyan4', 'RoyalBlue3', 'SeaGreen3', 'SlateGray1', 'IndianRed3', 'DarkGoldenrod3', 'HotPink1', 'navy', 'tan2', 'orange4', 'tomato', 'LightSteelBlue1', 'coral1', 'MediumOrchid4', 'light grey', 'DarkOrchid3', 'RosyBrown2', 'LightSkyBlue1', 'medium sea green', 'deep pink', 'OrangeRed3', 'sienna2', 'thistle2', 'linen', 'tan4', 'bisque2', 'MediumPurple4', 'DarkSlateGray4', 'mint cream', 'sienna3', 'lemon chiffon', 'ivory3', 'chocolate1', 'peach puff', 'DeepSkyBlue3', 'khaki2', 'SlateGray2', 'dark turquoise', 'deep sky blue', 'light sky blue', 'lime green', 'yellow', 'burlywood3', 'tomato4', 'orange3', 'wheat2', 'olive drab', 'brown3', 'burlywood1', 'LightPink1', 'light cyan', 'saddle brown', 'SteelBlue3', 'SpringGreen3', 'goldenrod4', 'dark salmon', 'DodgerBlue3', 'MediumPurple3', 'azure2', 'lavender blush', 'SteelBlue4', 'honeydew3', 'LightBlue1', 'DeepSkyBlue4', 'medium aquamarine', 'turquoise1', 'thistle', 'DarkGoldenrod2', 'wheat3', 'LemonChiffon2', 'turquoise', 'light sea green', 'maroon3', 'green4', 'SlateBlue1', 'DarkOliveGreen3', 'dark violet', 'LightYellow3', 'DarkGoldenrod1', 'PeachPuff3', 'DarkOrange1', 'goldenrod2', 'goldenrod1', 'SkyBlue4', 'ivory4', 'DarkSeaGreen3', 'aquamarine4', 'VioletRed3', 'orange red', 'CadetBlue3', 'DarkSlateGray2', 'seashell2', 'DarkOliveGreen4', 'SkyBlue2', 'DarkOrchid2', 'maroon1', 'orchid1', 'red3', 'LightSkyBlue4', 'HotPink4', 'LightBlue2', 'coral3', 'magenta4', 'bisque4', 'SteelBlue1', 'cornsilk3', 'dark sea green', 'RosyBrown3', 'salmon3', 'NavajoWhite2', 'PaleTurquoise4', 'SteelBlue2', 'OliveDrab1', 'ghost white', 'HotPink3', 'salmon', 'maroon', 'khaki3', 'AntiqueWhite1', 'PaleVioletRed2', 'maroon2', 'cyan3', 'MistyRose4', 'thistle3', 'gold3', 'tomato3', 'tan1', 'LightGoldenrod3', 'blue violet', 'tomato2', 'RoyalBlue4', 'pink3', 'cadet blue', 'slate gray', 'medium slate blue', 'PaleGreen3', 'DodgerBlue2', 'LightSkyBlue3', 'lawn green', 'PaleGreen1', 'forest green', 'thistle1', 'snow', 'LightSteelBlue4', 'medium violet red', 'pink2', 'PaleVioletRed4', 'VioletRed1', 'gainsboro', 'navajo white', 'DarkOliveGreen1', 'IndianRed2', 'RoyalBlue2', 'dark olive green', 'AntiqueWhite3', 'DarkSlateGray1', 'LightSalmon3', 'salmon4', 'plum3', 'orchid3', 'azure', 'bisque3', 'turquoise4', 'SeaGreen1', 'sienna4', 'pink', 'MediumOrchid1', 'thistle4', 'PaleVioletRed3', 'blanched almond', 'DarkOrange2', 'royal blue', 'blue2', 'chartreuse4', 'LightGoldenrod4', 'NavajoWhite4', 'dark orchid', 'plum1', 'SkyBlue1', 'OrangeRed4', 'khaki', 'PaleGreen2', 'yellow4', 'maroon4', 'turquoise2', 'firebrick3', 'bisque', 'LightCyan2', 'burlywood4', 'PaleTurquoise3', 'azure4', 'gold', 'yellow3', 'chartreuse3', 'RosyBrown1', 'white smoke', 'PaleVioletRed1', 'papaya whip', 'medium spring green', 'AntiqueWhite4', 'SlateGray4', 'LightYellow4', 'coral2', 'MediumOrchid3', 'CadetBlue2', 'LightBlue3', 'snow2', 'purple1', 'magenta3', 'OliveDrab4', 'DarkOrange3', 'seashell3', 'magenta2', 'green2', 'snow4', 'DarkSeaGreen4', 'slate blue', 'PaleTurquoise1', 'red2', 'LightSkyBlue2', 'snow3', 'green yellow', 'DeepPink2', 'orange2', 'cyan', 'light goldenrod', 'light pink', 'honeydew4', 'RoyalBlue1', 'sea green', 'pale violet red', 'AntiqueWhite2', 'blue', 'LightSalmon2', 'SlateBlue4', 'orchid4', 'dark slate gray', 'dark slate blue', 'purple', 'chartreuse2', 'khaki1', 'LightBlue4', 'light yellow', 'indian red', 'VioletRed2', 'gold4', 'light goldenrod yellow', 'rosy brown', 'IndianRed4', 'azure3', 'orange', 'VioletRed4', 'salmon2', 'SeaGreen2', 'pale goldenrod', 'pale green', 'plum2', 'dark green', 'coral4', 'LightGoldenrod2', 'goldenrod3', 'NavajoWhite3', 'MistyRose2', 'wheat1', 'medium turquoise', 'floral white', 'red4', 'firebrick1', 'burlywood2', 'DarkGoldenrod4', 'goldenrod', 'sienna1', 'MediumPurple1', 'purple2', 'LightPink4', 'dim gray', 'LemonChiffon3', 'light steel blue', 'seashell4', 'brown1', 'wheat4', 'MediumOrchid2', 'DarkOrchid1', 'RosyBrown4', 'blue4', 'cyan2', 'salmon1', 'MistyRose3', 'chocolate3', 'light salmon', 'coral', 'honeydew2', 'light blue', 'sandy brown', 'LightCyan3', 'brown2', 'midnight blue', 'CadetBlue1', 'LightYellow2', 'cornsilk4', 'cornsilk2', 'SpringGreen4', 'PeachPuff4', 'PaleGreen4', 'SlateBlue2', 'orchid2', 'purple3', 'light slate blue', 'purple4', 'lavender', 'cornflower blue', 'CadetBlue4', 'DodgerBlue4', 'SlateBlue3', 'DarkSlateGray3', 'medium orchid', 'gold2', 'pink4', 'DarkOliveGreen2', 'spring green', 'dodger blue', 'IndianRed1', 'violet red', 'MediumPurple2', 'old lace', 'LightSalmon4', 'brown4', 'SpringGreen2', 'yellow green', 'plum4', 'SlateGray3', 'steel blue', 'HotPink2', 'medium purple', 'LightPink3', 'PeachPuff2', 'sky blue', 'dark goldenrod', 'PaleTurquoise2']
         self.canvas = tk.Canvas(self.top, bg = 'white')
@@ -946,21 +947,28 @@ class popupWindow3(object):
         nodes = self.graphcopy.nodes()
         edge_add = []
         edge_remove = []
-        for i,j in enumerate(self.context_no):
+        for i,j in enumerate(self.context_no_unordered):
             ####find paths in that phase
+            
+            phase = atribs[j]
+            root = [i for i in nodes if "b_" + str(phase) in i][0]
+            leaf = [i for i in nodes if "a_" + str(phase) in i][0]
+            all_paths = []
+            all_paths.extend(nx.all_simple_paths(self.graphcopy, source = root, target = leaf))
+
             if self.CONT_TYPE[i] == 'residual':
-                phase = atribs[j]
-                root = [i for i in nodes if "b_" + str(phase) in i][0]
-                leaf = [i for i in nodes if "a_" + str(phase) in i][0]
-                all_paths = []
-                all_paths.extend(nx.all_simple_paths(self.graphcopy, source = root, target = leaf))
                 for f in all_paths:
-                    ind = np.where(np.array(f) == str(j))[0][0]
-                    edge_add.append((f[ind - 1], f[ind+ 1]))
+                    if j in f:
+                        ind = np.where(np.array(f) == str(j))[0][0]
+                        edge_add.append((f[ind - 1], f[ind+ 1]))
                 for k in self.graphcopy.edges():
                     if k[0] == j:
                         edge_remove.append((k[0], k[1]))
             elif self.CONT_TYPE[i] == 'intrusive':
+                for f in all_paths:
+                    if j in f:
+                        ind = np.where(np.array(f) == str(j))[0][0]
+                        edge_add.append((f[ind -1], f[ind + 1]))
                 for k in self.graphcopy.edges():
                     if k[1] == j:
                         edge_remove.append((k[0], k[1]))
@@ -1027,7 +1035,7 @@ class popupWindow4(object):
         self.prev_phase = self.popup3.prev_phase
         self.post_phase = self.popup3.post_phase
         self.phi_ref = self.popup3.phi_ref
-        self.context_no = self.popup3.context_no
+        self.context_no_unordered = self.popup3.context_no_unordered
         self.graphcopy = self.popup3.graphcopy
         self.node_del_tracker = self.popup3.node_del_tracker
         self.top.destroy()
@@ -1223,14 +1231,14 @@ class popupWindow9(object):
 
           self.rc_llhds_dict = {}
           for a, b in enumerate(base_context_no):
-              print(a)
+          #    print(a)
               self.rc_llhds_dict[b] = mcmc.likelihood_func(RCD_EST[a], RCD_ERR[a], A,  P, CALIBRATION)
           self.node_importance(base_graph)
           for i, j, k in model_list_labels:
-              print(k)
+         #     print(k)
               if k not in os.listdir(path):
                   os.chdir(ref_wd)
-                  print('3')
+         #         print('3')
              #     self.master.restore_state()
                   self.master.CONT_TYPE = base_cont_type.copy()
                   self.master.key_ref = base_key_ref.copy()
@@ -1254,11 +1262,11 @@ class popupWindow9(object):
                   self.graph_adjust(phase, phase_ref)
                   ######## sorting floating nodes
                   group_conts = [self.master.CONTEXT_NO[i] for i,j in enumerate(self.master.key_ref) if j == phase]
-                  print('heeeey')
+               #   print('heeeey')
                   for m in group_conts:
                       if len(self.master.chrono_dag.out_edges(m)) == 0:
                          alph = [i for i in self.master.chrono_dag.nodes() if "a_" + phase in i]
-                         print(alph)
+                     #    print(alph)
                          self.master.chrono_dag.add_edge(m, alph[0], arrowhead = 'none')
                       if len(self.master.chrono_dag.in_edges(m)) == 0:
                           bet = [i for i in self.master.chrono_dag.nodes() if "b_" + phase in i]
@@ -1576,6 +1584,7 @@ class load_Window(object):
                     self.master.show_frame("StartPage")   
             self.cleanup()
             tk.messagebox.showinfo('Tips:','model created successfully!')
+            os.chdir(dirs)
         else:
             
             tk.messagebox.showerror('Tips','The folder name exists, please change it')
@@ -1904,9 +1913,10 @@ class StartPage(tk.Frame):
     def resid_check(self):
         '''Loads a text box to check if the user thinks any samples are residual'''
         global load_check
-        print("do we get here?")
+  #      print("do we get here?")
         MsgBox = tk.messagebox.askquestion('Residual and Intrusive Contexts', 'Do you suspect any of your samples are residual or intrusive?', icon='warning')
         if MsgBox == 'yes':
+            
             pagetwo = PageTwo(self, self.controller)
             self.popup3 = pagetwo.popup4
 
@@ -2110,6 +2120,7 @@ class StartPage(tk.Frame):
         if load_check == "loaded":
             answer = askquestion('Warning!', 'Chronological DAG already loaded, are you sure you want to write over it? You can copy this model in the file menu if you want to consider multiple models')
             if answer == 'yes':
+                self.refresh_4_new_model(self.controller, proj_dir, load = False)
                 load_check = 'not_loaded'
                 self.littlecanvas2.delete('all')
                 self.chrono_dag = self.chronograph_render()
@@ -2118,7 +2129,7 @@ class StartPage(tk.Frame):
                 startpage.prev_phase = self.popup3.prev_phase
                 startpage.post_phase = self.popup3.post_phase
                 startpage.phi_ref = self.popup3.phi_ref
-                startpage.context_no = self.popup3.context_no
+                startpage.context_no_unordered = self.popup3.context_no_unordered
                 startpage.graphcopy = self.popup3.graphcopy
                 startpage.node_del_tracker = self.popup3.node_del_tracker
         else: 
@@ -2129,7 +2140,7 @@ class StartPage(tk.Frame):
             startpage.prev_phase = self.popup3.prev_phase
             startpage.post_phase = self.popup3.post_phase
             startpage.phi_ref = self.popup3.phi_ref
-            startpage.context_no = self.popup3.context_no
+            startpage.context_no_unordered = self.popup3.context_no_unordered
             startpage.graphcopy = self.popup3.graphcopy
             startpage.node_del_tracker = self.popup3.node_del_tracker
     def open_file2(self):
@@ -2195,7 +2206,7 @@ class StartPage(tk.Frame):
                 if load_it == 'load':
                     for i, j in enumerate(self.datefile["context"]):
                         self.graph.nodes()[str(j)].update({"Date":[self.datefile["date"][i], self.datefile["error"][i]]})
-                    self.context_no = list(self.graph.nodes())
+                    self.context_no_unordered = list(self.graph.nodes())
                 self.date_check = True
                 self.check_list_gen()
                 tk.messagebox.showinfo("Success", "Scientific dating data loaded")
@@ -2279,10 +2290,10 @@ class StartPage(tk.Frame):
         outputPanel.place(relx = 0.4, rely = 0.4)  
         pb1 = ttk.Progressbar(self.backcanvas, orient=tk.HORIZONTAL, length=400, mode='indeterminate')
         pb1.place(relx = 0.2, rely = 0.56)
-        old_stdout = sys.stdout
-        sys.stdout = StdoutRedirector(outputPanel, pb1)
+    #    old_stdout = sys.stdout
+    #    sys.stdout = StdoutRedirector(outputPanel, pb1)
         self.ACCEPT = [[]]
-        while min([len(i) for i in self.ACCEPT]) < 50000:
+        while min([len(i) for i in self.ACCEPT]) < 30000:
             self.CONTEXT_NO, self.ACCEPT, self.PHI_ACCEPT, self.PHI_REF, self.A, self.P, self.ALL_SAMPS_CONT, self.ALL_SAMPS_PHI, self.resultsdict, self.all_results_dict = self.MCMC_func()
         mcmc_check = 'mcmc_loaded'
         sys.stdout = old_stdout
@@ -2362,13 +2373,30 @@ class StartPage(tk.Frame):
 
     def MCMC_func(self):
         '''gathers all the inputs for the mcmc module and then runs it and returns resuslts dictionaries'''
-        context_no = [x for x in list(self.context_no) if x not in self.node_del_tracker]
+        context_no = [x for x in list(self.context_no_unordered) if x not in self.node_del_tracker]
         TOPO = list(nx.topological_sort(self.chrono_dag))
         self.TOPO_SORT = [x for x in TOPO if (x not in self.node_del_tracker) and (x in context_no)]
         self.TOPO_SORT.reverse()
         context_no = self.TOPO_SORT
         self.key_ref = [list(self.phasefile["Group"])[list(self.phasefile["context"]).index(i)] for i in context_no]
-        strat_vec = [[list(self.graph.predecessors(i)), list(self.graph.successors(i))] for i in context_no]
+        self.CONT_TYPE = [self.CONT_TYPE[list(self.context_no_unordered).index(i)] for i in self.TOPO_SORT]
+        strat_vec = []
+        resids = [j for i,j in enumerate(context_no) if self.CONT_TYPE[i] == 'residual']
+        intrus = [j for i,j in enumerate(context_no) if self.CONT_TYPE[i] == 'intrusive']
+        for i,j in enumerate(context_no): 
+            if self.CONT_TYPE[i] == 'residual':
+                low = []
+                up = list(self.graph.predeccessors(j))
+            elif self.CONT_TYPE[i] == 'intrusive':
+                low = list(self.graph.successors(j))
+                up = []
+                print(j)
+                print([up, low])
+            else:
+                up = [k for k in self.graph.predecessors(j) if k not in resids]
+                low = [k for k in self.graph.successors(j) if k not in intrus]
+            strat_vec.append([up, low])
+        #strat_vec = [[list(self.graph.predecessors(i)), list(self.graph.successors(i))] for i in context_no]
         self.RCD_EST = [int(list(self.datefile["date"])[list(self.datefile["context"]).index(i)]) for i in context_no]
         self.RCD_ERR = [int(list(self.datefile["error"])[list(self.datefile["context"]).index(i)]) for i in context_no]
         rcd_est = self.RCD_EST
@@ -2377,7 +2405,7 @@ class StartPage(tk.Frame):
         input_1 = [strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.phi_ref, self.prev_phase, self.post_phase, self.TOPO_SORT, self.CONT_TYPE]
         f = open('input_file', 'w')
         writer = csv.writer(f)
-        #for i in input_1:
+      #  for i in input_1:
         writer.writerow(input_1)
         f.close()
         CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.phi_ref, self.prev_phase, self.post_phase, self.TOPO_SORT, self.CONT_TYPE)
@@ -2397,8 +2425,8 @@ class StartPage(tk.Frame):
             node_df_con = node_coords_fromjson(graph)
         else:
             node_df_con = node_coords_fromjson(self.graph)
-        print(node_df_con[0])
-        print(node_df_con[1])
+    #    print(node_df_con[0])
+    #    print(node_df_con[1])
         node_df = node_df_con[0]
         
         xmax, ymax = node_df_con[1]
@@ -2449,6 +2477,7 @@ class StartPage(tk.Frame):
                     answer = askquestion('Warning!', 'Chronological DAG already loaded, do you want to save this as a new model first? \n\n Click Yes to save as new model and No to overwrite existing model')
                     if answer == 'yes':
                         self.refresh_4_new_model(self.controller, proj_dir, load = False)
+                    print(answer)
                     self.littlecanvas2.delete('all')       
                 self.graph.remove_node(self.node)
                 self.nodedel_meta = self.node_del_popup()
@@ -3066,7 +3095,7 @@ class PageOne(tk.Frame):
             if self.canvas_plt != None:
                 self.canvas_plt.get_tk_widget().pack_forget()
                 self.toolbar.destroy()
-            print(min(40, len(self.results_list)*8))
+      #      print(min(40, len(self.results_list)*8))
             fig = Figure(figsize=(8, min(30, len(self.results_list)*3)),
                              dpi=100)
             for i, j in enumerate(self.results_list):
@@ -3089,7 +3118,7 @@ class PageOne(tk.Frame):
                 lowlim = nodes[-1]
                 min_plot = min(startpage.resultsdict[uplim])
                 max_plot = max(startpage.resultsdict[lowlim])
-                print(min_plot, max_plot)
+            #    print(min_plot, max_plot)
                 plot1.set_xlim(min_plot, max_plot)
                 node = str(j)
                 if ('a' in node) or ('b' in node):

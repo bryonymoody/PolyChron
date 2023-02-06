@@ -311,12 +311,6 @@ def post_h(A, P, site_dict, THETAS, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION):
              for j in enumerate(site_dict[i]["dates"])]
     hh_1 = [i[0] for i in h_vec]
     hh_2 = [i[1] for i in h_vec]
-    for i in hh_1 + hh_2:
-   #     print(i)
-        if (i <= 1) and (i >= 0) == False:
-            print('ERROR')
-            print(hh_1)
-            print(hh_2)
     return hh_1, hh_2
 
 def dict_seek_4(i_dict, key, site_dict):
@@ -401,6 +395,7 @@ def theta_init_func_n(KEY_REF1, PHI_REF1, RESULT_VEC1, STRAT_VEC, P, CONTEXT_NO,
         phase = [CONTEXT_NO[i] for i in ref_vec]
         phase_topo = [i for i in TOPO_SORT if i in phase]
         for i in phase_topo:
+            print(i)
             a = np.where(np.array(CONTEXT_NO) == i)[0][0].item()
             low = STRAT_VEC[a][1]
             if len(low) == 0:
@@ -886,7 +881,6 @@ def squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, 
         ########################### figures out how to sample based on phase relationships
         K = len(THETAS)
         M = len(PHIS_VEC)
-        print(M)
         S = max(RCD_ERR)
         R = P - A
         POST_THETAS, POST_PHIS, POST_S = set_up_post_arrays(THETAS, PHIS_VEC, THETA_INITS, PHASE_BOUNDARY_INITS)
