@@ -14,13 +14,16 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-CALIBRATION = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True)
+#CALIBRATION = pd.read_csv('linear_interpolation.txt')
 
-def HPD_interval(x_temp, lim=0.95, probs=0):
-    if probs == 0:
+def HPD_interval(x_temp, lim=0.95, probs=[]):
+    if len(probs) == 0:
         x_temp = np.array(x_temp)
         n = math.ceil((x_temp.max() - x_temp.min()))
         probs, x_vals = np.histogram(x_temp, bins=n, density=1)
+    else:
+        x_vals = x_temp
+        probs = probs[1:]
     df = pd.DataFrame({'Theta':x_vals[1:], 'Posterior':probs})
     hpd_vec = []
     theta_vec = []
@@ -395,7 +398,6 @@ def theta_init_func_n(KEY_REF1, PHI_REF1, RESULT_VEC1, STRAT_VEC, P, CONTEXT_NO,
         phase = [CONTEXT_NO[i] for i in ref_vec]
         phase_topo = [i for i in TOPO_SORT if i in phase]
         for i in phase_topo:
-            print(i)
             a = np.where(np.array(CONTEXT_NO) == i)[0][0].item()
             low = STRAT_VEC[a][1]
             if len(low) == 0:
@@ -559,8 +561,8 @@ def initialise(CALIBRATION, RCD_EST, RCD_ERR):
     a = list(mydict.values())
     p = min(range(len(a)), key=lambda i: abs(a[i]-x_min))
     l = min(range(len(a)), key=lambda i: abs(a[i]-x_max))
-    A = max(p - 10*s, 0)
-    P = min(l + 10*s, 50000)
+    A = max(p - 20*s, 0)
+    P = min(l + 20*s, 50000)
     ##############################################
     ##initiating  likelihoods
     RCD_S = [list(x) for x in zip(RCD_EST, RCD_ERR)]
@@ -693,10 +695,10 @@ def step_1_squeeze(A, P, i, PREV_PROB_TEST, K, ACCEPT, SITE_DICT_TEST_1, SITE_DI
     if cont_type == 'normal':
         THETAS[k] = np.random.uniform(max(SITE_DICT_TEST_1[key]["boundaries"][0], strat_single[1]),
                                       min(SITE_DICT_TEST_1[key]["boundaries"][1], strat_single[0]))
-    elif cont_type == 'residual':
-        THETAS[k] = np.random.uniform(PHIS_VEC[-1],
-                                      min(SITE_DICT_TEST_1[key]["boundaries"][1], strat_single[0]))
     elif cont_type == 'intrusive':
+        THETAS[k] = np.random.uniform(A,
+                                      min(SITE_DICT_TEST_1[key]["boundaries"][1], strat_single[0]))
+    elif cont_type == 'residual':
         THETAS[k] = np.random.uniform(max(SITE_DICT_TEST_1[key]["boundaries"][0], strat_single[1]),
                                       P)
     for g_1 in enumerate(THETAS):
@@ -733,8 +735,7 @@ def step_2_squeeze(i, prob_1_test, M, PHI_SAMP_DICT, POST_S, R, PHIS_VEC, SITE_D
     f_phi1 = (s1**(2-M))/(R-s1)
     oldphi = PHIS_VEC[m]
     lims = PHI_SAMP_DICT[STEP_1[m]][STEP_2[m]][STEP_3[m]](THETAS, PHIS_VEC, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE)
-    PHIS_VEC[m] = np.random.uniform(lims[0], lims[1])
-    
+    PHIS_VEC[m] = np.random.uniform(lims[0], lims[1])  
     for v1, a_2 in enumerate(PHIS_VEC):
         POST_PHIS[v1].append(a_2)
     s2 = max(PHIS_VEC) - min(PHIS_VEC)
@@ -908,12 +909,12 @@ def squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, 
                 #step 4
                 PREV_PROB_TEST, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_5, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, ALL_SAMPS_CONT, ALL_SAMPS_PHI = step_4_squeeze(A, P, i, b_test, prob_3_test, ACCEPT, POST_S, R, PHIS_VEC, SITE_DICT_TEST_5, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, POST_PHASE, PHI_REF, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI)
                 i = i + 3
-            CHECK_ACCEPT = accept_prob(ACCEPT, PHI_ACCEPT, i)
-            acept_prob = len(CHECK_ACCEPT[(CHECK_ACCEPT <= 0.01) | (CHECK_ACCEPT >= 0.7)])
-            if acept_prob > 0:
-                break
+  #          CHECK_ACCEPT = accept_prob(ACCEPT, PHI_ACCEPT, i)
+   #         acept_prob = len(CHECK_ACCEPT[(CHECK_ACCEPT <= 0.01) | (CHECK_ACCEPT >= 0.7)])
+    #        if acept_prob > 0:
+     #           break
           #plot code
-        CHECK_ACCEPT = accept_prob(ACCEPT, PHI_ACCEPT, i)
+      #  CHECK_ACCEPT = accept_prob(ACCEPT, PHI_ACCEPT, i)
         return PHI_ACCEPT, ACCEPT, POST_S, ALL_SAMPS_CONT, ALL_SAMPS_PHI
 
 #%%
@@ -1052,14 +1053,12 @@ def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_
      }
     method = "squeeze"
     A, P, RESULT_VEC = initialise(CALIBRATION, RCD_EST, RCD_ERR)#  tot_i = 0
-    print(A)
-    print(P)
     if method == "squeeze":
         PHI_ACCEPT, ACCEPT, POST_S, ALL_SAMPS_CONT, ALL_SAMPS_PHI = squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_REF, RCD_EST, CALIBRATION, CONT_TYPE)
         _, ACCEPT_test_1, _, _, _ = squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_REF, RCD_EST, CALIBRATION, CONT_TYPE)
         checks = [GR_conv_check(np.array(j), np.array(ACCEPT_test_1[i])) for i,j in enumerate(ACCEPT)]
-        print(min(checks))
-        print(max(checks)) 
+   #     print(min(checks))
+     #   print(max(checks)) 
     elif method == 'gibbs':
         PHI_ACCEPT, ACCEPT, POST_S, ALL_SAMPS_CONT, ALL_SAMPS_PHI = gibbs_code(5000, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT, CONT_TYPE)
 

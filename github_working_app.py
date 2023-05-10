@@ -31,6 +31,11 @@ from tkinter import simpledialog
 import tkinter.font as tkFont
 from tkinter.messagebox import askquestion
 import csv
+import svgutils.transform as sg
+from svglib.svglib import svg2rlg
+from reportlab.graphics import renderPDF, renderPM
+from svglib.svglib import svg2rlg
+import cairosvg
 old_stdout = sys.stdout
 
 
@@ -59,7 +64,7 @@ phase_true = 0
 load_check = 'not_loaded'
 mcmc_check = 'mcmc_notloaded'
 proj_dir = ""
-CALIBRATION = pd.read_csv('spline_interpolation_new.txt', delim_whitespace=True)
+CALIBRATION = pd.read_csv('linear_interpolation.txt')
 
 def trim(im_trim):
     """Trims images down"""
@@ -72,6 +77,23 @@ def trim(im_trim):
 def clear_all(tree):
    for item in tree.get_children():
       tree.delete(item)
+      
+def node_del_fixed(graph, node):
+    in_nodes = [i[0] for i in list(graph.in_edges(node))]
+    out_nodes = [i[1] for i in list(graph.out_edges(node))]
+    graph.remove_node(node)
+    for i in in_nodes:
+        for j in out_nodes:
+            graph.add_edge(i, j, arrowhead = 'none')
+    
+    graph_check = nx.transitive_reduction(graph)
+    if graph.edges() != graph_check.edges():
+        edges1 = list(graph.edges()).copy()
+        for k in edges1:
+            if k not in graph_check.edges():
+                graph.remove_edge(k[0], k[1])
+    return graph
+ 
 
 def polygonfunc(i):
     '''finds node coords of a kite'''
@@ -100,11 +122,9 @@ def node_coords_fromjson(graph):
         graphs = graph
     else:   
         graphs = nx.nx_pydot.to_pydot(graph)
- #   print(type(graphs))
     svg_string = str(graphs.create_svg())
     scale_info = re.search('points=(.*?)/>', svg_string).group(1).replace(' ', ',')
     scale_info = scale_info.split(",")
-  #  print('now?')
     scale = [float(scale_info[4]), -1*float(scale_info[3])]
     coords_x = re.findall(r'id="node(.*?)</text>', svg_string)
     coords_temp = [polygonfunc(i) if "points" in i else ellipsefunc(i) for i in coords_x]
@@ -113,8 +133,7 @@ def node_coords_fromjson(graph):
 
     new_pos = dict(zip(node_list, coords_temp))
     df = pd.DataFrame.from_dict(new_pos, orient='index',
-                                columns=['x_lower', 'x_upper', 'y_lower', 'y_upper'])
-  #  print('or here?')   
+                                columns=['x_lower', 'x_upper', 'y_lower', 'y_upper'])  
     return df, scale
 
 def all_node_info(node_list, x_image, node_info):
@@ -189,7 +208,6 @@ def phase_relabel(graph):
             label_str = i.replace("b_", "<&beta;<SUB>") + '</SUB>>'
             label_dict[i] = label_str
     #sets the new phase labels to the node attribute labels
-#    print(label_dict)
     nx.set_node_attributes(graph, label_dict, 'label')
     return graph
 
@@ -431,14 +449,38 @@ def imgrender(file, canv_width, canv_height):
    # graph = g[0]
  #   graph.write_dot('fi_neww')
     render('dot', 'png', 'fi_new')
+#    render('dot', 'svg', 'fi_new')
     inp = Image.open("fi_new.png")
-    inp = trim(inp)
-    scale_factor = min(canv_width/inp.size[0], canv_height/inp.size[1])  
-            
-    inp_final = inp.resize((int(inp.size[0]*scale_factor), int(inp.size[1]*scale_factor)), Image.ANTIALIAS)       
+    inp_final = trim(inp)
+  #  scale_factor = min(canv_width/inp.size[0], canv_height/inp.size[1])  
+#    print(scale_factor)        
+ #   inp_final = inp.resize((int(inp.size[0]*scale_factor), int(inp.size[1]*scale_factor)), Image.ANTIALIAS)       
     inp_final.save("testdag.png")
     outp = Image.open("testdag.png")
     node_df = node_coords_fromjson(file)
+#     str_size = "\"" + str(int((canv_height)/96))+ ","+str(int((canv_width)/96)) + "!" +"\""
+#     file.graph['graph']={'splines':'ortho', 'size' : str(2417/90)+ ","+str(2016/96)}#str_size}
+#     graph_check = nx.transitive_reduction(file)
+#     if file.edges() != graph_check.edges():
+#        edges1 = list(file).copy()
+#        for k in edges1:
+#            if k not in graph_check.edges():
+#                file(k[0], k[1])
+#     write_dot(file, 'fi_new')    
+#     render('dot', 'png', 'fi_new')
+#     fig = sg.fromfile('fi_new.svg')
+#     img_size = fig.get_size()
+#     img_size = [int(i.replace("pt", "")) for i in img_size]
+#     scale_factor = min(canv_width/img_size[0], canv_height/img_size[1])
+#     fig.set_size((str(int((img_size[0]*scale_factor))), str(int((img_size[1]*scale_factor)*1))))
+#     fig.save('myimage2.svg')
+#     cairosvg.svg2png(url='myimage2.svg', write_to='testdag.png')
+# #    
+#  #   write_dot(file, 'fi_new')    
+#   #  render('dot', 'png', 'fi_new')
+#     outp = Image.open("fi_new.png")
+#     outp = trim(outp)
+#     node_df = node_coords_fromjson(file)
     return outp
 
 def imgrender2(canv_width, canv_height):
@@ -446,10 +488,11 @@ def imgrender2(canv_width, canv_height):
     global load_check, node_df
     if load_check == 'loaded':
         render('dot', 'png', 'fi_new_chrono')
+     #   render('dot', 'svg', 'fi_new_chrono')
         inp = Image.open("fi_new_chrono.png")
-        inp = trim(inp)
-        scale_factor = min(canv_width/inp.size[0], canv_height/inp.size[1])                 
-        inp_final = inp.resize((int(inp.size[0]*scale_factor), int(inp.size[1]*scale_factor)), Image.ANTIALIAS)  
+        inp_final = trim(inp)
+   #     scale_factor = min(canv_width/inp.size[0], canv_height/inp.size[1])                 
+   #     inp_final = inp.resize((int(inp.size[0]*scale_factor), int(inp.size[1]*scale_factor)), Image.ANTIALIAS)  
         inp_final.save("testdag_chrono.png")
         outp = Image.open("testdag_chrono.png")
     else:
@@ -735,7 +778,7 @@ class popupWindow3(object):
             elif datadict[i] == [None, None]:
                 self.node_del_tracker.append(i)
         for j in self.node_del_tracker:
-            self.graphcopy.remove_node(j)
+            self.graphcopy = node_del_fixed(self.graphcopy, j)
         #sets up all the vairables we need for this class
         self.context_no_unordered = [x for x in list(self.graph.nodes()) if x not in self.node_del_tracker] # sets up a context list
         self.CONT_TYPE = ['normal' for i in self.context_no_unordered] #set up context types
@@ -749,7 +792,7 @@ class popupWindow3(object):
             if self.dropdown_ns[i].get() == "Treat as TPQ":
                 self.CONT_TYPE[np.where(np.array(self.context_no_unordered) == self.resid_list3[i])[0][0]] = "residual"
             elif self.dropdown_ns[i].get() == "Exclude from modelling":
-                self.graphcopy.remove_node(i)
+                self.graphcopy = node_del_fixed(self.graphcopy, i)
                 self.CONT_TYPE.pop(np.where(np.array(self.context_no_unordered) == i)[0][0])
                 self.context_no_unordered.remove(self.resid_list3[i])
 
@@ -757,11 +800,9 @@ class popupWindow3(object):
             if self.dropdown_intru[j].get() == "Treat as TAQ":
                 self.CONT_TYPE[np.where(np.array(self.context_no_unordered) == j)[0][0]] = "intrusive"
             elif self.dropdown_intru[j].get() == "Exclude from modelling":
-                self.graphcopy.remove_node(j)
+                self.graphcopy = node_del_fixed(self.graphcopy, j)
                 self.CONT_TYPE.pop(np.where(np.array(self.context_no_unordered) == j)[0][0])
                 self.context_no_unordered.remove(j)
-        print(self.context_no_unordered)
-        print(self.CONT_TYPE)
         self.step_1 = chrono_edge_remov(self.graphcopy)
         self.COLORS = ['LavenderBlush2', 'powder blue', 'LavenderBlush3', 'LemonChiffon4', 'dark khaki', 'LightGoldenrod1', 'aquamarine2', 'hot pink', 'DarkOrchid4', 'pale turquoise', 'LightSteelBlue2', 'DeepPink4', 'firebrick4', 'khaki4', 'turquoise3', 'alice blue', 'DarkOrange4', 'LavenderBlush4', 'misty rose', 'pink1', 'OrangeRed2', 'chocolate2', 'OliveDrab2', 'LightSteelBlue3', 'firebrick2', 'dark orange', 'ivory2', 'yellow2', 'DeepPink3', 'aquamarine', 'LightPink2', 'DeepSkyBlue2', 'LightCyan4', 'RoyalBlue3', 'SeaGreen3', 'SlateGray1', 'IndianRed3', 'DarkGoldenrod3', 'HotPink1', 'navy', 'tan2', 'orange4', 'tomato', 'LightSteelBlue1', 'coral1', 'MediumOrchid4', 'light grey', 'DarkOrchid3', 'RosyBrown2', 'LightSkyBlue1', 'medium sea green', 'deep pink', 'OrangeRed3', 'sienna2', 'thistle2', 'linen', 'tan4', 'bisque2', 'MediumPurple4', 'DarkSlateGray4', 'mint cream', 'sienna3', 'lemon chiffon', 'ivory3', 'chocolate1', 'peach puff', 'DeepSkyBlue3', 'khaki2', 'SlateGray2', 'dark turquoise', 'deep sky blue', 'light sky blue', 'lime green', 'yellow', 'burlywood3', 'tomato4', 'orange3', 'wheat2', 'olive drab', 'brown3', 'burlywood1', 'LightPink1', 'light cyan', 'saddle brown', 'SteelBlue3', 'SpringGreen3', 'goldenrod4', 'dark salmon', 'DodgerBlue3', 'MediumPurple3', 'azure2', 'lavender blush', 'SteelBlue4', 'honeydew3', 'LightBlue1', 'DeepSkyBlue4', 'medium aquamarine', 'turquoise1', 'thistle', 'DarkGoldenrod2', 'wheat3', 'LemonChiffon2', 'turquoise', 'light sea green', 'maroon3', 'green4', 'SlateBlue1', 'DarkOliveGreen3', 'dark violet', 'LightYellow3', 'DarkGoldenrod1', 'PeachPuff3', 'DarkOrange1', 'goldenrod2', 'goldenrod1', 'SkyBlue4', 'ivory4', 'DarkSeaGreen3', 'aquamarine4', 'VioletRed3', 'orange red', 'CadetBlue3', 'DarkSlateGray2', 'seashell2', 'DarkOliveGreen4', 'SkyBlue2', 'DarkOrchid2', 'maroon1', 'orchid1', 'red3', 'LightSkyBlue4', 'HotPink4', 'LightBlue2', 'coral3', 'magenta4', 'bisque4', 'SteelBlue1', 'cornsilk3', 'dark sea green', 'RosyBrown3', 'salmon3', 'NavajoWhite2', 'PaleTurquoise4', 'SteelBlue2', 'OliveDrab1', 'ghost white', 'HotPink3', 'salmon', 'maroon', 'khaki3', 'AntiqueWhite1', 'PaleVioletRed2', 'maroon2', 'cyan3', 'MistyRose4', 'thistle3', 'gold3', 'tomato3', 'tan1', 'LightGoldenrod3', 'blue violet', 'tomato2', 'RoyalBlue4', 'pink3', 'cadet blue', 'slate gray', 'medium slate blue', 'PaleGreen3', 'DodgerBlue2', 'LightSkyBlue3', 'lawn green', 'PaleGreen1', 'forest green', 'thistle1', 'snow', 'LightSteelBlue4', 'medium violet red', 'pink2', 'PaleVioletRed4', 'VioletRed1', 'gainsboro', 'navajo white', 'DarkOliveGreen1', 'IndianRed2', 'RoyalBlue2', 'dark olive green', 'AntiqueWhite3', 'DarkSlateGray1', 'LightSalmon3', 'salmon4', 'plum3', 'orchid3', 'azure', 'bisque3', 'turquoise4', 'SeaGreen1', 'sienna4', 'pink', 'MediumOrchid1', 'thistle4', 'PaleVioletRed3', 'blanched almond', 'DarkOrange2', 'royal blue', 'blue2', 'chartreuse4', 'LightGoldenrod4', 'NavajoWhite4', 'dark orchid', 'plum1', 'SkyBlue1', 'OrangeRed4', 'khaki', 'PaleGreen2', 'yellow4', 'maroon4', 'turquoise2', 'firebrick3', 'bisque', 'LightCyan2', 'burlywood4', 'PaleTurquoise3', 'azure4', 'gold', 'yellow3', 'chartreuse3', 'RosyBrown1', 'white smoke', 'PaleVioletRed1', 'papaya whip', 'medium spring green', 'AntiqueWhite4', 'SlateGray4', 'LightYellow4', 'coral2', 'MediumOrchid3', 'CadetBlue2', 'LightBlue3', 'snow2', 'purple1', 'magenta3', 'OliveDrab4', 'DarkOrange3', 'seashell3', 'magenta2', 'green2', 'snow4', 'DarkSeaGreen4', 'slate blue', 'PaleTurquoise1', 'red2', 'LightSkyBlue2', 'snow3', 'green yellow', 'DeepPink2', 'orange2', 'cyan', 'light goldenrod', 'light pink', 'honeydew4', 'RoyalBlue1', 'sea green', 'pale violet red', 'AntiqueWhite2', 'blue', 'LightSalmon2', 'SlateBlue4', 'orchid4', 'dark slate gray', 'dark slate blue', 'purple', 'chartreuse2', 'khaki1', 'LightBlue4', 'light yellow', 'indian red', 'VioletRed2', 'gold4', 'light goldenrod yellow', 'rosy brown', 'IndianRed4', 'azure3', 'orange', 'VioletRed4', 'salmon2', 'SeaGreen2', 'pale goldenrod', 'pale green', 'plum2', 'dark green', 'coral4', 'LightGoldenrod2', 'goldenrod3', 'NavajoWhite3', 'MistyRose2', 'wheat1', 'medium turquoise', 'floral white', 'red4', 'firebrick1', 'burlywood2', 'DarkGoldenrod4', 'goldenrod', 'sienna1', 'MediumPurple1', 'purple2', 'LightPink4', 'dim gray', 'LemonChiffon3', 'light steel blue', 'seashell4', 'brown1', 'wheat4', 'MediumOrchid2', 'DarkOrchid1', 'RosyBrown4', 'blue4', 'cyan2', 'salmon1', 'MistyRose3', 'chocolate3', 'light salmon', 'coral', 'honeydew2', 'light blue', 'sandy brown', 'LightCyan3', 'brown2', 'midnight blue', 'CadetBlue1', 'LightYellow2', 'cornsilk4', 'cornsilk2', 'SpringGreen4', 'PeachPuff4', 'PaleGreen4', 'SlateBlue2', 'orchid2', 'purple3', 'light slate blue', 'purple4', 'lavender', 'cornflower blue', 'CadetBlue4', 'DodgerBlue4', 'SlateBlue3', 'DarkSlateGray3', 'medium orchid', 'gold2', 'pink4', 'DarkOliveGreen2', 'spring green', 'dodger blue', 'IndianRed1', 'violet red', 'MediumPurple2', 'old lace', 'LightSalmon4', 'brown4', 'SpringGreen2', 'yellow green', 'plum4', 'SlateGray3', 'steel blue', 'HotPink2', 'medium purple', 'LightPink3', 'PeachPuff2', 'sky blue', 'dark goldenrod', 'PaleTurquoise2']
         self.canvas = tk.Canvas(self.top, bg = 'white')
@@ -1224,22 +1265,16 @@ class popupWindow9(object):
           base_phi_ref = self.master.phi_ref
           base_prev_phase = self.master.prev_phase
           base_post_phase = self.master.post_phase
+          base_context_no_unordered = self.master.context_no_unordered
           RCD_EST = [int(list(self.master.datefile["date"])[list(self.master.datefile["context"]).index(i)]) for i in base_context_no]
           RCD_ERR = [int(list(self.master.datefile["error"])[list(self.master.datefile["context"]).index(i)]) for i in base_context_no]
           A = max(min(RCD_EST) - 4*max(RCD_EST), 0)
           P = min(max(RCD_EST) + 4*max(RCD_EST), 50000)
 
           self.rc_llhds_dict = {}
-          for a, b in enumerate(base_context_no):
-          #    print(a)
-              self.rc_llhds_dict[b] = mcmc.likelihood_func(RCD_EST[a], RCD_ERR[a], A,  P, CALIBRATION)
-          self.node_importance(base_graph)
           for i, j, k in model_list_labels:
-         #     print(k)
               if k not in os.listdir(path):
                   os.chdir(ref_wd)
-         #         print('3')
-             #     self.master.restore_state()
                   self.master.CONT_TYPE = base_cont_type.copy()
                   self.master.key_ref = base_key_ref.copy()
                   self.master.CONTEXT_NO = base_context_no.copy()
@@ -1247,26 +1282,27 @@ class popupWindow9(object):
                   self.master.chrono_dag = base_chrono_graph.copy()
                   self.master.phi_ref = base_phi_ref.copy()
                   self.master.prev_phase = base_prev_phase.copy()
-                  self.master.post_phase = base_post_phase.copy()       
-                  #remove_node_section
-                  self.master.chrono_dag.remove_node(j)     
-                  self.master.graph.remove_node(j)   
-                  ref = np.where(np.array(base_context_no) == str(j))[0][0] 
+                  self.master.post_phase = base_post_phase.copy()    
+                  self.master.context_no_unordered = base_context_no_unordered.copy()
+                  #remove_node_section   
+                  self.master.chrono_dag = node_del_fixed(self.master.chrono_dag, j)
+                  self.master.graph = node_del_fixed(self.master.graph, j)
+                  ref = np.where(np.array(base_context_no) == str(j))[0][0]
+                  ref2 = np.where(np.array(base_context_no_unordered) == str(j))[0][0]
                   phase = self.master.key_ref[ref]              
                   phase_ref = np.where(np.array(base_phi_ref) == str(phase))[0][0]
                   self.master.CONT_TYPE.pop(ref)
                   self.master.key_ref.pop(ref)
                   self.master.CONTEXT_NO.pop(ref)
+                  self.master.context_no_unordered.pop(ref2)
             ## ###correcting phases for removed nodes
             #change to new phase rels
                   self.graph_adjust(phase, phase_ref)
                   ######## sorting floating nodes
                   group_conts = [self.master.CONTEXT_NO[i] for i,j in enumerate(self.master.key_ref) if j == phase]
-               #   print('heeeey')
                   for m in group_conts:
                       if len(self.master.chrono_dag.out_edges(m)) == 0:
                          alph = [i for i in self.master.chrono_dag.nodes() if "a_" + phase in i]
-                     #    print(alph)
                          self.master.chrono_dag.add_edge(m, alph[0], arrowhead = 'none')
                       if len(self.master.chrono_dag.in_edges(m)) == 0:
                           bet = [i for i in self.master.chrono_dag.nodes() if "b_" + phase in i]
@@ -1277,7 +1313,7 @@ class popupWindow9(object):
                   imgrender2(self.master.littlecanvas2.winfo_width(), self.master.littlecanvas2.winfo_height())  
                   imgrender(self.master.graph, self.master.littlecanvas.winfo_width(), self.master.littlecanvas.winfo_height())
                   self.master.ACCEPT = [[]]
-                  while min([len(i) for i in self.master.ACCEPT]) < 5000:
+                  while min([len(i) for i in self.master.ACCEPT]) < 20000:
                           self.master.CONTEXT_NO, self.master.ACCEPT, self.master.PHI_ACCEPT, self.master.PHI_REF, self.master.A, self.master.P, self.master.ALL_SAMPS_CONT, self.master.ALL_SAMPS_PHI, self.master.resultsdict, self.master.all_results_dict = self.master.MCMC_func()
                   mcmc_check = 'mcmc_loaded'
                   self.save_state_1(self.master, dirs4)
@@ -1309,6 +1345,261 @@ class popupWindow9(object):
            df.columns = ['context', 'pagerank']
            df.to_csv("katz_centr.csv")
        
+      def graph_adjust(self, phase, phase_ref):
+              graph_check = nx.transitive_reduction(self.master.chrono_dag)
+              if self.master.chrono_dag.edges() != graph_check.edges():
+                 edges1 = list(self.master.chrono_dag.edges()).copy()
+                 for k in edges1:
+                     if k not in graph_check.edges():
+                         self.master.chrono_dag.remove_edge(k[0], k[1])
+              if (phase in self.master.key_ref) == False:
+                  self.master.phi_ref.pop(phase_ref)                                
+                  if self.master.prev_phase[phase_ref] == 'start':
+                      phase_node = [i for i in self.master.chrono_dag.nodes() if "b_"+str(phase) in i]
+                      self.master.chrono_dag.remove_node("a_" + str(phase))       
+                      old_label = str(phase_node[0])
+                      new_label = "a_"+ str(self.master.phi_ref[phase_ref + 1])
+                      mapping = {old_label: new_label}
+                      self.master.prev_phase.pop(phase_ref)
+                      self.master.post_phase.pop(phase_ref)   
+                      self.master.prev_phase[phase_ref] = 'start'
+                  elif self.master.post_phase[phase_ref] == 'end':
+                      phase_node = [i for i in self.master.chrono_dag.nodes() if "a_"+str(phase) in i]
+                      self.master.chrono_dag.remove_node("b_" + str(phase))     
+                      old_label = str(phase_node[0])
+                      new_label = "b_"+ str(self.master.phi_ref[phase_ref -1])
+                      mapping = {old_label: new_label}
+                      self.master.prev_phase.pop(phase_ref)
+                      self.master.post_phase.pop(phase_ref)   
+                      self.master.post_phase[phase_ref] = 'end'
+                  else:
+                      phase_nodes = [i for i in self.master.chrono_dag.nodes() if phase in i]
+                      self.master.chrono_dag.remove_edge(phase_nodes[0], phase_nodes[1])
+                      self.master.chrono_dag = nx.contracted_nodes(self.master.chrono_dag, phase_nodes[0], phase_nodes[1]) 
+                      new_label_1 = str(phase_nodes[0])
+                      new_label = new_label_1.replace("a_"+str(phase), "a_"+ str(self.master.phi_ref[phase_ref + 1]))
+                      mapping = {phase_nodes[0]: new_label}
+                      self.master.prev_phase.pop(phase_ref)
+                      self.master.post_phase.pop(phase_ref)   
+                      self.master.prev_phase[phase_ref] = 'gap'
+                      self.master.post_phase[phase_ref] = 'gap'
+                  self.master.chrono_dag = nx.relabel_nodes(self.master.chrono_dag, mapping)
+                  self.master.chrono_dag = phase_relabel(self.master.chrono_dag)
+              self.master.chrono_dag.graph['graph']={'splines':'ortho'}    
+              atribs = nx.get_node_attributes(self.master.chrono_dag, 'Group')
+              nodes = self.master.chrono_dag.nodes()
+              edge_add = []
+              edge_remove = []
+              for v,w in enumerate(self.master.CONTEXT_NO):
+                    ####find paths in that phase
+                    if self.master.CONT_TYPE[v] == 'residual':
+                        phase = atribs[w]
+                        root = [i for i in nodes if "b_" + str(phase) in i][0]
+                        leaf = [i for i in nodes if "a_" + str(phase) in i][0]
+                        all_paths = []
+                        all_paths.extend(nx.all_simple_paths(self.master.chrono_dag, source = root, target = leaf))
+                        for f in all_paths:
+                            ind = np.where(np.array(f) == str(w))[0][0]
+                            edge_add.append((f[ind - 1], f[ind+ 1]))
+                        for k in self.master.chrono_dag.edges():
+                            if k[0] == w:
+                                edge_remove.append((k[0], k[1]))
+                    elif self.master.CONT_TYPE[v] == 'intrusive':
+                        for k in self.master.chrono_dag.edges():
+                            if k[1] == w:
+                                edge_remove.append((k[0], k[1]))
+              for a in edge_add:
+                    self.master.chrono_dag.add_edge(a[0], a[1], arrowhead = 'none')
+              for b in edge_remove:
+                    self.master.chrono_dag.remove_edge(b[0], b[1])
+
+
+      def make_directories(self, i):
+              dirs2 = os.path.join(i, "stratigraphic_graph")
+              dirs3 = os.path.join(i, "chronological_graph")
+              dirs4 = os.path.join(i, "python_only")
+              dirs5 = os.path.join(i, "mcmc_results")
+              os.makedirs(dirs2)
+              os.makedirs(dirs3)
+              os.makedirs(dirs4)
+              os.makedirs(dirs5)
+              os.chdir(i)
+              return dirs4
+      def selectall(self):
+          self.e.select_set(0, 'end')
+    
+      def save_state_1(self, master, j):
+         global mcmc_check, load_check, FILE_INPUT
+        
+         vars_list_1 = dir(self.master)
+         var_list = [var for var in vars_list_1 if (('__' and 'grid' and 'get' and 'tkinter' and 'children') not in var) and (var[0] != '_')]          
+         data = {}
+         check_list = ["tkinter", "method", "__main__", 'PIL']
+         for i in var_list:
+             v = getattr(master, i)
+             if not any(x in str(type(v)) for x in check_list):
+                data[i] = v
+         data['all_vars'] = list(data.keys())
+         data['load_check'] = load_check
+         data['mcmc_check'] = mcmc_check
+         data["file_input"] = FILE_INPUT
+         path = j + "/save.pickle"
+         if mcmc_check == 'mcmc_loaded': 
+                results = data["all_results_dict"]
+                df = pd.DataFrame()
+                for i in results.keys():
+                    df[i] = results[i][10000:]  
+                results_path = os.getcwd() + "/mcmc_results/full_results_df"    
+                df.to_csv(results_path)
+                phasefile = data['phasefile']
+                context_no = data['CONTEXT_NO']
+                key_ref = [list(phasefile["Group"])[list(phasefile["context"]).index(i)] for i in context_no]
+                df1 = pd.DataFrame(key_ref)   
+                df1.to_csv('mcmc_results/key_ref.csv') 
+                df2 = pd.DataFrame(context_no)
+                df2.to_csv('mcmc_results/context_no.csv') 
+
+         try:
+             with open(path, "wb") as f:
+                  pickle.dump(data, f)
+         except Exception:
+             tk.messagebox.showerror('Error', 'File not saved')        
+             
+      def load_cal_data(self, j):
+         global mcmc_check, load_check, FILE_INPUT
+         with open(self.path + "/" + str(j) + '/python_only/save.pickle', "rb") as f:
+             data = pickle.load(f)
+             vars_list = data['all_vars']
+             for i in vars_list:
+                 setattr(self, i, data[i])
+             FILE_INPUT = data['file_input']
+             load_check = data['load_check']
+             mcmc_check = data['mcmc_check']
+
+class popupWindow10(object):
+      def __init__(self, master, path):
+          global mcmc_check
+          self.master = master
+          self.path = path
+          # for i in range(20,140):
+          #     katz_df_subset = katz_df_test.sort_values(by='pagerank', ascending = False).head(i)
+          ref_wd = os.getcwd()
+     #     con_list = list(katz_df_test['context'])
+          base_cont_type =  self.master.CONT_TYPE
+          base_key_ref = self.master.key_ref
+          base_context_no = self.master.CONTEXT_NO
+          base_graph = self.master.graph
+          base_chrono_graph = self.master.chrono_dag
+          base_phi_ref = self.master.phi_ref
+          base_prev_phase = self.master.prev_phase
+          base_post_phase = self.master.post_phase
+          base_context_no_unordered = self.master.context_no_unordered
+          
+          
+          for num in range(5,43):
+          #for loop would start here
+              os.chdir(path)
+              self.master.CONT_TYPE = base_cont_type.copy()
+              self.master.key_ref = base_key_ref.copy()
+              self.master.CONTEXT_NO = base_context_no.copy()
+              self.master.graph = base_graph.copy()
+              self.master.chrono_dag = base_chrono_graph.copy()
+              self.master.phi_ref = base_phi_ref.copy()
+              self.master.prev_phase = base_prev_phase.copy()
+              self.master.post_phase = base_post_phase.copy()    
+              self.master.context_no_unordered = base_context_no_unordered.copy()
+              katz_df_test = self.top_nodes(num, self.master.phi_ref, self.master.CONTEXT_NO, self.master.key_ref, path)
+              #remove_node_section
+              remove_conts = [i for i in self.master.CONTEXT_NO if i not in katz_df_test]
+              print('remove contexts')
+          
+              print(len(remove_conts))
+              for j in remove_conts:
+                  self.master.chrono_dag.remove_node(j)     
+                  self.master.graph.remove_node(j)   
+                  ref = np.where(np.array(self.master.CONTEXT_NO) == str(j))[0][0]
+                  ref2 = np.where(np.array(self.master.context_no_unordered) == str(j))[0][0]
+                  phase = self.master.key_ref[ref]              
+                  phase_ref = np.where(np.array(base_phi_ref) == str(phase))[0][0]
+                  self.master.CONT_TYPE.pop(ref)
+                  self.master.key_ref.pop(ref)
+                  self.master.CONTEXT_NO.pop(ref)   
+                  self.master.context_no_unordered.pop(ref2)
+        ## ###correcting phases for removed nodes
+        #change to new phase rels
+                  self.graph_adjust(phase, phase_ref)
+                  ######## sorting floating nodes
+                  group_conts = [self.master.CONTEXT_NO[i] for i,j in enumerate(self.master.key_ref) if j == phase]
+                  for m in group_conts:
+                      if len(self.master.chrono_dag.out_edges(m)) == 0:
+                         alph = [i for i in self.master.chrono_dag.nodes() if "a_" + phase in i]
+                         self.master.chrono_dag.add_edge(m, alph[0], arrowhead = 'none')
+                      if len(self.master.chrono_dag.in_edges(m)) == 0:
+                          bet = [i for i in self.master.chrono_dag.nodes() if "b_" + phase in i]
+                          self.master.chrono_dag.add_edge(bet[0], m, arrowhead = 'none')
+        #############################    setting up the directorys
+              dirs4 = self.make_directories('testing' + str(num))
+              write_dot(self.master.chrono_dag, 'fi_new_chrono')
+              imgrender2(self.master.littlecanvas2.winfo_width(), self.master.littlecanvas2.winfo_height())  
+              imgrender(self.master.graph, self.master.littlecanvas.winfo_width(), self.master.littlecanvas.winfo_height())
+              self.master.ACCEPT = [[]]
+              while min([len(i) for i in self.master.ACCEPT]) < 50000:
+                       self.master.CONTEXT_NO, self.master.ACCEPT, self.master.PHI_ACCEPT, self.master.PHI_REF, self.master.A, self.master.P, self.master.ALL_SAMPS_CONT, self.master.ALL_SAMPS_PHI, self.master.resultsdict, self.master.all_results_dict = self.master.MCMC_func()
+              mcmc_check = 'mcmc_loaded'
+              self.save_state_1(self.master, dirs4)
+              
+      def katz_plus_overlap(self, path, refmodel, mode = 'strat'): 
+          if mode == 'strat':
+              katz_df_test = pd.read_csv(path + "/" + refmodel + "/katz_centr_strat.csv") # katz centrality worked out for the reference model
+          elif mode == 'chrono':
+              katz_df_test = pd.read_csv(path + "/" + refmodel + "/katz_centr_chrono.csv") 
+          katz_df_test = katz_df_test[['context', 'pagerank']]
+          katz_df_test['context'] = katz_df_test['context'].astype(str)
+          katz_df_test = katz_df_test.loc[(katz_df_test["context"].str.contains("a") == False)]
+          katz_df_test = katz_df_test.loc[(katz_df_test["context"].str.contains("b") == False)]
+          katz_df_test = katz_df_test.transpose()
+          katz_df = katz_df_test.rename(columns=katz_df_test.iloc[0]).drop(katz_df_test.index[0]).reset_index(drop=True)    
+          ll_over_df = pd.read_csv(path + "/" + refmodel + "/overlap_df.csv")
+          ll_over_df = pd.DataFrame(ll_over_df[['node', 'neighbour', 'overlap_measure']]) #overlap df for the reference model
+          ll_over_df['neighbour'] = ll_over_df['neighbour'].astype(str)
+          ll_over_df['node'] = ll_over_df['node'].astype(str)
+          return katz_df, ll_over_df             
+              
+      def katz_w_weight(self, path):
+         with open(path + "/reference_model/python_only/save.pickle", "rb") as f:
+             data = pickle.load(f)   
+         ref_graph = data['graph'] 
+         katz_df, ll_over_df =  self.katz_plus_overlap(path, 'reference_model', mode = 'chrono')  
+         ll_over_df['neighbour'] = ll_over_df['neighbour'].astype(str)
+         ll_over_df['node'] = ll_over_df['node'].astype(str)
+         for v, w in ref_graph.edges: 
+             ref_graph.edges[v, w]["weight"] = float(ll_over_df.loc[(ll_over_df['node'] == v) & (ll_over_df['neighbour'] == w)]['overlap_measure'])
+         weighted_katz = nx.pagerank(ref_graph.to_undirected())  
+         return weighted_katz
+              
+              
+
+      def top_nodes(self, num, phi_ref, context_no, key_ref, path):
+          contexts = []
+          weighted_katz = self.katz_w_weight(path)
+          katz_vals = [weighted_katz[label] for i, label in enumerate(context_no)] 
+          df = pd.DataFrame()
+          df['context'] = context_no
+          df['key_ref'] = key_ref
+          df['katz_vals'] = katz_vals
+          print('num')
+          print(num)
+          for i in phi_ref:
+              df_subset = df.loc[df['key_ref'] == i]
+              if len(df_subset) > num:
+                  df_subset.sort_values(by = 'katz_vals', ascending=False)
+                  conts = df_subset['context'][0:num]
+                  [contexts.append(i) for i in conts]
+              else:
+                  conts = df_subset['context']
+                  [contexts.append(i) for i in conts]
+          return contexts
+        
       def graph_adjust(self, phase, phase_ref):
               if (phase in self.master.key_ref) == False:
                   self.master.phi_ref.pop(phase_ref)                                
@@ -1371,7 +1662,7 @@ class popupWindow9(object):
                     self.master.chrono_graph.remove_edge(b[0], b[1])
 
 
-      def make_directories(self, i):
+      def make_directories(self, i):         
               dirs2 = os.path.join(i, "stratigraphic_graph")
               dirs3 = os.path.join(i, "chronological_graph")
               dirs4 = os.path.join(i, "python_only")
@@ -1400,7 +1691,7 @@ class popupWindow9(object):
          data['load_check'] = load_check
          data['mcmc_check'] = mcmc_check
          data["file_input"] = FILE_INPUT
-         path = j + "/save.pickle"
+         path = os.getcwd() + "/python_only/save.pickle"
          if mcmc_check == 'mcmc_loaded': 
                 results = data["all_results_dict"]
                 df = pd.DataFrame()
@@ -1409,7 +1700,7 @@ class popupWindow9(object):
                 results_path = os.getcwd() + "/mcmc_results/full_results_df"    
                 df.to_csv(results_path)
                 phasefile = data['phasefile']
-                context_no = data['context_no']
+                context_no = data['CONTEXT_NO']
                 key_ref = [list(phasefile["Group"])[list(phasefile["context"]).index(i)] for i in context_no]
                 df1 = pd.DataFrame(key_ref)   
                 df1.to_csv('mcmc_results/key_ref.csv') 
@@ -1432,6 +1723,9 @@ class popupWindow9(object):
              FILE_INPUT = data['file_input']
              load_check = data['load_check']
              mcmc_check = data['mcmc_check']
+
+
+
             
 class load_Window(object):
     def __init__(self,master):
@@ -1734,7 +2028,8 @@ class StartPage(tk.Frame):
         file2.add_command(label = 'Calibrate model', command=lambda: self.load_mcmc(), font='helvetica 11')
         file2.add_command(label = 'Calibrate multiple projects from project', command=lambda: popupWindow8(self, proj_dir), font='helvetica 11')
         file2.add_command(label = 'Calibrate node delete variations (alpha)', command=lambda: popupWindow9(self, proj_dir), font='helvetica 11')
-      
+        file2.add_command(label = 'Calibrate important variations (alpha)', command=lambda: popupWindow10(self, proj_dir), font='helvetica 11')
+            
         # file2.add_separator()
         self.tool_menubar.place(relx=0.14, rely=0, relwidth=0.1, relheight=0.03)
         #############################
@@ -1839,6 +2134,7 @@ class StartPage(tk.Frame):
         self.tree3.heading("Meta", text="Reason for deleting")
         f = dir(self)
         self.f_1 = [var for var in f if ('__' or 'grid' or 'get') not in var]
+        self.littlecanvas.update()
         try: 
             self.restore_state()
         except FileNotFoundError:
@@ -1858,7 +2154,7 @@ class StartPage(tk.Frame):
     def refresh_4_new_model(self, controller, proj_dir, load):
         extra_top = load_Window.new_model(load_Window(MAIN_FRAME), proj_dir, load)
         self.wait_window(extra_top)
-        self.save_state_1()
+ #       self.save_state_1()
         
     def display_data_func(self):
         if self.display_data_var == 'hidden':
@@ -1913,7 +2209,6 @@ class StartPage(tk.Frame):
     def resid_check(self):
         '''Loads a text box to check if the user thinks any samples are residual'''
         global load_check
-  #      print("do we get here?")
         MsgBox = tk.messagebox.askquestion('Residual and Intrusive Contexts', 'Do you suspect any of your samples are residual or intrusive?', icon='warning')
         if MsgBox == 'yes':
             
@@ -1941,6 +2236,7 @@ class StartPage(tk.Frame):
             row_list.append((self.tree2.item(child)['text'],self.tree2.item(child)['values']))
         self.treeview_df = pd.DataFrame(row_list, columns=columns)
         vars_list_1 = dir(self)
+  #      self.node_importance(self.graph)
         var_list = [var for var in vars_list_1 if (('__' and 'grid' and 'get' and 'tkinter' and 'children') not in var) and (var[0] != '_')]          
         data = {}
         check_list = ["tkinter", "method", "__main__", 'PIL']
@@ -1962,7 +2258,7 @@ class StartPage(tk.Frame):
             results_path = os.getcwd() + "/mcmc_results/full_results_df"    
             df.to_csv(results_path)
             phasefile = data['phasefile']
-            context_no = data['context_no']
+            context_no = data['CONTEXT_NO']
             key_ref = [list(phasefile["Group"])[list(phasefile["context"]).index(i)] for i in context_no]
             df1 = pd.DataFrame(key_ref)   
             df1.to_csv('mcmc_results/key_ref.csv') 
@@ -2007,10 +2303,14 @@ class StartPage(tk.Frame):
                                                                          image=self.littlecanvas2.img)
     
                 self.width2, self.height2 = self.image2.size
-                self.imscale2 = 1.0  # scale for the canvaas image
+              #  self.imscale2 = 1.0  # scale for the canvaas image
                 self.delta2 = 1.1  # zoom magnitude
                 # Put image into container rectangle and use it to set proper coordinates to the image
                 self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
+                self.imscale2  = min(921/self.image2.size[0], 702/self.image2.size[1])
+                self.littlecanvas.scale('all', 0, 0, self.delta2, self.delta2)  # rescale all canvas objects       
+                self.show_image2()
+                
                 self.littlecanvas2.bind("<Configure>", self.resize2)
 
             
@@ -2077,10 +2377,13 @@ class StartPage(tk.Frame):
 
         self.width, self.height = self.image.size
         self.imscale = 1.0  # scale for the canvaas image
+      #  self.imscale  = min(921/self.image.size[0], 702/self.image.size[1])
         self.delta = 1.1  # zoom magnitude
         # Put image into container rectangle and use it to set proper coordinates to the image
         self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
         self.bind("<Configure>", self.resize)
+        self.littlecanvas.scale('all', 0, 0, self.delta, self.delta)  # rescale all canvas objects       
+        self.show_image()
         self.littlecanvas.bind("<Configure>", self.resize)
         self.delnodes = []
         self.delnodes_meta = []
@@ -2090,27 +2393,33 @@ class StartPage(tk.Frame):
     def rerender_stratdag(self):
         global phase_true
         '''rerenders stratdag after reloading previous project'''
-        height = 0.96*0.99*0.97*1000*0.96
-        width = 0.99*0.37*2000*0.96   
+        height = 0.96*0.99*0.97*1000
+        width = 0.99*0.37*2000*0.96  
         if phase_true == 1:
             self.image = imgrender_phase(self.graph)
         else:
             self.image = imgrender(self.graph, width, height)
         
-    #    scale_factor = min(width/self.image_ws.size[0], height/self.image_ws.size[1])                 
+        
+             
  #       self.image = self.image_ws.resize((int(self.image_ws.size[0]*scale_factor), int(self.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
         self.littlecanvas.img = ImageTk.PhotoImage(self.image)
         self.littlecanvas_img = self.littlecanvas.create_image(0, 0, anchor="nw",
                                                                image=self.littlecanvas.img)
 
         self.width, self.height = self.image.size
-        self.imscale = 1.0  # scale for the canvaas image
+     #   self.imscale = 1.0  # scale for the canvaas image
         self.delta = 1.1  # zoom magnitude
         # Put image into container rectangle and use it to set proper coordinates to the image
         self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
+        self.imscale  = min(width/self.image.size[0], height/self.image.size[1])
+
         self.delnodes = []
         self.delnodes_meta = []
         self.littlecanvas.bind("<Button-3>", self.preClick)
+        self.littlecanvas.update()
+        self.littlecanvas.scale('all', 0, 0, self.delta, self.delta)  # rescale all canvas objects       
+        self.show_image()
 
     def chronograph_render_wrap(self):
         '''wraps chronograph render so we can assign a variable when runing the func using a button'''
@@ -2120,6 +2429,7 @@ class StartPage(tk.Frame):
         if load_check == "loaded":
             answer = askquestion('Warning!', 'Chronological DAG already loaded, are you sure you want to write over it? You can copy this model in the file menu if you want to consider multiple models')
             if answer == 'yes':
+            
                 self.refresh_4_new_model(self.controller, proj_dir, load = False)
                 load_check = 'not_loaded'
                 self.littlecanvas2.delete('all')
@@ -2132,6 +2442,7 @@ class StartPage(tk.Frame):
                 startpage.context_no_unordered = self.popup3.context_no_unordered
                 startpage.graphcopy = self.popup3.graphcopy
                 startpage.node_del_tracker = self.popup3.node_del_tracker
+
         else: 
             self.littlecanvas2.delete('all')
             self.chrono_dag = self.chronograph_render()
@@ -2175,13 +2486,14 @@ class StartPage(tk.Frame):
                         self.image = imgrender_phase(self.graph)
                     else:
                         self.image = imgrender(self.graph, self.littlecanvas.winfo_width(), self.littlecanvas.winfo_height())
+                        
                    #     scale_factor = min(self.littlecanvas.winfo_width()/self.image_ws.size[0], self.littlecanvas.winfo_height()/self.image_ws.size[1])                       
                    #     self.image = self.image_ws.resize((int(self.image_ws.size[0]*scale_factor), int(self.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
                         self.littlecanvas.img = ImageTk.PhotoImage(self.image)
                         self.littlecanvas_img = self.littlecanvas.create_image(0, 0, anchor="nw",
                                                                                image=self.littlecanvas.img)                       
                         self.width, self.height = self.image.size
-                        self.imscale = 1.0#, self.littlecanvas.winfo_height()/self.image.size[1])# scale for the canvaas image
+                   #     self.imscale = 1.0#, self.littlecanvas.winfo_height()/self.image.size[1])# scale for the canvaas image
                         self.delta = 1.1 # zoom magnitude
                         # Put image into container rectangle and use it to set proper coordinates to the image
                         self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
@@ -2190,6 +2502,9 @@ class StartPage(tk.Frame):
                         self.delnodes = []
                         self.delnodes_meta = []
                         self.littlecanvas.bind("<Button-3>", self.preClick)
+                        self.imscale  = min(921/self.image.size[0], 702/self.image.size[1])
+                        self.littlecanvas.scale('all', 0, 0, self.delta, self.delta)  # rescale all canvas objects       
+                        self.show_image()
                     tk.messagebox.showinfo("Success", "Stratigraphic data loaded")
                     self.check_list_gen()
             except ValueError:
@@ -2290,10 +2605,10 @@ class StartPage(tk.Frame):
         outputPanel.place(relx = 0.4, rely = 0.4)  
         pb1 = ttk.Progressbar(self.backcanvas, orient=tk.HORIZONTAL, length=400, mode='indeterminate')
         pb1.place(relx = 0.2, rely = 0.56)
-    #    old_stdout = sys.stdout
-    #    sys.stdout = StdoutRedirector(outputPanel, pb1)
+        old_stdout = sys.stdout
+        sys.stdout = StdoutRedirector(outputPanel, pb1)
         self.ACCEPT = [[]]
-        while min([len(i) for i in self.ACCEPT]) < 30000:
+        while min([len(i) for i in self.ACCEPT]) < 50000:
             self.CONTEXT_NO, self.ACCEPT, self.PHI_ACCEPT, self.PHI_REF, self.A, self.P, self.ALL_SAMPS_CONT, self.ALL_SAMPS_PHI, self.resultsdict, self.all_results_dict = self.MCMC_func()
         mcmc_check = 'mcmc_loaded'
         sys.stdout = old_stdout
@@ -2335,10 +2650,13 @@ class StartPage(tk.Frame):
                                                                              image=self.littlecanvas2.img)
         
                     self.width2, self.height2 = self.image2.size
-                    self.imscale2 = 1.0  # scale for the canvaas image
+                    #self.imscale2 = 1.0  # scale for the canvaas image
                     self.delta2 = 1.1  # zoom magnitude
                     # Put image into container rectangle and use it to set proper coordinates to the image
                     self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
+                    self.imscale2  = min(921/self.image2.size[0], 702/self.image2.size[1])
+                    self.littlecanvas2.scale('all', 0, 0, self.delta2, self.delta2)  # rescale all canvas objects       
+                    self.show_image2()
                     self.littlecanvas2.bind("<Configure>", self.resize2)
                 except (RuntimeError, TypeError, NameError):
                     load_check = 'not_loaded'
@@ -2390,8 +2708,6 @@ class StartPage(tk.Frame):
             elif self.CONT_TYPE[i] == 'intrusive':
                 low = list(self.graph.successors(j))
                 up = []
-                print(j)
-                print([up, low])
             else:
                 up = [k for k in self.graph.predecessors(j) if k not in resids]
                 low = [k for k in self.graph.successors(j) if k not in intrus]
@@ -2425,8 +2741,6 @@ class StartPage(tk.Frame):
             node_df_con = node_coords_fromjson(graph)
         else:
             node_df_con = node_coords_fromjson(self.graph)
-    #    print(node_df_con[0])
-    #    print(node_df_con[1])
         node_df = node_df_con[0]
         
         xmax, ymax = node_df_con[1]
@@ -2442,6 +2756,7 @@ class StartPage(tk.Frame):
                 node_inside = node_df.iloc[n_ind].name
                 self.graph[node_inside]
         return node_inside
+
 
     def edge_render(self):
         """renders string for deleted edges"""
@@ -2477,9 +2792,9 @@ class StartPage(tk.Frame):
                     answer = askquestion('Warning!', 'Chronological DAG already loaded, do you want to save this as a new model first? \n\n Click Yes to save as new model and No to overwrite existing model')
                     if answer == 'yes':
                         self.refresh_4_new_model(self.controller, proj_dir, load = False)
-                    print(answer)
                     self.littlecanvas2.delete('all')       
-                self.graph.remove_node(self.node)
+             #   self.graph.remove_node(self.node)
+                self.graph = node_del_fixed(self.graph, self.node)
                 self.nodedel_meta = self.node_del_popup()
                 self.delnodes = np.append(self.delnodes, self.node)
                 self.delnodes_meta.append(self.nodedel_meta)
@@ -2673,6 +2988,7 @@ class StartPage(tk.Frame):
                 return  # 1 pixel is bigger than the visible area
             self.imscale *= self.delta
             scale *= self.delta
+    #    print(scale)
         self.littlecanvas.scale('all', 0, 0, scale, scale)  # rescale all canvas objects
         self.show_image()
 
@@ -2703,6 +3019,7 @@ class StartPage(tk.Frame):
 
     def show_image(self):
         """Show image on the Canvas"""
+        
         bbox1 = [0, 0, int(self.image.size[0]*self.imscale), int(self.image.size[1]*self.imscale)]
         # Remove 1 pixel shift at the sides of the bbox1
         bbox1 = (bbox1[0] + 1, bbox1[1] + 1, bbox1[2] - 1, bbox1[3] - 1)
@@ -2710,6 +3027,8 @@ class StartPage(tk.Frame):
                  self.littlecanvas.canvasy(0),
                  self.littlecanvas.canvasx(self.littlecanvas.winfo_width()),
                  self.littlecanvas.canvasy(self.littlecanvas.winfo_height()))
+        if int(bbox2[3]) == 1:
+             bbox2 = [0, 0, 0.96*0.99*0.97*1000, 0.99*0.37*2000*0.96]
         bbox = [min(bbox1[0], bbox2[0]), min(bbox1[1], bbox2[1]),  # get scroll region box
                 max(bbox1[2], bbox2[2]), max(bbox1[3], bbox2[3])]
         bbox1 = [0, 0, int(self.image.size[0]*self.imscale), int(self.image.size[1]*self.imscale)]
@@ -2724,6 +3043,7 @@ class StartPage(tk.Frame):
         y_1 = max(bbox2[1] - bbox1[1], 0)
         x_2 = min(bbox2[2], bbox1[2]) - bbox1[0]
         y_2 = min(bbox2[3], bbox1[3]) - bbox1[1]
+        
         if int(x_2 - x_1) > 0 and int(y_2 - y_1) > 0:  # show image if it in the visible area
             x_img = min(int(x_2 / self.imscale), self.width)   # sometimes it is larger on 1 pixel
             y_img = min(int(y_2 / self.imscale), self.height)  # ...and sometimes not
@@ -2746,6 +3066,8 @@ class StartPage(tk.Frame):
                  self.littlecanvas2.canvasy(0),
                  self.littlecanvas2.canvasx(self.littlecanvas2.winfo_width()),
                  self.littlecanvas2.canvasy(self.littlecanvas2.winfo_height()))
+        if int(bbox2[3]) == 1:
+             bbox2 = [0, 0, 0.96*0.99*0.97*1000, 0.99*0.37*2000*0.96]
         bbox = [min(bbox1[0], bbox2[0]), min(bbox1[1], bbox2[1]),  # get scroll region box
                 max(bbox1[2], bbox2[2]), max(bbox1[3], bbox2[3])]
         bbox1 = [0, 0, int(self.image2.size[0]*self.imscale2), int(self.image2.size[1]*self.imscale2)]
@@ -2783,10 +3105,13 @@ class StartPage(tk.Frame):
         self.littlecanvas_img = self.littlecanvas.create_image(0, 0, anchor="nw",
                                                                image=self.littlecanvas.img)
         self.width, self.height = self.image.size
-        self.imscale = 1.0  # scale for the canvaas image
+      #  self.imscale = 1.0  # scale for the canvaas image
         self.delta = 1.1  # zoom magnitude
         # Put image into container rectangle and use it to set proper coordinates to the image
         self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
+        self.imscale  = min(921/self.image.size[0], 702/self.image.size[1])
+        self.littlecanvas.scale('all', 0, 0, self.delta, self.delta)  # rescale all canvas objects       
+        self.show_image()
         self.bind("<Configure>", self.resize)
         self.littlecanvas.bind("<Configure>", self.resize)
         self.delnodes = []
@@ -2856,6 +3181,7 @@ class PageOne(tk.Frame):
         self.results_text = None
         self.canvas_plt = None
         self.phase_len_nodes = []
+        self.fig = None
         self.file_menubar = ttk.Menubutton(self, text = 'File',)
         # Adding File Menu and commands
         file = tk.Menu(self.file_menubar, tearoff = 0, bg = '#fcfdfd')#, font = ('helvetica',11))
@@ -2991,13 +3317,16 @@ class PageOne(tk.Frame):
                 self.phase_len_nodes = np.append(self.phase_len_nodes, x)
                 if self.canvas_plt != None:
                     self.canvas_plt.get_tk_widget().pack_forget()
-                font = {'size': 11}
+        #        font = {'size': 11}
                 # using rc function
-                self.fig.rc('font', **font)
+                
                 self.fig = Figure()
+           #     self.fig.rc('font', **font)
                 LENGTHS = phase_length_finder(self.phase_len_nodes[0], self.phase_len_nodes[1], startpage.all_results_dict)
                 plot1 = self.fig.add_subplot(111)
                 plot1.hist(LENGTHS, bins='auto', color='#0504aa', rwidth = 1, density=True)
+                plot1.xlabel('Time elapsed in calibrated years (cal BP)')
+                plot1.ylabel('Probability density')
                 plot1.spines['right'].set_visible(False)
                 plot1.spines['top'].set_visible(False)
                 plot1.set_ylim([0, 0.05])
@@ -3095,7 +3424,6 @@ class PageOne(tk.Frame):
             if self.canvas_plt != None:
                 self.canvas_plt.get_tk_widget().pack_forget()
                 self.toolbar.destroy()
-      #      print(min(40, len(self.results_list)*8))
             fig = Figure(figsize=(8, min(30, len(self.results_list)*3)),
                              dpi=100)
             for i, j in enumerate(self.results_list):
@@ -3118,7 +3446,6 @@ class PageOne(tk.Frame):
                 lowlim = nodes[-1]
                 min_plot = min(startpage.resultsdict[uplim])
                 max_plot = max(startpage.resultsdict[lowlim])
-            #    print(min_plot, max_plot)
                 plot1.set_xlim(min_plot, max_plot)
                 node = str(j)
                 if ('a' in node) or ('b' in node):
@@ -3188,10 +3515,13 @@ class PageOne(tk.Frame):
                                                                      image=self.littlecanvas2.img)
 
             self.width2, self.height2 = self.image2.size
-            self.imscale2 = 1.0  # scale for the canvaas image
+         #   self.imscale2 = 1.0  # scale for the canvaas image
             self.delta2 = 1.1  # zoom magnitude
                 # Put image into container rectangle and use it to set proper coordinates to the image
             self.container2 = self.littlecanvas2.create_rectangle(0, 0, self.width2, self.height2, width=0)
+            self.imscale2  = min(921/self.image2.size[0], 702/self.image2.size[1])
+            self.littlecanvas2.scale('all', 0, 0, self.delta2, self.delta2)  # rescale all canvas objects       
+            self.show_image2()
 
     def tkraise(self, aboveThis=None):
         self.chronograph_render_post()
@@ -3243,6 +3573,8 @@ class PageOne(tk.Frame):
                  self.littlecanvas2.canvasy(0),
                  self.littlecanvas2.canvasx(self.littlecanvas2.winfo_width()),
                  self.littlecanvas2.canvasy(self.littlecanvas2.winfo_height()))
+        if int(bbox2[3]) == 1:
+             bbox2 = [0, 0, 0.96*0.99*0.97*1000, 0.99*0.37*2000*0.96]
         bbox = [min(bbox1[0], bbox2[0]), min(bbox1[1], bbox2[1]),  # get scroll region box
                 max(bbox1[2], bbox2[2]), max(bbox1[3], bbox2[3])]
         bbox1 = [0, 0, int(self.image2.size[0]*self.imscale2), int(self.image2.size[1]*self.imscale2)]
@@ -3325,7 +3657,7 @@ class PageTwo(object):
         self.x_1 = 1
         self.image = "noimage"
         self.phase_rels = None
-        self.imscale2 = 1.0  # scale for the canvaas image
+       # self.imscale2 = 1.0  # scale for the canvaas image
         self.delta2 = 1.1
         self.results_text = None
         self.canvas_plt = None
@@ -3360,6 +3692,8 @@ class PageTwo(object):
         label3.place(relx=0.4, rely=0.52)
         if startpage.graph != None:
             self.graphcopy = self.load_graph()
+            self.imscale2  = min(921/self.image.size[0], 702/self.image.size[1])
+            self.graphcanvas.scale('all', 0, 0, self.delta2, self.delta2)  # rescale all canvas objects       
             self.show_image2()
         self.graphcanvas.update()
         button = ttk.Button(self.top, text="Proceed",
@@ -3477,9 +3811,34 @@ class PageTwo(object):
                 return  # 1 pixel is bigger than the visible area
             self.imscale2 *= self.delta2
             scale2 *= self.delta2
+    #    print(scale2)
         self.graphcanvas.scale('all', 0, 0, scale2, scale2)  # rescale all canvas objects
         self.show_image2()
 
+    def autozoom(self, event):
+        """Zoom with mouse wheel"""
+        x_zoom = self.graphcanvas.canvasx(event.x)
+        y_zoom = self.graphcanvas.canvasy(event.y)
+        bbox = self.graphcanvas.bbox(self.container)  # get image area
+        if bbox[0] < x_zoom < bbox[2] and bbox[1] < y_zoom < bbox[3]:
+            pass  # Ok! Inside the image
+        else: return  # zoom only inside image area
+        scale2 = 1.0
+        # Respond to Linux (event.num) or Windows (event.delta) wheel event
+        if event.num == 5 or event.delta == -120:  # scroll down
+            i = min(self.width2, self.height2)
+            if int(i * self.imscale2) < 30:
+                return  # image is less than 30 pixels
+            self.imscale2 /= self.delta2
+            scale2 /= self.delta2
+        if event.num == 4 or event.delta == 120:  # scroll up
+            i = min(self.graphcanvas.winfo_width(), self.graphcanvas.winfo_height())
+            if i < self.imscale2:
+                return  # 1 pixel is bigger than the visible area
+            self.imscale2 *= self.delta2
+            scale2 *= self.delta2
+        self.graphcanvas.scale('all', 0, 0, scale2, scale2)  # rescale all canvas objects
+        self.show_image2()
     def show_image2(self):
         """Show image on the Canvas"""
         startpage = self.controller.get_page('StartPage')
@@ -3595,7 +3954,7 @@ class PageTwo(object):
         else:
             imgrender(self.graphcopy, self.graphcanvas.winfo_width(), self.graphcanvas.winfo_height())
         #rerends the image of the strat DAG with right colours
-        self.image = Image.open('testdag.png')
+        self.image = Image.open('fi_new.png')
         self.width2, self.height2 = self.image.size
         self.container = self.graphcanvas.create_rectangle(0, 0, self.width2, self.height2, width=0)
         self.show_image2()
