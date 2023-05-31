@@ -896,8 +896,8 @@ def squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, 
         ALL_SAMPS_PHI = [[] for _ in range(len(PHIS_VEC))]
         i = 0
          ###START OF MCMC ALGORITHM###############
-        while min([len(i) for i in ACCEPT]) < 50000:
-            print(int((min([len(i) for i in ACCEPT])/50000)*100))
+        while min([len(i) for i in ACCEPT]) < 60000:
+            print(int((min([len(i) for i in ACCEPT])/60000)*100))
             for l in np.linspace(0, 10002, 3335):
                 SITE_DICT_TEST_1 = dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF)
                 #step 1
@@ -1057,8 +1057,8 @@ def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_
         PHI_ACCEPT, ACCEPT, POST_S, ALL_SAMPS_CONT, ALL_SAMPS_PHI = squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_REF, RCD_EST, CALIBRATION, CONT_TYPE)
         _, ACCEPT_test_1, _, _, _ = squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_REF, RCD_EST, CALIBRATION, CONT_TYPE)
         checks = [GR_conv_check(np.array(j), np.array(ACCEPT_test_1[i])) for i,j in enumerate(ACCEPT)]
-   #     print(min(checks))
-     #   print(max(checks)) 
+    #    print(min(checks))
+   #     print(max(checks)) 
     elif method == 'gibbs':
         PHI_ACCEPT, ACCEPT, POST_S, ALL_SAMPS_CONT, ALL_SAMPS_PHI = gibbs_code(5000, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT, CONT_TYPE)
 
