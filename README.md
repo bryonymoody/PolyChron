@@ -1,2 +1,2 @@
-# Python_DAG_App
+# PolyChron
 Prototype software for manipulating DAGs
