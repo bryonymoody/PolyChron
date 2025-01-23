@@ -6,13 +6,19 @@ Created on Sun Aug 15 17:43:25 2021
 @author: bryony
 """
 import os
-os.chdir("/home/bryony/Documents/Pythonapp_tests/projects")
+import pathlib
+# Get the absolute path to a directory in the users home dir
+POLYCHRON_PROJECTS_DIR = (pathlib.Path.home() / "Documents/Pythonapp_tests/projects").resolve()
+# Ensure the directory exists (this is a little aggressive)
+POLYCHRON_PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
+# Change into the projects dir
+os.chdir(POLYCHRON_PROJECTS_DIR)
+
 import tkinter as tk
 from tkinter import ttk
 import copy
 import re
 import ast
-import pathlib
 import matplotlib as plt
 from PIL import Image, ImageTk, ImageChops
 from networkx.drawing.nx_pydot import read_dot, write_dot
@@ -1033,7 +1039,7 @@ class MainFrame(tk.Tk):
     def __init__(self, *args, **kwargs):
         """initilaises the main frame for tkinter app"""
         tk.Tk.__init__(self, *args, **kwargs)
-        os.chdir("/home/bryony/Documents/Pythonapp_tests/projects")
+        os.chdir(POLYCHRON_PROJECTS_DIR)
         load_Window(self)
         # the container is where we'll stack a bunch of frames
         # on top of each other, then the one we want visible
@@ -1792,13 +1798,13 @@ class load_Window(object):
         
     def load_proj(self):
         global proj_dir
-        os.chdir("/home/bryony/Documents/Pythonapp_tests/projects")
+        os.chdir(POLYCHRON_PROJECTS_DIR)
         [x.destroy() for x in [self.label1, self.greeting, self.b, self.c, self.back, self.l, self.back1, self.MyListBox, self.text_1, self.user_input] if x != None]
         self.maincanvas.update()
 
         self.l=tk.Label(self.maincanvas, text="Select project", bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
         self.l.place(relx = 0.36, rely = 0.1)
-        myList = [d for d in os.listdir("/home/bryony/Documents/Pythonapp_tests/projects") if os.path.isdir(d)]
+        myList = [d for d in os.listdir(POLYCHRON_PROJECTS_DIR) if os.path.isdir(d)]
         myList = [d for d in myList if (d != '__pycache__') and (d != 'Data')]
         mylist_var = tk.StringVar(value = myList)
         self.MyListBox = tk.Listbox(self.maincanvas, listvariable = mylist_var, bg = '#eff3f6', font = ('Helvetica 11 bold'),  fg = '#2F4858', selectmode = 'browse')  
@@ -1828,7 +1834,7 @@ class load_Window(object):
 
         self.l=tk.Label(self.maincanvas, text="Model list", bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
         self.l.place(relx = 0.36, rely = 0.1)
-       # myList_all = os.listdir("/home/bryony/Documents/Pythonapp_tests/projects")
+       # myList_all = os.listdir(POLYCHRON_PROJECTS_DIR)
         myList = [d for d in os.listdir(path) if os.path.isdir(d)]
         self.model_list = tk.StringVar(value = myList)
         self.MyListBox = tk.Listbox(self.maincanvas, listvariable = self.model_list, bg = '#eff3f6', font = ('Helvetica 11 bold'),  fg = '#2F4858', selectmode = 'browse')  
@@ -1859,7 +1865,7 @@ class load_Window(object):
         
     def create_file(self, folder_dir, load):  
         global proj_dir
-        dirs = os.path.join("/home/bryony/Documents/Pythonapp_tests/projects", folder_dir, self.model.get())
+        dirs = os.path.join(POLYCHRON_PROJECTS_DIR, folder_dir, self.model.get())
         dirs2 = os.path.join(dirs, "stratigraphic_graph")
         dirs3 = os.path.join(dirs, "chronological_graph")
         dirs4 = os.path.join(dirs, "python_only")
@@ -1872,7 +1878,7 @@ class load_Window(object):
             os.makedirs(dirs4)
             os.makedirs(dirs5)
             os.chdir(dirs)
-            proj_dir = os.path.join("/home/bryony/Documents/Pythonapp_tests/projects", folder_dir)
+            proj_dir = os.path.join(POLYCHRON_PROJECTS_DIR, folder_dir)
             if load == True:
                 for F in (StartPage, PageOne):
                     page_name = F.__name__
