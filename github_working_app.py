@@ -12,6 +12,7 @@ from tkinter import ttk
 import copy
 import re
 import ast
+import pathlib
 import matplotlib as plt
 from PIL import Image, ImageTk, ImageChops
 from networkx.drawing.nx_pydot import read_dot, write_dot
@@ -64,7 +65,8 @@ phase_true = 0
 load_check = 'not_loaded'
 mcmc_check = 'mcmc_notloaded'
 proj_dir = ""
-CALIBRATION = pd.read_csv('linear_interpolation.txt')
+SCRIPT_DIR = pathlib.Path(__file__).parent # Path to directory containing this script
+CALIBRATION = pd.read_csv(SCRIPT_DIR / "linear_interpolation.txt")
 
 def trim(im_trim):
     """Trims images down"""
@@ -1767,7 +1769,7 @@ class load_Window(object):
     def initscreen(self):
         [x.destroy() for x in [self.greeting, self.b, self.c, self.back, self.back1, self.l, self.MyListBox, self.text_1, self.user_input] if x != None]
         self.maincanvas.update() 
-        image1 = Image.open("/home/bryony/Documents/Pythonapp_tests/projects/logo.png")
+        image1 = Image.open(SCRIPT_DIR / "logo.png")
         logo = ImageTk.PhotoImage(image1.resize((360, 70)))
  #       self.imagetk2 = ImageTk.PhotoImage(image2.resize((int(x_2 - x_1), int(y_2 - y_1))))
         self.label1 = tk.Label(self.maincanvas, image=logo, bg = 'white')
