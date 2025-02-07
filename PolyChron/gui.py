@@ -28,7 +28,7 @@ import numpy as np
 import pandas as pd
 from tkinter.filedialog import askopenfile
 from graphviz import render
-import automated_mcmc_ordering_coupling_copy as mcmc
+import PolyChron.automated_mcmc_ordering_coupling_copy as mcmc
 from ttkthemes import ThemedStyle
 import sys
 from matplotlib.figure import Figure
@@ -38,11 +38,12 @@ from tkinter import simpledialog
 import tkinter.font as tkFont
 from tkinter.messagebox import askquestion
 import csv
-import svgutils.transform as sg
-from svglib.svglib import svg2rlg
-from reportlab.graphics import renderPDF, renderPM
-from svglib.svglib import svg2rlg
-import cairosvg
+# Currently unused dependencies
+# import svgutils.transform as sg
+# from svglib.svglib import svg2rlg
+# from reportlab.graphics import renderPDF, renderPM
+# from svglib.svglib import svg2rlg
+# import cairosvg
 old_stdout = sys.stdout
 
 
@@ -2253,7 +2254,8 @@ class StartPage(tk.Frame):
   #      self.node_importance(self.graph)
         var_list = [var for var in vars_list_1 if (('__' and 'grid' and 'get' and 'tkinter' and 'children') not in var) and (var[0] != '_')]          
         data = {}
-        check_list = ["tkinter", "method", "__main__", 'PIL']
+        # Type names to not pickle when saving state. PolyChron is excluded to avoid classes which inherit from tk, this may be a bit too strong.
+        check_list = ["tkinter", "method", "__main__", 'PIL', "PolyChron"]
         
 
         for i in var_list:
@@ -3975,9 +3977,8 @@ class PageTwo(object):
         self.show_image2()
         return node
 
-
+# Global scoping of MAIN_FRAME is currently required for state saving behaviour, prior to refactoring.
 MAIN_FRAME = MainFrame()
-
 style = ThemedStyle(MAIN_FRAME)
 style.set_theme("arc")
 # f = tkFont.Font(family='helvetica', size=10, weight='bold')
@@ -3993,5 +3994,13 @@ style.configure('TOptionMenu', font=('Helvetica', 12, 'bold'))
 style.configure('TTreeView', font=('Helvetica', 12, 'bold'))
 MAIN_FRAME.option_add("*Font", default_font)
 MAIN_FRAME.geometry("2000x1000")
-MAIN_FRAME.title("PolyChron 1.0")
-MAIN_FRAME.mainloop() 
+MAIN_FRAME.title("PolyChron 0.1")
+
+def main():
+    """Main method as the entry point for launching the GUI
+    """
+    MAIN_FRAME.mainloop() 
+
+# If this script is executed directly, run the main method
+if __name__ == "__main__":
+    main()
