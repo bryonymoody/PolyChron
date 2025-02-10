@@ -44,6 +44,7 @@ import csv
 # from reportlab.graphics import renderPDF, renderPM
 # from svglib.svglib import svg2rlg
 # import cairosvg
+from importlib.metadata import version # requires python >= 3.8
 old_stdout = sys.stdout
 
 
@@ -3994,7 +3995,7 @@ style.configure('TOptionMenu', font=('Helvetica', 12, 'bold'))
 style.configure('TTreeView', font=('Helvetica', 12, 'bold'))
 MAIN_FRAME.option_add("*Font", default_font)
 MAIN_FRAME.geometry("2000x1000")
-MAIN_FRAME.title("PolyChron 0.1")
+MAIN_FRAME.title(f"PolyChron {version('PolyChron')}")
 
 def main():
     """Main method as the entry point for launching the GUI
