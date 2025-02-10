@@ -60,3 +60,30 @@ python3 ./PolyChron/
 # Or by launching the GUI module manually
 python3 ./PolyChron/gui.py
 ```
+
+## Documentation
+
+Documentation is built using [mkdocs](https://github.com/mkdocs/mkdocs) and some extensions.
+
+Documentation building dependencies are included in the `docs` optional dependencies group.
+They can be installed into the current python environment along with `PolyChron` using `pip`:
+
+```bash
+python3 -m pip install -e .[docs]
+```
+
+Once installed, documentation can be generated and viewed via a local webserver using:
+
+```bash
+python3 -m mkdocs serve
+# or just
+mkdocs serve
+```
+
+Or a static html version can be built into `_site` using:
+
+```bash
+python3 -m mkdocs build
+# pass --no-directory-urls if you wish to view local .html files without a web server
+python3 -m mkdocs build --no-directory-urls
+```

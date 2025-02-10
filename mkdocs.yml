@@ -1,0 +1,71 @@
+site_name: "PolyChron"
+docs_dir: docs
+site_dir: _site
+repo_url: https://github.com/bryonymoody/PolyChron
+repo_name: GitHub
+site_description: PolyChron Documentation 
+
+extra_css:
+  - assets/css/polychron.css
+
+theme:
+  name: "material"
+  locale: en
+  logo: assets/img/logo.png
+  features:
+    - content.code.copy
+    - navigation.indexes 
+    - navigation.expand
+
+  palette:
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+
+nav:
+  - About: index.md
+  - User Guide:
+    - userguide/index.md
+  - API:
+    - api/index.md
+    - api/automated_mcmc_ordering_coupling_copy.md
+    - api/gui.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github 
+      link: https://github.com/bryonymoody
+
+plugins: 
+- mkdocstrings
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.tasklist
+  - pymdownx.superfences:
+      custom_fences:
+        # Enable Mermaid, via the material theme
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
