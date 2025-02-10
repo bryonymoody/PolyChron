@@ -87,3 +87,19 @@ python3 -m mkdocs build
 # pass --no-directory-urls if you wish to view local .html files without a web server
 python3 -m mkdocs build --no-directory-urls
 ```
+
+## Tests
+
+Tests are implemented using `pytest`, which can be installed as part of the `test` optional dependencies via:
+
+```bash
+python3 -m pip install .[test]
+```
+
+Once installed, unit tests can be executed via `pytest` from the root directory
+
+```bash
+python3 -m pytest
+# or
+pytest
+```
