@@ -101,3 +101,17 @@ python3 -m pytest
 # or
 pytest
 ```
+
+## Linting
+
+Linting is handled using [`ruff`](https://github.com/astral-sh/ruff) which can be installed as part of the `dev` extras.
+
+> **Note**: `automated_mcmc_ordering_coupling.py` and `gui.py` are currently excluded from linting
+
+Ruff can then be invoked using:
+
+```bash
+python3 -m ruff check
+# or
+ruff check
+```
