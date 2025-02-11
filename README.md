@@ -37,8 +37,6 @@ PolyChron has several non-python dependencies, which must be installed manually:
         apt-get install python3-tk
         ```
 
-<!-- @todo - non python dependencies? Graphviz? Tikz? -->
-
 PolyChron can then be installed into your python environment using `pip`.
 Using an editable installation (`-e` / `--editable`) is preferred for development.
 
