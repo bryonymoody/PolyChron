@@ -38,10 +38,15 @@ PolyChron has several non-python dependencies, which must be installed manually:
         ```
 
 PolyChron can then be installed into your python environment using `pip`.
-Using an editable installation (`-e` / `--editable`) is preferred for development.
 
 ```bash
-python3 -m pip install -e .
+python3 -m pip install .
+```
+
+If you are installing PolyChron from source for as a developer, consider using an editable installation (`-e` / `--editable`) and installing the `dev`, `docs` and `test` extras (which are described in subsequent sections).
+
+```bash
+python3 -m pip install -e .[dev,docs,test]
 ```
 
 ## Usage
