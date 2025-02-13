@@ -67,15 +67,15 @@ jobs:
         run: |
           python3 -c "from importlib.metadata import version; print(version('PolyChron'))"
 
-      # Run the PolyChron module
-      # - name: Run PolyChron as a module
-      #   run: |
-      #     python3 -m PolyChron
+      # Run the PolyChron module to ensure it is installed. use --help to prevent gui hanging
+      - name: Run PolyChron as a module
+        run: |
+          python3 -m PolyChron --help
 
-      # Run the PolyChron binary
-      # - name: Run PolyChron via the executable script
-      #   run: |
-      #     polychron
+      # Run the polychron binary to ensure it is installed. use --version to prevent gui hanging
+      - name: Run PolyChron via the executable script
+        run: |
+          polychron --version
 
       # Install the package into the current python environment with the test extras
       - name: Install PolyChron with extras
