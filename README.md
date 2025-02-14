@@ -120,3 +120,13 @@ python3 -m ruff check
 # or
 ruff check
 ```
+
+Code formatting (white space, quotes used etc) can separately be handled using `ruff format`
+
+```bash
+python3 -m ruff format 
+# or
+ruff format
+```
+
+This will apply changes to the whole project, or can be applied to files individually.
