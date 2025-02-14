@@ -1282,10 +1282,10 @@ class popupWindow9(object):
           base_prev_phase = self.master.prev_phase
           base_post_phase = self.master.post_phase
           base_context_no_unordered = self.master.context_no_unordered
-          RCD_EST = [int(list(self.master.datefile["date"])[list(self.master.datefile["context"]).index(i)]) for i in base_context_no]
-          RCD_ERR = [int(list(self.master.datefile["error"])[list(self.master.datefile["context"]).index(i)]) for i in base_context_no]
-          A = max(min(RCD_EST) - 4*max(RCD_EST), 0)
-          P = min(max(RCD_EST) + 4*max(RCD_EST), 50000)
+          # RCD_EST = [int(list(self.master.datefile["date"])[list(self.master.datefile["context"]).index(i)]) for i in base_context_no]
+          # RCD_ERR = [int(list(self.master.datefile["error"])[list(self.master.datefile["context"]).index(i)]) for i in base_context_no]
+          # A = max(min(RCD_EST) - 4*max(RCD_EST), 0)
+          # P = min(max(RCD_EST) + 4*max(RCD_EST), 50000)
 
           self.rc_llhds_dict = {}
           for i, j, k in model_list_labels:
@@ -1499,7 +1499,7 @@ class popupWindow10(object):
           self.path = path
           # for i in range(20,140):
           #     katz_df_subset = katz_df_test.sort_values(by='pagerank', ascending = False).head(i)
-          ref_wd = os.getcwd()
+        #   ref_wd = os.getcwd()
      #     con_list = list(katz_df_test['context'])
           base_cont_type =  self.master.CONT_TYPE
           base_key_ref = self.master.key_ref
