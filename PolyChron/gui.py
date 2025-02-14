@@ -2990,7 +2990,8 @@ class StartPage(tk.Frame):
         bbox = self.littlecanvas.bbox(self.container)  # get image area
         if bbox[0] < x_zoom < bbox[2] and bbox[1] < y_zoom < bbox[3]:
             pass  # Ok! Inside the image
-        else: return  # zoom only inside image area
+        else: 
+            return  # zoom only inside image area
         scale = 1.0
         # Respond to Linux (event.num) or Windows (event.delta) wheel event
         if event.num == 5 or event.delta == -120:  # scroll down
@@ -3016,7 +3017,8 @@ class StartPage(tk.Frame):
         bbox = self.littlecanvas2.bbox(self.container2)  # get image area
         if bbox[0] < x_zoom < bbox[2] and bbox[1] < y_zoom < bbox[3]:
             pass  # Ok! Inside the image
-        else: return  # zoom only inside image area
+        else:
+            return  # zoom only inside image area
         scale2 = 1.0
         # Respond to Linux (event.num) or Windows (event.delta) wheel event
         if event.num == 5 or event.delta == -120:  # scroll down
@@ -3564,7 +3566,8 @@ class PageOne(tk.Frame):
         bbox = self.littlecanvas2.bbox(self.container2)  # get image area
         if bbox[0] < x_zoom < bbox[2] and bbox[1] < y_zoom < bbox[3]:
             pass  # Ok! Inside the image
-        else: return  # zoom only inside image area
+        else:
+            return  # zoom only inside image area
         scale2 = 1.0
         # Respond to Linux (event.num) or Windows (event.delta) wheel event
         if event.num == 5 or event.delta == -120:  # scroll down
@@ -3814,7 +3817,8 @@ class PageTwo(object):
         bbox = self.graphcanvas.bbox(self.container)  # get image area
         if bbox[0] < x_zoom < bbox[2] and bbox[1] < y_zoom < bbox[3]:
             pass  # Ok! Inside the image
-        else: return  # zoom only inside image area
+        else:
+            return  # zoom only inside image area
         scale2 = 1.0
         # Respond to Linux (event.num) or Windows (event.delta) wheel event
         if event.num == 5 or event.delta == -120:  # scroll down
@@ -3840,7 +3844,8 @@ class PageTwo(object):
         bbox = self.graphcanvas.bbox(self.container)  # get image area
         if bbox[0] < x_zoom < bbox[2] and bbox[1] < y_zoom < bbox[3]:
             pass  # Ok! Inside the image
-        else: return  # zoom only inside image area
+        else:
+            return  # zoom only inside image area
         scale2 = 1.0
         # Respond to Linux (event.num) or Windows (event.delta) wheel event
         if event.num == 5 or event.delta == -120:  # scroll down
