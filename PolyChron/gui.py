@@ -7,13 +7,6 @@ Created on Sun Aug 15 17:43:25 2021
 """
 import os
 import pathlib
-# Get the absolute path to a directory in the users home dir
-POLYCHRON_PROJECTS_DIR = (pathlib.Path.home() / "Documents/Pythonapp_tests/projects").resolve()
-# Ensure the directory exists (this is a little aggressive)
-POLYCHRON_PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
-# Change into the projects dir
-os.chdir(POLYCHRON_PROJECTS_DIR)
-
 import tkinter as tk
 from tkinter import ttk
 import copy
@@ -46,6 +39,12 @@ import csv
 # import cairosvg
 from importlib.metadata import version # requires python >= 3.8
 import argparse
+# Get the absolute path to a directory in the users home dir
+POLYCHRON_PROJECTS_DIR = (pathlib.Path.home() / "Documents/Pythonapp_tests/projects").resolve()
+# Ensure the directory exists (this is a little aggressive)
+POLYCHRON_PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
+# Change into the projects dir
+os.chdir(POLYCHRON_PROJECTS_DIR)
 old_stdout = sys.stdout
 
 
