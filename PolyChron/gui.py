@@ -412,7 +412,7 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck, post_d
         elif (i in xs):
             if i not in ys:
                 file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrowhead='none')
-    if phasedict != None:
+    if phasedict is not None:
         p_list = list(set(phase_trck)) #phases before any get removed due to having no dates
 
         phase_nodes.append('a_'+ str(p_list[0][0]))
@@ -515,7 +515,7 @@ def edge_of_phase(test1, pset, node_list, node_info):
     y_l = []
     mydict = {}
     phase_tracker = []
-    if FILE_INPUT != None:
+    if FILE_INPUT is not None:
         for i in enumerate(pset):
             temp_nodes_list = []
             for j in enumerate(node_list):
@@ -551,7 +551,7 @@ def phase_info_func(file_graph):
     node_list = list(file_graph.nodes)
     nd = dict(file_graph.nodes(data=True))
     node_info = [nd[i] for i in node_list]
-    if FILE_INPUT != None:
+    if FILE_INPUT is not None:
         phase = nx.get_node_attributes(file_graph, "fillcolor")
         phase_norm = [phase[ph][phase[ph].rfind("/")+1:len(phase[ph])] for ph in phase]
 # ####code to get colours####
@@ -789,7 +789,7 @@ class popupWindow3(object):
         self.node_del_tracker = [] #empty node tracker 
         #checks for each context and if there isn't node or phase info, it deletes it
         for i in nodes:
-            if phasedict[i] == None:
+            if phasedict[i] is not None:
                 self.node_del_tracker.append(i)
             elif datadict[i] == [None, None]:
                 self.node_del_tracker.append(i)
@@ -1775,7 +1775,7 @@ class load_Window(object):
         self.initscreen()
         
     def initscreen(self):
-        [x.destroy() for x in [self.greeting, self.b, self.c, self.back, self.back1, self.l, self.MyListBox, self.text_1, self.user_input] if x != None]
+        [x.destroy() for x in [self.greeting, self.b, self.c, self.back, self.back1, self.l, self.MyListBox, self.text_1, self.user_input] if x is not None]
         self.maincanvas.update() 
         image1 = Image.open(SCRIPT_DIR / "logo.png")
         logo = ImageTk.PhotoImage(image1.resize((360, 70)))
@@ -1801,7 +1801,7 @@ class load_Window(object):
     def load_proj(self):
         global proj_dir
         os.chdir(POLYCHRON_PROJECTS_DIR)
-        [x.destroy() for x in [self.label1, self.greeting, self.b, self.c, self.back, self.l, self.back1, self.MyListBox, self.text_1, self.user_input] if x != None]
+        [x.destroy() for x in [self.label1, self.greeting, self.b, self.c, self.back, self.l, self.back1, self.MyListBox, self.text_1, self.user_input] if x is not None]
         self.maincanvas.update()
 
         self.l=tk.Label(self.maincanvas, text="Select project", bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
@@ -1826,8 +1826,8 @@ class load_Window(object):
     
     def load_model(self, direc):
         global proj_dir
-        [x.destroy() for x in [self.greeting, self.label1, self.b, self.c, self.back, self.back1, self.l, self.MyListBox] if x != None] 
-        if self.selected_langs == None:
+        [x.destroy() for x in [self.greeting, self.label1, self.b, self.c, self.back, self.back1, self.l, self.MyListBox] if x is not None] 
+        if self.selected_langs is None:
             path = direc
         else:    
             path = os.getcwd() + "/" + self.selected_langs 
@@ -1901,7 +1901,7 @@ class load_Window(object):
             self.cleanup()
 
     def new_proj(self):
-        [x.destroy() for x in [self.greeting, self.label1, self.b, self.back1, self.c, self.back, self.l, self.MyListBox, self.text_1, self.user_input] if x != None]
+        [x.destroy() for x in [self.greeting, self.label1, self.b, self.back1, self.c, self.back, self.l, self.MyListBox, self.text_1, self.user_input] if x is not None]
         self.maincanvas.update()
         self.folder = tk.StringVar() # Receiving user's folder_name selection
         self.text_1 = tk.Label(self.maincanvas, text = "Input project name:" ,bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
@@ -1915,7 +1915,7 @@ class load_Window(object):
         self.back.place(relx = 0.21, rely = 0.01)
         
     def new_model(self, folder_dir, load = True):
-        [x.destroy() for x in [self.greeting, self.label1, self.b, self.c, self.back, self.back1, self.l, self.MyListBox, self.text_1, self.user_input] if x != None]
+        [x.destroy() for x in [self.greeting, self.label1, self.b, self.c, self.back, self.back1, self.l, self.MyListBox, self.text_1, self.user_input] if x is not None]
         self.maincanvas.update()
         self.model = tk.StringVar() # Receiving user's folder_name selection
         self.text_1 = tk.Label(self.maincanvas, text = "Input model name:" ,bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
@@ -3332,7 +3332,7 @@ class PageOne(tk.Frame):
         if len(self.phase_len_nodes) == 1:
             if self.variable.get() == "Get time elapsed between "+ str(self.phase_len_nodes[0]) + ' and another context':
                 self.phase_len_nodes = np.append(self.phase_len_nodes, x)
-                if self.canvas_plt != None:
+                if self.canvas_plt is not None:
                     self.canvas_plt.get_tk_widget().pack_forget()
         #        font = {'size': 11}
                 # using rc function
@@ -3439,7 +3439,7 @@ class PageOne(tk.Frame):
         global mcmc_check
         startpage = self.controller.get_page('StartPage')
         if mcmc_check == 'mcmc_loaded':
-            if self.canvas_plt != None:
+            if self.canvas_plt is not None:
                 self.canvas_plt.get_tk_widget().pack_forget()
                 self.toolbar.destroy()
             fig = Figure(figsize=(8, min(30, len(self.results_list)*3)),
@@ -3708,7 +3708,7 @@ class PageTwo(object):
         scroll_bar2.pack(side=tk.RIGHT)
         label3 = ttk.Label(self.canvas, text='Intrusive Contexts')
         label3.place(relx=0.4, rely=0.52)
-        if startpage.graph != None:
+        if startpage.graph is not None:
             self.graphcopy = self.load_graph()
             self.imscale2  = min(921/self.image.size[0], 702/self.image.size[1])
             self.graphcanvas.scale('all', 0, 0, self.delta2, self.delta2)  # rescale all canvas objects       
@@ -3904,7 +3904,7 @@ class PageTwo(object):
         startpage.update_idletasks()
 
         node_inside = "no node"
-        if self.graphcopy != None:
+        if self.graphcopy is not None:
             #gets node coordinates from the graph
             node_df_con = node_coords_fromjson(self.graphcopy)
             #forms a dataframe from the dicitonary of coords
