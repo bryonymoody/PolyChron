@@ -128,7 +128,7 @@ def ellipsefunc(i):
 def node_coords_fromjson(graph):
     """Gets coordinates of each node"""
     global phase_true
-    if ('pydot' in str(type(graph))) == True:
+    if ('pydot' in str(type(graph))):
         graphs = graph
     else:   
         graphs = nx.nx_pydot.to_pydot(graph)
@@ -342,14 +342,14 @@ def del_empty_phases(phi_ref, del_phase, phasedict):
         rels_list = [i for i in phasedict.keys() if j in i]
         for rels in rels_list:
             if rels[0] == j:
-                if rels[1] in del_phase == True:
+                if rels[1] in del_phase:
                     del_phase_dict_1[j]['lower'] = del_phase_dict_1[rels[1]]['lower']
     del_phase.reverse()
     for k in del_phase:
         rels_list = [i for i in phasedict.keys() if k in i]
         for rels in rels_list:
             if rels[1] == k:
-                if rels[0] in del_phase == True:
+                if rels[0] in del_phase:
                     del_phase_dict_1[k]['upper'] = del_phase_dict_1[rels[0]]['upper']
     new_phase_rels = [[del_phase_dict_1[l]['upper'],
                        del_phase_dict_1[l]['lower']] for l in del_phase_dict_1.keys()
@@ -365,24 +365,24 @@ def phase_rels_delete_empty(file_graph, new_phase_rels, p_list, phasedict, phase
     for p in p_list:
         relation = phasedict[p]
         if relation == 'gap':
-            if (p[0] in graph_data[1][2]) == False:
+            if p[0] not in graph_data[1][2]:
                 phasedict.pop[p]
                 null_phases.append(p)
-            elif (p[1] in graph_data[1][2]) == False:
+            elif p[1] not in graph_data[1][2]:
                 null_phases.append(p)
             else:
                 file_graph.add_edge("a_" + str(p[0]), "b_" + str(p[1]), arrowhead='none')
         if relation == 'overlap':
-            if (p[0] in graph_data[1][2]) == False:
+            if p[0] not in graph_data[1][2]:
                 null_phases.append(p)
-            elif (p[1] in graph_data[1][2]) == False:
+            elif p[1] not in graph_data[1][2]:
                 null_phases.append(p)
             else:
                 file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[0]), arrowhead='none')
         if relation == "abutting":
-            if (p[0] in graph_data[1][2]) == False:
+            if p[0] not in graph_data[1][2]:
                 null_phases.append(p)
-            elif (p[1] in graph_data[1][2]) == False:
+            elif p[1] not in graph_data[1][2]:
                 null_phases.append(p)
             else:
                 file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
@@ -403,14 +403,14 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck, post_d
     phase_norm, node_list = graph_data[1][0], graph_data[1][1]
     all_node_phase = dict(zip(node_list, phase_norm))
     for i in node_list: #loop adds edges between phases
-        if (i in xs) == False:
-            if (i in ys) == False:
+        if i not in xs:
+            if i not in ys:
                 file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrowhead='none')
                 file_graph.add_edge(i, "a_" + str(all_node_phase[i]), arrowhead='none')
             else:
                 file_graph.add_edge(i, "a_" + str(all_node_phase[i]), arrowhead='none')
-        elif (i in xs) == True:
-            if (i in ys) == False:
+        elif (i in xs):
+            if i not in ys:
                 file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrowhead='none')
     if phasedict != None:
         p_list = list(set(phase_trck)) #phases before any get removed due to having no dates
@@ -987,7 +987,7 @@ class popupWindow3(object):
         else:
             self.phi_ref = list(self.step_1[0][1][2])
         self.post_phase.append("end")
-        del_phases = [i for i in self.phi_ref if i in phase_list == False]
+        del_phases = [i for i in self.phi_ref if i not in phase_list]
         ref_list = []
         for i in del_phases:
             ref = np.where(np.array(self.phi_ref) == i)[0][0]
@@ -1368,7 +1368,7 @@ class popupWindow9(object):
                  for k in edges1:
                      if k not in graph_check.edges():
                          self.master.chrono_dag.remove_edge(k[0], k[1])
-              if (phase in self.master.key_ref) == False:
+              if phase not in self.master.key_ref:
                   self.master.phi_ref.pop(phase_ref)                                
                   if self.master.prev_phase[phase_ref] == 'start':
                       phase_node = [i for i in self.master.chrono_dag.nodes() if "b_"+str(phase) in i]
@@ -1571,8 +1571,8 @@ class popupWindow10(object):
               katz_df_test = pd.read_csv(path + "/" + refmodel + "/katz_centr_chrono.csv") 
           katz_df_test = katz_df_test[['context', 'pagerank']]
           katz_df_test['context'] = katz_df_test['context'].astype(str)
-          katz_df_test = katz_df_test.loc[(katz_df_test["context"].str.contains("a") == False)]
-          katz_df_test = katz_df_test.loc[(katz_df_test["context"].str.contains("b") == False)]
+          katz_df_test = katz_df_test.loc[(not katz_df_test["context"].str.contains("a"))]
+          katz_df_test = katz_df_test.loc[(not katz_df_test["context"].str.contains("b"))]
           katz_df_test = katz_df_test.transpose()
           katz_df = katz_df_test.rename(columns=katz_df_test.iloc[0]).drop(katz_df_test.index[0]).reset_index(drop=True)    
           ll_over_df = pd.read_csv(path + "/" + refmodel + "/overlap_df.csv")
@@ -1617,7 +1617,7 @@ class popupWindow10(object):
           return contexts
         
       def graph_adjust(self, phase, phase_ref):
-              if (phase in self.master.key_ref) == False:
+              if phase not in self.master.key_ref:
                   self.master.phi_ref.pop(phase_ref)                                
                   if self.master.prev_phase[phase_ref] == 'start':
                       phase_node = [i for i in self.master.chrono_dag.nodes() if "b_"+str(phase) in i]
@@ -1881,7 +1881,7 @@ class load_Window(object):
             os.makedirs(dirs5)
             os.chdir(dirs)
             proj_dir = os.path.join(POLYCHRON_PROJECTS_DIR, folder_dir)
-            if load == True:
+            if load:
                 for F in (StartPage, PageOne):
                     page_name = F.__name__
                     frame = F(parent=self.master.container, controller=self.master)
@@ -2495,7 +2495,7 @@ class StartPage(tk.Frame):
                     edges = []
                     for i in range(len(self.stratfile)):
                         a = tuple(self.stratfile.iloc[i, :])
-                        if pd.isna(a[1]) == False:
+                        if not pd.isna(a[1]):
                             edges.append(a)
                     G.add_edges_from(edges, arrowhead="none")
                     self.graph = G
@@ -3936,24 +3936,24 @@ class PageTwo(object):
         node = self.nodecheck(x_scal, y_scal)
         outline = nx.get_node_attributes(self.graphcopy, 'color')
         #changes colour of the node outline to represent: intrustive (green), residual (orange) or none (black)
-        if ((node in self.resid_list) == True) and (self.modevariable != 'intru'):
+        if (node in self.resid_list) and (self.modevariable != 'intru'):
             self.resid_list.remove(node)
             outline[node] = 'black'
-        elif ((node in self.resid_list) == True) and (self.modevariable == 'intru'):
+        elif (node in self.resid_list) and (self.modevariable == 'intru'):
             self.resid_list.remove(node)
             outline[node] = 'green'
             self.intru_list.append(node)
-        elif ((node in self.intru_list) == True) and (self.modevariable != 'resid'):
+        elif (node in self.intru_list) and (self.modevariable != 'resid'):
             self.intru_list.remove(node)
             outline[node] = 'black'
-        elif ((node in self.intru_list) == True) and (self.modevariable == 'resid'):
+        elif (node in self.intru_list) and (self.modevariable == 'resid'):
             self.intru_list.remove(node)
             self.resid_list.append(node)
             outline[node] = 'orange'
-        elif (self.modevariable == 'resid') and ((node in self.resid_list) == False):
+        elif (self.modevariable == 'resid') and (node not in self.resid_list):
             self.resid_list.append(node)
             outline[node] = 'orange'
-        elif self.modevariable == 'intru'and ((node in self.intru_list) == False):
+        elif self.modevariable == 'intru'and (node not in self.intru_list):
             self.intru_list.append(node)
             outline[node] = 'green'
         self.resid_label = ttk.Label(self.residcanvas, text=str(self.resid_list).replace("'", "")[1:-1])
