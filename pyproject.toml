@@ -31,7 +31,9 @@ dependencies = [
     "graphviz",
     "numpy<2",
     "matplotlib",
-    "networkx",
+    "networkx>=3.4; python_version >= '3.10'", # required for https://github.com/networkx/networkx/pull/7588, but not available for py 3.9
+    "networkx>=2; python_version < '3.10'",
+    "packaging",
     "pandas<2",
     "pydot",
     "ttkthemes",
