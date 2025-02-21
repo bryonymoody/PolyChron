@@ -37,13 +37,16 @@ PolyChron has several non-python dependencies, which must be installed manually:
         apt-get install python3-tk
         ```
 
-<!-- @todo - non python dependencies? Graphviz? Tikz? -->
-
 PolyChron can then be installed into your python environment using `pip`.
-Using an editable installation (`-e` / `--editable`) is preferred for development.
 
 ```bash
-python3 -m pip install -e .
+python3 -m pip install .
+```
+
+If you are installing PolyChron from source for as a developer, consider using an editable installation (`-e` / `--editable`) and installing the `dev`, `docs` and `test` extras (which are described in subsequent sections).
+
+```bash
+python3 -m pip install -e .[dev,docs,test]
 ```
 
 ## Usage
@@ -102,4 +105,18 @@ Once installed, unit tests can be executed via `pytest` from the root directory
 python3 -m pytest
 # or
 pytest
+```
+
+## Linting
+
+Linting is handled using [`ruff`](https://github.com/astral-sh/ruff) which can be installed as part of the `dev` extras.
+
+> **Note**: `automated_mcmc_ordering_coupling.py` and `gui.py` are currently excluded from linting
+
+Ruff can then be invoked using:
+
+```bash
+python3 -m ruff check
+# or
+ruff check
 ```
