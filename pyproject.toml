@@ -37,6 +37,12 @@ dependencies = [
     "ttkthemes",
 ]
 
+[project.optional-dependencies]
+docs = [
+    "mkdocstrings[python]>=0.18",
+    "mkdocs-material>=9.5.0",
+]
+
 [project.urls]
 # Documentation = "https://bryonymoody.github.io/PolyChron"
 Repository = "https://github.com/bryonymoody/PolyChron"
