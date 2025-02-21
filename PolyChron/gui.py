@@ -789,7 +789,7 @@ class popupWindow3(object):
         self.node_del_tracker = [] #empty node tracker 
         #checks for each context and if there isn't node or phase info, it deletes it
         for i in nodes:
-            if phasedict[i] is not None:
+            if phasedict[i] is None:
                 self.node_del_tracker.append(i)
             elif datadict[i] == [None, None]:
                 self.node_del_tracker.append(i)
