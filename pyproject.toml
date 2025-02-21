@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "PolyChron"
+version = "0.1.0"
+requires-python = ">= 3.9"
+authors = [
+    {name = "Bryony Moody", email = "bryony.moody@sheffield.ac.uk"},
+    {name = "Peter Heywood", email = "p.heywood@sheffield.ac.uk"},
+]
+maintainers = [
+    {name = "Bryony Moody", email = "bryony.moody@sheffield.ac.uk"},
+]
+readme = "README.md"
+# license = ""
+# license-files = ["LICENSE.md"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    # Ensure this package does not get uploaded to pypi until it is ready.
+    "Private :: Do Not Upload",
+]
+dependencies = [
+    "graphviz",
+    "numpy<2",
+    "matplotlib",
+    "networkx",
+    "pandas<2",
+    "pydot",
+    "ttkthemes",
+]
+
+[project.urls]
+# Documentation = "https://bryonymoody.github.io/PolyChron"
+Repository = "https://github.com/bryonymoody/PolyChron"
+Issues = "https://github.com/bryonymoody/PolyChron/issues"
+
+[project.gui-scripts]
+polychron = "PolyChron.gui:main"
