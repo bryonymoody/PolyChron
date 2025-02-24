@@ -126,7 +126,7 @@ pytest
 
 Linting is handled using [`ruff`](https://github.com/astral-sh/ruff) which can be installed as part of the `dev` extras.
 
-> **Note**: `automated_mcmc_ordering_coupling.py` and `gui.py` are currently excluded from linting
+> **Note**: `automated_mcmc_ordering_coupling.py` is currently excluded from linting
 
 Ruff can then be invoked using:
 
