@@ -22,6 +22,7 @@ import pandas as pd
 from tkinter.filedialog import askopenfile
 from graphviz import render
 import PolyChron.automated_mcmc_ordering_coupling_copy as mcmc
+from . import __version__
 from ttkthemes import ThemedStyle
 import sys
 from matplotlib.figure import Figure
@@ -37,7 +38,6 @@ import csv
 # from reportlab.graphics import renderPDF, renderPM
 # from svglib.svglib import svg2rlg
 # import cairosvg
-from importlib.metadata import version # requires python >= 3.8
 import argparse
 # Get the absolute path to a directory in the users home dir
 POLYCHRON_PROJECTS_DIR = (pathlib.Path.home() / "Documents/Pythonapp_tests/projects").resolve()
@@ -4000,7 +4000,7 @@ style.configure('TOptionMenu', font=('Helvetica', 12, 'bold'))
 style.configure('TTreeView', font=('Helvetica', 12, 'bold'))
 MAIN_FRAME.option_add("*Font", default_font)
 MAIN_FRAME.geometry("2000x1000")
-MAIN_FRAME.title(f"PolyChron {version('PolyChron')}")
+MAIN_FRAME.title(f"PolyChron {__version__}")
 
 def parse_cli(argv=None):
     """Parse and return command line arguments
@@ -4022,7 +4022,7 @@ def print_version():
     Note:
         For editable installs the printed value may be incorrect 
     """
-    print(f"PolyChron {version('PolyChron')}")
+    print(f"PolyChron {__version__}")
 
 def main():
     """Main method as the entry point for launching the GUI
