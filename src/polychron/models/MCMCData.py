@@ -1,11 +1,12 @@
 import json
 import pathlib
 from dataclasses import dataclass, field
-from importlib.metadata import version
 from typing import Dict, List, get_type_hints
 
 import pandas as pd
+from packaging.version import Version
 
+from .. import __version__
 from ..util import MonotonicTimer
 
 
@@ -126,7 +127,7 @@ class MCMCData:
                 data[k] = str(v)
 
         indent = 2 if pretty else None
-        return json.dumps({"polychron_version": version("polychron"), "mcmc_data": data}, indent=indent)
+        return json.dumps({"polychron_version": Version(__version__).public, "mcmc_data": data}, indent=indent)
 
     def save(self, path: pathlib.Path, group_df: pd.DataFrame, verbose: bool = False) -> None:
         """Save the current state of this file to the specified path
