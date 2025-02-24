@@ -3,13 +3,13 @@ from __future__ import annotations
 import pathlib
 import platform
 import tkinter as tk
-from importlib.metadata import version
 from tkinter import ttk
 from unittest.mock import MagicMock, patch
 
 import pytest
 from ttkthemes import ThemedStyle, ThemedTk
 
+from polychron import __version__
 from polychron.Config import Config
 from polychron.GUIApp import GUIApp
 from polychron.models.ProjectSelection import ProjectSelection
@@ -142,7 +142,7 @@ class TestGUIApp:
         """Test the set window title method behaves as intended, by patching ThemedTk.title"""
         app = GUIApp()
 
-        expected_base_title = f"PolyChron {version('polychron')}"
+        expected_base_title = f"PolyChron {__version__}"
 
         # Patch out .title so we can check it was called as expected
         with patch("polychron.GUIApp.ThemedTk.title") as mock_root_title:

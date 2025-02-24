@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "polychron"
-version = "0.2.0"
+dynamic = ["version"]
 requires-python = ">= 3.9"
 authors = [
     {name = "Bryony Moody", email = "bryony.moody@sheffield.ac.uk"},
@@ -65,6 +65,9 @@ Issues = "https://github.com/bryonymoody/PolyChron/issues"
 
 [project.scripts]
 polychron = "polychron.entrypoint:main"
+
+[tool.hatch.version]
+path = "src/polychron/_version.py"
 
 # pytest options
 [tool.pytest.ini_options]
