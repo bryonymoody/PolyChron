@@ -3,9 +3,9 @@
 from __future__ import annotations
 
 import argparse
-from importlib.metadata import version
 from typing import Sequence
 
+from . import __version__
 from .Config import Config, get_config
 
 
@@ -47,7 +47,7 @@ def print_version() -> None:
     Note:
         For editable installs the printed value may be incorrect
     """
-    print(f"PolyChron {version('polychron')}")
+    print(f"PolyChron {__version__}")
 
 
 def main() -> None:

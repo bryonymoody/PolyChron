@@ -6,12 +6,12 @@ import re
 import sys
 import tkinter as tk
 import tkinter.font as tkFont
-from importlib.metadata import version
 from tkinter import ttk
 from typing import Any, Dict
 
 from ttkthemes import ThemedStyle, ThemedTk
 
+from . import __version__
 from .Config import Config, get_config
 from .interfaces import Mediator
 from .models.ProjectSelection import ProjectSelection
@@ -91,7 +91,7 @@ class GUIApp(Mediator):
         Parameters:
             suffix: an optional suffix which will be appended to the default window title
         """
-        title = f"PolyChron {version('polychron')}"
+        title = f"PolyChron {__version__}"
         if suffix is not None and len(str(suffix)) > 0:
             title += f" | {suffix}"
         self.root.title(title)
