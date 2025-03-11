@@ -5,7 +5,6 @@ Created on Sun Aug 15 17:43:25 2021
 
 @author: bryony
 """
-import argparse
 import copy
 import csv
 import os
@@ -13,7 +12,7 @@ import pickle
 import sys
 import tkinter as tk
 import tkinter.font as tkFont
-from importlib.metadata import version  # requires python >= 3.8
+from importlib.metadata import version
 from tkinter import simpledialog, ttk
 from tkinter.filedialog import askopenfile
 from tkinter.messagebox import askquestion
@@ -50,8 +49,10 @@ from .util import (
     imgrender_phase,
     node_coords_fromjson,
     node_del_fixed,
+    parse_cli,
     phase_labels,
     phase_length_finder,
+    print_version,
 )
 
 # @todo - these should be removed?
@@ -2326,28 +2327,6 @@ class PageTwo(object):
 
 # Global scoping of MAIN_FRAME is currently required for state saving behaviour, prior to refactoring.
 MAIN_FRAME = MainFrame()
-
-def parse_cli(argv=None):
-    """Parse and return command line arguments
-
-    Args:
-        argv (list[str] or None): optional list of command line parameters to parse. If None, sys.argv is used by `argparse.ArgumentParser.parse_args`
-
-    Returns:
-        (argparse.Namespace): Namespace object with arguments set as attributes, as returned by `argparse.ArgumentParser.parse_args()`
-    """
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--version", action="store_true", help="show version information and exit")
-    args = parser.parse_args(argv)
-    return args
-
-def print_version():
-    """Print the version of PolyChron to stdout
-
-    Note:
-        For editable installs the printed value may be incorrect 
-    """
-    print(f"PolyChron {version('polychron')}")
 
 def main():
     """Main method as the entry point for launching the GUI

@@ -1,7 +1,9 @@
 """Collection of utility functions / classes."""
 
+import argparse
 import ast
 import re
+from importlib.metadata import version
 
 import networkx as nx
 import numpy as np
@@ -604,3 +606,26 @@ def imgrender_phase(file):
     outp = Image.open("testdag.png")
     globals.node_df = node_coords_fromjson(graph)
     return outp
+
+
+def parse_cli(argv=None):
+    """Parse and return command line arguments
+
+    Args:
+        argv (list[str] or None): optional list of command line parameters to parse. If None, sys.argv is used by `argparse.ArgumentParser.parse_args`
+
+    Returns:
+        (argparse.Namespace): Namespace object with arguments set as attributes, as returned by `argparse.ArgumentParser.parse_args()`
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--version", action="store_true", help="show version information and exit")
+    args = parser.parse_args(argv)
+    return args
+
+def print_version():
+    """Print the version of PolyChron to stdout
+
+    Note:
+        For editable installs the printed value may be incorrect 
+    """
+    print(f"PolyChron {version('polychron')}")
