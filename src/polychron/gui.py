@@ -5,626 +5,55 @@ Created on Sun Aug 15 17:43:25 2021
 
 @author: bryony
 """
-import os
-import pathlib
-import tkinter as tk
-from tkinter import ttk
-import copy
-import re
-import ast
-import matplotlib as plt
-from PIL import Image, ImageTk, ImageChops
-from networkx.drawing.nx_pydot import read_dot, write_dot
-import networkx as nx
-import pydot
-import numpy as np
-import pandas as pd
-from tkinter.filedialog import askopenfile
-from graphviz import render
-import polychron.automated_mcmc_ordering_coupling_copy as mcmc
-from ttkthemes import ThemedStyle
-import sys
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
-import pickle
-from tkinter import simpledialog
-import tkinter.font as tkFont
-from tkinter.messagebox import askquestion
-import csv
-# Currently unused dependencies
-# import svgutils.transform as sg
-# from svglib.svglib import svg2rlg
-# from reportlab.graphics import renderPDF, renderPM
-# from svglib.svglib import svg2rlg
-# import cairosvg
-from importlib.metadata import version # requires python >= 3.8
 import argparse
+import copy
+import csv
+import os
+import pickle
+import sys
+import tkinter as tk
+import tkinter.font as tkFont
+from importlib.metadata import version  # requires python >= 3.8
+from tkinter import simpledialog, ttk
+from tkinter.filedialog import askopenfile
+from tkinter.messagebox import askquestion
+
+import matplotlib as plt
+import networkx as nx
+import numpy as np
 import packaging.version
-# Get the absolute path to a directory in the users home dir
-POLYCHRON_PROJECTS_DIR = (pathlib.Path.home() / "Documents/Pythonapp_tests/projects").resolve()
+import pandas as pd
+import pydot
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+from matplotlib.figure import Figure
+from networkx.drawing.nx_pydot import write_dot
+from PIL import Image, ImageTk
+from ttkthemes import ThemedStyle
+
+import polychron.automated_mcmc_ordering_coupling_copy as mcmc
+
+from . import globals
+from .util import (
+    StdoutRedirector,
+    chrono_edge_add,
+    chrono_edge_remov,
+    clear_all,
+    imagefunc,
+    imgrender,
+    imgrender2,
+    imgrender_phase,
+    node_coords_fromjson,
+    node_del_fixed,
+    phase_labels,
+    phase_length_finder,
+    phase_relabel,
+)
+
+# @todo - these should be removed?
 # Ensure the directory exists (this is a little aggressive)
-POLYCHRON_PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
+globals.POLYCHRON_PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
 # Change into the projects dir
-os.chdir(POLYCHRON_PROJECTS_DIR)
-old_stdout = sys.stdout
-
-
-class StdoutRedirector(object):
-    def __init__(self, text_area, pb1):
-        '''allows us to rimedirect    
-        output to the app canvases'''     
-        self.text_area = text_area
-        self.pb1 = pb1
-
-    def write(self, str):
-        '''writes to canvas'''        
-   #     self.text_area.update_idletasks()
-        self.pb1.update_idletasks
-        #self.text_area.destroy()
-        str1 = re.findall(r'\d+', str)
-        if len(str1) != 0:
-              self.text_area['text'] = str1[0] + "% complete"
-              self.pb1['value'] = int(str1[0])
-              self.text_area.update_idletasks()
-            #  self.text_area.see(1.0)
-    def flush(self):
-        pass
-#global variables
-phase_true = 0
-load_check = 'not_loaded'
-mcmc_check = 'mcmc_notloaded'
-proj_dir = ""
-SCRIPT_DIR = pathlib.Path(__file__).parent # Path to directory containing this script
-CALIBRATION = pd.read_csv(SCRIPT_DIR / "linear_interpolation.txt")
-
-def trim(im_trim):
-    """Trims images down"""
-    bg_trim = Image.new(im_trim.mode, im_trim.size)
-    diff = ImageChops.difference(im_trim, bg_trim)
-    diff = ImageChops.add(diff, diff, 2.0, -100)
-    bbox = diff.getbbox()
-    return im_trim.crop(bbox)
-
-def clear_all(tree):
-   for item in tree.get_children():
-      tree.delete(item)
-      
-def node_del_fixed(graph, node):
-    in_nodes = [i[0] for i in list(graph.in_edges(node))]
-    out_nodes = [i[1] for i in list(graph.out_edges(node))]
-    graph.remove_node(node)
-    for i in in_nodes:
-        for j in out_nodes:
-            graph.add_edge(i, j, arrowhead = 'none')
-    
-    graph_check = nx.transitive_reduction(graph)
-    if graph.edges() != graph_check.edges():
-        edges1 = list(graph.edges()).copy()
-        for k in edges1:
-            if k not in graph_check.edges():
-                graph.remove_edge(k[0], k[1])
-    return graph
- 
-
-def polygonfunc(i):
-    '''finds node coords of a kite'''
-    x = re.findall(r'points="(.*?)"', i)[0].replace(' ', ',')
-    a = x.split(",")
-    #if loop checks if it's a rectangle or a kite then gets the right coords
-    if -1*float(a[7]) == -1*float(a[3]):
-        coords_converted = [float(a[2]), float(a[6]), -1*float(a[5]), -1*float(a[1])]
-    else:
-        coords_converted = [float(a[2]), float(a[6]), -1*float(a[7]), -1*float(a[3])]
-    return coords_converted
-
-def ellipsefunc(i):
-    '''finds coords from dot file for ellipse nodes'''
-    x = re.findall(r'cx=(.*?)/>', i)[0].replace(' ', ',')
-    x = x.replace('cy=', '').replace('rx=', '').replace('ry=', '').replace('"', '')
-    a = x.split(",")
-    coords_converted = [float(a[0]) - float(a[2]), float(a[0]) + float(a[2]),
-                        -1*float(a[1]) - float(a[3]), -1*float(a[1]) + float(a[3])]
-    return coords_converted
-
-def node_coords_fromjson(graph):
-    """Gets coordinates of each node"""
-    global phase_true
-    if ('pydot' in str(type(graph))):
-        graphs = graph
-    else:   
-        graphs = nx.nx_pydot.to_pydot(graph)
-    svg_string = str(graphs.create_svg())
-    scale_info = re.search('points=(.*?)/>', svg_string).group(1).replace(' ', ',')
-    scale_info = scale_info.split(",")
-    scale = [float(scale_info[4]), -1*float(scale_info[3])]
-    coords_x = re.findall(r'id="node(.*?)</text>', svg_string)
-    coords_temp = [polygonfunc(i) if "points" in i else ellipsefunc(i) for i in coords_x]
-    node_test = re.findall(r'node">\\n<title>(.*?)</title>', svg_string)
-    node_list = [i.replace('&#45;', '-') for i in node_test]
-
-    new_pos = dict(zip(node_list, coords_temp))
-    df = pd.DataFrame.from_dict(new_pos, orient='index',
-                                columns=['x_lower', 'x_upper', 'y_lower', 'y_upper'])  
-    return df, scale
-
-def all_node_info(node_list, x_image, node_info):
-    """obtains node attributes from original dot file"""
-    for i in node_list:
-        for j in x_image:
-            b_string = re.search("\"(.*)\" ", j)
-            if b_string is not None:
-                if i == b_string.group(1):
-                    if i in j and '->' not in j:
-                        tset = j[(j.index('[')+1):(len(j)-1)]
-                        atr_new = tset.replace('] [', '\',\'')
-                        atr_new = atr_new.replace('=', '\':\' ')
-                        atr_new = atr_new.replace('\' \"', '\"')
-                        atr_new = atr_new.replace('\"\'', '\"')
-                        atr_new = atr_new.replace('\' ', '\'')
-                        atr_newer = str('{\''+atr_new+'}')
-                        dicc = ast.literal_eval(atr_newer)
-                        node_info.append(dicc)
-    return node_info
-
-def phase_length_finder(con_1, con_2, resultsdict):
-    '''finding the phase length between any two contexts or phase boundaries'''
-    phase_lengths = []
-    x_3 = resultsdict[con_1]
-    x_4 = resultsdict[con_2]
-    for i in range(len(x_3)):
-        phase_lengths.append(np.abs(x_3[i] - x_4[i]))
-    un_phase_lens = []
-    for i in range(len(phase_lengths)-1):
-        if phase_lengths[i] != phase_lengths[i+1]:
-            un_phase_lens.append(phase_lengths[i])
-    return phase_lengths
-
-def imagefunc(dotfile):
-    """Sets note attributes to a dot string"""
-    file = read_dot(dotfile)
- ####code to get colours####
-    f_string = open(str(dotfile), "r")
-    dotstr = f_string.read()
-    dotstr = dotstr.replace(";<", "@<")
-    dotstr = dotstr.replace("14.0", "50.0")
-#change any ';>' to '@>' then back again after
-    x_image = dotstr.rsplit(";")
-    for i in enumerate(x_image):
-        x_image[i[0]] = x_image[i[0]].replace("@<", ";<")
-    node_list = list(file.nodes)
-    node_info_init = list()
-    node_info = all_node_info(node_list, x_image, node_info_init)
-    for k in enumerate(node_list):
-        node_info[k[0]].update({"Determination":"None", "Find_Type":"None",
-                                "Group":node_info[k[0]]['fillcolor'], 'color' : 'black'})
-    individ_attrs = zip(node_list, node_info)
-    attrs = dict(individ_attrs)#add the dictionary of attributed to a node
-    nx.set_node_attributes(file, attrs)
-    return file
-
-def phase_relabel(graph):
-    '''relabels the phase labels to be alphas and betas, for display only,
-    still refer to them with a's and b's'''
-    label_dict = {}
-    for i in graph.nodes():  
-        if 'a_' in i:
-            if 'b_' in i:           
-                label_str = i.replace("a_", "<&alpha;<SUB>")
-                label_str = label_str.replace(" = b_", '</SUB> = &beta;<SUB>') + '</SUB>>' 
-                label_dict[i] = label_str 
-            else:
-                label_str = i.replace("a_", "<&alpha;<SUB> ")  + '</SUB>>' 
-                label_dict[i] = label_str
-        elif ('b_' in i) and ('a_' not in i):
-            label_str = i.replace("b_", "<&beta;<SUB>") + '</SUB>>'
-            label_dict[i] = label_str
-    #sets the new phase labels to the node attribute labels
-    nx.set_node_attributes(graph, label_dict, 'label')
-    return graph
-
-def chrono_edge_remov(file_graph):
-    '''removes any excess edges so we can render the chronograph'''
-    xs, ys = [], []
-    #gets a list of all the edges and splits into above and below
-    for x, y in list(file_graph.edges):
-        xs.append(x)
-        ys.append(y)
-    graph_data = phase_info_func(file_graph)
-    phase_list = list(graph_data[1][2])
-    phase_dic = graph_data[3]
-    #case with more than one phase
-    if len(phase_list) != 1:
-        if len(graph_data[1][3]) == 0:
-            file_graph.add_edge(phase_dic[phase_list[0]][0], phase_dic[phase_list[1]][0], arrowhead='none')
-            graph_data = phase_info_func(file_graph)
-        x_l, y_l = graph_data[2][0], graph_data[2][1]
-        evenlist, oddlist, elist, olist = [], [], [], []
-        for i in range(len(x_l)):
-            if i % 2 == 0:
-                evenlist.append(x_l[i])
-                elist.append(y_l[i])
-            else:
-                oddlist.append(x_l[i])
-                olist.append(y_l[i])
-        for j in range(len(evenlist)):
-            file_graph.remove_edge(oddlist[j], evenlist[j])
-
-        for node in phase_list:
-            alp_beta_node_add(node, file_graph)
-        file_graph = phase_relabel(file_graph)
-
-        for i, j in enumerate(elist):
-            file_graph.add_edge("b_" + str(j), evenlist[i], arrowhead='none')
-        for i, j in enumerate(olist):
-            file_graph.add_edge(oddlist[i], "a_" + str(j.replace("_below", "")), arrowhead='none')
-    #case when there's only one phase
-    elif len(phase_list) == 1:
-        evenlist = []
-        oddlist = []
-        for nd in graph_data[1][1]:
-            if len(list(file_graph.predecessors(nd))) == 0:
-                evenlist.append(nd) #if no predecesors, adds to list for nodes to connect to phase boundary
-            if len(list(file_graph.edges(nd))) == 0:
-                oddlist.append(nd)
-        for node in list(phase_list):
-            alp_beta_node_add(node, file_graph)
-        for node in list(phase_list):
-            alp_beta_node_add(node, file_graph)
-        phase_lab = phase_list[0]
-        for z in evenlist:
-            file_graph.add_edge("b_" + str(phase_lab), z,
-                                arrowhead='none')
-
-        for m in oddlist:
-            file_graph.add_edge(m, "a_" + str(phase_lab),
-                                arrowhead='none')
-    #graph data gives 1) phases in a dict and nodes at the edge of that phase,
-    #2) phases for each context, 3) contexts, 4) phases in "below form",
-    #5)dictionary of phases and contexts in them
-    #xs, ys gives any edges removed becuase phase boundaries need to go in
-    #list of phases
-    return graph_data, [xs, ys], phase_list
-
-def phase_labels(phi_ref, POST_PHASE, phi_accept, all_samps_phi):
-    '''provides phase limits for a phase'''
-    labels = ['a_' + str(phi_ref[0])]
-    i = 0
-    results_dict = {labels[0]: phi_accept[i]}
-    all_results_dict = {labels[0]: all_samps_phi[i]}
-    for a_val in enumerate(POST_PHASE):
-        i = i + 1
-        if a_val[1] == "abutting":
-            labels.append('b_' + str(phi_ref[a_val[0]]) + ' = a_' + str(phi_ref[a_val[0]+1]))
-            results_dict['a_' + str(phi_ref[a_val[0]+1])  + ' = b_' + str(phi_ref[a_val[0]])] = phi_accept[i]
-            all_results_dict['a_' + str(phi_ref[a_val[0]+1])  + ' = b_' + str(phi_ref[a_val[0]])] = all_samps_phi[i]
-           # results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
-        elif a_val[1] == 'end':
-            labels.append('b_' + str(phi_ref[-1]))
-            results_dict['b_' + str(phi_ref[a_val[0]])] = phi_accept[i]
-            all_results_dict['b_' + str(phi_ref[a_val[0]])] = all_samps_phi[i]
-        elif a_val == 'gap':
-            labels.append('b_' + str(phi_ref[a_val[0]]))
-            labels.append('a_' + str(phi_ref[a_val[0]+1]))
-            results_dict['b_' + str(phi_ref[a_val[0]])] = phi_accept[i]
-            all_results_dict['b_' + str(phi_ref[a_val[0]])] = all_samps_phi[i]
-            i = i + 1
-            results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
-            all_results_dict['a_' + str(phi_ref[a_val[0]+1])] = all_samps_phi[i]
-        else:
-            labels.append('a_' + str(phi_ref[a_val[0]+1]))
-            labels.append('b_' + str(phi_ref[a_val[0]]))
-            results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
-            all_results_dict['a_' + str(phi_ref[a_val[0]+1])] = all_samps_phi[i]
-            i = i + 1
-            results_dict['b_' + str(phi_ref[a_val[0]])] = phi_accept[i]
-            all_results_dict['b_' + str(phi_ref[a_val[0]])] = all_samps_phi[i]
-    # returns dictionary of results do we can plot probability density functions
-    return labels, results_dict, all_results_dict
-
-def del_empty_phases(phi_ref, del_phase, phasedict):
-    ''' checks for any phase rels that need changing due to missing dates'''
-    del_phase = [i for i in phi_ref if i in del_phase]
-    del_phase_dict_1 = {}
-    for j in del_phase:
-        del_phase_dict = {}
-        rels_list = [i for i in phasedict.keys() if j in i]
-        for rels in rels_list:
-            if rels[0] == j:
-                del_phase_dict['lower'] = rels[1]
-            if rels[1] == j:
-                del_phase_dict['upper'] = rels[0]
-        del_phase_dict_1[j] = del_phase_dict
-    if phi_ref[-1] in del_phase_dict_1.keys():
-        del_phase_dict_1[phi_ref[-1]]['upper'] = 'end'
-    if phi_ref[0] in del_phase_dict_1.keys():
-        del_phase_dict_1[phi_ref[0]]['lower'] = 'start'
-    #We then have to run the loop again in case any phases are next to eachother, this checks that
-    for j in del_phase:
-        rels_list = [i for i in phasedict.keys() if j in i]
-        for rels in rels_list:
-            if rels[0] == j:
-                if rels[1] in del_phase:
-                    del_phase_dict_1[j]['lower'] = del_phase_dict_1[rels[1]]['lower']
-    del_phase.reverse()
-    for k in del_phase:
-        rels_list = [i for i in phasedict.keys() if k in i]
-        for rels in rels_list:
-            if rels[1] == k:
-                if rels[0] in del_phase:
-                    del_phase_dict_1[k]['upper'] = del_phase_dict_1[rels[0]]['upper']
-    new_phase_rels = [[del_phase_dict_1[l]['upper'],
-                       del_phase_dict_1[l]['lower']] for l in del_phase_dict_1.keys()
-                      if del_phase_dict_1[l]['upper'] != 'end' if del_phase_dict_1[l]['lower'] != 'start']
-    return new_phase_rels
-
-def phase_rels_delete_empty(file_graph, new_phase_rels, p_list, phasedict, phase_nodes, graph_data):
-    phase_relabel(file_graph)
-    #adds edges between phases that had gaps due to no contexts being left in them
-    label_dict = {}
-    null_phases = []  # keep track of phases we need to delete
-    [file_graph.add_edge("a_"+ str(i[0]), "b_" + str(i[1]), arrowhead='none') for i in new_phase_rels]
-    for p in p_list:
-        relation = phasedict[p]
-        if relation == 'gap':
-            if p[0] not in graph_data[1][2]:
-                phasedict.pop[p]
-                null_phases.append(p)
-            elif p[1] not in graph_data[1][2]:
-                null_phases.append(p)
-            else:
-                file_graph.add_edge("a_" + str(p[0]), "b_" + str(p[1]), arrowhead='none')
-        if relation == 'overlap':
-            if p[0] not in graph_data[1][2]:
-                null_phases.append(p)
-            elif p[1] not in graph_data[1][2]:
-                null_phases.append(p)
-            else:
-                file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[0]), arrowhead='none')
-        if relation == "abutting":
-            if p[0] not in graph_data[1][2]:
-                null_phases.append(p)
-            elif p[1] not in graph_data[1][2]:
-                null_phases.append(p)
-            else:
-                file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
-                x_nod = list(file_graph)
-                newnode = str("a_" + str(p[0]) + " = " +"b_" + str(p[1]))
-                label_str = '<&alpha;<SUB>' + str(p[0]) + '</SUB> = &beta;<SUB>' + str(p[1]) + '</SUB>>'
-                label_dict[newnode] = label_str
-                phase_nodes.append("a_" + str(p[0]) + " = " +"b_" + str(p[1]))
-                y_nod = [newnode if i == "a_" + str(p[0]) else i for i in x_nod]
-                mapping = dict(zip(x_nod, y_nod))
-                file_graph = nx.relabel_nodes(file_graph, mapping)
-    return file_graph, null_phases, label_dict
-
-def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck, post_dict, prev_dict):
-    xs = xs_ys[0]
-    ys = xs_ys[1]
-    phase_nodes = []
-    phase_norm, node_list = graph_data[1][0], graph_data[1][1]
-    all_node_phase = dict(zip(node_list, phase_norm))
-    for i in node_list: #loop adds edges between phases
-        if i not in xs:
-            if i not in ys:
-                file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrowhead='none')
-                file_graph.add_edge(i, "a_" + str(all_node_phase[i]), arrowhead='none')
-            else:
-                file_graph.add_edge(i, "a_" + str(all_node_phase[i]), arrowhead='none')
-        elif (i in xs):
-            if i not in ys:
-                file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrowhead='none')
-    if phasedict is not None:
-        p_list = list(set(phase_trck)) #phases before any get removed due to having no dates
-
-        phase_nodes.append('a_'+ str(p_list[0][0]))
-        up_phase = [i[0] for i in p_list]
-        low_phase = [i[1] for i in p_list]
-        act_phases = set(up_phase + low_phase) #actual phases we are working with
-        del_phase = act_phases - set(graph_data[1][2])
-        graph = nx.DiGraph(graph_attr={'splines':'ortho'})
-        if len(phase_trck) != 0:
-            graph.add_edges_from(phase_trck, arrows = "none")
-            phi_ref = list(reversed(list(nx.topological_sort(graph))))
-            graph_temp = nx.transitive_reduction(graph)
-            a = set(graph.edges())
-            b = set(graph_temp.edges())
-            if len(list(a-b)) != 0:
-                rem = list(a-b)[0]
-                file_graph.remove_edge(rem[0], rem[1])
-        new_phase_rels = del_empty_phases(phi_ref, del_phase, phasedict)
-#changes diplay labels to alpha ans betas
-        file_graph, null_phases, label_dict = phase_rels_delete_empty(file_graph, new_phase_rels, p_list, phasedict, phase_nodes, graph_data)
-
-        phi_ref = [i for i in phi_ref if i in set(graph_data[1][2])]
-        phase_nodes.append('b_' + str(p_list[len(p_list)-1][0]))
-
-    #replace phase rels with gap for phases adjoined due to missing phases
-    for i in new_phase_rels:
-        post_dict[i[1]] = 'gap'
-        prev_dict[i[0]] = 'gap'
-    nx.set_node_attributes(file_graph, label_dict, 'label')
-    return(file_graph, phi_ref, null_phases)
-
-
-
-def imgrender(file, canv_width, canv_height):
-    global node_df
-    """renders png from dotfile""" 
-    file.graph['graph']={'splines':'ortho'}
-    write_dot(file, 'fi_new')    
-     ####code to get colours####
-#    f_string = open(str('fi_new'), "r")
- #   f = f_string.read()
-##    f = f.replace('{', '{ splines = "ortho";', 1)
-  #  g = pydot.graph_from_dot_data(f)
-   # graph = g[0]
- #   graph.write_dot('fi_neww')
-    render('dot', 'png', 'fi_new')
-    render('dot', 'svg', 'fi_new')
-    inp = Image.open("fi_new.png")
-    inp_final = trim(inp)
-  #  scale_factor = min(canv_width/inp.size[0], canv_height/inp.size[1])  
-#    print(scale_factor)        
- #   inp_final = inp.resize((int(inp.size[0]*scale_factor), int(inp.size[1]*scale_factor)), Image.ANTIALIAS)       
-    inp_final.save("testdag.png")
-    outp = Image.open("testdag.png")
-    node_df = node_coords_fromjson(file)
-#     str_size = "\"" + str(int((canv_height)/96))+ ","+str(int((canv_width)/96)) + "!" +"\""
-#     file.graph['graph']={'splines':'ortho', 'size' : str(2417/90)+ ","+str(2016/96)}#str_size}
-#     graph_check = nx.transitive_reduction(file)
-#     if file.edges() != graph_check.edges():
-#        edges1 = list(file).copy()
-#        for k in edges1:
-#            if k not in graph_check.edges():
-#                file(k[0], k[1])
-#     write_dot(file, 'fi_new')    
-#     render('dot', 'png', 'fi_new')
-#     fig = sg.fromfile('fi_new.svg')
-#     img_size = fig.get_size()
-#     img_size = [int(i.replace("pt", "")) for i in img_size]
-#     scale_factor = min(canv_width/img_size[0], canv_height/img_size[1])
-#     fig.set_size((str(int((img_size[0]*scale_factor))), str(int((img_size[1]*scale_factor)*1))))
-#     fig.save('myimage2.svg')
-#     cairosvg.svg2png(url='myimage2.svg', write_to='testdag.png')
-# #    
-#  #   write_dot(file, 'fi_new')    
-#   #  render('dot', 'png', 'fi_new')
-#     outp = Image.open("fi_new.png")
-#     outp = trim(outp)
-#     node_df = node_coords_fromjson(file)
-    return outp
-
-def imgrender2(canv_width, canv_height):
-    """renders png from dotfile"""
-    global load_check, node_df
-    if load_check == 'loaded':
-        render('dot', 'png', 'fi_new_chrono')
-        render('dot', 'svg', 'fi_new_chrono')
-        inp = Image.open("fi_new_chrono.png")
-        inp_final = trim(inp)
-   #     scale_factor = min(canv_width/inp.size[0], canv_height/inp.size[1])                 
-   #     inp_final = inp.resize((int(inp.size[0]*scale_factor), int(inp.size[1]*scale_factor)), Image.ANTIALIAS)  
-        inp_final.save("testdag_chrono.png")
-        outp = Image.open("testdag_chrono.png")
-    else:
-        outp = 'No_image'
-    return outp
-
-def edge_of_phase(test1, pset, node_list, node_info):
-    """find nodes on edge of each phase"""
-    x_l = []
-    y_l = []
-    mydict = {}
-    phase_tracker = []
-    if FILE_INPUT is not None:
-        for i in enumerate(pset):
-            temp_nodes_list = []
-            for j in enumerate(node_list):
-                if node_info[j[0]]["fillcolor"] == pset[i[0]]:
-                    temp_nodes_list.append(node_list[j[0]])
-                    p_phase = str(pset[i[0]][pset[i[0]].rfind("/")+1:len(pset[i[0]])])
-                    node_info[j[0]].update({"Group":p_phase})
-                mydict[str(pset[i[0]][pset[i[0]].rfind("/")+1:len(pset[i[0]])])] = temp_nodes_list
-    else:
-        for i in enumerate(pset):
-            temp_nodes_list = []
-            for j in enumerate(node_list):
-                if node_info[j[0]]["Group"] == pset[i[0]]:
-                    temp_nodes_list.append(node_list[j[0]])
-                mydict[pset[i[0]]] = temp_nodes_list
-    for i in enumerate(test1):
-        for key in mydict:
-            if test1[i[0]][1] in mydict[key] and test1[i[0]][0] not in mydict[key]:
-                x_l.append(test1[i[0]][1])
-                y_l.append(key)
-                phase_lst = [list(mydict.values()).index(j) for j in list(mydict.values()) if
-                             test1[i[0]][0] in j]
-                key_1 = (list(mydict.keys())[phase_lst[0]]) #trying to find phase of other value
-                x_l.append(test1[i[0]][0])
-                y_l.append(str(key_1 + "_below"))
-                phase_tracker.append((key_1, key))
-    return x_l, y_l, mydict.keys(), phase_tracker, mydict
-
-def phase_info_func(file_graph):
-   # t0 = time.time()
-    """returns a dictionary of phases and nodes in each phase"""
-    res = []
-    node_list = list(file_graph.nodes)
-    nd = dict(file_graph.nodes(data=True))
-    node_info = [nd[i] for i in node_list]
-    if FILE_INPUT is not None:
-        phase = nx.get_node_attributes(file_graph, "fillcolor")
-        phase_norm = [phase[ph][phase[ph].rfind("/")+1:len(phase[ph])] for ph in phase]
-# ####code to get colours####
-        f_str = open(str(FILE_INPUT), "r")
-        dotstr = f_str.read()
-        dotstr = dotstr.replace(";<", "@<")
-        dotstr = dotstr.replace("14.0", "50.0")
-##change any ';>' to '@>' then back again after
-        x_phaseinf = dotstr.rsplit(";")
-        for i in enumerate(x_phaseinf):
-            x_phaseinf[i[0]] = x_phaseinf[i[0]].replace("@<", ";<")
-        for key in phase.keys():
-            res.append(phase[key])
-    else:
-        phase1 = nx.get_node_attributes(file_graph, "Group")
-        for key in phase1.keys():
-            res.append(phase1[key])
-        phase_norm = res
-    x_l, y_l, phase_list, phase_trck, phase_dic = edge_of_phase(list(nx.line_graph(file_graph)),
-                                                                list(set(res)), node_list, node_info)
-    reversed_dict = {}
-    if len(phase_list) > 1:
-        testdic = dict(zip(x_l, y_l))
-        for key, value in testdic.items():
-            reversed_dict.setdefault(value, [])
-            reversed_dict[value].append(key)
-    return reversed_dict, [phase_norm, node_list, phase_list, phase_trck], [x_l, y_l], phase_dic
-
-def alp_beta_node_add(x, graph):
-    '''adds an alpha and beta node to node x'''
-    graph.add_node("a_" + str(x), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
-    graph.add_node("b_" + str(x), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
-
-def rank_func(tes, file_content):
-  #  t0 = time.time()
-    """adds strings into dot string to make nodes of the same phase the same rank"""
-    rank_same = []
-    for key in tes.keys():
-        x_rank = tes[key]
-        y_1 = str(x_rank)
-        y_2 = y_1.replace("[", "")
-        y_3 = y_2.replace("]", "")
-        y_4 = y_3.replace("'", "")
-        y_5 = y_4.replace(",", ";")
-        x_2 = "{rank = same; "+y_5+";}\n"
-        rank_same.append(x_2)
-    rank_string = ''.join(rank_same)[:-1]
-    new_string = file_content[:-2] + rank_string + file_content[-2]
-    return new_string
-
-def imgrender_phase(file):
-    global node_df
-  #  t0 = time.time()
-    """Renders image from dot file with all nodes of the same phase collected together"""
-    write_dot(file, 'fi_new.txt')
-    my_file = open("fi_new.txt")
-    file_content = my_file.read()
-    new_string = rank_func(phase_info_func(file)[0], file_content)
-    textfile = open('fi_new.txt', 'w')
-    textfile.write(new_string)
-    textfile.close()
-    (graph,) = pydot.graph_from_dot_file('fi_new.txt')
-    graph.write_png('test.png')
-    inp = Image.open("test.png")
-    inp = trim(inp)
-            # Call the real .tkraise
-    inp.save("testdag.png")
-    outp = Image.open("testdag.png")
-    node_df = node_coords_fromjson(graph)
-    return outp
-
-
+os.chdir(globals.POLYCHRON_PROJECTS_DIR)
 
 class popupWindow(object):
     def __init__(self, master):
@@ -1049,7 +478,7 @@ class MainFrame(tk.Tk):
     def __init__(self, *args, **kwargs):
         """initilaises the main frame for tkinter app"""
         tk.Tk.__init__(self, *args, **kwargs)
-        os.chdir(POLYCHRON_PROJECTS_DIR)
+        os.chdir(globals.POLYCHRON_PROJECTS_DIR)
         load_Window(self)
         # the container is where we'll stack a bunch of frames
         # on top of each other, then the one we want visible
@@ -1206,8 +635,8 @@ class popupWindow8(object):
              mod_path = str(path) + "/" + str(i) + "/python_only/save.pickle"
              with open(mod_path, "rb") as f:
                  data = pickle.load(f)
-                 load_check = data['load_check']
-             if load_check == "loaded":
+                 globals.load_check = data['load_check']
+             if globals.load_check == "loaded":
                 model_list.append(i)
 
 
@@ -1231,7 +660,6 @@ class popupWindow8(object):
          self.e.select_set(0, 'end')
     
      def save_state_1(self, j):
-        global mcmc_check, load_check, FILE_INPUT
         
         vars_list_1 = dir(self)
         var_list = [var for var in vars_list_1 if (('__' and 'grid' and 'get' and 'tkinter' and 'children') not in var) and (var[0] != '_')]          
@@ -1242,9 +670,9 @@ class popupWindow8(object):
             if not any(x in str(type(v)) for x in check_list):
                data[i] = v
         data['all_vars'] = list(data.keys())
-        data['load_check'] = load_check
-        data['mcmc_check'] = mcmc_check
-        data["file_input"] = FILE_INPUT
+        data['load_check'] = globals.load_check
+        data['mcmc_check'] = globals.mcmc_check
+        data["file_input"] = globals.FILE_INPUT
         path = self.path + "/" +  str(j) + "/python_only/save.pickle"
         try:
             with open(path, "wb") as f:
@@ -1253,29 +681,26 @@ class popupWindow8(object):
         except Exception:
             tk.messagebox.showerror('Error', 'File not saved')             
      def load_cal_data(self, j):
-        global mcmc_check, load_check, FILE_INPUT
         with open(self.path + "/" + str(j) + '/python_only/save.pickle', "rb") as f:
             data = pickle.load(f)
             vars_list = data['all_vars']
             for i in vars_list:
                 setattr(self, i, data[i])
-            FILE_INPUT = data['file_input']
-            load_check = data['load_check']
-            mcmc_check = data['mcmc_check']
+            globals.FILE_INPUT = data['file_input']
+            globals.load_check = data['load_check']
+            globals.mcmc_check = data['mcmc_check']
         
      def cleanup(self):
-         global mcmc_check
          values = [self.e.get(idx) for idx in self.e.curselection()]
          for i in values:
              self.load_cal_data(i)
              self.CONTEXT_NO, self.ACCEPT, self.PHI_ACCEPT, self.PHI_REF, self.A, self.P, self.ALL_SAMPS_CONT, self.ALL_SAMPS_PHI, self.resultsdict, self.all_results_dict = self.master.MCMC_func()
-             mcmc_check = 'mcmc_loaded'
+             globals.mcmc_check = 'mcmc_loaded'
              self.save_state_1(i)
          self.top.destroy()
          
 class popupWindow9(object):
       def __init__(self, master, path):
-          global mcmc_check
           self.master = master
           self.path = path
           model_list_labels = [(str(path) + '/graph_theory_tests_' + str(i), i, 'graph_theory_tests_' + str(i)) for i in self.master.graph.nodes()]
@@ -1339,7 +764,7 @@ class popupWindow9(object):
                   self.master.ACCEPT = [[]]
                   while min([len(i) for i in self.master.ACCEPT]) < 20000:
                           self.master.CONTEXT_NO, self.master.ACCEPT, self.master.PHI_ACCEPT, self.master.PHI_REF, self.master.A, self.master.P, self.master.ALL_SAMPS_CONT, self.master.ALL_SAMPS_PHI, self.master.resultsdict, self.master.all_results_dict = self.master.MCMC_func()
-                  mcmc_check = 'mcmc_loaded'
+                  globals.mcmc_check = 'mcmc_loaded'
                   self.save_state_1(self.master, dirs4)
 
       def prob_overlap(self, ll1, ll2):
@@ -1453,7 +878,6 @@ class popupWindow9(object):
           self.e.select_set(0, 'end')
     
       def save_state_1(self, master, j):
-         global mcmc_check, load_check, FILE_INPUT
         
          vars_list_1 = dir(self.master)
          var_list = [var for var in vars_list_1 if (('__' and 'grid' and 'get' and 'tkinter' and 'children') not in var) and (var[0] != '_')]          
@@ -1464,11 +888,11 @@ class popupWindow9(object):
              if not any(x in str(type(v)) for x in check_list):
                 data[i] = v
          data['all_vars'] = list(data.keys())
-         data['load_check'] = load_check
-         data['mcmc_check'] = mcmc_check
-         data["file_input"] = FILE_INPUT
+         data['load_check'] = globals.load_check
+         data['mcmc_check'] = globals.mcmc_check
+         data["file_input"] = globals.FILE_INPUT
          path = j + "/save.pickle"
-         if mcmc_check == 'mcmc_loaded': 
+         if globals.mcmc_check == 'mcmc_loaded': 
                 results = data["all_results_dict"]
                 df = pd.DataFrame()
                 for i in results.keys():
@@ -1490,19 +914,17 @@ class popupWindow9(object):
              tk.messagebox.showerror('Error', 'File not saved')        
              
       def load_cal_data(self, j):
-         global mcmc_check, load_check, FILE_INPUT
          with open(self.path + "/" + str(j) + '/python_only/save.pickle', "rb") as f:
              data = pickle.load(f)
              vars_list = data['all_vars']
              for i in vars_list:
                  setattr(self, i, data[i])
-             FILE_INPUT = data['file_input']
-             load_check = data['load_check']
-             mcmc_check = data['mcmc_check']
+             globals.FILE_INPUT = data['file_input']
+             globals.load_check = data['load_check']
+             globals.mcmc_check = data['mcmc_check']
 
 class popupWindow10(object):
       def __init__(self, master, path):
-          global mcmc_check
           self.master = master
           self.path = path
           # for i in range(20,140):
@@ -1569,7 +991,7 @@ class popupWindow10(object):
               self.master.ACCEPT = [[]]
               while min([len(i) for i in self.master.ACCEPT]) < 50000:
                        self.master.CONTEXT_NO, self.master.ACCEPT, self.master.PHI_ACCEPT, self.master.PHI_REF, self.master.A, self.master.P, self.master.ALL_SAMPS_CONT, self.master.ALL_SAMPS_PHI, self.master.resultsdict, self.master.all_results_dict = self.master.MCMC_func()
-              mcmc_check = 'mcmc_loaded'
+              globals.mcmc_check = 'mcmc_loaded'
               self.save_state_1(self.master, dirs4)
               
       def katz_plus_overlap(self, path, refmodel, mode = 'strat'): 
@@ -1701,7 +1123,6 @@ class popupWindow10(object):
           self.e.select_set(0, 'end')
     
       def save_state_1(self, master, j):
-         global mcmc_check, load_check, FILE_INPUT
         
          vars_list_1 = dir(self.master)
          var_list = [var for var in vars_list_1 if (('__' and 'grid' and 'get' and 'tkinter' and 'children') not in var) and (var[0] != '_')]          
@@ -1712,11 +1133,11 @@ class popupWindow10(object):
              if not any(x in str(type(v)) for x in check_list):
                 data[i] = v
          data['all_vars'] = list(data.keys())
-         data['load_check'] = load_check
-         data['mcmc_check'] = mcmc_check
-         data["file_input"] = FILE_INPUT
+         data['load_check'] = globals.load_check
+         data['mcmc_check'] = globals.mcmc_check
+         data["file_input"] = globals.FILE_INPUT
          path = os.getcwd() + "/python_only/save.pickle"
-         if mcmc_check == 'mcmc_loaded': 
+         if globals.mcmc_check == 'mcmc_loaded': 
                 results = data["all_results_dict"]
                 df = pd.DataFrame()
                 for i in results.keys():
@@ -1738,15 +1159,14 @@ class popupWindow10(object):
              tk.messagebox.showerror('Error', 'File not saved')        
              
       def load_cal_data(self, j):
-         global mcmc_check, load_check, FILE_INPUT
          with open(self.path + "/" + str(j) + '/python_only/save.pickle', "rb") as f:
              data = pickle.load(f)
              vars_list = data['all_vars']
              for i in vars_list:
                  setattr(self, i, data[i])
-             FILE_INPUT = data['file_input']
-             load_check = data['load_check']
-             mcmc_check = data['mcmc_check']
+             globals.FILE_INPUT = data['file_input']
+             globals.load_check = data['load_check']
+             globals.mcmc_check = data['mcmc_check']
 
 
 
@@ -1785,7 +1205,7 @@ class load_Window(object):
     def initscreen(self):
         [x.destroy() for x in [self.greeting, self.b, self.c, self.back, self.back1, self.l, self.MyListBox, self.text_1, self.user_input] if x is not None]
         self.maincanvas.update() 
-        image1 = Image.open(SCRIPT_DIR / "logo.png")
+        image1 = Image.open(globals.SCRIPT_DIR / "logo.png")
         logo = ImageTk.PhotoImage(image1.resize((360, 70)))
  #       self.imagetk2 = ImageTk.PhotoImage(image2.resize((int(x_2 - x_1), int(y_2 - y_1))))
         self.label1 = tk.Label(self.maincanvas, image=logo, bg = 'white')
@@ -1807,14 +1227,13 @@ class load_Window(object):
   
         
     def load_proj(self):
-        global proj_dir
-        os.chdir(POLYCHRON_PROJECTS_DIR)
+        os.chdir(globals.POLYCHRON_PROJECTS_DIR)
         [x.destroy() for x in [self.label1, self.greeting, self.b, self.c, self.back, self.l, self.back1, self.MyListBox, self.text_1, self.user_input] if x is not None]
         self.maincanvas.update()
 
         self.l=tk.Label(self.maincanvas, text="Select project", bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
         self.l.place(relx = 0.36, rely = 0.1)
-        myList = [d for d in os.listdir(POLYCHRON_PROJECTS_DIR) if os.path.isdir(d)]
+        myList = [d for d in os.listdir(globals.POLYCHRON_PROJECTS_DIR) if os.path.isdir(d)]
         myList = [d for d in myList if (d != '__pycache__') and (d != 'Data')]
         mylist_var = tk.StringVar(value = myList)
         self.MyListBox = tk.Listbox(self.maincanvas, listvariable = mylist_var, bg = '#eff3f6', font = ('Helvetica 11 bold'),  fg = '#2F4858', selectmode = 'browse')  
@@ -1825,15 +1244,14 @@ class load_Window(object):
         self.MyListBox['yscrollcommand'] = scrollbar.set
         self.MyListBox.place(relx = 0.36, rely = 0.17, relheight=0.4, relwidth = 0.28)
         self.MyListBox.bind('<<ListboxSelect>>', self.items_selected)
-        self.b=tk.Button(self.maincanvas,text='Load project', command=lambda: self.load_model(proj_dir),  bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6') 
+        self.b=tk.Button(self.maincanvas,text='Load project', command=lambda: self.load_model(globals.proj_dir),  bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6') 
         self.b.place(relx = 0.8, rely = 0.9, relwidth = 0.19)
-        self.top.bind('<Return>', (lambda event: self.load_model(proj_dir)))
+        self.top.bind('<Return>', (lambda event: self.load_model(globals.proj_dir)))
         self.back=tk.Button(self.maincanvas,text='Back', command=lambda: self.initscreen(),  bg = '#eff3f6', font = ('Helvetica 12 bold'),  fg = '#2F4858')
         self.back.place(relx = 0.21, rely = 0.01)
          
     
     def load_model(self, direc):
-        global proj_dir
         [x.destroy() for x in [self.greeting, self.label1, self.b, self.c, self.back, self.back1, self.l, self.MyListBox] if x is not None] 
         if self.selected_langs is None:
             path = direc
@@ -1844,7 +1262,7 @@ class load_Window(object):
 
         self.l=tk.Label(self.maincanvas, text="Model list", bg = 'white', font = ('helvetica 14 bold'), fg = '#2F4858' )
         self.l.place(relx = 0.36, rely = 0.1)
-       # myList_all = os.listdir(POLYCHRON_PROJECTS_DIR)
+       # myList_all = os.listdir(globals.POLYCHRON_PROJECTS_DIR)
         myList = [d for d in os.listdir(path) if os.path.isdir(d)]
         self.model_list = tk.StringVar(value = myList)
         self.MyListBox = tk.Listbox(self.maincanvas, listvariable = self.model_list, bg = '#eff3f6', font = ('Helvetica 11 bold'),  fg = '#2F4858', selectmode = 'browse')  
@@ -1862,7 +1280,7 @@ class load_Window(object):
         self.back.place(relx = 0.21, rely = 0.01)
         self.back1=tk.Button(self.maincanvas,text='Create new model', command=lambda: self.new_model(path),  bg = '#eff3f6', font = ('Helvetica 12 bold'),  fg = '#2F4858')
         self.back1.place(relx = 0.62, rely = 0.9, relwidth = 0.17)
-        proj_dir = path
+        globals.proj_dir = path
 
     def items_selected(self, event):
         """ handle item selected event    """
@@ -1874,8 +1292,7 @@ class load_Window(object):
   
         
     def create_file(self, folder_dir, load):  
-        global proj_dir
-        dirs = os.path.join(POLYCHRON_PROJECTS_DIR, folder_dir, self.model.get())
+        dirs = os.path.join(globals.POLYCHRON_PROJECTS_DIR, folder_dir, self.model.get())
         dirs2 = os.path.join(dirs, "stratigraphic_graph")
         dirs3 = os.path.join(dirs, "chronological_graph")
         dirs4 = os.path.join(dirs, "python_only")
@@ -1888,7 +1305,7 @@ class load_Window(object):
             os.makedirs(dirs4)
             os.makedirs(dirs5)
             os.chdir(dirs)
-            proj_dir = os.path.join(POLYCHRON_PROJECTS_DIR, folder_dir)
+            globals.proj_dir = os.path.join(globals.POLYCHRON_PROJECTS_DIR, folder_dir)
             if load:
                 for F in (StartPage, PageOne):
                     page_name = F.__name__
@@ -1957,7 +1374,6 @@ class load_Window(object):
 class StartPage(tk.Frame):
     """ Main frame for tkinter app"""
     def __init__(self, parent, controller):
-        global load_check, mcmc_check, FILE_INPUT, proj_dir
         tk.Frame.__init__(self, parent)
         self.controller = controller
         self.configure(background= 'white')
@@ -2022,7 +1438,7 @@ class StartPage(tk.Frame):
         file = tk.Menu(self.file_menubar, tearoff = 0, bg = 'white', font = ("helvetica 12 bold"))
         self.file_menubar["menu"] = file
         file.add_separator()
-        FILE_INPUT = None
+        globals.FILE_INPUT = None
         file.add_command(label ='Load stratigraphic diagram file (.dot)', command=lambda: self.open_file1(), font="helvetica 12 bold")
         file.add_command(label ='Load stratigraphic relationship file (.csv)', command=lambda: self.open_file2(),font="helvetica 12 bold")
         file.add_command(label ='Load scientific dating file (.csv)', command=lambda: self.open_file3(), font="helvetica 12 bold")
@@ -2030,9 +1446,9 @@ class StartPage(tk.Frame):
         file.add_command(label ='Load group relationship file (.csv)', command=lambda: self.open_file5(), font="helvetica 12 bold")
         file.add_command(label ='Load context equalities file (.csv)', command=lambda: self.open_file6(), font="helvetica 12 bold")
         file.add_command(label ='Load new project', command = lambda: load_Window(MAIN_FRAME) , font="helvetica 12 bold")
-        file.add_command(label ='Load existing model', command = lambda: load_Window.load_model(load_Window(MAIN_FRAME), proj_dir), font="helvetica 12 bold")
+        file.add_command(label ='Load existing model', command = lambda: load_Window.load_model(load_Window(MAIN_FRAME), globals.proj_dir), font="helvetica 12 bold")
         file.add_command(label ='Save changes as current model', command = lambda: self.save_state_1(), font="helvetica 12 bold")
-        file.add_command(label ='Save changes as new model', command = lambda: self.refresh_4_new_model(controller, proj_dir, load = False), font="helvetica 12 bold")
+        file.add_command(label ='Save changes as new model', command = lambda: self.refresh_4_new_model(controller, globals.proj_dir, load = False), font="helvetica 12 bold")
         file.add_separator()
         file.add_command(label ='Exit', command = lambda: self.destroy1)
         self.file_menubar.place(relx=0.00, rely=0, relwidth=0.1, relheight=0.03)
@@ -2050,9 +1466,9 @@ class StartPage(tk.Frame):
         #file2.add_separator()
         file2.add_command(label = 'Render chronological graph', command=lambda: self.chronograph_render_wrap(), font='helvetica 12 bold')
         file2.add_command(label = 'Calibrate model', command=lambda: self.load_mcmc(), font='helvetica 12 bold')
-        file2.add_command(label = 'Calibrate multiple projects from project', command=lambda: popupWindow8(self, proj_dir), font='helvetica 12 bold')
-        file2.add_command(label = 'Calibrate node delete variations (alpha)', command=lambda: popupWindow9(self, proj_dir), font='helvetica 12 bold')
-        file2.add_command(label = 'Calibrate important variations (alpha)', command=lambda: popupWindow10(self, proj_dir), font='helvetica 12 bold')
+        file2.add_command(label = 'Calibrate multiple projects from project', command=lambda: popupWindow8(self, globals.proj_dir), font='helvetica 12 bold')
+        file2.add_command(label = 'Calibrate node delete variations (alpha)', command=lambda: popupWindow9(self, globals.proj_dir), font='helvetica 12 bold')
+        file2.add_command(label = 'Calibrate important variations (alpha)', command=lambda: popupWindow10(self, globals.proj_dir), font='helvetica 12 bold')
             
         # file2.add_separator()
         self.tool_menubar.place(relx=0.14, rely=0, relwidth=0.1, relheight=0.03)
@@ -2232,7 +1648,6 @@ class StartPage(tk.Frame):
         self.menubar.place_forget()
     def resid_check(self):
         '''Loads a text box to check if the user thinks any samples are residual'''
-        global load_check
         MsgBox = tk.messagebox.askquestion('Residual and Intrusive Contexts', 'Do you suspect any of your samples are residual or intrusive?', icon='warning')
         if MsgBox == 'yes':
             
@@ -2252,7 +1667,6 @@ class StartPage(tk.Frame):
             self.testmenu.place_forget()
             self.variable.set("Node Action")
     def save_state_1(self):
-        global mcmc_check, load_check, FILE_INPUT
         #converting metadata treeview to dataframe
         row_list = []
         columns = ('context', 'Reason for deleting')
@@ -2272,10 +1686,10 @@ class StartPage(tk.Frame):
             if not any(x in str(type(v)) for x in check_list):
                data[i] = v
         data['all_vars'] = list(data.keys())
-        data['load_check'] = load_check
-        data['mcmc_check'] = mcmc_check
-        data["file_input"] = FILE_INPUT
-        if mcmc_check == 'mcmc_loaded': 
+        data['load_check'] = globals.load_check
+        data['mcmc_check'] = globals.mcmc_check
+        data["file_input"] = globals.FILE_INPUT
+        if globals.mcmc_check == 'mcmc_loaded': 
             results = data["all_results_dict"]
             df = pd.DataFrame()
             for i in results.keys():
@@ -2300,23 +1714,22 @@ class StartPage(tk.Frame):
 
                 
     def restore_state(self):
-        global mcmc_check, load_check, FILE_INPUT
         with open('python_only/save.pickle', "rb") as f:
             data = pickle.load(f)
             vars_list = data['all_vars']
             for i in vars_list:
                 setattr(self, i, data[i])
-            FILE_INPUT = data['file_input']
-            load_check = data['load_check']
-            mcmc_check = data['mcmc_check']
+            globals.FILE_INPUT = data['file_input']
+            globals.load_check = data['load_check']
+            globals.mcmc_check = data['mcmc_check']
         if self.graph is not None:
             self.littlecanvas.delete('all')
             self.rerender_stratdag()
             for i, j in enumerate(self.treeview_df['context']):
                  self.tree2.insert("", 'end', text=j, values=self.treeview_df['Reason for deleting'][i])
 
-        if load_check == 'loaded':
-            FILE_INPUT = None
+        if globals.load_check == 'loaded':
+            globals.FILE_INPUT = None
             #manaually work this out as canvas hasn't rendered enough at this point to have a height and width in pixels
             height = 0.96*0.99*0.97*1000*0.96
             width = 0.99*0.37*2000*0.96  
@@ -2388,11 +1801,10 @@ class StartPage(tk.Frame):
 
     def open_file1(self):
         '''opens dot file'''
-        global node_df, FILE_INPUT, phase_true
         file = askopenfile(mode='r', filetypes=[('Python Files', '*.dot')])
-        FILE_INPUT = file.name
+        globals.FILE_INPUT = file.name
         self.graph = nx.DiGraph(imagefunc(file.name), graph_attr={'splines':'ortho'})
-        if phase_true == 1:
+        if globals.phase_true == 1:
             self.image = imgrender_phase(self.graph)
         else:
             self.image = imgrender(self.graph)
@@ -2416,11 +1828,10 @@ class StartPage(tk.Frame):
         self.littlecanvas.bind("<Button-3>", self.preClick)
 
     def rerender_stratdag(self):
-        global phase_true
         '''rerenders stratdag after reloading previous project'''
         height = 0.96*0.99*0.97*1000
         width = 0.99*0.37*2000*0.96  
-        if phase_true == 1:
+        if globals.phase_true == 1:
             self.image = imgrender_phase(self.graph)
         else:
             self.image = imgrender(self.graph, width, height)
@@ -2448,15 +1859,14 @@ class StartPage(tk.Frame):
 
     def chronograph_render_wrap(self):
         '''wraps chronograph render so we can assign a variable when runing the func using a button'''
-        global load_check
         if (self.phase_rels is None) or (self.phasefile is None) or (self.datefile is None):
             tk.messagebox.showinfo("Error", "You haven't loaded in all the data required for a chronological graph")
-        if load_check == "loaded":
+        if globals.load_check == "loaded":
             answer = askquestion('Warning!', 'Chronological DAG already loaded, are you sure you want to write over it? You can copy this model in the file menu if you want to consider multiple models')
             if answer == 'yes':
             
-                self.refresh_4_new_model(self.controller, proj_dir, load = False)
-                load_check = 'not_loaded'
+                self.refresh_4_new_model(self.controller, globals.proj_dir, load = False)
+                globals.load_check = 'not_loaded'
                 self.littlecanvas2.delete('all')
                 self.chrono_dag = self.chronograph_render()
                 startpage = self.controller.get_page('StartPage')
@@ -2481,11 +1891,10 @@ class StartPage(tk.Frame):
             startpage.node_del_tracker = self.popup3.node_del_tracker
     def open_file2(self):
         '''opens plain text strat file'''
-        global FILE_INPUT, phase_true       
         file = askopenfile(mode='r', filetypes=[('Python Files', '*.csv')])
         if file is not None:
             try:
-                FILE_INPUT = None
+                globals.FILE_INPUT = None
                 self.littlecanvas.delete('all')
                 self.stratfile = pd.read_csv(file, dtype=str)
                 load_it = self.file_popup(self.stratfile)
@@ -2507,7 +1916,7 @@ class StartPage(tk.Frame):
                             edges.append(a)
                     G.add_edges_from(edges, arrowhead="none")
                     self.graph = G
-                    if phase_true == 1:
+                    if globals.phase_true == 1:
                         self.image = imgrender_phase(self.graph)
                     else:
                         self.image = imgrender(self.graph, self.littlecanvas.winfo_width(), self.littlecanvas.winfo_height())
@@ -2586,7 +1995,6 @@ class StartPage(tk.Frame):
                 
     def open_file6(self):
         '''opens files determining equal contexts (in time)'''
-        global phase_true
         file = askopenfile(mode='r', filetypes=[('Python Files', '*.csv')])
         if file is not None:
             try:
@@ -2601,7 +2009,7 @@ class StartPage(tk.Frame):
                     y_nod = [newnode if i == j else i for i in x_nod]
                     mapping = dict(zip(x_nod, y_nod))
                     self.graph = nx.relabel_nodes(self.graph, mapping)
-                if phase_true == 1:
+                if globals.phase_true == 1:
                     imgrender_phase(self.graph)
                 else:
                     imgrender(self.graph, self.littlecanvas.winfo_width(), self.littlecanvas.winfo_height())
@@ -2619,7 +2027,6 @@ class StartPage(tk.Frame):
         self.top.destroy()
     def load_mcmc(self):
         '''loads mcmc loading page'''
-        global mcmc_check
         self.top = tk.Toplevel(self.littlecanvas)
         self.backcanvas = tk.Canvas(self.top, bg = '#AEC7D6')
         self.backcanvas.place(relx = 0, rely = 0, relwidth = 1, relheight = 1)
@@ -2635,7 +2042,7 @@ class StartPage(tk.Frame):
         self.ACCEPT = [[]]
         while min([len(i) for i in self.ACCEPT]) < 50000:
             self.CONTEXT_NO, self.ACCEPT, self.PHI_ACCEPT, self.PHI_REF, self.A, self.P, self.ALL_SAMPS_CONT, self.ALL_SAMPS_PHI, self.resultsdict, self.all_results_dict = self.MCMC_func()
-        mcmc_check = 'mcmc_loaded'
+        globals.mcmc_check = 'mcmc_loaded'
         sys.stdout = old_stdout
         self.controller.show_frame('PageOne')
         f = dir(self)
@@ -2645,7 +2052,6 @@ class StartPage(tk.Frame):
 
     def addedge(self, edgevec):
         '''adds an edge relationship (edgevec) to graph and rerenders the graph'''
-        global node_df, phase_true
         x_1 = edgevec[0]
         x_2 = edgevec[1]
         self.graph.add_edge(x_1, x_2, arrowhead='none')
@@ -2653,7 +2059,7 @@ class StartPage(tk.Frame):
         if self.graph.edges() != self.graph_check.edges():
             self.graph.remove_edge(x_1, x_2)
             tk.messagebox.showerror("Redundant relationship", "That stratigraphic relationship is already implied by other relationships in the graph")
-        if phase_true == 1:
+        if globals.phase_true == 1:
             imgrender_phase(self.graph)
         else:
             imgrender(self.graph, self.littlecanvas.winfo_width(), self.littlecanvas.winfo_height())
@@ -2662,9 +2068,8 @@ class StartPage(tk.Frame):
 
     def chronograph_render(self):
         '''initiates residual checking function then renders the graph when thats done'''
-        global load_check
-        if load_check != 'loaded':
-            load_check = 'loaded'
+        if globals.load_check != 'loaded':
+            globals.load_check = 'loaded'
             self.resid_check()
             self.image2 = imgrender2(self.littlecanvas2.winfo_width(), self.littlecanvas2.winfo_height())
             if self.image2 != 'No_image':
@@ -2684,7 +2089,7 @@ class StartPage(tk.Frame):
                     self.show_image2()
                     self.littlecanvas2.bind("<Configure>", self.resize2)
                 except (RuntimeError, TypeError, NameError):
-                    load_check = 'not_loaded'
+                    globals.load_check = 'not_loaded'
         return self.popup3.graphcopy
 
 
@@ -2749,7 +2154,7 @@ class StartPage(tk.Frame):
       #  for i in input_1:
         writer.writerow(input_1)
         f.close()
-        CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.phi_ref, self.prev_phase, self.post_phase, self.TOPO_SORT, self.CONT_TYPE)
+        CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(globals.CALIBRATION, strat_vec, rcd_est, rcd_err, self.key_ref, context_no, self.phi_ref, self.prev_phase, self.post_phase, self.TOPO_SORT, self.CONT_TYPE)
         phase_nodes, resultsdict, all_results_dict = phase_labels(PHI_REF, self.post_phase, PHI_ACCEPT, ALL_SAMPS_PHI)
         for i, j in enumerate(CONTEXT_NO):
             resultsdict[j] = ACCEPT[i]
@@ -2761,12 +2166,12 @@ class StartPage(tk.Frame):
     def nodecheck(self, x_current, y_current):
         """ returns the node that corresponds to the mouse cooridinates"""     
         node_inside = "no node"
-        if phase_true == 1:
+        if globals.phase_true == 1:
             (graph,) = pydot.graph_from_dot_file('fi_new.txt')
             node_df_con = node_coords_fromjson(graph)
         else:
             node_df_con = node_coords_fromjson(self.graph)
-        node_df = node_df_con[0]
+        globals.node_df = node_df_con[0]
         
         xmax, ymax = node_df_con[1]
         #forms a dataframe from the dicitonary of coords
@@ -2775,10 +2180,10 @@ class StartPage(tk.Frame):
         cany = y*self.imscale
         xscale = (x_current)*(xmax)/cavx
         yscale = (cany-y_current)*(ymax)/cany
-        for n_ind in range(node_df.shape[0]):
-            if ((node_df.iloc[n_ind].x_lower < xscale < node_df.iloc[n_ind].x_upper) and
-                    (node_df.iloc[n_ind].y_lower < yscale < node_df.iloc[n_ind].y_upper)):
-                node_inside = node_df.iloc[n_ind].name
+        for n_ind in range(globals.node_df.shape[0]):
+            if ((globals.node_df.iloc[n_ind].x_lower < xscale < globals.node_df.iloc[n_ind].x_upper) and
+                    (globals.node_df.iloc[n_ind].y_lower < yscale < globals.node_df.iloc[n_ind].y_upper)):
+                node_inside = globals.node_df.iloc[n_ind].name
                 self.graph[node_inside]
         return node_inside
 
@@ -2807,16 +2212,15 @@ class StartPage(tk.Frame):
         
     def nodes(self, currentevent):
         """performs action using the node and redraws the graph"""
-        global load_check, phase_true
         self.testmenu.place_forget()
         #deleting a single context
         if self.variable.get() == "Delete context":
             if self.node != "no node":
-                if load_check == 'loaded':
-                    load_check = 'not_loaded'
+                if globals.load_check == 'loaded':
+                    globals.load_check = 'not_loaded'
                     answer = askquestion('Warning!', 'Chronological DAG already loaded, do you want to save this as a new model first? \n\n Click Yes to save as new model and No to overwrite existing model')
                     if answer == 'yes':
-                        self.refresh_4_new_model(self.controller, proj_dir, load = False)
+                        self.refresh_4_new_model(self.controller, globals.proj_dir, load = False)
                     self.littlecanvas2.delete('all')       
              #   self.graph.remove_node(self.node)
                 self.graph = node_del_fixed(self.graph, self.node)
@@ -2826,12 +2230,12 @@ class StartPage(tk.Frame):
                 self.tree2.insert("", 'end', text=self.node, values=[self.nodedel_meta])
         #presents popup list to label new context
         if self.variable.get() == "Add new contexts":
-            if load_check == 'loaded':
+            if globals.load_check == 'loaded':
                 answer = askquestion('Warning!', 'Chronological DAG already loaded, do you want to save this as a new model first? \n Click YES to save as new model and NO to overwrite existing model')
                 if answer == 'yes':
-                    self.refresh_4_new_model(self.controller, proj_dir, load = False)
+                    self.refresh_4_new_model(self.controller, globals.proj_dir, load = False)
                 self.littlecanvas2.delete('all')
-                load_check = 'not_loaded'
+                globals.load_check = 'not_loaded'
             self.w = popupWindow(self)
             self.wait_window(self.w.top)
             self.node = self.w.value
@@ -2843,12 +2247,12 @@ class StartPage(tk.Frame):
             if self.variable.get() == "Delete stratigraphic relationship with "+ str(self.edge_nodes[0]):
                 self.edge_nodes = np.append(self.edge_nodes, self.node)
                 self.reason = self.edge_del_popup()
-                if load_check == 'loaded':
+                if globals.load_check == 'loaded':
                     answer = askquestion('Warning!', 'Chronological DAG already loaded, do you want to save this as a new model first? \n Click YES to save as new model and NO to overwrite existing model')
                     if answer == 'yes':
-                        self.refresh_4_new_model(self.controller, proj_dir, load = False)
+                        self.refresh_4_new_model(self.controller, globals.proj_dir, load = False)
                     self.littlecanvas2.delete('all')
-                    load_check = 'not_loaded'
+                    globals.load_check = 'not_loaded'
                 try:
                     self.graph.remove_edge(self.edge_nodes[0], self.edge_nodes[1])
                     self.edge_render()
@@ -2866,12 +2270,12 @@ class StartPage(tk.Frame):
                 self.edge_nodes = []
             #second case is adding a strat relationship
             elif self.variable.get() == ("Place "+ str(self.edge_nodes[0]) + " Above"):
-                    if load_check == 'loaded':
+                    if globals.load_check == 'loaded':
                      answer = askquestion('Warning!', 'Chronological DAG already loaded, do you want to save this as a new model first? \n Click YES to save as new model and NO to overwrite existing model')
                      if answer == 'yes':
-                         self.refresh_4_new_model(self.controller, proj_dir, load = False)
+                         self.refresh_4_new_model(self.controller, globals.proj_dir, load = False)
                     self.littlecanvas2.delete('all')
-                    load_check = 'not_loaded'
+                    globals.load_check = 'not_loaded'
                     self.edge_nodes = np.append(self.edge_nodes, self.node)
                     self.addedge(self.edge_nodes)
                     self.OptionList.remove("Place "+ str(self.edge_nodes[0]) + " Above")
@@ -2888,7 +2292,7 @@ class StartPage(tk.Frame):
         #equates too contexts
         if len(self.comb_nodes) == 1:
             if self.variable.get() == "Equate context with "+ str(self.comb_nodes[0]):
-                if load_check == 'loaded':
+                if globals.load_check == 'loaded':
                     answer = askquestion('Warning!', 'Chronological DAG already loaded, do you want to save this as a new model first? \n Click YES to save as new model and NO to overwrite existing model')
                 self.comb_nodes = np.append(self.comb_nodes, self.node)
                 graph_temp = nx.contracted_nodes(self.graph, self.comb_nodes[0], self.comb_nodes[1])
@@ -2953,7 +2357,7 @@ class StartPage(tk.Frame):
             self.testmenu = ttk.OptionMenu(self.littlecanvas, self.variable, self.OptionList[0], *self.OptionList, command=self.nodes)
         if self.variable.get() == "Get stratigraphic information":
             self.stratfunc(self.node) 
-        if phase_true == 1:
+        if globals.phase_true == 1:
             imgrender_phase(self.graph)
         else:
             imgrender(self.graph, self.littlecanvas.winfo_width(), self.littlecanvas.winfo_height())
@@ -3125,8 +2529,7 @@ class StartPage(tk.Frame):
 
     def phasing(self):
         """runs image render function with phases on seperate levels"""
-        global phase_true, node_df
-        phase_true = 1
+        globals.phase_true = 1
         self.image = imgrender_phase(self.graph)
         self.littlecanvas.img = ImageTk.PhotoImage(self.image)
         self.littlecanvas_img = self.littlecanvas.create_image(0, 0, anchor="nw",
@@ -3446,9 +2849,8 @@ class PageOne(tk.Frame):
 
     def mcmc_output(self):
         '''loads posterior density plots into the graph'''
-        global mcmc_check
         startpage = self.controller.get_page('StartPage')
-        if mcmc_check == 'mcmc_loaded':
+        if globals.mcmc_check == 'mcmc_loaded':
             if self.canvas_plt is not None:
                 self.canvas_plt.get_tk_widget().pack_forget()
                 self.toolbar.destroy()
@@ -3498,14 +2900,13 @@ class PageOne(tk.Frame):
 
     def get_hpd_interval(self):
         '''loads hpd intervals into the results page'''
-        global mcmc_check
         if len(self.results_list) != 0:
             startpage = self.controller.get_page('StartPage')
             USER_INP = simpledialog.askstring(title="HPD interval percentage",
                                               prompt="Please input HPD interval percentage. Note, 95% is used as standard \n \n Percentage:")
     
             self.lim = np.float64(USER_INP)/100
-            if mcmc_check == 'mcmc_loaded':
+            if globals.mcmc_check == 'mcmc_loaded':
                 hpd_str = ""
                 columns = ('context', 'hpd_interval')
                 self.tree_phases = ttk.Treeview(self.littlecanvas_a, columns=columns, show='headings')
@@ -3532,8 +2933,7 @@ class PageOne(tk.Frame):
                 self.littlecanvas_a.create_text(150, 80, text=hpd_str, fill = '#0A3200')
 
     def chronograph_render_post(self):
-        global load_check
-        if load_check == 'loaded':
+        if globals.load_check == 'loaded':
             self.image2 = imgrender2(self.littlecanvas2.winfo_width(), self.littlecanvas2.winfo_height())
         #    scale_factor = min(self.littlecanvas2.winfo_width()/self.image_ws.size[0], self.littlecanvas2.winfo_height()/self.image_ws.size[1])                       
         #    self.image2 = self.image_ws.resize((int(self.image_ws.size[0]*scale_factor), int(self.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
@@ -3633,10 +3033,9 @@ class PageOne(tk.Frame):
 
     def nodecheck(self, x_current, y_current):
         """ returns the node that corresponds to the mouse cooridinates"""
-        global node_df
         node_inside = "no node"
         node_df_con = node_coords_fromjson(self.chronograph)
-        node_df = node_df_con[0]
+        globals.node_df = node_df_con[0]
         xmax, ymax = node_df_con[1]
         #forms a dataframe from the dicitonary of coords
         x, y = self.image2.size
@@ -3645,10 +3044,10 @@ class PageOne(tk.Frame):
         xscale = (x_current)*(xmax)/cavx
         yscale = (cany-y_current)*(ymax)/cany
         outline = nx.get_node_attributes(self.chronograph, 'color')
-        for n_ind in range(node_df.shape[0]):
-            if ((node_df.iloc[n_ind].x_lower < xscale < node_df.iloc[n_ind].x_upper) and
-                    (node_df.iloc[n_ind].y_lower < yscale < node_df.iloc[n_ind].y_upper)):
-                node_inside = node_df.iloc[n_ind].name
+        for n_ind in range(globals.node_df.shape[0]):
+            if ((globals.node_df.iloc[n_ind].x_lower < xscale < globals.node_df.iloc[n_ind].x_upper) and
+                    (globals.node_df.iloc[n_ind].y_lower < yscale < globals.node_df.iloc[n_ind].y_upper)):
+                node_inside = globals.node_df.iloc[n_ind].name
                 outline[node_inside] = 'red'
                 nx.set_node_attributes(self.chronograph, outline, 'color')
         return node_inside
@@ -3789,7 +3188,7 @@ class PageTwo(object):
             fill[j] = 'gray'
         nx.set_node_attributes(self.graphcopy, color, 'color')
         nx.set_node_attributes(self.graphcopy, fill, 'fontcolor')
-        if phase_true == 1:
+        if globals.phase_true == 1:
             self.image = imgrender_phase(self.graphcopy)
         else:
             self.image = imgrender(self.graphcopy, self.graphcanvas.winfo_width(), self.graphcanvas.winfo_height())
@@ -3911,7 +3310,6 @@ class PageTwo(object):
 
     def nodecheck(self, x_current, y_current):
         """ returns the node that corresponds to the mouse cooridinates"""
-        global node_df
         startpage = self.controller.get_page('StartPage')
         #updates canvas to get the right coordinates
         startpage.update_idletasks()
@@ -3921,7 +3319,7 @@ class PageTwo(object):
             #gets node coordinates from the graph
             node_df_con = node_coords_fromjson(self.graphcopy)
             #forms a dataframe from the dicitonary of coords
-            node_df = node_df_con[0]
+            globals.node_df = node_df_con[0]
             xmax, ymax = node_df_con[1]
             #scales the coordinates using the canvas and image size
             x, y = self.image.size
@@ -3931,10 +3329,10 @@ class PageTwo(object):
             yscale = (cany-y_current)*(ymax)/cany
             #gets current node colours
             outline = nx.get_node_attributes(self.graphcopy, 'color')
-            for n_ind in range(node_df.shape[0]):
-                if ((node_df.iloc[n_ind].x_lower < xscale < node_df.iloc[n_ind].x_upper) and
-                        (node_df.iloc[n_ind].y_lower < yscale < node_df.iloc[n_ind].y_upper)):
-                    node_inside = node_df.iloc[n_ind].name
+            for n_ind in range(globals.node_df.shape[0]):
+                if ((globals.node_df.iloc[n_ind].x_lower < xscale < globals.node_df.iloc[n_ind].x_upper) and
+                        (globals.node_df.iloc[n_ind].y_lower < yscale < globals.node_df.iloc[n_ind].y_upper)):
+                    node_inside = globals.node_df.iloc[n_ind].name
                     nx.set_node_attributes(self.graphcopy, outline, 'color')
         return node_inside
 
@@ -3980,7 +3378,7 @@ class PageTwo(object):
         scroll_bar2.pack(side=tk.RIGHT)
         #updates the node outline colour
         nx.set_node_attributes(self.graphcopy, outline, 'color')
-        if phase_true == 1:
+        if globals.phase_true == 1:
             imgrender_phase(self.graphcopy)
         else:
             imgrender(self.graphcopy, self.graphcanvas.winfo_width(), self.graphcanvas.winfo_height())
