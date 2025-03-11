@@ -39,6 +39,7 @@ import csv
 # import cairosvg
 from importlib.metadata import version # requires python >= 3.8
 import argparse
+import packaging.version
 # Get the absolute path to a directory in the users home dir
 POLYCHRON_PROJECTS_DIR = (pathlib.Path.home() / "Documents/Pythonapp_tests/projects").resolve()
 # Ensure the directory exists (this is a little aggressive)
@@ -1033,6 +1034,13 @@ class popupWindow3(object):
             self.graphcopy.add_edge(a[0], a[1], arrowhead = 'none')
         for b in edge_remove:
             self.graphcopy.remove_edge(b[0], b[1])
+
+        # networkx.drawing.nx_pydot.write_dot from networkx < 3.4 does not quote node attributes correctly if they contain characters such as :. Networkx 3.4 is only available for pythono >= 3.10, so a workaround is required for python 3.9 users.
+        if packaging.version.parse(nx.__version__) < packaging.version.parse("3.4.0"):
+            # Remove the contraction attribute from nodes.
+            for i in nodes:
+                self.graphcopy.nodes[i].pop("contraction", None)
+
         write_dot(self.graphcopy, 'fi_new_chrono')
         self.top.destroy()
 
