@@ -622,10 +622,11 @@ def parse_cli(argv=None):
     args = parser.parse_args(argv)
     return args
 
+
 def print_version():
     """Print the version of PolyChron to stdout
 
     Note:
-        For editable installs the printed value may be incorrect 
+        For editable installs the printed value may be incorrect
     """
     print(f"PolyChron {version('polychron')}")
