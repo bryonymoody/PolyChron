@@ -1,7 +1,10 @@
 # @note - this will currently cause a window to open and require working tkinter.
-import pytest
-import polychron.gui
 import pathlib
+
+import pytest
+
+import polychron.gui
+
 
 class TestGUI:
 
