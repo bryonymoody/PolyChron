@@ -73,10 +73,6 @@ With PolyChron installed in the current python environment, it can be launched u
 polychron
 # By running the installed polychron module
 python3 -m polychron
-# By launching the polychron/__main__.py
-python3 ./polychron/
-# Or by launching the GUI module manually
-python3 ./polychron/gui.py
 ```
 
 ## Documentation

@@ -4040,7 +4040,3 @@ def main():
         print_version()
     else:
         MAIN_FRAME.mainloop() 
-
-# If this script is executed directly, run the main method
-if __name__ == "__main__":
-    main()
