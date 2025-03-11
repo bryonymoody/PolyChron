@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 from tkinter.filedialog import askopenfile
 from graphviz import render
-import PolyChron.automated_mcmc_ordering_coupling_copy as mcmc
+import polychron.automated_mcmc_ordering_coupling_copy as mcmc
 from ttkthemes import ThemedStyle
 import sys
 from matplotlib.figure import Figure
@@ -2263,8 +2263,8 @@ class StartPage(tk.Frame):
   #      self.node_importance(self.graph)
         var_list = [var for var in vars_list_1 if (('__' and 'grid' and 'get' and 'tkinter' and 'children') not in var) and (var[0] != '_')]          
         data = {}
-        # Type names to not pickle when saving state. PolyChron is excluded to avoid classes which inherit from tk, this may be a bit too strong.
-        check_list = ["tkinter", "method", "__main__", 'PIL', "PolyChron"]
+        # Type names to not pickle when saving state. polychron is excluded to avoid classes which inherit from tk, this may be a bit too strong.
+        check_list = ["tkinter", "method", "__main__", 'PIL', "polychron"]
         
 
         for i in var_list:
@@ -4008,7 +4008,7 @@ style.configure('TOptionMenu', font=('Helvetica', 12, 'bold'))
 style.configure('TTreeView', font=('Helvetica', 12, 'bold'))
 MAIN_FRAME.option_add("*Font", default_font)
 MAIN_FRAME.geometry("2000x1000")
-MAIN_FRAME.title(f"PolyChron {version('PolyChron')}")
+MAIN_FRAME.title(f"PolyChron {version('polychron')}")
 
 def parse_cli(argv=None):
     """Parse and return command line arguments
@@ -4030,7 +4030,7 @@ def print_version():
     Note:
         For editable installs the printed value may be incorrect 
     """
-    print(f"PolyChron {version('PolyChron')}")
+    print(f"PolyChron {version('polychron')}")
 
 def main():
     """Main method as the entry point for launching the GUI

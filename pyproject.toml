@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "PolyChron"
+name = "polychron"
 version = "0.1.0"
 requires-python = ">= 3.9"
 authors = [
@@ -58,7 +58,7 @@ Repository = "https://github.com/bryonymoody/PolyChron"
 Issues = "https://github.com/bryonymoody/PolyChron/issues"
 
 [project.gui-scripts]
-polychron = "PolyChron.gui:main"
+polychron = "polychron.gui:main"
 
 # pytest options
 [tool.pytest.ini_options]
@@ -77,7 +77,7 @@ line-length = 120
 indent-width = 4
 # Exclude pre-existing files until they have intentionally been linted
 extend-exclude = [
-    "PolyChron/automated_mcmc_ordering_coupling_copy.py",
+    "polychron/automated_mcmc_ordering_coupling_copy.py",
 ]
 # Select which ruff rules to apply when linting.
 lint.select = ["E4", "E7", "E9", "F"]

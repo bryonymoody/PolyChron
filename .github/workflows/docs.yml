@@ -35,7 +35,7 @@ jobs:
           sudo apt-get -y install graphviz
 
       # Install the package into the current python environment with the docs extra group
-      - name: Install PolyChron and docs dependencies
+      - name: Install polychron and docs dependencies
         run: |
           python3 -m pip install -U pip
           python3 -m pip install .[docs]

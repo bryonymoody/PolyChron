@@ -44,7 +44,7 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-You can then install the latest version of `PolyChron` into your Python environment using pip:
+You can then install the latest version of PolyChron into your Python environment using pip:
 
 ```bash
 python3 -m pip install git+https://github.com/bryonymoody/PolyChron.git
@@ -71,12 +71,12 @@ With PolyChron installed in the current python environment, it can be launched u
 ```bash
 # via the executable script
 polychron
-# By running the installed PolyChron module
-python3 -m PolyChron
-# By launching the PolyChron/__main__.py
-python3 ./PolyChron/
+# By running the installed polychron module
+python3 -m polychron
+# By launching the polychron/__main__.py
+python3 ./polychron/
 # Or by launching the GUI module manually
-python3 ./PolyChron/gui.py
+python3 ./polychron/gui.py
 ```
 
 ## Documentation
@@ -84,7 +84,7 @@ python3 ./PolyChron/gui.py
 Documentation is built using [mkdocs](https://github.com/mkdocs/mkdocs) and some extensions.
 
 Documentation building dependencies are included in the `docs` optional dependencies group.
-They can be installed into the current python environment along with `PolyChron` using `pip`:
+They can be installed into the current python environment along with `polychron` using `pip`:
 
 ```bash
 python3 -m pip install -e .[docs]
