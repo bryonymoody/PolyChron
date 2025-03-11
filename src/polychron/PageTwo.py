@@ -5,6 +5,7 @@ from tkinter import ttk
 import networkx as nx
 from PIL import Image, ImageTk
 
+from . import globals
 from .popupWindow4 import popupWindow4
 from .util import imgrender, imgrender_phase, node_coords_fromjson
 
