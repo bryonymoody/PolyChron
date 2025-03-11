@@ -489,6 +489,22 @@ class MainFrame(tk.Tk):
         self.container.grid_columnconfigure(0, weight=1)
         self.frames = {}
 
+        style = ThemedStyle(self)
+        style.set_theme("arc")
+        # f = tkFont.Font(family='helvetica', size=10, weight='bold')
+        # s = ttk.Style()
+        # s.configure('.', font=f)
+        default_font = tkFont.nametofont("TkDefaultFont")
+        default_font.configure(size=12, weight = 'bold')
+        style = ttk.Style(self)
+        style.configure('TEntry', font=('Helvetica', 12, 'bold'))
+        style.configure('TButton', font=('Helvetica', 12, 'bold'))
+        style.configure('TLabel', font=('Helvetica', 12, 'bold'))
+        style.configure('TOptionMenu', font=('Helvetica', 12, 'bold'))
+        style.configure('TTreeView', font=('Helvetica', 12, 'bold'))
+        self.option_add("*Font", default_font)
+        self.geometry("2000x1000")
+        self.title(f"PolyChron {version('polychron')}")
 
     def show_frame(self, page_name):
         '''Show a frame for the given page name'''
@@ -3391,22 +3407,6 @@ class PageTwo(object):
 
 # Global scoping of MAIN_FRAME is currently required for state saving behaviour, prior to refactoring.
 MAIN_FRAME = MainFrame()
-style = ThemedStyle(MAIN_FRAME)
-style.set_theme("arc")
-# f = tkFont.Font(family='helvetica', size=10, weight='bold')
-# s = ttk.Style()
-# s.configure('.', font=f)
-default_font = tkFont.nametofont("TkDefaultFont")
-default_font.configure(size=12, weight = 'bold')
-style = ttk.Style(MAIN_FRAME)
-style.configure('TEntry', font=('Helvetica', 12, 'bold'))
-style.configure('TButton', font=('Helvetica', 12, 'bold'))
-style.configure('TLabel', font=('Helvetica', 12, 'bold'))
-style.configure('TOptionMenu', font=('Helvetica', 12, 'bold'))
-style.configure('TTreeView', font=('Helvetica', 12, 'bold'))
-MAIN_FRAME.option_add("*Font", default_font)
-MAIN_FRAME.geometry("2000x1000")
-MAIN_FRAME.title(f"PolyChron {version('polychron')}")
 
 def parse_cli(argv=None):
     """Parse and return command line arguments
