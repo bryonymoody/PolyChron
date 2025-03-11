@@ -41,7 +41,7 @@ dependencies = [
 
 # When widely supported, it would be better to leverage [dependency-groups] than optional-extras for at least dev. https://packaging.python.org/en/latest/specifications/dependency-groups
 [project.optional-dependencies]
-docs = [
+doc = [
     "mkdocstrings[python]>=0.18",
     "mkdocs-material>=9.5.0",
 ]

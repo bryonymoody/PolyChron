@@ -29,16 +29,16 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
 
-      # Install non-python dependencies. This could be skipped if we manually installed docs dependencies
+      # Install non-python dependencies. This could be skipped if we manually installed documentation dependencies
       - name: Install non-python dependencies
         run: |
           sudo apt-get -y install graphviz
 
-      # Install the package into the current python environment with the docs extra group
-      - name: Install polychron and docs dependencies
+      # Install the package into the current python environment with the doc extra group
+      - name: Install polychron and doc dependencies
         run: |
           python3 -m pip install -U pip
-          python3 -m pip install .[docs]
+          python3 -m pip install .[doc]
 
       # Build the documentation
       - name: Run mkdocs build

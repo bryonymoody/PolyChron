@@ -58,10 +58,10 @@ cd PolyChron
 python3 -m pip install .
 ```
 
-If you are installing PolyChron from source for as a developer, consider using an editable installation (`-e` / `--editable`) and installing the `dev`, `docs` and `test` extras.
+If you are installing PolyChron from source for as a developer, consider using an editable installation (`-e` / `--editable`) and installing the `dev`, `doc` and `test` extras.
 
 ```bash
-python3 -m pip install -e .[dev,docs,test]
+python3 -m pip install -e .[dev,doc,test]
 ```
 
 ## Usage
@@ -79,11 +79,11 @@ python3 -m polychron
 
 Documentation is built using [mkdocs](https://github.com/mkdocs/mkdocs) and some extensions.
 
-Documentation building dependencies are included in the `docs` optional dependencies group.
+Documentation building dependencies are included in the `doc` optional dependencies group.
 They can be installed into the current python environment along with `polychron` using `pip`:
 
 ```bash
-python3 -m pip install -e .[docs]
+python3 -m pip install -e .[doc]
 ```
 
 Once installed, documentation can be generated and viewed via a local webserver using:
