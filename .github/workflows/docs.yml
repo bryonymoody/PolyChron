@@ -44,3 +44,26 @@ jobs:
       - name: Run mkdocs build
         run: |
           python3 -m mkdocs build
+
+      # Store the compiled use for deployment in the subequent job (if appropriate)
+      - name: Upload static files as artifact
+        id: deployment
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site/
+
+  # If this build was triggered by a push or workflow_dispatch agianst main, deploy the previously built docs to github pages via an action.
+  deploy:
+    if: ${{ ( github.event_name == 'workflow_dispatch' || github.event_name == 'push' ) && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    needs: build-docs
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
