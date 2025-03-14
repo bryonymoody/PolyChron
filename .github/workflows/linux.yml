@@ -51,7 +51,7 @@ jobs:
           sudo apt-get -y install graphviz
 
       # Install the package into the current python environment
-      - name: Install PolyChron
+      - name: Install polychron
         run: |
           python3 -m pip install -U pip
           python3 -m pip install .
@@ -62,23 +62,23 @@ jobs:
           sudo Xvfb $DISPLAY -screen 0 1280x1024x24 > /dev/null 2>&1 &
           echo "Xvfb started"
 
-      # Check that the PolyChron package has been installed via importlib.metadata
-      - name: Check PolyChron installed via importlib.metadata
+      # Check that the polychron package has been installed via importlib.metadata
+      - name: Check polychron installed via importlib.metadata
         run: |
-          python3 -c "from importlib.metadata import version; print(version('PolyChron'))"
+          python3 -c "from importlib.metadata import version; print(version('polychron'))"
 
-      # Run the PolyChron module to ensure it is installed. use --help to prevent gui hanging
-      - name: Run PolyChron as a module
+      # Run the polychron module to ensure it is installed. use --help to prevent gui hanging
+      - name: Run polychron as a module
         run: |
-          python3 -m PolyChron --help
+          python3 -m polychron --help
 
       # Run the polychron binary to ensure it is installed. use --version to prevent gui hanging
-      - name: Run PolyChron via the executable script
+      - name: Run polychron via the executable script
         run: |
           polychron --version
 
       # Install the package into the current python environment with the test extras
-      - name: Install PolyChron with extras
+      - name: Install polychron with extras
         run: |
           python3 -m pip install .[test]
 

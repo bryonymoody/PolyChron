@@ -35,7 +35,7 @@ jobs:
           sudo apt-get -y install graphviz
 
       # Install the package into the current python environment with the dev extra group
-      - name: Install PolyChron and dev dependencies
+      - name: Install polychron and dev dependencies
         run: |
           python3 -m pip install -U pip
           python3 -m pip install .[dev]
