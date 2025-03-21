@@ -38,7 +38,6 @@ import csv
 # from svglib.svglib import svg2rlg
 # import cairosvg
 from importlib.metadata import version # requires python >= 3.8
-import argparse
 import packaging.version
 # Get the absolute path to a directory in the users home dir
 POLYCHRON_PROJECTS_DIR = (pathlib.Path.home() / "Documents/Pythonapp_tests/projects").resolve()
@@ -4010,33 +4009,7 @@ MAIN_FRAME.option_add("*Font", default_font)
 MAIN_FRAME.geometry("2000x1000")
 MAIN_FRAME.title(f"PolyChron {version('polychron')}")
 
-def parse_cli(argv=None):
-    """Parse and return command line arguments
-
-    Args:
-        argv (list[str] or None): optional list of command line parameters to parse. If None, sys.argv is used by `argparse.ArgumentParser.parse_args`
-
-    Returns:
-        (argparse.Namespace): Namespace object with arguments set as attributes, as returned by `argparse.ArgumentParser.parse_args()`
-    """
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--version", action="store_true", help="show version information and exit")
-    args = parser.parse_args(argv)
-    return args
-
-def print_version():
-    """Print the version of PolyChron to stdout
-
-    Note:
-        For editable installs the printed value may be incorrect 
-    """
-    print(f"PolyChron {version('polychron')}")
-
 def main():
     """Main method as the entry point for launching the GUI
     """
-    args = parse_cli()
-    if args.version:
-        print_version()
-    else:
-        MAIN_FRAME.mainloop() 
+    MAIN_FRAME.mainloop()
