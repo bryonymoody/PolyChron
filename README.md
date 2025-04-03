@@ -1,6 +1,6 @@
 # PolyChron
 
-![PolyChron Logo](./PolyChron/logo.png)
+![PolyChron Logo](./src/polychron/resources/logo.png)
 
 PolyChron is prototype software required to be installed locally on a user’s machine, allowing users to produce multiple chronological models.
 
