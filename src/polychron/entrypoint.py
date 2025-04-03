@@ -18,6 +18,7 @@ def parse_cli(argv=None):
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--version", action="store_true", help="show version information and exit")
+    parser.add_argument("--view", type=str, help="Temporary: select which view to demo during development") #  @todo remove this
     args = parser.parse_args(argv)
     return args
 
@@ -42,4 +43,5 @@ def main():
         from .GUIApp import GUIApp
 
         app = GUIApp()
-        app.launch()
+        # app.launch()
+        app.launch(args.view) # @todo remove args.view
