@@ -12,6 +12,14 @@ from .views.ModelCreateView import ModelCreateView
 from .views.ModelSelectView import ModelSelectView
 from .views.ProjectCreateView import ProjectCreateView
 from .views.ProjectSelectView import ProjectSelectView
+from .views.AddContextView import AddContextView
+from .views.GetSupplementaryDataView import GetSupplementaryDataView
+from .views.ResidualCheckView import ResidualCheckView
+from .views.ManageIntrusiveOrResidualContexts import ManageIntrusiveOrResidualContexts
+from .views.RemoveContextView import RemoveContextView
+from .views.RemoveStratigraphicRelationshipView import RemoveStratigraphicRelationshipView
+from .views.DatafilePreviewView import DatafilePreviewView
+from .views.CalibrateModelSelectView import CalibrateModelSelectView
 
 class GUIApp:
     def __init__(self) -> None:
@@ -74,12 +82,21 @@ class GUIApp:
         """
 
         # Temporary dictionary of view instances, for use during refactoring before the addition of Models or Presenters
+        # popupWindow9 and popupWindow10 don't have any view related content + marked as alpha?
         views: Dict[str, ttk.Frame] = {
             "WelcomeView": WelcomeView,
             "ProjectCreateView": ProjectCreateView,
             "ProjectSelectView": ProjectSelectView,
             "ModelCreateView": ModelCreateView,
             "ModelSelectView": ModelSelectView,
+            "AddContextView": AddContextView,
+            "GetSupplementaryDataView": GetSupplementaryDataView,
+            "ResidualCheckView": ResidualCheckView,
+            "ManageIntrusiveOrResidualContexts": ManageIntrusiveOrResidualContexts,
+            "RemoveContextView": RemoveContextView,
+            "RemoveStratigraphicRelationshipView": RemoveStratigraphicRelationshipView,
+            "DatafilePreviewView": DatafilePreviewView,
+            "CalibrateModelSelectView": CalibrateModelSelectView,
         }
 
         # Temporary view-only cli options for testing views
