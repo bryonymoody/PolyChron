@@ -67,10 +67,10 @@ class GUIApp:
             # Apply the new window geometry
             self.root.geometry(new_geometry)
 
-    def launch(self, viewName: Optional[str]) -> None:
+    def launch(self, viewName: Optional[str], viewIdx: Optional[int]) -> None:
         """Method to launch the GUIApp, i.e. start the render loop
         
-        @todo - remove the viewName
+        @todo - remove the viewName and viewIdx params
         """
 
         # Temporary dictionary of view instances, for use during refactoring before the addition of Models or Presenters
@@ -82,11 +82,20 @@ class GUIApp:
             "ModelSelectView": ModelSelectView,
         }
 
+        # Temporary view-only cli options for testing views
         print("--view options:")
-        for v in views:
-            print(f"  {v}")
+        for i, v in enumerate(views):
+            print(f"  {i}: {v}")
+        viewClass = views[list(views.keys())[0]]
+        if viewName is not None:
+            if viewName not in views:
+                raise Exception(f"--view {viewName} is not valid")
+            viewClass = views[viewName]
+        elif viewIdx is not None:
+            if viewIdx < 0 or viewIdx >= len(views):
+                raise Exception(f"--viewidx {viewIdx} invalid, must be in range [0, {len(views)})")
+            viewClass = views[list(views.keys())[viewIdx]]
 
-        viewClass = views[viewName] if viewName in views else views[list(views.keys())[0]]
         viewClass(self.root)
 
         self.root.mainloop()
