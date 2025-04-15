@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable, Optional
 
 
 class ResidualCheckView(ttk.Frame):
