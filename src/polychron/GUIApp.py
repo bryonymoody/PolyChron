@@ -15,6 +15,7 @@ from .views.ProjectSelectView import ProjectSelectView
 from .views.AddContextView import AddContextView
 from .views.GetSupplementaryDataView import GetSupplementaryDataView
 from .views.ResidualCheckView import ResidualCheckView
+from .views.ResidualCheckConfirmView import ResidualCheckConfirmView
 from .views.ManageIntrusiveOrResidualContexts import ManageIntrusiveOrResidualContexts
 from .views.RemoveContextView import RemoveContextView
 from .views.RemoveStratigraphicRelationshipView import RemoveStratigraphicRelationshipView
@@ -104,6 +105,7 @@ class GUIApp:
             "AddContextView": AddContextView,
             "GetSupplementaryDataView": GetSupplementaryDataView,
             "ResidualCheckView": ResidualCheckView,
+            "ResidualCheckConfirmView": ResidualCheckConfirmView,
             "ManageIntrusiveOrResidualContexts": ManageIntrusiveOrResidualContexts,
             "RemoveContextView": RemoveContextView,
             "RemoveStratigraphicRelationshipView": RemoveStratigraphicRelationshipView,
