@@ -3,12 +3,12 @@ from tkinter import ttk
 from typing import Any, Callable, Optional
 
 
-class ResidualCheckView(ttk.Frame):
+class ResidualCheckConfirmView(ttk.Frame):
     """View for residual vs inclusive contexts
 
     Formerly `popupWindow3`, Part of the Rendering chronological graph process
 
-    @todo - make this a popup rather than child of root?
+    @todo - make this share parts with / part of ResidualCheckConfirmView. Unsure on best right now so duplicated
     """
 
     def __init__(self, root: tk.Tk):
@@ -35,8 +35,8 @@ class ResidualCheckView(ttk.Frame):
         self.canvas = tk.Canvas(self.top, bg = 'white')
         self.canvas.place(relx = 0.135, rely = 0.05, relheight = 0.85, relwidth = 0.53)
         self.canvas.update()
-        self.instruc_label = tk.Label(self.maincanvas, text = "Instructions: \n Place the oldest group in the bottom left corner then for each subseqent group, place it directly above and move it to be overlapping, abutting or to have a gap.")
-        self.instruc_label.config(bg='white', font=('helvetica', 12, 'bold'),fg = '#2f4858', wraplength=130)
+        self.instruc_label = tk.Label(self.maincanvas, text = "If you're happy with your group relationships, click the Render Chronological Graph button.")
+        self.instruc_label.config(bg='white', font=('helvetica', 12, 'bold'), wraplength=130)
         self.instruc_label.place(relx = 0.01, rely = 0.05, relwidth = 0.12, relheight = 0.85)
         self.instruc_label2 = tk.Label(self.maincanvas, text = "User defined group relationships")
         self.instruc_label2.config(bg='white', font=('helvetica', 12, 'bold'), fg = '#2f4858')
@@ -51,15 +51,17 @@ class ResidualCheckView(ttk.Frame):
         #     self.label_dict[i] = msg
 
 
-        self.confirm_button = tk.Button(self.maincanvas, text = "Confirm groups", bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6') # command = lambda: self.get_coords(), 
-        self.confirm_button.place(relx = 0.8, rely = 0.91)
+        self.render_button = tk.Button(self.maincanvas, text='Render Chronological graph', command=lambda: self.full_chronograph_func(), bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6')
+        self.render_button.place(relx=0.75, rely=0.91)
+        self.change_button = tk.Button(self.maincanvas, text='Change relationships', command=lambda: self.back_func(), bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6')
+        self.change_button.place(relx=0.55, rely=0.91)
 
         self.frmtreeborder = tk.LabelFrame(self.maincanvas, bg = 'white')
         self.frmtreeborder.columnconfigure(0, weight=1)
         self.frmtreeborder.rowconfigure(0, weight=1)
         self.tree = ttk.Treeview(self.frmtreeborder)
         self.frmtreeborder.place(relx = 0.67, rely = 0.25, relheight = 0.65, relwidth = 0.32)
-        self.tree.grid(column=0,row=0,sticky='nsew',padx=6,pady=6)      
+        self.tree.grid(column=0,row=0,sticky='nsew',padx=6,pady=6)    
         # cols = list(self.df.columns) # @todo
         # self.tree["columns"] = cols # @todo
         #  for i in cols:
@@ -71,7 +73,12 @@ class ResidualCheckView(ttk.Frame):
         # master.wait_window(self.top)
 
 
-    def bind_confirm_button(self, callback: Callable[[], Optional[Any]]) -> None:
-        """Bind the callback for when the confirm_button is pressed"""
+    def bind_render_button(self, callback: Callable[[], Optional[Any]]) -> None:
+        """Bind the callback for when the render_button is pressed"""
         if callback is not None:
-            self.confirm_button.config(command=callback)
+            self.render_button.config(command=callback)
+
+    def bind_change_button(self, callback: Callable[[], Optional[Any]]) -> None:
+        """Bind the callback for when the change_button is pressed"""
+        if callback is not None:
+            self.change_button.config(command=callback)
