@@ -72,7 +72,7 @@ testpaths = [
     "tests",
 ]
 
-# Linter configuration
+# Lint & Format configuration
 [tool.ruff]
 line-length = 120
 indent-width = 4
@@ -80,9 +80,16 @@ indent-width = 4
 extend-exclude = [
     "src/polychron/automated_mcmc_ordering_coupling_copy.py",
 ]
+
+[tool.ruff.lint]
 # Select which ruff rules to apply when linting.
-lint.select = ["E4", "E7", "E9", "F"]
+select = ["E4", "E7", "E9", "F"]
 # But ignore some of them
-lint.ignore = [
+ignore = [
     "E741", # https://docs.astral.sh/ruff/rules/ambiguous-variable-name/
+]
+
+[tool.ruff.format]
+exclude = [
+    "src/polychron/gui.py",
 ]
