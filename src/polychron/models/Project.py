@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import pathlib
 from .Model import Model
 
+
 @dataclass
 class Project:
     """MVP Model representing a polychron project."""
@@ -14,4 +15,3 @@ class Project:
 
     models: dict[str, Model]
     """A dictionary of models within this project, with their name as the key"""
-

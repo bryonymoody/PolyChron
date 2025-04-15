@@ -2,6 +2,7 @@ from dataclasses import dataclass
 import pathlib
 from .Project import Project
 
+
 @dataclass
 class Project:
     """MVP Model representing the projects directory"""
