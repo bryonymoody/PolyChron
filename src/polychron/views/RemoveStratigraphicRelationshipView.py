@@ -19,19 +19,25 @@ class RemoveStratigraphicRelationshipView(ttk.Frame):
         self.root = root
 
         # @todo cleaner popup separation?
-        self.top=tk.Toplevel(root)
-        self.top.configure(bg ='white')
+        self.top = tk.Toplevel(root)
+        self.top.configure(bg="white")
         self.top.geometry("1000x400")
         self.top.title("Removal of stratigraphic relationship")
-        self.top.attributes('-topmost', 'true')  # @todo maybe remove. # Forces the top level to always be on top. 
+        self.top.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
 
-        self.label=tk.Label(self.top,text="Why are you deleting the stratigraphic relationship between these contexts?", bg ='white', font='helvetica 12', fg = '#2f4858')
-        self.label.place(relx = 0.3, rely = 0.1)
-        self.text=tk.Text(self.top, font='helvetica 12', fg = '#2f4858')
-        self.text.place(relx = 0.3, rely = 0.2, relheight= 0.5, relwidth = 0.5)
-        self.ok_button=tk.Button(self.top,text='OK', bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6')
-        self.ok_button.place(relx = 0.3, rely = 0.7)
-    
+        self.label = tk.Label(
+            self.top,
+            text="Why are you deleting the stratigraphic relationship between these contexts?",
+            bg="white",
+            font="helvetica 12",
+            fg="#2f4858",
+        )
+        self.label.place(relx=0.3, rely=0.1)
+        self.text = tk.Text(self.top, font="helvetica 12", fg="#2f4858")
+        self.text.place(relx=0.3, rely=0.2, relheight=0.5, relwidth=0.5)
+        self.ok_button = tk.Button(self.top, text="OK", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6")
+        self.ok_button.place(relx=0.3, rely=0.7)
+
     # def cleanup(self):
     #     self.value=self.text.get('1.0', 'end')
     #     self.top.destroy()

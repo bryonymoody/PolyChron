@@ -17,18 +17,24 @@ class ManageIntrusiveOrResidualContexts(ttk.Frame):
 
         # @todo cleaner popup separation?
         self.top = tk.Toplevel(root)
-        self.top.configure(bg ='#AEC7D6')
+        self.top.configure(bg="#AEC7D6")
         self.top.geometry("1000x400")
         self.top.title("Managing intrusive and residual contexts")
-        self.top.attributes('-topmost', 'true')  # @todo maybe remove. # Forces the top level to always be on top. 
+        self.top.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
 
         # self.node_del_tracker = node_track
         # self.controller = controller
         # self.resid_list = resid_list
         # self.intru_list = intru_list
-        self.back_button = tk.Button(self.top, text='Go back', bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6')
+        self.back_button = tk.Button(self.top, text="Go back", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6")
         self.back_button.grid(column=30, row=4)
-        self.proceed_button = tk.Button(self.top, text='Proceed to render chronological graph',  bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6')
+        self.proceed_button = tk.Button(
+            self.top,
+            text="Proceed to render chronological graph",
+            bg="#2F4858",
+            font=("Helvetica 12 bold"),
+            fg="#eff3f6",
+        )
         self.proceed_button.grid(column=30, row=6)
         # self.test(resid_list, intru_list)
         # controller.wait_window(self.top)

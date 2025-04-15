@@ -19,16 +19,16 @@ class AddContextView(ttk.Frame):
 
         # @todo cleaner popup separation?
         self.top = tk.Toplevel(root)
-        self.top.configure(bg ='#AEC7D6')
+        self.top.configure(bg="#AEC7D6")
         self.top.geometry("1000x400")
-        self.top.attributes('-topmost', 'true')  # @todo maybe remove. # Forces the top level to always be on top. 
+        self.top.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
 
-        #pop up window to allow us to enter a context that we want to change the meta data for
+        # pop up window to allow us to enter a context that we want to change the meta data for
         self.label = ttk.Label(self.top, text="Context Number")
         self.label.pack()
-        self.entry = ttk.Entry(self.top) #allows us to keep t6rack of the number we've entered
+        self.entry = ttk.Entry(self.top)  # allows us to keep t6rack of the number we've entered
         self.entry.pack()
-        self.ok_button = ttk.Button(self.top, text='Ok') #gets ridof the popup
+        self.ok_button = ttk.Button(self.top, text="Ok")  # gets ridof the popup
         self.ok_button.pack()
         self.value = tk.StringVar(self.top)
 
