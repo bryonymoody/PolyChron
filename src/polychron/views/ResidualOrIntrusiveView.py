@@ -71,18 +71,17 @@ class ResidualOrIntrusiveView(ttk.Frame):
         # self.set_intru_label_text(["foo", "bar", "baz"])
         # self.set_residual_mode_button_background("orange")
         # self.set_intrusive_mode_button_background("lightgreen")
-        
 
     def set_resid_label_text(self, resid_list: List[str]):
         """Update the intrusive list
-        
+
         @todo - check this behaves as intended, it might make a copy?
         """
         self.resid_label["text"] = str(resid_list).replace("'", "")[1:-1]
 
     def set_intru_label_text(self, intru_list: List[str]):
         """Update the intrusive list
-        
+
         @todo - check this behaves as intended, it might make a copy?
         """
         self.intru_label["text"] = str(intru_list).replace("'", "")[1:-1]
