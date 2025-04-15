@@ -20,8 +20,15 @@ from .views.RemoveContextView import RemoveContextView
 from .views.RemoveStratigraphicRelationshipView import RemoveStratigraphicRelationshipView
 from .views.DatafilePreviewView import DatafilePreviewView
 from .views.CalibrateModelSelectView import CalibrateModelSelectView
+from .views.MCMCProgressView import MCMCProgressView
 
 class GUIApp:
+    """Main GUIApp which is provides the main entry point, initialises the Models, Views and Presenters and opens the main window.
+    
+    This includes code which used to belong to `MainFrame`
+    """
+
+
     def __init__(self) -> None:
         # Initialse the application config object
         self.config: Config = Config.from_default_filepath()
@@ -97,6 +104,7 @@ class GUIApp:
             "RemoveStratigraphicRelationshipView": RemoveStratigraphicRelationshipView,
             "DatafilePreviewView": DatafilePreviewView,
             "CalibrateModelSelectView": CalibrateModelSelectView,
+            "MCMCProgressView": MCMCProgressView,
         }
 
         # Temporary view-only cli options for testing views
