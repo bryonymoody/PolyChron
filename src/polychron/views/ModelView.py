@@ -58,7 +58,6 @@ class ModelView(tk.Frame):
         file = tk.Menu(self.file_menubar, tearoff=0, bg="white", font=("helvetica 12 bold"))
         self.file_menubar["menu"] = file
         file.add_separator()
-        FILE_INPUT = None
         file.add_command(
             label="Load stratigraphic diagram file (.dot)", font="helvetica 12 bold"
         )  # , command=lambda: self.open_file1()
