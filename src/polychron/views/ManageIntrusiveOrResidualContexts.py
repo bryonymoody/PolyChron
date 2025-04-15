@@ -6,7 +6,7 @@ from typing import Any, Callable, Optional
 class ManageIntrusiveOrResidualContexts(ttk.Frame):
     """View for managing intrusive and residual contexts
 
-    Formerly `popupWindow4`
+    Formerly `popupWindow4`. This is a popup window triggered after ResidualOrIntrusive input
     """
 
     def __init__(self, root: tk.Tk):

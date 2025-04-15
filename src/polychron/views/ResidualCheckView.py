@@ -5,7 +5,7 @@ from tkinter import ttk
 class ResidualCheckView(ttk.Frame):
     """View for residual vs inclusive contexts
 
-    Formerly `popupWindow3`
+    Formerly `popupWindow3`, Part of the Rendering chronological graph process
 
     @todo - implement
 

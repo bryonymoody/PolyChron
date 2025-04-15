@@ -21,11 +21,16 @@ from .views.RemoveStratigraphicRelationshipView import RemoveStratigraphicRelati
 from .views.DatafilePreviewView import DatafilePreviewView
 from .views.CalibrateModelSelectView import CalibrateModelSelectView
 from .views.MCMCProgressView import MCMCProgressView
+from .views.DatingResultsView import DatingResultsView
+from .views.ModelView import ModelView
+from .views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
 
 class GUIApp:
     """Main GUIApp which is provides the main entry point, initialises the Models, Views and Presenters and opens the main window.
     
     This includes code which used to belong to `MainFrame`
+
+    This is the only class/file which should import tkinter / ThemedTK other than View classes (unless needed for typehinting?)
     """
 
 
@@ -105,6 +110,9 @@ class GUIApp:
             "DatafilePreviewView": DatafilePreviewView,
             "CalibrateModelSelectView": CalibrateModelSelectView,
             "MCMCProgressView": MCMCProgressView,
+            "ModelView": ModelView,
+            "DatingResultsView": DatingResultsView,
+            "ResidualOrIntrusiveView": ResidualOrIntrusiveView,
         }
 
         # Temporary view-only cli options for testing views
