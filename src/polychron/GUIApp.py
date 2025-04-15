@@ -121,16 +121,22 @@ class GUIApp:
         print("--view options:")
         for i, v in enumerate(views):
             print(f"  {i}: {v}")
-        viewClass = views[list(views.keys())[0]]
-        if viewName is not None:
-            if viewName not in views:
-                raise Exception(f"--view {viewName} is not valid")
-            viewClass = views[viewName]
-        elif viewIdx is not None:
-            if viewIdx < 0 or viewIdx >= len(views):
-                raise Exception(f"--viewidx {viewIdx} invalid, must be in range [0, {len(views)})")
-            viewClass = views[list(views.keys())[viewIdx]]
-
-        viewClass(self.root)
-
-        self.root.mainloop()
+        if viewName == "all":
+            for viewClass in views.values():
+                try:
+                    viewClass(self.root)
+                    self.root.mainloop()
+                except:
+                    pass
+        else:
+            viewClass = views[list(views.keys())[0]]
+            if viewName is not None:                
+                if viewName not in views:
+                    raise Exception(f"--view {viewName} is not valid")
+                viewClass = views[viewName]
+            elif viewIdx is not None:
+                if viewIdx < 0 or viewIdx >= len(views):
+                    raise Exception(f"--viewidx {viewIdx} invalid, must be in range [0, {len(views)})")
+                viewClass = views[list(views.keys())[viewIdx]]
+            viewClass(self.root)
+            self.root.mainloop()
