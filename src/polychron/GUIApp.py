@@ -26,14 +26,14 @@ from .views.DatingResultsView import DatingResultsView
 from .views.ModelView import ModelView
 from .views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
 
+
 class GUIApp:
     """Main GUIApp which is provides the main entry point, initialises the Models, Views and Presenters and opens the main window.
-    
+
     This includes code which used to belong to `MainFrame`
 
     This is the only class/file which should import tkinter / ThemedTK other than View classes (unless needed for typehinting?)
     """
-
 
     def __init__(self) -> None:
         # Initialse the application config object
@@ -59,13 +59,13 @@ class GUIApp:
         """Register application-wide key bindings"""
         # ctrl+w to close the window @todo this might need changing for sub-windows..
         self.root.bind("<Control-w>", self.exit_application)
-    
+
     def register_protocols(self):
         """Register protocols with the root window - i.e. what to do on (graceful) application exit"""
         self.root.protocol("WM_DELETE_WINDOW", self.exit_application)
 
     def exit_application(self, event: Optional[Any] = None) -> None:
-        """Callback function for graceful application exit via keybind or window manager close. """
+        """Callback function for graceful application exit via keybind or window manager close."""
         # @todo - add any exit behaviour here
         # Quit the root window
         self.root.quit()
@@ -90,7 +90,7 @@ class GUIApp:
 
     def launch(self, viewName: Optional[str], viewIdx: Optional[int]) -> None:
         """Method to launch the GUIApp, i.e. start the render loop
-        
+
         @todo - remove the viewName and viewIdx params
         """
 
@@ -126,11 +126,11 @@ class GUIApp:
                 try:
                     viewClass(self.root)
                     self.root.mainloop()
-                except:
+                except Exception:
                     pass
         else:
             viewClass = views[list(views.keys())[0]]
-            if viewName is not None:                
+            if viewName is not None:
                 if viewName not in views:
                     raise Exception(f"--view {viewName} is not valid")
                 viewClass = views[viewName]
