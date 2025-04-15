@@ -32,6 +32,7 @@ class MCMCProgressView(ttk.Frame):
 
     def update_progress(self, percent: int):
         # @todo - assert integer is between 0 and 100 inclusive
-        # @todo - should this be split into 2 methods which just sets a passed in string and integer separately from the appropriate presenter, to make this view more passive (i.e. move as much testing as possible out of the view?
+        # @todo - should this be split into 2 methods which just sets a passed in string and integer separately from the appropriate presenter, to make this view more passive
+        # i.e. move as much testing as possible out of the view?
         self.output_label["text"] = f"{percent}% complete"
         self.progress_bar["value"] = percent
