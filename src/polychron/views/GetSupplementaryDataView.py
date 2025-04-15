@@ -13,7 +13,7 @@ class GetSupplementaryDataView(ttk.Frame):
         super().__init__(root)
         self.root = root
 
-        raise Exception(f"GetSupplementaryDataView is not fully implemented. popupWindow2 was previously unused.")
+        raise Exception("GetSupplementaryDataView is not fully implemented. popupWindow2 was previously unused.")
 
         # @todo cleaner popup separation?
         self.top = tk.Toplevel(root)
