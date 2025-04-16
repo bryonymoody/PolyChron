@@ -4,26 +4,27 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 from typing import Any, Callable, Optional
+from .BaseMainWindowView import BaseMainWindowView
 
 
-class WelcomeView(ttk.Frame):
+class WelcomeView(BaseMainWindowView):
     """View for the welcome screen when polychron is first opened.
 
     This is implemented as a passive view, i.e. UI elements have no callbacks at constrution, and they must be explcitly bound afterwards
     """
 
-    def __init__(self, root: tk.Tk):
+    def __init__(self, parent: tk.Frame):
         """Construct the view, without binding any callbacks"""
         # Call the root tk constructor
-        super().__init__(root)
-        self.root = root
+        super().__init__(parent)
+        self.parent = parent
 
         # Declare 2 canvas, splitting the UI into 2 columns
         # @todo - self.top? i.e. a special top window? Maybe shoudl just be passed in as a diff root?
         # @todo - should this be moved somewhere else, which views which use these then extend to avoid duplication?
-        self.maincanvas = tk.Canvas(self.root, bg="white")
+        self.maincanvas = tk.Canvas(self, bg="white")
         self.maincanvas.place(relx=0, rely=0, relheight=1, relwidth=1)
-        self.canvas = tk.Canvas(self.root, bg="#AEC7D6")
+        self.canvas = tk.Canvas(self, bg="#AEC7D6")
         self.canvas.place(relx=0, rely=0, relheight=1, relwidth=0.2)
 
         # Load the image from the package resources, and add it to the current frame

@@ -2,6 +2,7 @@
 
 from importlib.metadata import version
 import re
+import tkinter as tk
 from tkinter import ttk
 from ttkthemes import ThemedTk
 from typing import Any, Dict, Optional
@@ -25,6 +26,8 @@ from .views.MCMCProgressView import MCMCProgressView
 from .views.DatingResultsView import DatingResultsView
 from .views.ModelView import ModelView
 from .views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
+from .views.BaseMainWindowView import BaseMainWindowView
+from .views.BasePopupView import BasePopupView
 
 
 class GUIApp:
@@ -51,9 +54,41 @@ class GUIApp:
         self.register_global_keybinds()
         self.register_protocols()
 
+        # Add a frame which fills the full root window, in to which other main window frames will be placed.
+        # @todo - make this a ttk frame instead?
+        self.container = tk.Frame(self.root)
+        self.container.pack(side="top", fill="both", expand=True)
+        self.container.grid_rowconfigure(0, weight=1)
+        self.container.grid_columnconfigure(0, weight=1)
+
+        # Construct the views and presenters for main window views (i.e. not-popups)
+        self.main_window_views: Dict[str, Any] = {
+            "Welcome": WelcomeView(self.container),
+            "Model": ModelView(self.container),
+            "DatingResults": DatingResultsView(self.container),
+        }
+
+        # Place each main window within the container
+        # @todo - make this part of a common base class mainWindowFrameView?
+        for frame in self.main_window_views.values():
+            frame.grid(row=0, column=0, sticky="nsew")
+            # Immeditely hide the frame, but remember it's settings.
+            frame.grid_remove()
+        # Hide the 
+
+
         # @todo MVP
 
-        # setup the initial view
+    def show_frame(self, name: str):
+        """Show a speicfic frame/view by it's name on the main window
+        
+        @todo - include the presenter here.
+        """
+        if name in self.main_window_views:
+            # Re-place the frame using grid, with settings remembered from before
+            self.main_window_views[name].grid()
+        else:
+            raise Exception("@todo better error missing frame")
 
     def register_global_keybinds(self):
         """Register application-wide key bindings"""
@@ -94,42 +129,45 @@ class GUIApp:
         @todo - remove the viewName and viewIdx params
         """
 
-        # Temporary dictionary of view instances, for use during refactoring before the addition of Models or Presenters
-        # popupWindow9 and popupWindow10 don't have any view related content + marked as alpha?
-        views: Dict[str, ttk.Frame] = {
-            "WelcomeView": WelcomeView,
-            "ProjectCreateView": ProjectCreateView,
-            "ProjectSelectView": ProjectSelectView,
-            "ModelCreateView": ModelCreateView,
-            "ModelSelectView": ModelSelectView,
-            "AddContextView": AddContextView,
-            "GetSupplementaryDataView": GetSupplementaryDataView,
-            "ResidualCheckView": ResidualCheckView,
-            "ResidualCheckConfirmView": ResidualCheckConfirmView,
-            "ManageIntrusiveOrResidualContexts": ManageIntrusiveOrResidualContexts,
-            "RemoveContextView": RemoveContextView,
-            "RemoveStratigraphicRelationshipView": RemoveStratigraphicRelationshipView,
-            "DatafilePreviewView": DatafilePreviewView,
-            "CalibrateModelSelectView": CalibrateModelSelectView,
-            "MCMCProgressView": MCMCProgressView,
-            "ModelView": ModelView,
-            "DatingResultsView": DatingResultsView,
-            "ResidualOrIntrusiveView": ResidualOrIntrusiveView,
-        }
 
-        # Temporary view-only cli options for testing views
-        print("--view options:")
-        for i, v in enumerate(views):
-            print(f"  {i}: {v}")
-        if viewName == "all":
-            for viewClass in views.values():
-                try:
-                    viewClass(self.root)
-                    self.root.mainloop()
-                except Exception:
-                    pass
+        if viewName is None and viewIdx is None:
+            # Actual intended body of this method, which should be all that is left once debugging is stripped out.
+            # shwo the initial view
+            self.show_frame("Welcome")
+            # self.show_frame("Model")
+            # self.show_frame("DatingResults")
+            self.root.mainloop()
         else:
+
+            # Temporary dictionary of view instances, for use during refactoring before the addition of Models or Presenters
+            # popupWindow9 and popupWindow10 don't have any view related content + marked as alpha?
+            views: Dict[str, ttk.Frame] = {
+                "WelcomeView": WelcomeView,
+                "ModelView": ModelView,
+                "DatingResultsView": DatingResultsView,
+                "ProjectCreateView": ProjectCreateView,
+                "ProjectSelectView": ProjectSelectView,
+                "ModelCreateView": ModelCreateView,
+                "ModelSelectView": ModelSelectView,
+                "AddContextView": AddContextView,
+                "GetSupplementaryDataView": GetSupplementaryDataView,
+                "ResidualCheckView": ResidualCheckView,
+                "ResidualCheckConfirmView": ResidualCheckConfirmView,
+                "ManageIntrusiveOrResidualContexts": ManageIntrusiveOrResidualContexts,
+                "RemoveContextView": RemoveContextView,
+                "RemoveStratigraphicRelationshipView": RemoveStratigraphicRelationshipView,
+                "DatafilePreviewView": DatafilePreviewView,
+                "CalibrateModelSelectView": CalibrateModelSelectView,
+                "MCMCProgressView": MCMCProgressView,
+                "ResidualOrIntrusiveView": ResidualOrIntrusiveView,
+            }
+
+            # Temporary view-only cli options for testing views
+            print("--view options:")
+            for i, v in enumerate(views):
+                print(f"  {i}: {v}")
             viewClass = views[list(views.keys())[0]]
+
             if viewName is not None:
                 if viewName not in views:
                     raise Exception(f"--view {viewName} is not valid")
@@ -138,5 +176,13 @@ class GUIApp:
                 if viewIdx < 0 or viewIdx >= len(views):
                     raise Exception(f"--viewidx {viewIdx} invalid, must be in range [0, {len(views)})")
                 viewClass = views[list(views.keys())[viewIdx]]
-            viewClass(self.root)
+
+            # Depending on if mainwindow or popupwindow, handle it differntly.
+            if issubclass(viewClass, BaseMainWindowView):
+                # This is gross
+                self.show_frame(viewClass.__name__.replace("View", ""))
+            elif issubclass(viewClass, BasePopupView):
+                viewClass(self.root)
+            else:
+                viewClass(self.root)
             self.root.mainloop()
