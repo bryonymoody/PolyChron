@@ -2,8 +2,10 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, Optional
 
+from .BasePopupView import BasePopupView
 
-class ResidualCheckConfirmView(ttk.Frame):
+
+class ResidualCheckConfirmView(BasePopupView):
     """View for residual vs inclusive contexts
 
     Formerly `popupWindow3`, Part of the Rendering chronological graph process
@@ -11,20 +13,19 @@ class ResidualCheckConfirmView(ttk.Frame):
     @todo - make this share parts with / part of ResidualCheckConfirmView. Unsure on best right now so duplicated
     """
 
-    def __init__(self, root: tk.Tk):
+    def __init__(self, parent: tk.Tk):
         """Construct the view, without binding any callbacks"""
-        # Call the root tk constructor
-        super().__init__(root)
-        self.root = root
+        # Call the parent class constructor
+        super().__init__(parent)
+        self.parent = parent
 
         # @todo cleaner popup separation?
-        self.top = tk.Toplevel(root)
-        self.top.geometry("1500x400")
-        self.top.title("Adding group relationships")
-        self.top.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
+        self.geometry("1500x400")
+        self.title("Adding group relationships")
+        self.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
 
         self.maincanvas = tk.Canvas(
-            self.top, bg="#AEC7D6", highlightthickness=0, borderwidth=0, highlightbackground="white"
+            self, bg="#AEC7D6", highlightthickness=0, borderwidth=0, highlightbackground="white"
         )
         self.maincanvas.place(relx=0, rely=0, relwidth=1, relheight=1)
         self.maincanvas.update()
@@ -36,7 +37,7 @@ class ResidualCheckConfirmView(ttk.Frame):
         self.time_label = tk.Label(self.maincanvas, text="Time")
         self.time_label.config(bg="white", font=("helvetica", 12, "bold"), fg="#2f4858", wraplength=130)
         self.time_label.place(relx=0.32, rely=0.91, relwidth=0.12, relheight=0.05)
-        self.canvas = tk.Canvas(self.top, bg="white")
+        self.canvas = tk.Canvas(self, bg="white")
         self.canvas.place(relx=0.135, rely=0.05, relheight=0.85, relwidth=0.53)
         self.canvas.update()
         self.instruc_label = tk.Label(
@@ -90,7 +91,7 @@ class ResidualCheckConfirmView(ttk.Frame):
         # for index, row in self.df.iterrows():
         #     self.tree.insert("",0,text=index,values=list(row))
         self.tree["show"] = "headings"
-        # master.wait_window(self.top)
+        # master.wait_window(self)
 
     def bind_render_button(self, callback: Callable[[], Optional[Any]]) -> None:
         """Bind the callback for when the render_button is pressed"""

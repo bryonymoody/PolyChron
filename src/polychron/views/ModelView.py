@@ -4,6 +4,7 @@ from typing import Any, Callable, Optional
 
 from .BaseMainWindowView import BaseMainWindowView
 
+
 class ModelView(BaseMainWindowView):
     """Main view for displaying information about the model.
     I.e. the "Stratigraphy and supplementary data" tab

@@ -2,27 +2,28 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, Optional, List
 
+from .BasePopupView import BasePopupView
 
-class ResidualOrIntrusiveView(ttk.Frame):
+
+class ResidualOrIntrusiveView(BasePopupView):
     """View for users to provide input on whether contexts are residual or inclusive during chronological graph rendering
 
     Formely part of `PageTwo`
 
     """
 
-    def __init__(self, root: tk.Tk):
+    def __init__(self, parent: tk.Tk):
         """Construct the view, without binding any callbacks"""
-        # Call the root tk constructor
-        super().__init__(root)
-        self.root = root
+        # Call the parent class constructor
+        super().__init__(parent)
+        self.parent = parent
 
         # @todo cleaner popup separation?
-        self.top = tk.Toplevel(root)
-        self.top.configure(bg="#AEC7D6")
-        self.top.geometry("2000x1000")  # @todo - differnt geometry?
-        self.top.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
+        self.configure(bg="#AEC7D6")
+        self.geometry("2000x1000")  # @todo - differnt geometry?
+        self.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
 
-        self.canvas = tk.Canvas(self.top, bd=0, highlightthickness=0)
+        self.canvas = tk.Canvas(self, bd=0, highlightthickness=0)
         self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
         self.graphcanvas = tk.Canvas(
             self.canvas, bd=0, bg="white", selectborderwidth=0, highlightthickness=0, insertwidth=0
@@ -30,7 +31,7 @@ class ResidualOrIntrusiveView(ttk.Frame):
         self.graphcanvas.place(relx=0.02, rely=0.05, relwidth=0.35, relheight=0.9)
         # @todo - this label suggests blue boxes, but green is used.
         self.label = tk.Message(
-            self.top,
+            self,
             text="Using this page: \n\n Please click on the buttons below to set into residual or intrusive mode. Then double right click on any context to set as residual/intrusive. \n\n Note that orange boxes denote intrusive contexts and blue boxes denote residual contexts. \n\n If you have clicked on a context by mistake, double right click to remove any label attributed to the context.",
         )
         self.label.place(relx=0.4, rely=0.05)
@@ -56,15 +57,15 @@ class ResidualOrIntrusiveView(ttk.Frame):
         self.intru_title_label = ttk.Label(self.canvas, text="Intrusive Contexts")
         self.intru_title_label.place(relx=0.4, rely=0.52)
 
-        self.proceed_button = ttk.Button(self.top, text="Proceed")
+        self.proceed_button = ttk.Button(self, text="Proceed")
         self.proceed_button.place(relx=0.48, rely=0.65, relwidth=0.09, relheight=0.03)
 
-        self.residual_mode_button = tk.Button(self.top, text="Residual mode")
+        self.residual_mode_button = tk.Button(self, text="Residual mode")
         self.residual_mode_button.place(relx=0.44, rely=0.35, relwidth=0.09, relheight=0.03)
-        self.intrusive_mode_button = tk.Button(self.top, text="Intrusive mode")
+        self.intrusive_mode_button = tk.Button(self, text="Intrusive mode")
         self.intrusive_mode_button.place(relx=0.54, rely=0.35, relwidth=0.09, relheight=0.03)
 
-        # self.root.wait_window(self.top) # @todo
+        # self.parent.wait_window(self) # @todo
 
         # @todo - move these to tests
         # self.set_resid_label_text(["foo", "bar"])

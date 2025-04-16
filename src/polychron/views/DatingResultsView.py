@@ -17,7 +17,7 @@ class DatingResultsView(BaseMainWindowView):
 
     def __init__(self, parent: tk.Frame):
         """Construct the view, without binding any callbacks"""
-        # Call the root tk constructor
+        # Call the parent class constructor
         super().__init__(parent)
         self.parent = parent
 

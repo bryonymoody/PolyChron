@@ -1,7 +1,6 @@
 import importlib.resources
 import io
 import tkinter as tk
-from tkinter import ttk
 from PIL import Image, ImageTk
 from typing import Any, Callable, Optional
 from .BaseMainWindowView import BaseMainWindowView
@@ -15,7 +14,7 @@ class WelcomeView(BaseMainWindowView):
 
     def __init__(self, parent: tk.Frame):
         """Construct the view, without binding any callbacks"""
-        # Call the root tk constructor
+        # Call the parent class constructor
         super().__init__(parent)
         self.parent = parent
 

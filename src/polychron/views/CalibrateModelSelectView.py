@@ -1,26 +1,26 @@
 import tkinter as tk
-from tkinter import ttk
 from typing import Any, Callable, Optional
 
+from .BasePopupView import BasePopupView
 
-class CalibrateModelSelectView(ttk.Frame):
+
+class CalibrateModelSelectView(BasePopupView):
     """View for selecting which models to calibrate, when multiple models are to be calibrated at once
 
     Formerly `popupWindow8`, used from menu option "Calibrate multiple projects from project"
     """
 
-    def __init__(self, root: tk.Tk):
+    def __init__(self, parent: tk.Tk):
         """Construct the view, without binding any callbacks"""
-        # Call the root tk constructor
-        super().__init__(root)
-        self.root = root
+        # Call the parent class constructor
+        super().__init__(parent)
+        self.parent = parent
 
         # @todo cleaner popup separation?
-        self.top = tk.Toplevel(root)
-        self.top.configure(bg="white")
-        self.top.title("Model calibration")
-        self.top.geometry("1000x400")
-        self.top.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
+        self.configure(bg="white")
+        self.title("Model calibration")
+        self.geometry("1000x400")
+        self.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
 
         # @todo - implement loading / data population in the presenter / model
         # self.path = path
@@ -35,19 +35,19 @@ class CalibrateModelSelectView(ttk.Frame):
         #         model_list.append(i)
 
         self.label = tk.Label(
-            self.top, text="Which model/s would you like calibrate?", bg="white", font="helvetica 12", fg="#2f4858"
+            self, text="Which model/s would you like calibrate?", bg="white", font="helvetica 12", fg="#2f4858"
         )
         self.label.place(relx=0.3, rely=0.1)
-        self.list_box = tk.Listbox(self.top, font="helvetica 12", fg="#2f4858", selectmode="multiple")
+        self.list_box = tk.Listbox(self, font="helvetica 12", fg="#2f4858", selectmode="multiple")
         self.list_box.place(relx=0.3, rely=0.2, relheight=0.5, relwidth=0.5)
         # self.list_box.bind('<<ListboxSelect>>',tk.CurSelet)
         # @todo provide method to populate list with data
         # for items in model_list:
         #     self.list_box.insert('end',items)
-        self.ok_button = tk.Button(self.top, text="OK", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6")
+        self.ok_button = tk.Button(self, text="OK", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6")
         self.ok_button.place(relx=0.3, rely=0.7)
         self.select_all_button = tk.Button(
-            self.top, text="Select all", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6"
+            self, text="Select all", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6"
         )
         self.select_all_button.place(relx=0.6, rely=0.7)
 

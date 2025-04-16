@@ -6,18 +6,18 @@ from typing import Any, Callable, Optional
 class ModelCreateView(ttk.Frame):
     """Passive view for model creation"""
 
-    def __init__(self, root: tk.Tk):
+    def __init__(self, parent: tk.Tk):
         """Construct the view, without binding any callbacks"""
-        # Call the root tk constructor
-        super().__init__(root)
-        self.root = root
+        # Call the parent class constructor
+        super().__init__(parent)
+        self.parent = parent
 
         # Declare 2 canvas, splitting the UI into 2 columns
-        # @todo - self.top? i.e. a special top window? Maybe shoudl just be passed in as a diff root?
+        # @todo - self.top? i.e. a special top window? Maybe shoudl just be passed in as a diff parent?
         # @todo - should this be moved somewhere else, which views which use these then extend to avoid duplication?
-        self.maincanvas = tk.Canvas(self.root, bg="white")
+        self.maincanvas = tk.Canvas(self.parent, bg="white")
         self.maincanvas.place(relx=0, rely=0, relheight=1, relwidth=1)
-        self.canvas = tk.Canvas(self.root, bg="#AEC7D6")
+        self.canvas = tk.Canvas(self.parent, bg="#AEC7D6")
         self.canvas.place(relx=0, rely=0, relheight=1, relwidth=0.2)
 
         # Receiving user's folder_name selection
