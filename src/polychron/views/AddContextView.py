@@ -4,6 +4,7 @@ from typing import Any, Callable, Optional
 
 from .BasePopupView import BasePopupView
 
+
 class AddContextView(BasePopupView):
     """View for adding an additional context to the current model
 
@@ -12,11 +13,11 @@ class AddContextView(BasePopupView):
     Formerly `popupWindow`
     """
 
-    def __init__(self, root: tk.Tk):
+    def __init__(self, parent: tk.Tk):
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(root)
-        self.root = root
+        super().__init__(parent)
+        self.parent = parent
 
         # @todo cleaner popup separation?
         self.configure(bg="#AEC7D6")

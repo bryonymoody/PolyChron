@@ -74,14 +74,13 @@ class GUIApp:
             frame.grid(row=0, column=0, sticky="nsew")
             # Immeditely hide the frame, but remember it's settings.
             frame.grid_remove()
-        # Hide the 
-
+        # Hide the
 
         # @todo MVP
 
     def show_frame(self, name: str):
         """Show a speicfic frame/view by it's name on the main window
-        
+
         @todo - include the presenter here.
         """
         if name in self.main_window_views:
@@ -129,7 +128,6 @@ class GUIApp:
         @todo - remove the viewName and viewIdx params
         """
 
-
         if viewName is None and viewIdx is None:
             # Actual intended body of this method, which should be all that is left once debugging is stripped out.
             # shwo the initial view
@@ -138,7 +136,6 @@ class GUIApp:
             # self.show_frame("DatingResults")
             self.root.mainloop()
         else:
-
             # Temporary dictionary of view instances, for use during refactoring before the addition of Models or Presenters
             # popupWindow9 and popupWindow10 don't have any view related content + marked as alpha?
             views: Dict[str, ttk.Frame] = {

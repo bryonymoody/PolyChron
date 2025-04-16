@@ -1,25 +1,25 @@
 import tkinter as tk
 from tkinter import ttk
 
+from .BasePopupView import BasePopupView
 
-class MCMCProgressView(ttk.Frame):
+
+class MCMCProgressView(BasePopupView):
     """View for displaying MCMC calibratrion progress
 
     Formely within `StartPage::load_mcmc`, triggered by tools > calibrate model
     """
 
-    def __init__(self, root: tk.Tk):
+    def __init__(self, parent: tk.Tk):
         """Construct the view, without binding any callbacks"""
-        # Call the root tk constructor
-        super().__init__(root)
-        self.root = root
+        # Call the parent class constructor
+        super().__init__(parent)
+        self.parent = parent
 
-        # @todo cleaner popup separation?
-        self.top = tk.Toplevel(root)
-        self.backcanvas = tk.Canvas(self.top, bg="#AEC7D6")
+        self.geometry("%dx%d%+d%+d" % (700, 200, 600, 400))  # @todo - handle geometry setting elsewhere
+        self.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
+        self.backcanvas = tk.Canvas(self, bg="#AEC7D6")
         self.backcanvas.place(relx=0, rely=0, relwidth=1, relheight=1)
-        self.top.geometry("%dx%d%+d%+d" % (700, 200, 600, 400))
-        self.top.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
 
         self.title_label = tk.Label(
             self.backcanvas, text="MCMC in progress", font=("helvetica 14 bold"), fg="#2F4858", bg="#AEC7D6"
