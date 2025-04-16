@@ -1,10 +1,10 @@
 import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, Optional
+from .BaseMainWindowView import BaseMainWindowView
 
 
-# @todo - ttk frame?
-class DatingResultsView(tk.Frame):
+class DatingResultsView(BaseMainWindowView):
     """View for displaying post-calibration "Dating Results" for a model.
 
     I.e. the "Dating Results" tab
@@ -15,26 +15,22 @@ class DatingResultsView(tk.Frame):
     @todo - Split the navbar into it's own class, to reduce duplication with ModelView)
     """
 
-    def __init__(self, root: tk.Tk):
+    def __init__(self, parent: tk.Frame):
         """Construct the view, without binding any callbacks"""
         # Call the root tk constructor
-        super().__init__(root)
-        self.root = root
-
-        # @todo Temp var to make this work, instances were just `self` originally
-        # @todo Once all views are workign in isolation, need to plan how to deal with in-place overwrites and popups, then be consistent / abstract the management of the currentlty visible views eslewhere.
-        self.ctr = self.root
+        super().__init__(parent)
+        self.parent = parent
 
         self.configure(background="#fcfdfd")
 
         # Use a canvas to add a background colour below the menu bar
-        self.canvas = tk.Canvas(self.ctr, bd=0, highlightthickness=0, bg="#FFE9D6")
+        self.canvas = tk.Canvas(self, bd=0, highlightthickness=0, bg="#FFE9D6")
         self.canvas.place(relx=0, rely=0.03, relwidth=1, relheight=0.97)
 
         # Add buttons to switch between the main windows.
         # @todo - abstract this esle where to avoid duplication
         self.sasd_tab_button = tk.Button(
-            self.ctr,
+            self,
             text="Stratigraphy and supplementary data",
             font="helvetica 12 bold",
             fg="#2F4858",
@@ -44,7 +40,7 @@ class DatingResultsView(tk.Frame):
         )
         self.sasd_tab_button.place(relx=0.38, rely=0.0, relwidth=0.17, relheight=0.03)
         self.dr_tab_button = tk.Button(
-            self.ctr,
+            self,
             text="Dating Results",
             font="helvetica 12 bold",
             fg="#8F4300",
@@ -57,7 +53,7 @@ class DatingResultsView(tk.Frame):
         # Add the file menu button and it's options
         # @todo - (partially) abstract this away to avoid duplication
         self.file_menubar = ttk.Menubutton(
-            self.ctr,
+            self,
             text="File",
         )
         self.file_menu = tk.Menu(self.file_menubar, tearoff=0, bg="#fcfdfd")  # , font = ('helvetica',11))
@@ -65,13 +61,13 @@ class DatingResultsView(tk.Frame):
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Save project progress", font=("helvetica 11 bold"))
         self.file_menubar.place(relx=0.0, rely=0, relwidth=0.1, relheight=0.03)
-        self.view_menubar = ttk.Menubutton(self.ctr, text="View")
+        self.view_menubar = ttk.Menubutton(self, text="View")
 
         # Adding View menu with (no) sub options
         self.view_menubar["menu"] = tk.Menu(self.view_menubar, tearoff=0, bg="#fcfdfd")  # , font = ('helvetica',11))
         self.view_menubar.place(relx=0.07, rely=0, relwidth=0.1, relheight=0.03)
         self.tool_menubar = ttk.Menubutton(
-            self.ctr,
+            self,
             text="Tools",
         )
 

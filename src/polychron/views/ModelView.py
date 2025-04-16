@@ -2,9 +2,9 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, Optional
 
+from .BaseMainWindowView import BaseMainWindowView
 
-# @todo ttk frame not tk frame
-class ModelView(tk.Frame):
+class ModelView(BaseMainWindowView):
     """Main view for displaying information about the model.
     I.e. the "Stratigraphy and supplementary data" tab
 
@@ -13,26 +13,21 @@ class ModelView(tk.Frame):
     @todo - consider splitting each canvas to it's own separate classes?
     """
 
-    def __init__(self, root: tk.Tk):
+    def __init__(self, parent: tk.Frame):
         """Construct the view, without binding any callbacks"""
-        # Call the root tk constructor
-        super().__init__(root)
-        self.root = root
-
-        # @todo Temp var to make this work, instances were just `self` originally
-        # @todo Once all views are workign in isolation, need to plan how to deal with in-place overwrites and popups, then be consistent / abstract the management of the currentlty visible views eslewhere.
-        self.ctr = self.root
+        # Call the base class constructor
+        super().__init__(parent)
 
         self.configure(background="white")
 
         # Use a canvas to add a background colour below the menu bar
-        self.canvas = tk.Canvas(self.ctr, bd=0, highlightthickness=0, bg="#AEC7D6")
+        self.canvas = tk.Canvas(self, bd=0, highlightthickness=0, bg="#AEC7D6")
         self.canvas.place(relx=0, rely=0.03, relwidth=1, relheight=0.97)
 
         # Add buttons to switch between the main windows.
         # @todo - abstract this esle where to avoid duplication
         self.sasd_tab_button = tk.Button(
-            self.ctr,
+            self,
             text="Stratigraphy and supplementary data",
             font="helvetica 12 bold",
             fg="#2F4858",
@@ -42,7 +37,7 @@ class ModelView(tk.Frame):
         )
         self.sasd_tab_button.place(relx=0.38, rely=0.0, relwidth=0.17, relheight=0.03)
         self.dr_tab_button = tk.Button(
-            self.ctr,
+            self,
             text="Dating Results",
             font="helvetica 12 bold",
             fg="#8F4300",
@@ -54,7 +49,7 @@ class ModelView(tk.Frame):
 
         # Adding File Menu and commands
         # @todo - (partially) abstract this away to avoid duplication
-        self.file_menubar = ttk.Menubutton(self.ctr, text="File")
+        self.file_menubar = ttk.Menubutton(self, text="File")
         file = tk.Menu(self.file_menubar, tearoff=0, bg="white", font=("helvetica 12 bold"))
         self.file_menubar["menu"] = file
         file.add_separator()
@@ -93,14 +88,14 @@ class ModelView(tk.Frame):
         self.file_menubar.place(relx=0.00, rely=0, relwidth=0.1, relheight=0.03)
 
         # Adding View Menu and commands
-        self.view_menubar = ttk.Menubutton(self.ctr, text="View")
+        self.view_menubar = ttk.Menubutton(self, text="View")
         view_menu = tk.Menu(self.view_menubar, tearoff=0, bg="white", font=("helvetica", 11))
         self.view_menubar["menu"] = view_menu
         view_menu.add_command(label="Display Stratigraphic diagram in phases", font="helvetica 12 bold")
         self.view_menubar.place(relx=0.07, rely=0, relwidth=0.1, relheight=0.03)
 
         # Adding Tool Menu and commands
-        self.tool_menubar = ttk.Menubutton(self.ctr, text="Tools")
+        self.tool_menubar = ttk.Menubutton(self, text="Tools")
         tool_menu = tk.Menu(self.tool_menubar, tearoff=0, bg="white", font=("helvetica", 11))
         self.tool_menubar["menu"] = tool_menu
         # tool_menu.add_separator()
