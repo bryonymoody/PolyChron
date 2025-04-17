@@ -1,7 +1,8 @@
-from .BaseMainWindowPresenter import BaseMainWindowPresenter
-from ..views.BaseMainWindowView import BaseMainWindowView
 from typing import Any, Optional
+
 from ..interfaces import Navigator
+from ..views.BaseMainWindowView import BaseMainWindowView
+from .BaseMainWindowPresenter import BaseMainWindowPresenter
 
 
 class WelcomePresenter(BaseMainWindowPresenter):

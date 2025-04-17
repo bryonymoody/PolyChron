@@ -2,7 +2,6 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, Optional
 
-
 from .BasePopupView import BasePopupView
 
 

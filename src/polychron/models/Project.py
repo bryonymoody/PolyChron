@@ -1,5 +1,6 @@
-from dataclasses import dataclass
 import pathlib
+from dataclasses import dataclass
+
 from .Model import Model
 
 

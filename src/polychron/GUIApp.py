@@ -1,41 +1,39 @@
 """The main GUI App class, which initialises the GUI application and can be used to run the main render loop"""
 
-from importlib.metadata import version
 import re
 import tkinter as tk
+from importlib.metadata import version
 from tkinter import ttk
-from ttkthemes import ThemedTk
 from typing import Any, Dict, Optional
+
+from ttkthemes import ThemedTk
 
 from .Config import Config
 from .interfaces import Navigator
-
-from .views.WelcomeView import WelcomeView
-from .views.ModelCreateView import ModelCreateView
-from .views.ModelSelectView import ModelSelectView
-from .views.ProjectCreateView import ProjectCreateView
-from .views.ProjectSelectView import ProjectSelectView
+from .presenters.BaseMainWindowPresenter import BaseMainWindowPresenter
+from .presenters.DatingResultsPresenter import DatingResultsPresenter
+from .presenters.ModelPresenter import ModelPresenter
+from .presenters.WelcomePresenter import WelcomePresenter
 from .views.AddContextView import AddContextView
-from .views.GetSupplementaryDataView import GetSupplementaryDataView
-from .views.ResidualCheckView import ResidualCheckView
-from .views.ResidualCheckConfirmView import ResidualCheckConfirmView
-from .views.ManageIntrusiveOrResidualContexts import ManageIntrusiveOrResidualContexts
-from .views.RemoveContextView import RemoveContextView
-from .views.RemoveStratigraphicRelationshipView import RemoveStratigraphicRelationshipView
-from .views.DatafilePreviewView import DatafilePreviewView
-from .views.CalibrateModelSelectView import CalibrateModelSelectView
-from .views.MCMCProgressView import MCMCProgressView
-from .views.DatingResultsView import DatingResultsView
-from .views.ModelView import ModelView
-from .views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
 from .views.BaseMainWindowView import BaseMainWindowView
 from .views.BasePopupView import BasePopupView
-
-
-from .presenters.BaseMainWindowPresenter import BaseMainWindowPresenter
-from .presenters.WelcomePresenter import WelcomePresenter
-from .presenters.ModelPresenter import ModelPresenter
-from .presenters.DatingResultsPresenter import DatingResultsPresenter
+from .views.CalibrateModelSelectView import CalibrateModelSelectView
+from .views.DatafilePreviewView import DatafilePreviewView
+from .views.DatingResultsView import DatingResultsView
+from .views.GetSupplementaryDataView import GetSupplementaryDataView
+from .views.ManageIntrusiveOrResidualContexts import ManageIntrusiveOrResidualContexts
+from .views.MCMCProgressView import MCMCProgressView
+from .views.ModelCreateView import ModelCreateView
+from .views.ModelSelectView import ModelSelectView
+from .views.ModelView import ModelView
+from .views.ProjectCreateView import ProjectCreateView
+from .views.ProjectSelectView import ProjectSelectView
+from .views.RemoveContextView import RemoveContextView
+from .views.RemoveStratigraphicRelationshipView import RemoveStratigraphicRelationshipView
+from .views.ResidualCheckConfirmView import ResidualCheckConfirmView
+from .views.ResidualCheckView import ResidualCheckView
+from .views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
+from .views.WelcomeView import WelcomeView
 
 
 class GUIApp(Navigator):

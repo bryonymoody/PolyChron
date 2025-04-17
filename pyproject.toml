@@ -79,11 +79,12 @@ indent-width = 4
 # Exclude pre-existing files until they have intentionally been linted
 extend-exclude = [
     "src/polychron/automated_mcmc_ordering_coupling_copy.py",
+    "src/polychron/gui.py",
 ]
 
 [tool.ruff.lint]
 # Select which ruff rules to apply when linting.
-select = ["E4", "E7", "E9", "F"]
+select = ["E4", "E7", "E9", "F", "I"]
 # But ignore some of them
 ignore = [
     "E741", # https://docs.astral.sh/ruff/rules/ambiguous-variable-name/

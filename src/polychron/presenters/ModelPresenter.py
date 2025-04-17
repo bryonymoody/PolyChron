@@ -1,7 +1,8 @@
-from .BaseMainWindowPresenter import BaseMainWindowPresenter
-from ..views.ModelView import ModelView
 from typing import Any, Optional
+
 from ..interfaces import Navigator
+from ..views.ModelView import ModelView
+from .BaseMainWindowPresenter import BaseMainWindowPresenter
 
 
 class ModelPresenter(BaseMainWindowPresenter):

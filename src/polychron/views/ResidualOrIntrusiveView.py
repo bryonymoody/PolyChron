@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable, Optional, List
+from typing import Any, Callable, List, Optional
 
 from .BasePopupView import BasePopupView
 
