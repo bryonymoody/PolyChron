@@ -8,6 +8,8 @@ from ttkthemes import ThemedTk
 from typing import Any, Dict, Optional
 
 from .Config import Config
+from .interfaces import Navigator
+
 from .views.WelcomeView import WelcomeView
 from .views.ModelCreateView import ModelCreateView
 from .views.ModelSelectView import ModelSelectView
@@ -30,7 +32,13 @@ from .views.BaseMainWindowView import BaseMainWindowView
 from .views.BasePopupView import BasePopupView
 
 
-class GUIApp:
+from .presenters.BaseMainWindowPresenter import BaseMainWindowPresenter
+from .presenters.WelcomePresenter import WelcomePresenter
+from .presenters.ModelPresenter import ModelPresenter
+from .presenters.DatingResultsPresenter import DatingResultsPresenter
+
+
+class GUIApp(Navigator):
     """Main GUIApp which is provides the main entry point, initialises the Models, Views and Presenters and opens the main window.
 
     This includes code which used to belong to `MainFrame`
@@ -62,30 +70,36 @@ class GUIApp:
         self.container.grid_columnconfigure(0, weight=1)
 
         # Construct the views and presenters for main window views (i.e. not-popups)
-        self.main_window_views: Dict[str, Any] = {
-            "Welcome": WelcomeView(self.container),
-            "Model": ModelView(self.container),
-            "DatingResults": DatingResultsView(self.container),
+        self.current_main_window_presenter: Optional[str] = None
+        self.main_window_presenters: Dict[str, BaseMainWindowPresenter] = {
+            "Welcome": WelcomePresenter(self, WelcomeView(self.container), {"@todo": "todo"}),
+            "Model": ModelPresenter(self, ModelView(self.container), {"@todo": "todo"}),
+            "DatingResults": DatingResultsPresenter(self, DatingResultsView(self.container), {"@todo": "todo"}),
         }
 
         # Place each main window within the container
         # @todo - make this part of a common base class mainWindowFrameView?
-        for frame in self.main_window_views.values():
-            frame.grid(row=0, column=0, sticky="nsew")
+        for presenter in self.main_window_presenters.values():
+            presenter.view.grid(row=0, column=0, sticky="nsew")
             # Immeditely hide the frame, but remember it's settings.
-            frame.grid_remove()
+            presenter.view.grid_remove()
         # Hide the
 
         # @todo MVP
 
-    def show_frame(self, name: str):
-        """Show a speicfic frame/view by it's name on the main window
+    def switch_main_presenter(self, name: str):
+        """Show a speicfic frame/view by it's name on the main window"""
+        if name in self.main_window_presenters:
+            # Hide the current presenter if set
+            if (
+                self.current_main_window_presenter is not None
+                and self.current_main_window_presenter in self.main_window_presenters
+            ):
+                self.main_window_presenters[self.current_main_window_presenter].view.grid_remove()
 
-        @todo - include the presenter here.
-        """
-        if name in self.main_window_views:
             # Re-place the frame using grid, with settings remembered from before
-            self.main_window_views[name].grid()
+            self.current_main_window_presenter = name
+            self.main_window_presenters[name].view.grid()
         else:
             raise Exception("@todo better error missing frame")
 
@@ -131,9 +145,9 @@ class GUIApp:
         if viewName is None and viewIdx is None:
             # Actual intended body of this method, which should be all that is left once debugging is stripped out.
             # shwo the initial view
-            self.show_frame("Welcome")
-            # self.show_frame("Model")
-            # self.show_frame("DatingResults")
+            # self.switch_main_presenter("Welcome")
+            self.switch_main_presenter("Model")
+            # self.switch_main_presenter("DatingResults")
             self.root.mainloop()
         else:
             # Temporary dictionary of view instances, for use during refactoring before the addition of Models or Presenters
@@ -177,7 +191,7 @@ class GUIApp:
             # Depending on if mainwindow or popupwindow, handle it differntly.
             if issubclass(viewClass, BaseMainWindowView):
                 # This is gross
-                self.show_frame(viewClass.__name__.replace("View", ""))
+                self.switch_main_presenter(viewClass.__name__.replace("View", ""))
             elif issubclass(viewClass, BasePopupView):
                 viewClass(self.root)
             else:

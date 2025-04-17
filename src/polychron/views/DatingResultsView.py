@@ -188,10 +188,10 @@ class DatingResultsView(BaseMainWindowView):
             *self.ResultList,
         )
 
-    def bind_sasd_tab_button_button(self, callback: Callable[[], Optional[Any]]) -> None:
-        """Bind the callback for when the sasd_tab_button_button is pressed"""
+    def bind_sasd_tab_button(self, callback: Callable[[], Optional[Any]]) -> None:
+        """Bind the callback for when the sasd_tab_button is pressed"""
         if callback is not None:
-            self.sasd_tab_button_button.config(command=callback)
+            self.sasd_tab_button.config(command=callback)
 
     def bind_dr_tab_button(self, callback: Callable[[], Optional[Any]]) -> None:
         """Bind the callback for when the dr_tab_button is pressed"""
