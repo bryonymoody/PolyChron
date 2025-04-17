@@ -1,7 +1,9 @@
 # @note - this will currently cause a window to open and require working tkinter.
-import pytest
-import polychron.gui
 import pathlib
+
+import pytest
+
+import polychron.gui
 
 
 @pytest.mark.skip(reason="Disabled during initial refactor")

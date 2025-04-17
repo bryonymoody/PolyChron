@@ -1,8 +1,10 @@
 import importlib.resources
 import io
 import tkinter as tk
-from PIL import Image, ImageTk
 from typing import Any, Callable, Optional
+
+from PIL import Image, ImageTk
+
 from .BaseMainWindowView import BaseMainWindowView
 
 

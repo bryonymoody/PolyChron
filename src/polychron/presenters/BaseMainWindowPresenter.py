@@ -1,5 +1,5 @@
-from typing import Any, Optional
 from abc import ABC
+from typing import Any, Optional
 
 from ..interfaces import Navigator
 from ..views.BaseMainWindowView import BaseMainWindowView

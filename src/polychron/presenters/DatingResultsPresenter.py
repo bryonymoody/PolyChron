@@ -1,7 +1,8 @@
-from .BaseMainWindowPresenter import BaseMainWindowPresenter
-from ..views.DatingResultsView import DatingResultsView
 from typing import Any, Optional
+
 from ..interfaces import Navigator
+from ..views.DatingResultsView import DatingResultsView
+from .BaseMainWindowPresenter import BaseMainWindowPresenter
 
 
 class DatingResultsPresenter(BaseMainWindowPresenter):
