@@ -10,13 +10,19 @@ class BasePopupView(tk.Toplevel):
     @todo - make this more complex
     """
 
-    def __init__(self, parent: tk.Toplevel):
+    def __init__(self, parent: tk.Toplevel, start_visible=False):
         """Call the base class (Toplevel) constructor"""
         # Call the tk.Toplevel's constructor providing the parent/master element
         super().__init__(parent)
 
         self.parent = parent
         """A reference to the parent frame"""
+
+        print(start_visible)
+        # Start with the view hidden
+        if not start_visible:
+            # withdraw to hide, deiconify to show, iconify to show minimised
+            self.withdraw()
 
         # Add a keybind for closing the popupwindow, with a method to gracefully handle it.
         self.register_popup_keybinds()

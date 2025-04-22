@@ -13,11 +13,10 @@ class ResidualCheckView(BasePopupView):
     @todo - make this a popup rather than child of parent?
     """
 
-    def __init__(self, parent: tk.Tk):
+    def __init__(self, parent: tk.Tk, start_visible=False):
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent)
-        self.parent = parent
+        super().__init__(parent, start_visible)
 
         self.geometry("1500x400")
         self.title("Adding group relationships")

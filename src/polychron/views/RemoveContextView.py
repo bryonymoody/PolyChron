@@ -10,11 +10,10 @@ class RemoveContextView(BasePopupView):
     Formerly `popupWindow5`
     """
 
-    def __init__(self, parent: tk.Tk):
+    def __init__(self, parent: tk.Tk, start_visible=False):
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent)
-        self.parent = parent
+        super().__init__(parent, start_visible)
 
         self.configure(bg="white")
         self.geometry("1000x400")

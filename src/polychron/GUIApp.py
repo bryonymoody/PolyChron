@@ -191,7 +191,8 @@ class GUIApp(Navigator):
                 # This is gross
                 self.switch_main_presenter(viewClass.__name__.replace("View", ""))
             elif issubclass(viewClass, BasePopupView):
-                viewClass(self.root)
+                v = viewClass(self.root, start_visible=False)
+                v.deiconify()
             else:
                 viewClass(self.root)
             self.root.mainloop()

@@ -20,7 +20,6 @@ class DatingResultsView(BaseMainWindowView):
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
         super().__init__(parent)
-        self.parent = parent
 
         self.configure(background="#fcfdfd")
 

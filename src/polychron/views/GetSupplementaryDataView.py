@@ -10,11 +10,10 @@ class GetSupplementaryDataView(BasePopupView):
     Not yet implemented, as implementation is marked as BROKEN in 0.1
     """
 
-    def __init__(self, parent: tk.Tk):
+    def __init__(self, parent: tk.Tk, start_visible=False):
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent)
-        self.parent = parent
+        super().__init__(parent, start_visible)
 
         raise Exception("GetSupplementaryDataView is not fully implemented. popupWindow2 was previously unused.")
 

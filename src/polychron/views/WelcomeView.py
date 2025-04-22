@@ -18,7 +18,6 @@ class WelcomeView(BaseMainWindowView):
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
         super().__init__(parent)
-        self.parent = parent
 
         # Declare 2 canvas, splitting the UI into 2 columns
         # @todo - self.top? i.e. a special top window? Maybe shoudl just be passed in as a diff root?

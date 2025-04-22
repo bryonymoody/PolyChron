@@ -13,11 +13,10 @@ class RemoveStratigraphicRelationshipView(BasePopupView):
     @todo - Add the option to not remove the relationship, i.e. cancel / go back?
     """
 
-    def __init__(self, parent: tk.Tk):
+    def __init__(self, parent: tk.Tk, start_visible=False):
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent)
-        self.parent = parent
+        super().__init__(parent, start_visible)
 
         # @todo cleaner popup separation?
         self.configure(bg="white")

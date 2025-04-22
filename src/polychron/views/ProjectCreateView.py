@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, Optional
 
-
+# @todo - base class for frames that aren't main window frames? Maybe it's the same thing?
 class ProjectCreateView(ttk.Frame):
     """Passive view for project creation"""
 
@@ -13,7 +13,6 @@ class ProjectCreateView(ttk.Frame):
         self.parent = parent
 
         # Declare 2 canvas, splitting the UI into 2 columns
-        # @todo - self.top? i.e. a special top window? Maybe shoudl just be passed in as a diff parent?
         # @todo - should this be moved somewhere else, which views which use these then extend to avoid duplication?
         self.maincanvas = tk.Canvas(self.parent, bg="white")
         self.maincanvas.place(relx=0, rely=0, relheight=1, relwidth=1)

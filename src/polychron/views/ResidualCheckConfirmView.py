@@ -13,11 +13,10 @@ class ResidualCheckConfirmView(BasePopupView):
     @todo - make this share parts with / part of ResidualCheckConfirmView. Unsure on best right now so duplicated
     """
 
-    def __init__(self, parent: tk.Tk):
+    def __init__(self, parent: tk.Tk, start_visible=False):
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent)
-        self.parent = parent
+        super().__init__(parent, start_visible)
 
         # @todo cleaner popup separation?
         self.geometry("1500x400")
