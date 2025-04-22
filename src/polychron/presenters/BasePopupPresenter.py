@@ -38,4 +38,16 @@ class BasePopupPresenter(ABC):
         """
         pass
 
+    def display_view(self) -> None:
+        """Make the view visible (and not minimised)"""
+        self.view.deiconify()
+
+    def minimise_view(self) -> None:
+        """Minimise the view"""
+        self.view.iconify()
+    
+    def hide_view(self) -> None:
+        """Hide (withdraw) the view"""
+        self.view.withdraw()
+
     # @todo - bind abstract method which binds all callbacks?
