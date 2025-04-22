@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Any, Optional
 
 from ..interfaces import Navigator
@@ -28,3 +28,14 @@ class BaseMainWindowPresenter(ABC):
 
         self.model: Optional[Any] = model
         """Model objects which include data and buisness logic which are presented by this presenter/view"""
+
+    @abstractmethod
+    def update_view(self) -> None:
+        """Update view data for the current state of the model
+
+        @todo - actually do this in smaller methods?
+        @todo - rename?
+        """
+        pass
+
+    # @todo - bind abstract method which binds all callbacks?

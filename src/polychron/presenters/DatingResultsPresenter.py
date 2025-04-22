@@ -10,7 +10,13 @@ class DatingResultsPresenter(BaseMainWindowPresenter):
         # Call the parent class' consturctor
         super().__init__(navigator, view, model)
 
-        print("DatingResutlsPresenter.__init__()")
-
+        # Bind callback functions for switching between the main view tabs
         view.bind_sasd_tab_button(lambda: self.navigator.switch_main_presenter("Model"))
         view.bind_dr_tab_button(lambda: self.navigator.switch_main_presenter("DatingResults"))
+
+        # @todo - bind menu buttons
+
+        # @todo - bind callbacks
+
+    def update_view(self):
+        pass  # @todo

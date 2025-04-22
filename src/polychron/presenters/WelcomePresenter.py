@@ -10,4 +10,7 @@ class WelcomePresenter(BaseMainWindowPresenter):
         # Call the parent class' consturctor
         super().__init__(navigator, view, model)
 
-        print("WelcomePresenter.__init__()")
+        # @todo - bind callbacks
+
+    def update_view(self):
+        pass  # @todo
