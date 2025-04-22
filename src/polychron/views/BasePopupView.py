@@ -20,7 +20,6 @@ class BasePopupView(tk.Toplevel):
         self.parent = parent
         """A reference to the parent frame"""
 
-        print(start_visible)
         # Start with the view hidden
         if not start_visible:
             # withdraw to hide, deiconify to show, iconify to show minimised
