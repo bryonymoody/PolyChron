@@ -7,6 +7,8 @@ class BasePopupView(tk.Toplevel):
 
     @todo - base this on tkk.Toplevel for better theming, but needs changes to extending classes
 
+    @todo - should this contain a Toplevel rahter than extend one? I.e. prevent tkinter leaking out of the view
+
     @todo - make this more complex
     """
 
@@ -25,6 +27,7 @@ class BasePopupView(tk.Toplevel):
             self.withdraw()
 
         # Add a keybind for closing the popupwindow, with a method to gracefully handle it.
+        # @todo - should these be replaced with bind mehtods, which are then called by the presenter providing the callback?
         self.register_popup_keybinds()
         self.register_protocols()
 

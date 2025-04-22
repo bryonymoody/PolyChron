@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, Optional
 
+
 # @todo - base class for frames that aren't main window frames? Maybe it's the same thing?
 class ProjectCreateView(ttk.Frame):
     """Passive view for project creation"""

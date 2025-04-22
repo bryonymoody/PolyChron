@@ -6,6 +6,8 @@ class BaseMainWindowView(tk.Frame):
 
     @todo - base this on tkk.Frame for better theming, but needs changes to extending classes
 
+    @todo - should this contain a Frame rahter than extend one? I.e. prevent tkinter leaking out of the view
+
     @todo - make this more complex
     """
 
