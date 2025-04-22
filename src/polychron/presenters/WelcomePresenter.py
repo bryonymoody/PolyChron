@@ -1,12 +1,12 @@
 from typing import Any, Optional
 
 from ..interfaces import Navigator
-from ..views.BaseMainWindowView import BaseMainWindowView
+from ..views.BaseFrameView import BaseFrameView
 from .BaseMainWindowPresenter import BaseMainWindowPresenter
 
 
 class WelcomePresenter(BaseMainWindowPresenter):
-    def __init__(self, navigator: Navigator, view: BaseMainWindowView, model: Optional[Any] = None):
+    def __init__(self, navigator: Navigator, view: BaseFrameView, model: Optional[Any] = None):
         # Call the parent class' consturctor
         super().__init__(navigator, view, model)
 

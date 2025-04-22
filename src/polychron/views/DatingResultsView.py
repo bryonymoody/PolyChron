@@ -2,10 +2,10 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, Optional
 
-from .BaseMainWindowView import BaseMainWindowView
+from .BaseFrameView import BaseFrameView
 
 
-class DatingResultsView(BaseMainWindowView):
+class DatingResultsView(BaseFrameView):
     """View for displaying post-calibration "Dating Results" for a model.
 
     I.e. the "Dating Results" tab

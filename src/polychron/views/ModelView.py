@@ -2,10 +2,10 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, Optional
 
-from .BaseMainWindowView import BaseMainWindowView
+from .BaseFrameView import BaseFrameView
 
 
-class ModelView(BaseMainWindowView):
+class ModelView(BaseFrameView):
     """Main view for displaying information about the model.
     I.e. the "Stratigraphy and supplementary data" tab
 

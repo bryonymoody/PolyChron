@@ -1,17 +1,17 @@
 import tkinter as tk
-from tkinter import ttk
 from typing import Any, Callable, Optional
+
+from .BaseFrameView import BaseFrameView
 
 
 # @todo - base class for frames that aren't main window frames? Maybe it's the same thing?
-class ProjectCreateView(ttk.Frame):
+class ProjectCreateView(BaseFrameView):
     """Passive view for project creation"""
 
-    def __init__(self, parent: tk.Tk):
+    def __init__(self, parent: tk.Frame):
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
         super().__init__(parent)
-        self.parent = parent
 
         # Declare 2 canvas, splitting the UI into 2 columns
         # @todo - should this be moved somewhere else, which views which use these then extend to avoid duplication?

@@ -1,14 +1,14 @@
 import tkinter as tk
 
 
-class BaseMainWindowView(tk.Frame):
-    """Base class for Views which will be contained within the main window
+class BaseFrameView(tk.Frame):
+    """Base class for Views which are frames rather than windows
 
     @todo - base this on tkk.Frame for better theming, but needs changes to extending classes
 
     @todo - should this contain a Frame rahter than extend one? I.e. prevent tkinter leaking out of the view
 
-    @todo - make this more complex
+    @todo - check waht the type hint for Parent should be. Parent could be a top level, or a tk.Tk or antother frame? Update in child classes
     """
 
     def __init__(self, parent: tk.Frame):

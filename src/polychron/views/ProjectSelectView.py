@@ -2,11 +2,13 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, Optional
 
+from .BaseFrameView import BaseFrameView
 
-class ProjectSelectView(ttk.Frame):
+
+class ProjectSelectView(BaseFrameView):
     """Passive view for project loading/selection"""
 
-    def __init__(self, parent: tk.Tk):
+    def __init__(self, parent: tk.Frame):
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
         super().__init__(parent)

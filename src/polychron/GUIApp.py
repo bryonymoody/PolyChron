@@ -15,7 +15,7 @@ from .presenters.DatingResultsPresenter import DatingResultsPresenter
 from .presenters.ModelPresenter import ModelPresenter
 from .presenters.WelcomePresenter import WelcomePresenter
 from .views.AddContextView import AddContextView
-from .views.BaseMainWindowView import BaseMainWindowView
+from .views.BaseFrameView import BaseFrameView
 from .views.BasePopupView import BasePopupView
 from .views.CalibrateModelSelectView import CalibrateModelSelectView
 from .views.DatafilePreviewView import DatafilePreviewView
@@ -187,7 +187,7 @@ class GUIApp(Navigator):
                 viewClass = views[list(views.keys())[viewIdx]]
 
             # Depending on if mainwindow or popupwindow, handle it differntly.
-            if issubclass(viewClass, BaseMainWindowView):
+            if issubclass(viewClass, BaseFrameView):
                 # This is gross
                 self.switch_main_presenter(viewClass.__name__.replace("View", ""))
             elif issubclass(viewClass, BasePopupView):

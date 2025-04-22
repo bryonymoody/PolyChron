@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Optional
 
 from ..interfaces import Navigator
-from ..views.BaseMainWindowView import BaseMainWindowView
+from ..views.BaseFrameView import BaseFrameView
 
 
 class BaseMainWindowPresenter(ABC):
@@ -13,19 +13,19 @@ class BaseMainWindowPresenter(ABC):
     @todo - rename. Remove base? "FramePresenter" or similar?
     """
 
-    def __init__(self, navigator: Navigator, view: BaseMainWindowView, model: Optional[Any] = None):
+    def __init__(self, navigator: Navigator, view: BaseFrameView, model: Optional[Any] = None):
         """Initialise the presenter
 
         Args:
             navigator (Navigator): an object which implements the Navigator protocol, i.e. the MainApp
-            view (BaseMainWindowView): The view instance to be presented
+            view (BaseFrameView): The view instance to be presented
             model (Optional[Any]): Model objects which include data and buiseness logic
         """
 
         self.navigator: Navigator = navigator
         """Reference to the parent navigator class, to enable switching between presenters/views"""
 
-        self.view: BaseMainWindowView = view
+        self.view: BaseFrameView = view
         """View managed by this presenter"""
 
         self.model: Optional[Any] = model

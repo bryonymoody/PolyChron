@@ -5,10 +5,10 @@ from typing import Any, Callable, Optional
 
 from PIL import Image, ImageTk
 
-from .BaseMainWindowView import BaseMainWindowView
+from .BaseFrameView import BaseFrameView
 
 
-class WelcomeView(BaseMainWindowView):
+class WelcomeView(BaseFrameView):
     """View for the welcome screen when polychron is first opened.
 
     This is implemented as a passive view, i.e. UI elements have no callbacks at constrution, and they must be explcitly bound afterwards
