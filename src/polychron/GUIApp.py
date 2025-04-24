@@ -146,8 +146,6 @@ class GUIApp(Navigator):
         @todo - remove the viewName and viewIdx params
         """
 
-
-
         if tabName is None and viewName is None and viewIdx is None:
             # Actual intended body of this method, which should be all that is left once debugging is stripped out.
             # shwo the initial view
