@@ -325,6 +325,7 @@ class ModelView(BaseFrameView):
         """Binds callback methods to file menu elements by label
 
         @todo - standardise this with how other menu callbacks are set in ModelView/DatingResultsVeiw. Probably a Dict[str, Callable] usign the menu label? Or just have a member dict of function pointers and directly bind to that for each command on creation.
+        Would be nicer to not have to re-use the full label?
         """
         tool_menu = self.nametowidget(self.tool_menubar.cget("menu"))
         for entry_label, callback in callbacks.items():

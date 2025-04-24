@@ -8,7 +8,7 @@ from .BasePopupView import BasePopupView
 class ResidualOrIntrusiveView(BasePopupView):
     """View for users to provide input on whether contexts are residual or inclusive during chronological graph rendering
 
-    Formely part of `PageTwo`
+    Formerly part of `PageTwo`
 
     """
 
@@ -69,8 +69,6 @@ class ResidualOrIntrusiveView(BasePopupView):
         # @todo - move these to tests
         # self.set_resid_label_text(["foo", "bar"])
         # self.set_intru_label_text(["foo", "bar", "baz"])
-        # self.set_residual_mode_button_background("orange")
-        # self.set_intrusive_mode_button_background("lightgreen")
 
     def set_resid_label_text(self, resid_list: List[str]):
         """Update the intrusive list

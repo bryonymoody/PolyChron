@@ -7,6 +7,11 @@ class Navigator(Protocol):
     This avoids a circular dependency between the GUIApp and presenters.
 
     @todo rename? main window specifc?
+
+    @todo - this needs some more thought / multiple types of navigator:
+    - Things which contain multiple presenters which can be switched between (GUIApp)
+    - Popup windows which contain multiple presenters to switch between, or to close with the ability to handle how it is closed
+    - Popup windows which can only contain a single presenter, but that can create new popup windows.
     """
 
     def switch_presenter(self, key: str) -> None:

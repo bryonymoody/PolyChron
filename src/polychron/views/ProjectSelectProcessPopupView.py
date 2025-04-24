@@ -16,12 +16,6 @@ class ProjectSelectProcessPopupView(BasePopupView):
         # Set the geometry, which naturally is centered within the parent window
         self.geometry("1000x400")  # @todo - not hardcoded here?
 
-        # Create a containing element in the current view
-        # self.container = tk.Frame(self)
-        # self.container.pack(side="top", fill="both", expand=True)
-        # self.container.grid_rowconfigure(0, weight=1)
-        # self.container.grid_columnconfigure(0, weight=1)
-
         # @todo - do this here rather thn in each child?
         # Declare 2 canvas, splitting the UI into 2 columns
         # Subsequent views are placed into one of these canvas elements and switched between by the presenter

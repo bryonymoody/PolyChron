@@ -2,26 +2,21 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, Optional
 
-from .BasePopupView import BasePopupView
+from .BaseFrameView import BaseFrameView
 
 
-class ResidualCheckConfirmView(BasePopupView):
+class ResidualCheckConfirmView(BaseFrameView):
     """View for residual vs inclusive contexts
 
     Formerly `popupWindow3`, Part of the Rendering chronological graph process
 
-    @todo - make this share parts with / part of ResidualCheckConfirmView. Unsure on best right now so duplicated
+    @todo - There is room for some refactoring here.
     """
 
-    def __init__(self, parent: tk.Frame, start_visible=False):
+    def __init__(self, parent: tk.Frame):
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent, start_visible)
-
-        # @todo cleaner popup separation?
-        self.geometry("1500x400")
-        self.title("Adding group relationships")
-        self.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
+        super().__init__(parent)
 
         self.maincanvas = tk.Canvas(
             self, bg="#AEC7D6", highlightthickness=0, borderwidth=0, highlightbackground="white"

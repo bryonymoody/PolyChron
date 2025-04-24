@@ -27,6 +27,7 @@ from .views.ModelCreateView import ModelCreateView
 from .views.ModelSelectView import ModelSelectView
 from .views.ModelView import ModelView
 from .views.ProjectCreateView import ProjectCreateView
+from .views.ProjectSelectProcessPopupView import ProjectSelectProcessPopupView
 from .views.ProjectSelectView import ProjectSelectView
 from .views.ProjectWelcomeView import ProjectWelcomeView
 from .views.RemoveContextView import RemoveContextView
@@ -35,7 +36,6 @@ from .views.ResidualCheckConfirmView import ResidualCheckConfirmView
 from .views.ResidualCheckView import ResidualCheckView
 from .views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
 from .views.SplashView import SplashView
-from .views.ProjectSelectProcessPopupView import ProjectSelectProcessPopupView
 
 
 class GUIApp(Navigator):
