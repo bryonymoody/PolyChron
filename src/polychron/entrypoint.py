@@ -19,6 +19,9 @@ def parse_cli(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--version", action="store_true", help="show version information and exit")
     parser.add_argument(
+        "--tab", choices=["Splash", "Model", "DatingResults"], help="Temporary: select which tab to start on"
+    )  #  @todo remove this
+    parser.add_argument(
         "--view", type=str, help="Temporary: select which view to demo during development"
     )  #  @todo remove this
     parser.add_argument(
@@ -50,4 +53,4 @@ def main():
 
         app = GUIApp()
         # app.launch()
-        app.launch(args.view, args.viewidx)  # @todo remove args.view
+        app.launch(args.tab, args.view, args.viewidx)  # @todo remove args.view

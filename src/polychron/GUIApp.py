@@ -140,20 +140,23 @@ class GUIApp(Navigator):
             # Apply the new window geometry
             self.root.geometry(new_geometry)
 
-    def launch(self, viewName: Optional[str], viewIdx: Optional[int]) -> None:
+    def launch(self, tabName: Optional[str], viewName: Optional[str], viewIdx: Optional[int]) -> None:
         """Method to launch the GUIApp, i.e. start the render loop
 
         @todo - remove the viewName and viewIdx params
         """
 
-        if viewName is None and viewIdx is None:
+
+
+        if tabName is None and viewName is None and viewIdx is None:
             # Actual intended body of this method, which should be all that is left once debugging is stripped out.
             # shwo the initial view
-            # self.switch_presenter("Splash")
-            # self.main_window_presenters["Splash"].on_select_project()  # Trigger the project open process
-            # @todo - alt debugging ways to start with different views
-            self.switch_presenter("Model")
-            # self.switch_presenter("DatingResults")
+            self.switch_presenter("Splash")
+            # Trigger the project open process
+            self.main_window_presenters["Splash"].on_select_project()
+            self.root.mainloop()
+        elif tabName is not None:
+            self.switch_presenter(tabName)
             self.root.mainloop()
         else:
             # Temporary dictionary of view instances, for use during refactoring before the addition of Models or Presenters
