@@ -21,7 +21,7 @@ from .views.CalibrateModelSelectView import CalibrateModelSelectView
 from .views.DatafilePreviewView import DatafilePreviewView
 from .views.DatingResultsView import DatingResultsView
 from .views.GetSupplementaryDataView import GetSupplementaryDataView
-from .views.ManageIntrusiveOrResidualContexts import ManageIntrusiveOrResidualContexts
+from .views.ManageIntrusiveOrResidualContextsView import ManageIntrusiveOrResidualContextsView
 from .views.MCMCProgressView import MCMCProgressView
 from .views.ModelCreateView import ModelCreateView
 from .views.ModelSelectView import ModelSelectView
@@ -35,6 +35,7 @@ from .views.ResidualCheckConfirmView import ResidualCheckConfirmView
 from .views.ResidualCheckView import ResidualCheckView
 from .views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
 from .views.SplashView import SplashView
+from .views.ProjectSelectProcessPopupView import ProjectSelectProcessPopupView
 
 
 class GUIApp(Navigator):
@@ -148,10 +149,10 @@ class GUIApp(Navigator):
         if viewName is None and viewIdx is None:
             # Actual intended body of this method, which should be all that is left once debugging is stripped out.
             # shwo the initial view
-            self.switch_presenter("Splash")
-            self.main_window_presenters["Splash"].on_select_project()  # Trigger the project open process
+            # self.switch_presenter("Splash")
+            # self.main_window_presenters["Splash"].on_select_project()  # Trigger the project open process
             # @todo - alt debugging ways to start with different views
-            # self.switch_presenter("Model")
+            self.switch_presenter("Model")
             # self.switch_presenter("DatingResults")
             self.root.mainloop()
         else:
@@ -163,6 +164,7 @@ class GUIApp(Navigator):
                 "ModelView": ModelView,
                 "DatingResultsView": DatingResultsView,
                 # project/model selection popup and assoc views
+                "ProjectSelectProcessPopupView": ProjectSelectProcessPopupView,
                 "ProjectWelcomeView": ProjectWelcomeView,
                 "ProjectCreateView": ProjectCreateView,
                 "ProjectSelectView": ProjectSelectView,
@@ -173,7 +175,7 @@ class GUIApp(Navigator):
                 "GetSupplementaryDataView": GetSupplementaryDataView,
                 "ResidualCheckView": ResidualCheckView,
                 "ResidualCheckConfirmView": ResidualCheckConfirmView,
-                "ManageIntrusiveOrResidualContexts": ManageIntrusiveOrResidualContexts,
+                "ManageIntrusiveOrResidualContextsView": ManageIntrusiveOrResidualContextsView,
                 "RemoveContextView": RemoveContextView,
                 "RemoveStratigraphicRelationshipView": RemoveStratigraphicRelationshipView,
                 "DatafilePreviewView": DatafilePreviewView,

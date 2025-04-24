@@ -15,8 +15,11 @@ class MCMCProgressView(BasePopupView):
         # Call the parent class constructor
         super().__init__(parent, start_visible)
 
-        self.geometry("%dx%d%+d%+d" % (700, 200, 600, 400))  # @todo - handle geometry setting elsewhere
+        # self.geometry("%dx%d%+d%+d" % (700, 200, 600, 400))  # @todo - handle geometry setting elsewhere
+        self.geometry("700x200")
+        self.title("MCMC in progress")
         self.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
+        # @todo block certain actions while this is on going?
         self.backcanvas = tk.Canvas(self, bg="#AEC7D6")
         self.backcanvas.place(relx=0, rely=0, relwidth=1, relheight=1)
 

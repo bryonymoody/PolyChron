@@ -21,15 +21,15 @@ class SplashPresenter(BaseFramePresenter):
         pass
 
     def on_select_project(self):
-        """Function which is called when File > Select Project is selected. I.e. open the popup preesnter for selecting a project."""
+        """Function which is called when File > Select Project is selected. I.e. open the popup preesnter for selecting a project.
 
-        # @todo - what should the navigator here actually be for a popup presenter? Do they need one? Should it just be the parent and not a navigator? some other interface?
+        @todo - this allows multiple open project windows to be created, which is not ideal
+        """
+
         # Instantiate the child presenter and view
-        child_presenter = ProjectSelectProcessPopupPresenter(
+        popup_presenter = ProjectSelectProcessPopupPresenter(
             self.navigator, ProjectSelectProcessPopupView(self.view), self.model
         )
-        # Make the new view visible
-        child_presenter.view.deiconify()
-        # Ensure it is above the root/parent window
-        child_presenter.view.lift()
-        # @todo - this allows multiple open project windows to be created, which is not ideal
+        # Ensure it is visible and on top
+        popup_presenter.view.deiconify()
+        popup_presenter.view.lift()

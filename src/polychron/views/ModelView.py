@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Dict, Optional
 
 from .BaseFrameView import BaseFrameView
 
@@ -100,10 +100,8 @@ class ModelView(BaseFrameView):
         tool_menu = tk.Menu(self.tool_menubar, tearoff=0, bg="white", font=("helvetica", 11))
         self.tool_menubar["menu"] = tool_menu
         # tool_menu.add_separator()
-        tool_menu.add_command(
-            label="Render chronological graph", command=lambda: self.chronograph_render_wrap(), font="helvetica 12 bold"
-        )
-        tool_menu.add_command(label="Calibrate model", command=lambda: self.load_mcmc(), font="helvetica 12 bold")
+        tool_menu.add_command(label="Render chronological graph", font="helvetica 12 bold")
+        tool_menu.add_command(label="Calibrate model", font="helvetica 12 bold")
         tool_menu.add_command(
             label="Calibrate multiple projects from project", font="helvetica 12 bold"
         )  #  command=lambda: popupWindow8(self, proj_dir))
@@ -322,3 +320,14 @@ class ModelView(BaseFrameView):
         self.littlecanvas2.bind("<Button-5>", callback_wheel)
         self.littlecanvas2.bind("<Button-1>", callback_move_from)
         self.littlecanvas2.bind("<B1-Motion>", callback_move_to)
+
+    def bind_tool_menu_callbacks(self, callbacks: Dict[str, Callable[[], Optional[Any]]]) -> None:
+        """Binds callback methods to file menu elements by label
+
+        @todo - standardise this with how other menu callbacks are set in ModelView/DatingResultsVeiw. Probably a Dict[str, Callable] usign the menu label? Or just have a member dict of function pointers and directly bind to that for each command on creation.
+        """
+        tool_menu = self.nametowidget(self.tool_menubar.cget("menu"))
+        for entry_label, callback in callbacks.items():
+            if callback is not None:
+                # @todo - handle missing labels gracefully
+                tool_menu.entryconfig(entry_label, command=callback)

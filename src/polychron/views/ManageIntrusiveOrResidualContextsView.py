@@ -4,7 +4,7 @@ from typing import Any, Callable, Optional
 from .BasePopupView import BasePopupView
 
 
-class ManageIntrusiveOrResidualContexts(BasePopupView):
+class ManageIntrusiveOrResidualContextsView(BasePopupView):
     """View for managing intrusive and residual contexts
 
     Formerly `popupWindow4`. This is a popup window triggered after ResidualOrIntrusive input
