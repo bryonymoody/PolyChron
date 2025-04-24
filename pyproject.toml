@@ -58,7 +58,7 @@ dev = [
 Repository = "https://github.com/bryonymoody/PolyChron"
 Issues = "https://github.com/bryonymoody/PolyChron/issues"
 
-[project.gui-scripts]
+[project.scripts]
 polychron = "polychron.entrypoint:main"
 
 # pytest options
