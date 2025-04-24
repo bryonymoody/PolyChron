@@ -10,10 +10,10 @@ from ttkthemes import ThemedTk
 
 from .Config import Config
 from .interfaces import Navigator
-from .presenters.BaseMainWindowPresenter import BaseMainWindowPresenter
+from .presenters.BaseFramePresenter import BaseFramePresenter
 from .presenters.DatingResultsPresenter import DatingResultsPresenter
 from .presenters.ModelPresenter import ModelPresenter
-from .presenters.WelcomePresenter import WelcomePresenter
+from .presenters.SplashPresenter import SplashPresenter
 from .views.AddContextView import AddContextView
 from .views.BaseFrameView import BaseFrameView
 from .views.BasePopupView import BasePopupView
@@ -28,12 +28,13 @@ from .views.ModelSelectView import ModelSelectView
 from .views.ModelView import ModelView
 from .views.ProjectCreateView import ProjectCreateView
 from .views.ProjectSelectView import ProjectSelectView
+from .views.ProjectWelcomeView import ProjectWelcomeView
 from .views.RemoveContextView import RemoveContextView
 from .views.RemoveStratigraphicRelationshipView import RemoveStratigraphicRelationshipView
 from .views.ResidualCheckConfirmView import ResidualCheckConfirmView
 from .views.ResidualCheckView import ResidualCheckView
 from .views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
-from .views.WelcomeView import WelcomeView
+from .views.SplashView import SplashView
 
 
 class GUIApp(Navigator):
@@ -62,6 +63,7 @@ class GUIApp(Navigator):
 
         # Add a frame which fills the full root window, in to which other main window frames will be placed.
         # @todo - make this a ttk frame instead?
+        # @todo - make this ContainerView or something?
         self.container = tk.Frame(self.root)
         self.container.pack(side="top", fill="both", expand=True)
         self.container.grid_rowconfigure(0, weight=1)
@@ -69,8 +71,8 @@ class GUIApp(Navigator):
 
         # Construct the views and presenters for main window views (i.e. not-popups)
         self.current_main_window_presenter: Optional[str] = None
-        self.main_window_presenters: Dict[str, BaseMainWindowPresenter] = {
-            "Welcome": WelcomePresenter(self, WelcomeView(self.container), {"@todo": "todo"}),
+        self.main_window_presenters: Dict[str, BaseFramePresenter] = {
+            "Splash": SplashPresenter(self, SplashView(self.container), {"@todo": "todo"}),
             "Model": ModelPresenter(self, ModelView(self.container), {"@todo": "todo"}),
             "DatingResults": DatingResultsPresenter(self, DatingResultsView(self.container), {"@todo": "todo"}),
         }
@@ -81,11 +83,11 @@ class GUIApp(Navigator):
             presenter.view.grid(row=0, column=0, sticky="nsew")
             # Immeditely hide the frame, but remember it's settings.
             presenter.view.grid_remove()
-        # Hide the
 
-        # @todo MVP
+        # Construct views and presenters for popups? @todo
+        # Or should these be owned by the presenter which leads to them being opened? @todo
 
-    def switch_main_presenter(self, name: str):
+    def switch_presenter(self, name: str):
         """Show a speicfic frame/view by it's name on the main window"""
         if name in self.main_window_presenters:
             # Hide the current presenter if set
@@ -100,6 +102,9 @@ class GUIApp(Navigator):
             self.main_window_presenters[name].view.grid()
         else:
             raise Exception("@todo better error missing frame")
+
+    def close_navigator(self):
+        print("@todo - implement GUIApp::close_navigator or separate a Navigator and ClosableNavigator")
 
     def register_global_keybinds(self):
         """Register application-wide key bindings"""
@@ -143,21 +148,27 @@ class GUIApp(Navigator):
         if viewName is None and viewIdx is None:
             # Actual intended body of this method, which should be all that is left once debugging is stripped out.
             # shwo the initial view
-            # self.switch_main_presenter("Welcome")
-            self.switch_main_presenter("Model")
-            # self.switch_main_presenter("DatingResults")
+            self.switch_presenter("Splash")
+            self.main_window_presenters["Splash"].on_select_project()  # Trigger the project open process
+            # @todo - alt debugging ways to start with different views
+            # self.switch_presenter("Model")
+            # self.switch_presenter("DatingResults")
             self.root.mainloop()
         else:
             # Temporary dictionary of view instances, for use during refactoring before the addition of Models or Presenters
             # popupWindow9 and popupWindow10 don't have any view related content + marked as alpha?
             views: Dict[str, ttk.Frame] = {
-                "WelcomeView": WelcomeView,
+                # main window views
+                "SplashView": SplashView,
                 "ModelView": ModelView,
                 "DatingResultsView": DatingResultsView,
+                # project/model selection popup and assoc views
+                "ProjectWelcomeView": ProjectWelcomeView,
                 "ProjectCreateView": ProjectCreateView,
                 "ProjectSelectView": ProjectSelectView,
                 "ModelCreateView": ModelCreateView,
                 "ModelSelectView": ModelSelectView,
+                # Other Popup Views
                 "AddContextView": AddContextView,
                 "GetSupplementaryDataView": GetSupplementaryDataView,
                 "ResidualCheckView": ResidualCheckView,
@@ -189,10 +200,11 @@ class GUIApp(Navigator):
             # Depending on if mainwindow or popupwindow, handle it differntly.
             if issubclass(viewClass, BaseFrameView):
                 # This is gross
-                self.switch_main_presenter(viewClass.__name__.replace("View", ""))
+                self.switch_presenter(viewClass.__name__.replace("View", ""))
             elif issubclass(viewClass, BasePopupView):
                 v = viewClass(self.root, start_visible=False)
                 v.deiconify()
+                v.lift()
             else:
                 viewClass(self.root)
             self.root.mainloop()

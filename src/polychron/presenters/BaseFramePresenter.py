@@ -5,12 +5,12 @@ from ..interfaces import Navigator
 from ..views.BaseFrameView import BaseFrameView
 
 
-class BaseMainWindowPresenter(ABC):
+class BaseFramePresenter(ABC):
     """Abstract Base class for Presenters for views which are in the main window, which act as the middle man between a veiw and the underlying data structures (model).
 
     @todo should / could this be combined with a simialr class for popup window presenters?
 
-    @todo - rename. Remove base? "FramePresenter" or similar?
+    @todo rename, Base is superflous.
     """
 
     def __init__(self, navigator: Navigator, view: BaseFrameView, model: Optional[Any] = None):

@@ -1,5 +1,5 @@
 import tkinter as tk
-from typing import Any, Optional
+from typing import Any, Callable, Dict, Optional
 
 
 class BasePopupView(tk.Toplevel):
@@ -24,25 +24,21 @@ class BasePopupView(tk.Toplevel):
         if not start_visible:
             # withdraw to hide, deiconify to show, iconify to show minimised
             self.withdraw()
+        else:
+            # Otherwise try to make sure it is on top
+            self.lift()
 
-        # Add a keybind for closing the popupwindow, with a method to gracefully handle it.
-        # @todo - should these be replaced with bind mehtods, which are then called by the presenter providing the callback?
-        self.register_popup_keybinds()
-        self.register_protocols()
+        # @todo - optionall prevent the parent window from being used while the popup is open.
+        # useing grab_set() and wait_window(self) can lead to unclosable windows if not careful
 
-    def register_popup_keybinds(self):
-        """Register application-wide key bindings
+    def register_keybinds(self, bindings: Dict[str, Callable[[], Optional[Any]]]):
+        """Register window-wide key bindings"""
+        for sequence, callback in bindings.items():
+            self.bind(sequence, callback)
 
-        @todo - check if this needs to be a lambda to support overriding the called mothod"""
-        # ctrl+w to close the window @todo this might need changing for sub-windows..
-        self.bind("<Control-w>", self.close_popup)
+    def register_protocols(self, bindings: Dict[str, Callable[[], Optional[Any]]]):
+        """Register protocols with the window
 
-    def register_protocols(self):
-        """Register protocols with the root window - i.e. what to do on (graceful) application exit"""
-        self.protocol("WM_DELETE_WINDOW", self.close_popup)
-
-    def close_popup(self, event: Optional[Any] = None) -> None:
-        """Callback function for graceful application exit via keybind or window manager close."""
-        # @todo - add any exit behaviour here
-        # Quit the root window
-        self.destroy()
+        i.e. what happens when the window is closed using the OS decorations"""
+        for name, callback in bindings.items():
+            self.protocol(name, callback)

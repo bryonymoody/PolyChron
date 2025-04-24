@@ -9,6 +9,14 @@ class Navigator(Protocol):
     @todo rename? main window specifc?
     """
 
-    def switch_main_presenter(self, key: str) -> None:
+    def switch_presenter(self, key: str) -> None:
         """Switch the active presenter & view by string key."""
+        ...
+
+    def close_navigator(self, reason: str = None) -> None:
+        """Gracefully close the navigator (i.e. popup window / main window)
+
+        @param reason: A string to pass to the presenter, enabling follow on actions. @todo think of a better way to handle this control flow.
+
+        @todo do something about making sure global application state has been updated"""
         ...

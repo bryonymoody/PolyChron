@@ -10,7 +10,7 @@ class CalibrateModelSelectView(BasePopupView):
     Formerly `popupWindow8`, used from menu option "Calibrate multiple projects from project"
     """
 
-    def __init__(self, parent: tk.Tk, start_visible=False):
+    def __init__(self, parent: tk.Frame, start_visible=False):
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
         super().__init__(parent, start_visible)
