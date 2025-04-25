@@ -50,10 +50,10 @@ class CalibrateModelSelectView(BasePopupView):
         )
         self.select_all_button.place(relx=0.6, rely=0.7)
 
-    def bind_load_button(self, callback: Callable[[], Optional[Any]]) -> None:
-        """Bind the callback for when the load_button is pressed"""
+    def bind_ok_button(self, callback: Callable[[], Optional[Any]]) -> None:
+        """Bind the callback for when the ok_button is pressed"""
         if callback is not None:
-            self.load_button.config(command=callback)
+            self.ok_button.config(command=callback)
 
     def bind_select_all_button(self, callback: Callable[[], Optional[Any]]) -> None:
         """Bind the callback for when the select_all_button is pressed"""

@@ -3,9 +3,11 @@ import tkinter.messagebox
 from typing import Any, Optional
 
 from ..interfaces import Navigator
+from ..presenters.CalibrateModelSelectPresenter import CalibrateModelSelectPresenter
 from ..presenters.MCMCProgressPresenter import MCMCProgressPresenter
 from ..presenters.ResidualCheckPopupPresenter import ResidualCheckPopupPresenter
 from ..presenters.ResidualOrIntrusivePresenter import ResidualOrIntrusivePresenter
+from ..views.CalibrateModelSelectView import CalibrateModelSelectView
 from ..views.MCMCProgressView import MCMCProgressView
 from ..views.ModelView import ModelView
 from ..views.ResidualCheckPopupView import ResidualCheckPopupView
@@ -28,6 +30,7 @@ class ModelPresenter(BaseFramePresenter):
             {
                 "Render chronological graph": lambda: self.chronograph_render_wrap(),
                 "Calibrate model": lambda: self.popup_calibrate_model(),
+                "Calibrate multiple projects from project": lambda: self.popup_calibrate_multiple(),
             }
         )
 
@@ -63,6 +66,23 @@ class ModelPresenter(BaseFramePresenter):
         self.navigator.switch_presenter("DatingResults")
 
         # @todo - esnure the presenter is destroyed
+
+    def popup_calibrate_multiple(self) -> None:
+        """Callback function for when Tools -> Calibrate multiple projects from project is selected
+
+        Opens a new popup box allowing the user to select which models from a list to calibrate as a batch.
+        On close, depending on if any models were selected or not, the models are subsequently calibrated
+
+        @todo - this allows multiple open project windows to be created, which is not ideal
+        """
+        popup_presenter = CalibrateModelSelectPresenter(self.navigator, CalibrateModelSelectView(self.view), self.model)
+        # Ensure it is visible and on top
+        popup_presenter.view.deiconify()
+        popup_presenter.view.lift()
+
+        # Calibrate the selected models
+        # see popupwindow8::cleanup
+        pass  # @todo
 
     def chronograph_render_wrap(self):
         """wraps chronograph render so we can assign a variable when runing the func using a button"""
