@@ -1,13 +1,18 @@
 import tkinter as tk
 import tkinter.messagebox
+from tkinter.filedialog import askopenfile
 from typing import Any, Optional
+
+import pandas as pd
 
 from ..interfaces import Navigator
 from ..presenters.CalibrateModelSelectPresenter import CalibrateModelSelectPresenter
+from ..presenters.DatafilePreviewPresenter import DatafilePreviewPresenter
 from ..presenters.MCMCProgressPresenter import MCMCProgressPresenter
 from ..presenters.ResidualCheckPopupPresenter import ResidualCheckPopupPresenter
 from ..presenters.ResidualOrIntrusivePresenter import ResidualOrIntrusivePresenter
 from ..views.CalibrateModelSelectView import CalibrateModelSelectView
+from ..views.DatafilePreviewView import DatafilePreviewView
 from ..views.MCMCProgressView import MCMCProgressView
 from ..views.ModelView import ModelView
 from ..views.ResidualCheckPopupView import ResidualCheckPopupView
@@ -26,11 +31,36 @@ class ModelPresenter(BaseFramePresenter):
 
         # Bind menu callbacks
         # @todo other menus
+
+        self.view.bind_file_menu_callbacks(
+            {
+                "Load stratigraphic diagram file (.dot)": lambda: print("@todo"),
+                "Load stratigraphic relationship file (.csv)": lambda: self.open_strat_csv_file(),
+                "Load scientific dating file (.csv)": lambda: print("@todo"),
+                "Load context grouping file (.csv)": lambda: print("@todo"),
+                "Load group relationship file (.csv)": lambda: print("@todo"),
+                "Load context equalities file (.csv)": lambda: print("@todo"),
+                "Load new project": lambda: print("@todo"),
+                "Load existing model": lambda: print("@todo"),
+                "Save changes as current model": lambda: print("@todo"),
+                "Save changes as new model": lambda: print("@todo"),
+                "Exit": lambda: print("@todo"),
+            }
+        )
+
+        self.view.bind_view_menu_callbacks(
+            {
+                "Display Stratigraphic diagram in phases": lambda: print("@todo"),
+            }
+        )
+
         self.view.bind_tool_menu_callbacks(
             {
                 "Render chronological graph": lambda: self.chronograph_render_wrap(),
                 "Calibrate model": lambda: self.popup_calibrate_model(),
                 "Calibrate multiple projects from project": lambda: self.popup_calibrate_multiple(),
+                "Calibrate node delete variations (alpha)": lambda: print("@todo"),
+                "Calibrate important variations (alpha)": lambda: print("@todo"),
             }
         )
 
@@ -127,3 +157,49 @@ class ModelPresenter(BaseFramePresenter):
             popup_presenter = ResidualCheckPopupPresenter(self.navigator, ResidualCheckPopupView(self.view), self.model)
             popup_presenter.view.deiconify()
             popup_presenter.view.lift()  # @todo - not sure these are neccesary
+
+    def file_popup(self, df: Any) -> str:
+        """For a gien dataframe, preview the data to the user. Returns the users decision
+
+        @todo - make this return a bool instead of 'load' or 'cancel'
+        """
+        # @todo set and get model data appropriately
+        temp_model = {"df": df, "result": "cancel"}
+        popup_presenter = DatafilePreviewPresenter(self.navigator, DatafilePreviewView(self.view), temp_model)
+        popup_presenter.view.deiconify()
+        popup_presenter.view.lift()  # @todo - not sure these are neccesary
+
+        # Prevent the view's canvas element from being interacted with?
+        self.view.canvas["state"] = "disabled"  # @todo
+        self.view.parent.wait_window(popup_presenter.view)  # @todo - view.parent mignt not have wiat_window?
+        self.view.canvas["state"] = "normal"  # @todo
+        print(f"temp_model {temp_model}")
+        return temp_model["result"]
+
+    def open_strat_csv_file(self) -> None:
+        """Callback function when File > Load stratigraphic relationship file (.csv) is selected, opening a plain text strat file
+
+        Formerly StartPage.open_file2
+
+        @todo - abstract askfileopen somewhere else to limit importing tkinter?
+
+        @todo - finish implementing this with the actual model
+
+        @todo - Column and value validation (within the data model, with exceptions handeled here?)
+        """
+        file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
+
+        if file is not None:
+            try:
+                # @todo finish this.
+                # self.littlecanvas.delete('all')
+                self.stratfile = pd.read_csv(file, dtype=str)
+                load_it = self.file_popup(self.stratfile)
+                if load_it == "load":
+                    # @todo rest of open_file2
+                    tk.messagebox.showinfo("Success", "Stratigraphic data loaded")
+                    # self.check_list_gen() # @todo
+                else:
+                    pass  # @todo this case.
+            except ValueError:
+                tk.messagebox.showerror("showerror", "Data not loaded, please try again")

@@ -240,18 +240,6 @@ class ModelView(BaseFrameView):
 
         tk.Misc.lift(self.littlecanvas)
 
-    def bind_file_menu_commands(self):
-        """Bind commands to the menu bar entires. This need some thought. One method per "menubar" which passes in a list of label/command pairs?"""
-        pass
-
-    def bind_view_menu_commands(self):
-        """Bind commands to the menu bar entires. This need some thought. One method per "menubar" which passes in a list of label/command pairs?"""
-        pass
-
-    def bind_tools_menu_commands(self):
-        """Bind commands to the menu bar entires. This need some thought. One method per "menubar" which passes in a list of label/command pairs?"""
-        pass
-
     def bind_testmenu_commands(self):
         """Bind commands for the stratigraphic graph right-click menu @todo"""
         pass
@@ -320,6 +308,30 @@ class ModelView(BaseFrameView):
         self.littlecanvas2.bind("<Button-5>", callback_wheel)
         self.littlecanvas2.bind("<Button-1>", callback_move_from)
         self.littlecanvas2.bind("<B1-Motion>", callback_move_to)
+
+    def bind_file_menu_callbacks(self, callbacks: Dict[str, Callable[[], Optional[Any]]]) -> None:
+        """Binds callback methods to file menu elements by label
+
+        @todo - standardise this with how other menu callbacks are set in ModelView/DatingResultsVeiw. Probably a Dict[str, Callable] usign the menu label? Or just have a member dict of function pointers and directly bind to that for each command on creation.
+        Would be nicer to not have to re-use the full label?
+        """
+        file_menu = self.nametowidget(self.file_menubar.cget("menu"))
+        for entry_label, callback in callbacks.items():
+            if callback is not None:
+                # @todo - handle missing labels gracefully
+                file_menu.entryconfig(entry_label, command=callback)
+
+    def bind_view_menu_callbacks(self, callbacks: Dict[str, Callable[[], Optional[Any]]]) -> None:
+        """Binds callback methods to view menu elements by label
+
+        @todo - standardise this with how other menu callbacks are set in ModelView/DatingResultsVeiw. Probably a Dict[str, Callable] usign the menu label? Or just have a member dict of function pointers and directly bind to that for each command on creation.
+        Would be nicer to not have to re-use the full label?
+        """
+        view_menu = self.nametowidget(self.view_menubar.cget("menu"))
+        for entry_label, callback in callbacks.items():
+            if callback is not None:
+                # @todo - handle missing labels gracefully
+                view_menu.entryconfig(entry_label, command=callback)
 
     def bind_tool_menu_callbacks(self, callbacks: Dict[str, Callable[[], Optional[Any]]]) -> None:
         """Binds callback methods to file menu elements by label
