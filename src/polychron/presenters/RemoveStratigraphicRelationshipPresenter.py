@@ -1,0 +1,32 @@
+from typing import Any, Optional
+
+from ..interfaces import Navigator
+from ..views.RemoveStratigraphicRelationshipView import RemoveStratigraphicRelationshipView
+from .BasePopupPresenter import BasePopupPresenter
+
+
+class RemoveStratigraphicRelationshipPresenter(BasePopupPresenter):
+    """Presenter for a popup window to provide the reason for the removal of a single stratigraphic relationship
+
+    Formerly `popupWindow6`, called by StartPage.edge_del_popup, triggered when "Delete stratigraphic relationship" is selected on an edge
+    """
+
+    def __init__(self, navigator: Navigator, view: RemoveStratigraphicRelationshipView, model: Optional[Any] = None):
+        # Call the parent class' consturctor
+        super().__init__(navigator, view, model)
+
+        # Bind buttons
+        self.view.bind_ok_button(self.on_ok_button)
+
+        # Update view information to reflect the current state of the model
+        self.update_view()
+
+    def update_view(self) -> None:
+        pass  # @todo
+
+    def on_ok_button(self) -> None:
+        """When the ok button is pressed, store the dataframe in the model and close the popup"""
+        # @todo - validate input and if ok update the model / trigger follow on actions.
+        # self.value=self.text.get('1.0', 'end')
+        self.close_view()
+        # @todo - this is prolly a memory leak.
