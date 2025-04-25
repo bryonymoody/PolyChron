@@ -60,15 +60,12 @@ class DatingResultsView(BaseFrameView):
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Save project progress", font=("helvetica 11 bold"))
         self.file_menubar.place(relx=0.0, rely=0, relwidth=0.1, relheight=0.03)
-        self.view_menubar = ttk.Menubutton(self, text="View")
+        self.view_menubar = ttk.Menubutton(self, text="View", state=tk.DISABLED)
 
         # Adding View menu with (no) sub options
         self.view_menubar["menu"] = tk.Menu(self.view_menubar, tearoff=0, bg="#fcfdfd")  # , font = ('helvetica',11))
         self.view_menubar.place(relx=0.07, rely=0, relwidth=0.1, relheight=0.03)
-        self.tool_menubar = ttk.Menubutton(
-            self,
-            text="Tools",
-        )
+        self.tool_menubar = ttk.Menubutton(self, text="Tools", state=tk.DISABLED)
 
         # Adding Tools menu with no suboptions
         self.tool_menubar["menu"] = tk.Menu(self.tool_menubar, tearoff=0, bg="#fcfdfd")  # , font = ('helvetica',11))

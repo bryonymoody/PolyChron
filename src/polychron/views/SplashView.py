@@ -37,6 +37,14 @@ class SplashView(BaseFrameView):
         file.add_command(label="Select Project", font="helvetica 12 bold")
         self.file_menubar.place(relx=0.00, rely=0, relwidth=0.1, relheight=0.03)
 
+        # Add an empty (and disabled) view menubar for consistency with other tabs
+        self.view_menubar = ttk.Menubutton(self, text="View", state=tk.DISABLED)
+        self.view_menubar.place(relx=0.07, rely=0, relwidth=0.1, relheight=0.03)
+
+        # Add an empty (and disabled) tools menubar for consistency with other tabs
+        self.tool_menubar = ttk.Menubutton(self, text="Tools", state=tk.DISABLED)
+        self.tool_menubar.place(relx=0.15, rely=0, relwidth=0.1, relheight=0.03)
+
         # Load the image from the package resources, and add it to the current frame
         package_name = __name__.split(".")[0]
         image1 = None
