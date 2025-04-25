@@ -33,10 +33,6 @@ class RemoveContextView(BasePopupView):
         self.ok_button = tk.Button(self, text="OK", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6")
         self.ok_button.place(relx=0.3, rely=0.7)
 
-    # def cleanup(self):
-    #     self.value=self.text.get('1.0', 'end')
-    #     self.destroy()
-
     def bind_ok_button(self, callback: Callable[[], Optional[Any]]) -> None:
         """Bind the callback for when the ok_button is pressed"""
         if callback is not None:
