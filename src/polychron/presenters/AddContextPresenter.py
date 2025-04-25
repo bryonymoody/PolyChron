@@ -1,9 +1,9 @@
-
 from typing import Any, Optional
 
 from ..interfaces import Navigator
 from ..views.AddContextView import AddContextView
 from .BasePopupPresenter import BasePopupPresenter
+
 
 class AddContextPresenter(BasePopupPresenter):
     """Presenter for adding an additional context to the current model
@@ -16,17 +16,16 @@ class AddContextPresenter(BasePopupPresenter):
         super().__init__(navigator, view, model)
 
         # Bind the OK button
-        self.view.bind_ok_button(self.on_ok)        
+        self.view.bind_ok_button(self.on_ok)
 
         # Update view information to reflect the current state of the model
         self.update_view()
 
     def update_view(self) -> None:
-        pass # @todo
+        pass  # @todo
 
     def on_ok(self) -> None:
         """When the OK button is pressed, validate user in put, update the model and close the popup"""
         # @todo - validate input and if ok update the model / trigger follow on actions.
         self.close_view()
         # @todo - this is prolly a memory leak.
-        
