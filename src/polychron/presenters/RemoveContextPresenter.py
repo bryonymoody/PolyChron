@@ -1,0 +1,32 @@
+from typing import Any, Optional
+
+from ..interfaces import Navigator
+from ..views.RemoveContextView import RemoveContextView
+from .BasePopupPresenter import BasePopupPresenter
+
+
+class RemoveContextPresenter(BasePopupPresenter):
+    """Presenter for a popup window to input the reason for the removal of a node/context
+
+    Formerly `popupWindow5`, called by StartPage.node_del_popup, triggered when "Delete context" is selected on a node
+    """
+
+    def __init__(self, navigator: Navigator, view: RemoveContextView, model: Optional[Any] = None):
+        # Call the parent class' consturctor
+        super().__init__(navigator, view, model)
+
+        # Bind buttons
+        self.view.bind_ok_button(self.on_ok_button)
+
+        # Update view information to reflect the current state of the model
+        self.update_view()
+
+    def update_view(self) -> None:
+        pass  # @todo
+
+    def on_ok_button(self) -> None:
+        """When the ok button is pressed, store the dataframe in the model and close the popup"""
+        # @todo - validate input and if ok update the model / trigger follow on actions.
+        # self.value=self.text.get('1.0', 'end')
+        self.close_view()
+        # @todo - this is prolly a memory leak.
