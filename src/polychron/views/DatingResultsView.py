@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Dict, Optional
 
 from .BaseFrameView import BaseFrameView
 
@@ -10,7 +10,7 @@ class DatingResultsView(BaseFrameView):
 
     I.e. the "Dating Results" tab
 
-    Formely part of `PageOne`
+    Formerly part of `PageOne`
 
     @todo - consider splitting each canvas to it's own separate classes?
     @todo - Split the navbar into it's own class, to reduce duplication with ModelView)
@@ -51,7 +51,6 @@ class DatingResultsView(BaseFrameView):
         self.dr_tab_button.place(relx=0.55, rely=0.0, relwidth=0.15, relheight=0.03)
 
         # Add the file menu button and it's options
-        # @todo - (partially) abstract this away to avoid duplication
         self.file_menubar = ttk.Menubutton(
             self,
             text="File",
@@ -213,7 +212,7 @@ class DatingResultsView(BaseFrameView):
         if callback is not None:
             self.clear_list_button.config(command=callback)
 
-    def bind_graphcanvas_events(
+    def bind_littlecanvas_events(
         self,
         callback_wheel: Callable[[], Optional[Any]],
         callback_rightclick: Callable[[], Optional[Any]],
@@ -226,21 +225,65 @@ class DatingResultsView(BaseFrameView):
 
         @todo better callback names
         """
-        self.graphcanvas.bind("<MouseWheel>", callback_wheel)
-        self.graphcanvas.bind("<Button-4>", callback_wheel)  # only with Linux, wheel scroll down
-        self.graphcanvas.bind("<Button-5>", callback_wheel)
-        self.graphcanvas.bind("<Double-Button-3>", callback_rightclick)
-        self.graphcanvas.bind("<Button-1>", callback_move_from)
-        self.graphcanvas.bind("<B1-Motion>", callback_move_to)
+        self.littlecanvas.bind("<MouseWheel>", callback_wheel)
+        self.littlecanvas.bind("<Button-4>", callback_wheel)  # only with Linux, wheel scroll down
+        self.littlecanvas.bind("<Button-5>", callback_wheel)
+        self.littlecanvas.bind("<Double-Button-3>", callback_rightclick)
+        self.littlecanvas.bind("<Button-1>", callback_move_from)
+        self.littlecanvas.bind("<B1-Motion>", callback_move_to)
 
-    def bind_file_menu_commands(self):
-        """Bind commands to the menu bar entires. This need some thought. One method per "menubar" which passes in a list of label/command pairs?"""
-        pass
+    def bind_littlecanvas2_events(
+        self,
+        callback_wheel: Callable[[], Optional[Any]],
+        callback_rightclick: Callable[[], Optional[Any]],
+        callback_move_from: Callable[[], Optional[Any]],
+        callback_move_to: Callable[[], Optional[Any]],
+    ) -> None:
+        """Bind mouse callback events for interacting with the graph canvas
 
-    def bind_view_menu_commands(self):
-        """Bind commands to the menu bar entires. This need some thought. One method per "menubar" which passes in a list of label/command pairs?"""
-        pass
+        @todo - split this method?
 
-    def bind_tools_menu_commands(self):
-        """Bind commands to the menu bar entires. This need some thought. One method per "menubar" which passes in a list of label/command pairs?"""
-        pass
+        @todo better callback names
+        """
+        self.littlecanvas2.bind("<MouseWheel>", callback_wheel)
+        self.littlecanvas2.bind("<Button-4>", callback_wheel)  # only with Linux, wheel scroll down
+        self.littlecanvas2.bind("<Button-5>", callback_wheel)
+        self.littlecanvas2.bind("<Double-Button-3>", callback_rightclick)
+        self.littlecanvas2.bind("<Button-1>", callback_move_from)
+        self.littlecanvas2.bind("<B1-Motion>", callback_move_to)
+
+    def bind_file_menu_callbacks(self, callbacks: Dict[str, Callable[[], Optional[Any]]]) -> None:
+        """Binds callback methods to file menu elements by label
+
+        @todo - standardise this with how other menu callbacks are set in ModelView/DatingResultsVeiw. Probably a Dict[str, Callable] usign the menu label? Or just have a member dict of function pointers and directly bind to that for each command on creation.
+        Would be nicer to not have to re-use the full label?
+        """
+        file_menu = self.nametowidget(self.file_menubar.cget("menu"))
+        for entry_label, callback in callbacks.items():
+            if callback is not None:
+                # @todo - handle missing labels gracefully
+                file_menu.entryconfig(entry_label, command=callback)
+
+    def bind_view_menu_callbacks(self, callbacks: Dict[str, Callable[[], Optional[Any]]]) -> None:
+        """Binds callback methods to view menu elements by label
+
+        @todo - standardise this with how other menu callbacks are set in ModelView/DatingResultsVeiw. Probably a Dict[str, Callable] usign the menu label? Or just have a member dict of function pointers and directly bind to that for each command on creation.
+        Would be nicer to not have to re-use the full label?
+        """
+        view_menu = self.nametowidget(self.view_menubar.cget("menu"))
+        for entry_label, callback in callbacks.items():
+            if callback is not None:
+                # @todo - handle missing labels gracefully
+                view_menu.entryconfig(entry_label, command=callback)
+
+    def bind_tool_menu_callbacks(self, callbacks: Dict[str, Callable[[], Optional[Any]]]) -> None:
+        """Binds callback methods to tool menu elements by label
+
+        @todo - standardise this with how other menu callbacks are set in ModelView/DatingResultsVeiw. Probably a Dict[str, Callable] usign the menu label? Or just have a member dict of function pointers and directly bind to that for each command on creation.
+        Would be nicer to not have to re-use the full label?
+        """
+        tool_menu = self.nametowidget(self.tool_menubar.cget("menu"))
+        for entry_label, callback in callbacks.items():
+            if callback is not None:
+                # @todo - handle missing labels gracefully
+                tool_menu.entryconfig(entry_label, command=callback)
