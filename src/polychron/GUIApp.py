@@ -20,7 +20,6 @@ from .views.BasePopupView import BasePopupView
 from .views.CalibrateModelSelectView import CalibrateModelSelectView
 from .views.DatafilePreviewView import DatafilePreviewView
 from .views.DatingResultsView import DatingResultsView
-from .views.GetSupplementaryDataView import GetSupplementaryDataView
 from .views.ManageIntrusiveOrResidualContextsView import ManageIntrusiveOrResidualContextsView
 from .views.MCMCProgressView import MCMCProgressView
 from .views.ModelCreateView import ModelCreateView
@@ -173,7 +172,6 @@ class GUIApp(Navigator):
                 "ModelSelectView": ModelSelectView,
                 # Other Popup Views
                 "AddContextView": AddContextView,
-                "GetSupplementaryDataView": GetSupplementaryDataView,
                 "ResidualCheckView": ResidualCheckView,
                 "ResidualCheckConfirmView": ResidualCheckConfirmView,
                 "ManageIntrusiveOrResidualContextsView": ManageIntrusiveOrResidualContextsView,
