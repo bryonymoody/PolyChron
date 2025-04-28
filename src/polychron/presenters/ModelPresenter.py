@@ -25,6 +25,35 @@ class ModelPresenter(BaseFramePresenter):
         # Call the parent class' consturctor
         super().__init__(navigator, view, model)
 
+        # Properties
+        self.strat_check: bool = False
+        """If a strat file has been loaded or not
+        
+        @todo - Should this actually belong to the ModelModel?
+        @todo - initalse these variables with values from the model?
+        """
+
+        self.date_check: bool = False
+        """If a data file has been loaded or not
+        
+        @todo - Should this actually belong to the ModelModel?
+        @todo - initalse these variables with values from the model?
+        """
+
+        self.phase_check: bool = False
+        """If a phase file has been loaded or not
+        
+        @todo - Should this actually belong to the ModelModel?
+        @todo - initalse these variables with values from the model?
+        """
+
+        self.phase_rel_check: bool = False
+        """If a phase_rel file has been loaded or not
+        
+        @todo - Should this actually belong to the ModelModel?
+        @todo - initalse these variables with values from the model?
+        """
+
         # Bind callback functions for switching between the main view tabs
         view.bind_sasd_tab_button(lambda: self.navigator.switch_presenter("Model"))
         view.bind_dr_tab_button(lambda: self.navigator.switch_presenter("DatingResults"))
@@ -66,11 +95,15 @@ class ModelPresenter(BaseFramePresenter):
 
         # Bind button clicks
         # @todo
+        # Bind the "Data loaded" button callback
+        self.display_data_var = "hidden"  # @todo - enum, save this as state?
+        self.view.bind_data_button(lambda: self.on_data_button())
 
         # Bind mouse & keyboard events
         # @todo
 
         # Update data
+        self.check_list_gen()
 
     def update_view(self) -> None:
         pass  # @todo
@@ -173,7 +206,6 @@ class ModelPresenter(BaseFramePresenter):
         self.view.canvas["state"] = "disabled"  # @todo
         self.view.parent.wait_window(popup_presenter.view)  # @todo - view.parent mignt not have wiat_window?
         self.view.canvas["state"] = "normal"  # @todo
-        print(f"temp_model {temp_model}")
         return temp_model["result"]
 
     def open_strat_dot_file(self) -> None:
@@ -233,7 +265,7 @@ class ModelPresenter(BaseFramePresenter):
                 if load_it == "load":
                     # @todo rest of open_file2
                     tk.messagebox.showinfo("Success", "Stratigraphic data loaded")
-                    # self.check_list_gen() # @todo
+                    self.check_list_gen()
                 else:
                     pass  # @todo this case.
             except ValueError:
@@ -258,14 +290,17 @@ class ModelPresenter(BaseFramePresenter):
                 self.datefile = self.datefile.applymap(str)
                 load_it = self.file_popup(self.datefile)
                 if load_it == "load":
-                    for i, j in enumerate(self.datefile["context"]):
-                        self.graph.nodes()[str(j)].update(
-                            {"Determination": [self.datefile["date"][i], self.datefile["error"][i]]}
-                        )
+                    pass  # @todo
+                    # for i, j in enumerate(self.datefile["context"]):
+                    # self.graph.nodes()[str(j)].update(
+                    #     {"Determination": [self.datefile["date"][i], self.datefile["error"][i]]}
+                    # )
                     # self.context_no_unordered = list(self.graph.nodes()) # @todo
-                # self.date_check = True # @todo
-                # self.check_list_gen() # @todo
-                tk.messagebox.showinfo("Success", "Scientific dating data loaded")
+                    self.date_check = True
+                    self.check_list_gen()
+                    tk.messagebox.showinfo("Success", "Scientific dating data loaded")
+                else:
+                    pass  # @todo
             except ValueError:
                 tk.messagebox.showerror("showerror", "Data not loaded, please try again")
 
@@ -289,8 +324,8 @@ class ModelPresenter(BaseFramePresenter):
                 if load_it == "load":
                     for i, j in enumerate(self.phasefile["context"]):
                         self.graph.nodes()[str(j)].update({"Group": self.phasefile["Group"][i]})
-                # self.phase_check = True # @todo
-                # self.check_list_gen() # @todo
+                self.phase_check = True
+                self.check_list_gen()
                 tk.messagebox.showinfo("Success", "Grouping data loaded")
             except ValueError:
                 tk.messagebox.showerror("showerror", "Data not loaded, please try again")
@@ -314,8 +349,8 @@ class ModelPresenter(BaseFramePresenter):
                     (str(phase_rel_df["above"][i]), str(phase_rel_df["below"][i])) for i in range(len(phase_rel_df))
                 ]
                 self.file_popup(pd.DataFrame(self.phase_rels, columns=["Younger group", "Older group"]))
-                # self.phase_rel_check = True # @todo
-                # self.check_list_gen() # @todo
+                self.phase_rel_check = True
+                self.check_list_gen()
                 tk.messagebox.showinfo("Success", "Group relationships data loaded")
             except ValueError:
                 tk.messagebox.showerror("showerror", "Data not loaded, please try again")
@@ -414,3 +449,27 @@ class ModelPresenter(BaseFramePresenter):
         @todo - popupWindow10 doesn't / didn't have any of it's own tkinter code, so not yet implemented
         """
         print("@todo - implement calibrate_important_variations/popupWindow10")
+
+    def on_data_button(self) -> None:
+        """Callback for when the "Data Loaded" button is pressed, which toggles the visibility of which required input files have been parsed or not
+
+        Formerly StartPage.display_data_func
+
+        @todo finish implementing this
+
+        @todo enum
+        """
+
+        if self.display_data_var == "hidden":
+            self.view.lift_datacanvas()
+            self.display_data_var = "onshow"
+        elif self.display_data_var == "onshow":
+            self.view.lift_littelcanvas()
+            self.display_data_var = "hidden"
+
+    def check_list_gen(self) -> None:
+        """Update the contents of the datacanvas checklist based on provided model state
+
+        Formerly StartPage.check_list_gen
+        """
+        self.view.update_datacanvas_checklist(self.strat_check, self.date_check, self.phase_check, self.phase_rel_check)

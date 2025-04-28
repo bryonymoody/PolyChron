@@ -13,19 +13,19 @@ class BaseFramePresenter(ABC):
     @todo rename, Base is superflous.
     """
 
-    def __init__(self, navigator: Navigator, view: BaseFrameView, model: Optional[Any] = None):
+    def __init__(self, navigator: Navigator, view: type[BaseFrameView], model: Optional[Any] = None):
         """Initialise the presenter
 
         Args:
             navigator (Navigator): an object which implements the Navigator protocol, i.e. the MainApp
-            view (BaseFrameView): The view instance to be presented
+            view (type[BaseFrameView]): The view instance to be presented
             model (Optional[Any]): Model objects which include data and buiseness logic
         """
 
         self.navigator: Navigator = navigator
         """Reference to the parent navigator class, to enable switching between presenters/views"""
 
-        self.view: BaseFrameView = view
+        self.view: type[BaseFrameView] = view
         """View managed by this presenter"""
 
         self.model: Optional[Any] = model

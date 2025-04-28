@@ -240,7 +240,7 @@ class ModelView(BaseFrameView):
 
         tk.Misc.lift(self.littlecanvas)
 
-    def bind_testmenu_commands(self):
+    def bind_testmenu_commands(self) -> None:
         """Bind commands for the stratigraphic graph right-click menu @todo"""
         pass
 
@@ -344,3 +344,62 @@ class ModelView(BaseFrameView):
             if callback is not None:
                 # @todo - handle missing labels gracefully
                 tool_menu.entryconfig(entry_label, command=callback)
+
+    def lift_datacanvas(self) -> None:
+        """Lift the datacanvas element to the top of the littlecanvas"""
+        tk.Misc.lift(self.datacanvas)
+        self.data_button["text"] = "Data loaded ↗"
+
+    def lift_littelcanvas(self) -> None:
+        """Lift the littlecanvas element to the top of the datacanvas"""
+        tk.Misc.lift(self.littlecanvas)
+        self.data_button["text"] = "Data loaded ↙"
+
+    def update_datacanvas_checklist(
+        self, strat_check: bool, date_check: bool, phase_check: bool, phase_rel_check: bool
+    ) -> None:
+        """Update the contents of the datacanvas checklist based on provided model state
+
+        Formerly part of StartPage.check_list_gen
+        """
+
+        if strat_check:
+            strat = "‣ Stratigraphic relationships"
+            col1 = "green"
+        else:
+            strat = "‣ Stratigraphic relationships"
+            col1 = "black"
+        if date_check:
+            date = "‣ Radiocarbon dates"
+            col2 = "green"
+        else:
+            date = "‣ Radiocarbon dates"
+            col2 = "black"
+        if phase_check:
+            phase = "‣ Groups for contexts"
+            col3 = "green"
+        else:
+            phase = "‣ Groups for contexts"
+            col3 = "black"
+        if phase_rel_check:
+            rels = "‣ Relationships between groups"
+            col4 = "green"
+        else:
+            rels = "‣ Relationships between groups"
+            col4 = "black"
+
+        self.datalittlecanvas.delete("all")
+        self.datalittlecanvas.create_text(
+            10, 20, anchor="nw", text=strat + "\n\n", font=("Helvetica 12 bold"), fill=col1
+        )
+        self.datalittlecanvas.pack()
+        self.datalittlecanvas.create_text(
+            10, 50, anchor="nw", text=date + "\n\n", font=("Helvetica 12 bold"), fill=col2
+        )
+        self.datalittlecanvas.pack()
+        self.datalittlecanvas.create_text(
+            10, 80, anchor="nw", text=phase + "\n\n", font=("Helvetica 12 bold"), fill=col3
+        )
+        self.datalittlecanvas.pack()
+        self.datalittlecanvas.create_text(10, 110, anchor="nw", text=rels, font=("Helvetica 12 bold"), fill=col4)
+        self.datalittlecanvas.pack()
