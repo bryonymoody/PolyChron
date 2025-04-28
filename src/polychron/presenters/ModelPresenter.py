@@ -59,8 +59,8 @@ class ModelPresenter(BaseFramePresenter):
                 "Render chronological graph": lambda: self.chronograph_render_wrap(),
                 "Calibrate model": lambda: self.popup_calibrate_model(),
                 "Calibrate multiple projects from project": lambda: self.popup_calibrate_multiple(),
-                "Calibrate node delete variations (alpha)": lambda: print("@todo"),
-                "Calibrate important variations (alpha)": lambda: print("@todo"),
+                "Calibrate node delete variations (alpha)": lambda: self.calibrate_node_delete_variations(),
+                "Calibrate important variations (alpha)": lambda: self.calibrate_important_variations(),
             }
         )
 
@@ -361,3 +361,21 @@ class ModelPresenter(BaseFramePresenter):
         # self.canvas.delete('all')
         # self.littlecanvas.bind("<Button-3>", self.preClick)
         # self.show_image()
+
+    def calibrate_node_delete_variations(self) -> None:
+        """Callback function when Tools > Calibrate node delete variations (alpha)
+
+        Formerly popupWindow9
+
+        @todo - popupWindow9 doesn't / didn't have any of it's own tkinter code, so not yet implemented
+        """
+        print("@todo - implement calibrate_node_delete_variations/popupWindow9")
+
+    def calibrate_important_variations(self) -> None:
+        """Callback function when Tools > Calibrate node delete variations (alpha)
+
+        Formerly popupWindow10
+
+        @todo - popupWindow10 doesn't / didn't have any of it's own tkinter code, so not yet implemented
+        """
+        print("@todo - implement calibrate_important_variations/popupWindow10")
