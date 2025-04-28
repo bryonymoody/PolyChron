@@ -50,7 +50,7 @@ class ModelPresenter(BaseFramePresenter):
 
         self.view.bind_view_menu_callbacks(
             {
-                "Display Stratigraphic diagram in phases": lambda: print("@todo"),
+                "Display Stratigraphic diagram in phases": lambda: self.phasing(),
             }
         )
 
@@ -330,3 +330,34 @@ class ModelPresenter(BaseFramePresenter):
         """Close polychron gracefully via File > Exit"""
         # @todo - alert on any unsaved changed?
         self.navigator.close_navigator("exit")
+
+    def phasing(self):
+        """Callback function for View > Display Stratigraphic diagram in phases
+
+        Runs image render function with phases on seperate levels
+
+        Formerly StartPage.phasing
+
+        """
+        pass  # @todo - implement this method
+        # global phase_true, node_df
+        # phase_true = 1
+        # self.image = imgrender_phase(self.graph)
+        # self.littlecanvas.img = ImageTk.PhotoImage(self.image)
+        # self.littlecanvas_img = self.littlecanvas.create_image(0, 0, anchor="nw",
+        #                                                        image=self.littlecanvas.img)
+        # self.width, self.height = self.image.size
+        # # self.imscale = 1.0  # scale for the canvaas image
+        # self.delta = 1.1  # zoom magnitude
+        # # Put image into container rectangle and use it to set proper coordinates to the image
+        # self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
+        # self.imscale  = min(921/self.image.size[0], 702/self.image.size[1])
+        # self.littlecanvas.scale('all', 0, 0, self.delta, self.delta)  # rescale all canvas objects
+        # self.show_image()
+        # self.bind("<Configure>", self.resize)
+        # self.littlecanvas.bind("<Configure>", self.resize)
+        # self.delnodes = []
+        # self.delnodes_meta = []
+        # self.canvas.delete('all')
+        # self.littlecanvas.bind("<Button-3>", self.preClick)
+        # self.show_image()
