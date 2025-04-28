@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Optional, Protocol
 
 
 class Navigator(Protocol):
@@ -18,7 +18,7 @@ class Navigator(Protocol):
         """Switch the active presenter & view by string key."""
         ...
 
-    def close_navigator(self, reason: str = None) -> None:
+    def close_navigator(self, reason: Optional[str] = None) -> None:
         """Gracefully close the navigator (i.e. popup window / main window)
 
         @param reason: A string to pass to the presenter, enabling follow on actions. @todo think of a better way to handle this control flow.

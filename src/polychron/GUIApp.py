@@ -103,8 +103,11 @@ class GUIApp(Navigator):
         else:
             raise Exception("@todo better error missing frame")
 
-    def close_navigator(self):
-        print("@todo - implement GUIApp::close_navigator or separate a Navigator and ClosableNavigator")
+    def close_navigator(self, reason: Optional[str] = None) -> None:
+        print(
+            "@todo - decide on if this should existr, or implement GUIApp::close_navigator or separate a Navigator and ClosableNavigator"
+        )
+        self.exit_application()
 
     def register_global_keybinds(self):
         """Register application-wide key bindings"""

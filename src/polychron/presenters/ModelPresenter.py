@@ -36,15 +36,15 @@ class ModelPresenter(BaseFramePresenter):
             {
                 "Load stratigraphic diagram file (.dot)": lambda: print("@todo"),
                 "Load stratigraphic relationship file (.csv)": lambda: self.open_strat_csv_file(),
-                "Load scientific dating file (.csv)": lambda: print("@todo"),
-                "Load context grouping file (.csv)": lambda: print("@todo"),
-                "Load group relationship file (.csv)": lambda: print("@todo"),
-                "Load context equalities file (.csv)": lambda: print("@todo"),
+                "Load scientific dating file (.csv)": lambda: self.open_scientific_dating_file(),
+                "Load context grouping file (.csv)": lambda: self.open_context_grouping_file(),
+                "Load group relationship file (.csv)": lambda: self.open_group_relationship_file(),
+                "Load context equalities file (.csv)": lambda: self.open_scientific_dating_file(),
                 "Load new project": lambda: print("@todo"),
                 "Load existing model": lambda: print("@todo"),
                 "Save changes as current model": lambda: print("@todo"),
                 "Save changes as new model": lambda: print("@todo"),
-                "Exit": lambda: print("@todo"),
+                "Exit": lambda: self.close_application(),
             }
         )
 
@@ -203,3 +203,130 @@ class ModelPresenter(BaseFramePresenter):
                     pass  # @todo this case.
             except ValueError:
                 tk.messagebox.showerror("showerror", "Data not loaded, please try again")
+
+    def open_scientific_dating_file(self) -> None:
+        """Callback function when File > Load scientific dating file (.csv) is selected, opening a scientific dating file
+
+        Formerly StartPage.open_file3
+
+        @todo - abstract askfileopen somewhere else to limit importing tkinter?
+
+        @todo - finish implementing this with the actual model
+
+        @todo - Column and value validation (within the data model, with exceptions handeled here?)
+        """
+        file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
+
+        if file is not None:
+            try:
+                self.datefile = pd.read_csv(file)
+                self.datefile = self.datefile.applymap(str)
+                load_it = self.file_popup(self.datefile)
+                if load_it == "load":
+                    for i, j in enumerate(self.datefile["context"]):
+                        self.graph.nodes()[str(j)].update(
+                            {"Determination": [self.datefile["date"][i], self.datefile["error"][i]]}
+                        )
+                    # self.context_no_unordered = list(self.graph.nodes()) # @todo
+                # self.date_check = True # @todo
+                # self.check_list_gen() # @todo
+                tk.messagebox.showinfo("Success", "Scientific dating data loaded")
+            except ValueError:
+                tk.messagebox.showerror("showerror", "Data not loaded, please try again")
+
+    def open_context_grouping_file(self) -> None:
+        """Callback function when File > Load context grouping file (.csv) is selected, opening context grouping / phase file
+
+        Formerly StartPage.open_file4
+
+        @todo - abstract askfileopen somewhere else to limit importing tkinter?
+
+        @todo - finish implementing this with the actual model
+
+        @todo - Column and value validation (within the data model, with exceptions handeled here?)
+        """
+        file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
+        if file is not None:
+            try:
+                self.phasefile = pd.read_csv(file)
+                self.phasefile = self.phasefile.applymap(str)
+                load_it = self.file_popup(self.phasefile)
+                if load_it == "load":
+                    for i, j in enumerate(self.phasefile["context"]):
+                        self.graph.nodes()[str(j)].update({"Group": self.phasefile["Group"][i]})
+                # self.phase_check = True # @todo
+                # self.check_list_gen() # @todo
+                tk.messagebox.showinfo("Success", "Grouping data loaded")
+            except ValueError:
+                tk.messagebox.showerror("showerror", "Data not loaded, please try again")
+
+    def open_group_relationship_file(self) -> None:
+        """Callback function when File > Load group relationship file (.csv) is selected, opening a group relationship / phase relationship file
+
+        Formerly StartPage.open_file5
+
+        @todo - abstract askfileopen somewhere else to limit importing tkinter?
+
+        @todo - finish implementing this with the actual model
+
+        @todo - Column and value validation (within the data model, with exceptions handeled here?)
+        """
+        file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
+        if file is not None:
+            try:
+                phase_rel_df = pd.read_csv(file)
+                self.phase_rels = [
+                    (str(phase_rel_df["above"][i]), str(phase_rel_df["below"][i])) for i in range(len(phase_rel_df))
+                ]
+                self.file_popup(pd.DataFrame(self.phase_rels, columns=["Younger group", "Older group"]))
+                # self.phase_rel_check = True # @todo
+                # self.check_list_gen() # @todo
+                tk.messagebox.showinfo("Success", "Group relationships data loaded")
+            except ValueError:
+                tk.messagebox.showerror("showerror", "Data not loaded, please try again")
+
+    def open_context_equalities_file(self) -> None:
+        """Callback function when File > Load context equalities file (.csv) is selected, opening a file providing context equalities (in time)
+
+        Formerly StartPage.open_file6
+
+        @todo - abstract askfileopen somewhere else to limit importing tkinter?
+
+        @todo - finish implementing this with the actual model
+
+        @todo - Column and value validation (within the data model, with exceptions handeled here?)
+        """
+        file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
+        if file is not None:
+            try:
+                equal_rel_df = pd.read_csv(file)
+                self.equal_rel_df = equal_rel_df.applymap(str)
+                # @todo - finish this
+                # @todo - this method did not open a file_preview / popup.
+                # context_1 = list(self.equal_rel_df.iloc[:, 0])
+                # context_2 = list(self.equal_rel_df.iloc[:, 1])
+                # for k, j in enumerate(context_1):
+                #     self.graph = nx.contracted_nodes(self.graph, j, context_2[k])
+                #     x_nod = list(self.graph)
+                #     newnode = str(j) + " = " + str(context_2[k])
+                #     y_nod = [newnode if i == j else i for i in x_nod]
+                #     mapping = dict(zip(x_nod, y_nod))
+                #     self.graph = nx.relabel_nodes(self.graph, mapping)
+                # if phase_true == 1:
+                #     imgrender_phase(self.graph)
+                # else:
+                #     imgrender(self.graph, self.littlecanvas.winfo_width(), self.littlecanvas.winfo_height())
+                # self.image = Image.open('testdag.png')
+                # scale_factor = min(self.littlecanvas.winfo_width()/self.image_ws.size[0], self.littlecanvas.winfo_height()/self.image_ws.size[1])
+                # self.image = self.image_ws.resize((int(self.image_ws.size[0]*scale_factor), int(self.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
+                # self.width, self.height = self.image.size
+                # self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
+                # self.show_image()
+                tk.messagebox.showinfo("Success", "Equal contexts data loaded")
+            except ValueError:
+                tk.messagebox.showerror("showerror", "Data not loaded, please try again")
+
+    def close_application(self) -> None:
+        """Close polychron gracefully via File > Exit"""
+        # @todo - alert on any unsaved changed?
+        self.navigator.close_navigator("exit")
