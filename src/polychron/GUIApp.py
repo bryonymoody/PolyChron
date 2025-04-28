@@ -9,6 +9,7 @@ from ttkthemes import ThemedTk
 
 from .Config import Config
 from .interfaces import Navigator
+from .models.ProjectsDirectory import ProjectsDirectory
 from .presenters.BaseFramePresenter import BaseFramePresenter
 from .presenters.DatingResultsPresenter import DatingResultsPresenter
 from .presenters.ModelPresenter import ModelPresenter
@@ -34,7 +35,7 @@ class GUIApp(Navigator):
         self.root: ThemedTk = ThemedTk(theme="arc")
 
         # Set the window title
-        self.root.title(f"PolyChron {version('polychron')}")
+        self.set_window_title()
         # Set the root window geometry from the potentially user provided size.
         self.resize_window(self.config.geometry)
 
@@ -50,12 +51,20 @@ class GUIApp(Navigator):
         self.container.grid_rowconfigure(0, weight=1)
         self.container.grid_columnconfigure(0, weight=1)
 
+        # Instantiate the "global" applcation data object
+        # @todo - may need to have a ProjectsDirectory object which does not actually parse the Project/Models, but instead just provides accessors.
+        # @todo rename.
+        self.projects_directory_obj: ProjectsDirectory = ProjectsDirectory(path=self.config.projects_directory)
+
         # Construct the views and presenters for main window views (i.e. not-popups)
         self.current_main_window_presenter: Optional[str] = None
+        # @todo - decide on and use the appropriate data object for the MVP model parameter for each display. May need to
         self.main_window_presenters: Dict[str, BaseFramePresenter] = {
-            "Splash": SplashPresenter(self, SplashView(self.container), {"@todo": "todo"}),
-            "Model": ModelPresenter(self, ModelView(self.container), {"@todo": "todo"}),
-            "DatingResults": DatingResultsPresenter(self, DatingResultsView(self.container), {"@todo": "todo"}),
+            "Splash": SplashPresenter(self, SplashView(self.container), self.projects_directory_obj),
+            "Model": ModelPresenter(self, ModelView(self.container), self.projects_directory_obj),
+            "DatingResults": DatingResultsPresenter(
+                self, DatingResultsView(self.container), self.projects_directory_obj
+            ),
         }
 
         # Place each main window within the container
@@ -68,6 +77,13 @@ class GUIApp(Navigator):
         # Construct views and presenters for popups? @todo
         # Or should these be owned by the presenter which leads to them being opened? @todo
 
+    def set_window_title(self, suffix: Optional[str] = None) -> None:
+        """Update the window title to include Polychron, the version of polychron, and the optional suffix"""
+        title = f"PolyChron {version('polychron')}"
+        if suffix is not None and len(str(suffix)) > 0:
+            title += f" | {suffix}"
+        self.root.title(title)
+
     def switch_presenter(self, name: str):
         """Show a speicfic frame/view by it's name on the main window"""
         if name in self.main_window_presenters:
@@ -77,10 +93,28 @@ class GUIApp(Navigator):
                 and self.current_main_window_presenter in self.main_window_presenters
             ):
                 self.main_window_presenters[self.current_main_window_presenter].view.grid_remove()
+                self.current_main_window_presenter = None
 
-            # Re-place the frame using grid, with settings remembered from before
+            # Update the now-current view
             self.current_main_window_presenter = name
+            # Apply any view updates in case the model has been changed since last rendered
+            self.main_window_presenters[name].update_view()
+            # Re-place the frame using grid, with settings remembered from before
             self.main_window_presenters[name].view.grid()
+
+            # @todo - move the title logic to the presenter and just call an appropraite method here
+            if (
+                name == "Model"
+                or name == "DatingResults"
+                and self.projects_directory_obj.selected_project is not None
+                and self.projects_directory_obj.selected_model is not None
+            ):
+                self.set_window_title(
+                    f"{self.projects_directory_obj.selected_project} - {self.projects_directory_obj.selected_model}"
+                )
+            else:
+                self.set_window_title()
+
         else:
             raise Exception("@todo better error missing frame")
 

@@ -57,8 +57,12 @@ class ProjectSelectProcessPopupPresenter(BasePopupPresenter, Navigator):
             # Hide the current presenter if set
             if self.current_presenter is not None and self.current_presenter in self.presenters:
                 self.presenters[self.current_presenter].view.grid_remove()
-            # Re-place the frame using grid, with settings remembered from before
+                self.current_presenter = None
+            # Update the now-current view
             self.current_presenter = name
+            # Apply any view updates in case the model has been changed since last rendered
+            self.presenters[name].update_view()
+            # Re-place the frame using grid, with settings remembered from before
             self.presenters[name].view.grid()
         else:
             raise Exception("@todo better error missing frame")

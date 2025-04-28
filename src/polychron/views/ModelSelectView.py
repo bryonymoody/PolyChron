@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable, Optional
+from typing import Any, Callable, List, Optional
 
 from .BaseFrameView import BaseFrameView
 
@@ -18,24 +18,21 @@ class ModelSelectView(BaseFrameView):
 
         self.list_label = tk.Label(self, text="Model list", bg="white", font=("helvetica 14 bold"), fg="#2F4858")
         self.list_label.place(relx=0.36, rely=0.1)
-        # myList = [d for d in os.listdir(path) if os.path.isdir(d)]
-        self.model_list = tk.StringVar()  # value = myList) # @todo
-        self.MyListBox = tk.Listbox(
+        self.model_listbox = tk.Listbox(
             self,
-            listvariable=self.model_list,
+            # listvariable=self.model_list, # @todo consider re-using
             bg="#eff3f6",
             font=("Helvetica 11 bold"),
             fg="#2F4858",
             selectmode="browse",
         )
-        scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.MyListBox.yview)
-        self.MyListBox["yscrollcommand"] = scrollbar.set
-        self.MyListBox.place(relx=0.36, rely=0.17, relheight=0.4, relwidth=0.28)
-        # self.MyListBox.bind('<<ListboxSelect>>', self.items_selected) # @todo
+        scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.model_listbox.yview)
+        self.model_listbox["yscrollcommand"] = scrollbar.set
+        self.model_listbox.place(relx=0.36, rely=0.17, relheight=0.4, relwidth=0.28)
+
         self.load_button = tk.Button(
             self, text="Load selected model", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6"
         )
-        # self.top.bind('<Return>', (lambda event: self.cleanup2())) #  @todo
         self.load_button.place(relx=0.8, rely=0.9, relwidth=0.195)
         self.back_button = tk.Button(self, text="Back", bg="#eff3f6", font=("Helvetica 12 bold"), fg="#2F4858")
         self.back_button.place(relx=0.21, rely=0.01)
@@ -45,9 +42,10 @@ class ModelSelectView(BaseFrameView):
         self.create_model_button.place(relx=0.62, rely=0.9, relwidth=0.17)
 
     def bind_load_button(self, callback: Callable[[], Optional[Any]]) -> None:
-        """Bind the callback for when the load_button is pressed"""
+        """Bind the callback for when the load_button is pressed & when enter is pressed with a list item selected"""
         if callback is not None:
             self.load_button.config(command=callback)
+            # self.top.bind('<Return>', callback) # @todo self.cleanup2()
 
     def bind_back_button(self, callback: Callable[[], Optional[Any]]) -> None:
         """Bind the callback for when the back_button is pressed"""
@@ -58,3 +56,23 @@ class ModelSelectView(BaseFrameView):
         """Bind the callback for when the create_model_button is pressed"""
         if callback is not None:
             self.create_model_button.config(command=callback)
+
+    def bind_list_select(self, callback: Callable[[], Optional[Any]]) -> None:
+        # @todo - unbind old callback? for this event?
+        if callback is not None:
+            self.model_listbox.bind("<<ListboxSelect>>", callback)
+
+    def update_model_list(self, model_names: List[str]):
+        """Update the list of models to choose from to include the provided list of model names"""
+        # Clear old entries
+        self.model_listbox.delete(0, tk.END)
+        # Insert the new entries
+        self.model_listbox.insert(tk.END, *model_names)
+
+    def get_selected_model(self) -> Optional[str]:
+        """Get the value of the currently selected model name"""
+        selected_index = self.model_listbox.curselection()
+        if selected_index:
+            return self.model_listbox.get(selected_index[0])
+        else:
+            return None

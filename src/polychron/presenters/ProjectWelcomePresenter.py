@@ -23,6 +23,8 @@ class ProjectWelcomePresenter(BaseFramePresenter):
 
     def on_load_button(self) -> None:
         """When the load button is pressed, update the SelectProject view and switch to it"""
+        # Update the ProjectList data objects and switch to the select view
+        self.model.load()  # @todo - could this go in an on_switched_to() for the dest presenter instead? Unsure how viable with tkinter
         self.navigator.switch_presenter("project_select")
 
     def on_create_button(self) -> None:

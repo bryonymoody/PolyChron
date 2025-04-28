@@ -10,4 +10,7 @@ class Model:
     """The name of the model within the project (unique)"""
 
     path: pathlib.Path
-    """The path to the directory representing this model on disk"""
+    """The path to the directory representing this model on disk
+    
+    @todo - this and name are not both required, could have parent_path and an dynamic path? (i.e. avoid duplication during construction)
+    """

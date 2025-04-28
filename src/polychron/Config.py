@@ -80,7 +80,7 @@ class Config:
 
     @classmethod
     def from_default_filepath(cls) -> "Config":
-        """Construct a Config instance from teh default configuration file path"""
+        """Construct a Config instance from the default configuration file path"""
         c = Config()
         try:
             c.load(Config._get_config_filepath())
