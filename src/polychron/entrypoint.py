@@ -21,12 +21,6 @@ def parse_cli(argv=None):
     parser.add_argument(
         "--tab", choices=["Splash", "Model", "DatingResults"], help="Temporary: select which tab to start on"
     )  #  @todo remove this
-    parser.add_argument(
-        "--view", type=str, help="Temporary: select which view to demo during development"
-    )  #  @todo remove this
-    parser.add_argument(
-        "--viewidx", type=int, help="Temporary: select which view to demo during development by index"
-    )  #  @todo remove this
 
     args = parser.parse_args(argv)
     return args
@@ -52,5 +46,4 @@ def main():
         from .GUIApp import GUIApp
 
         app = GUIApp()
-        # app.launch()
-        app.launch(args.tab, args.view, args.viewidx)  # @todo remove args.view
+        app.launch(args.tab)

@@ -3,7 +3,6 @@
 import re
 import tkinter as tk
 from importlib.metadata import version
-from tkinter import ttk
 from typing import Any, Dict, Optional
 
 from ttkthemes import ThemedTk
@@ -14,26 +13,8 @@ from .presenters.BaseFramePresenter import BaseFramePresenter
 from .presenters.DatingResultsPresenter import DatingResultsPresenter
 from .presenters.ModelPresenter import ModelPresenter
 from .presenters.SplashPresenter import SplashPresenter
-from .views.AddContextView import AddContextView
-from .views.BaseFrameView import BaseFrameView
-from .views.BasePopupView import BasePopupView
-from .views.CalibrateModelSelectView import CalibrateModelSelectView
-from .views.DatafilePreviewView import DatafilePreviewView
 from .views.DatingResultsView import DatingResultsView
-from .views.ManageIntrusiveOrResidualContextsView import ManageIntrusiveOrResidualContextsView
-from .views.MCMCProgressView import MCMCProgressView
-from .views.ModelCreateView import ModelCreateView
-from .views.ModelSelectView import ModelSelectView
 from .views.ModelView import ModelView
-from .views.ProjectCreateView import ProjectCreateView
-from .views.ProjectSelectProcessPopupView import ProjectSelectProcessPopupView
-from .views.ProjectSelectView import ProjectSelectView
-from .views.ProjectWelcomeView import ProjectWelcomeView
-from .views.RemoveContextView import RemoveContextView
-from .views.RemoveStratigraphicRelationshipView import RemoveStratigraphicRelationshipView
-from .views.ResidualCheckConfirmView import ResidualCheckConfirmView
-from .views.ResidualCheckView import ResidualCheckView
-from .views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
 from .views.SplashView import SplashView
 
 
@@ -142,73 +123,25 @@ class GUIApp(Navigator):
             # Apply the new window geometry
             self.root.geometry(new_geometry)
 
-    def launch(self, tabName: Optional[str], viewName: Optional[str], viewIdx: Optional[int]) -> None:
+    def launch(self, tabName: Optional[str]) -> None:
         """Method to launch the GUIApp, i.e. start the render loop
 
-        @todo - remove the viewName and viewIdx params
+        @todo - remove the tabName param
         """
 
-        if tabName is None and viewName is None and viewIdx is None:
-            # Actual intended body of this method, which should be all that is left once debugging is stripped out.
-            # shwo the initial view
-            self.switch_presenter("Splash")
-            # Trigger the project open process
-            self.main_window_presenters["Splash"].on_select_project()
-            self.root.mainloop()
-        elif tabName is not None:
+        # If a tab name was provided (temporary development feature), display it and return. @todo remove
+        if tabName is not None:
+            # If the TabName is invalid, warn and just render the splash tab
+            if tabName not in self.main_window_presenters:
+                print(f"Warning: Invalid --tab {tabName}. Choose from {list(self.main_window_presenters.keys())}")
+                tabName = "Splash"
             self.switch_presenter(tabName)
             self.root.mainloop()
-        else:
-            # Temporary dictionary of view instances, for use during refactoring before the addition of Models or Presenters
-            # popupWindow9 and popupWindow10 don't have any view related content + marked as alpha?
-            views: Dict[str, ttk.Frame] = {
-                # main window views
-                "SplashView": SplashView,
-                "ModelView": ModelView,
-                "DatingResultsView": DatingResultsView,
-                # project/model selection popup and assoc views
-                "ProjectSelectProcessPopupView": ProjectSelectProcessPopupView,
-                "ProjectWelcomeView": ProjectWelcomeView,
-                "ProjectCreateView": ProjectCreateView,
-                "ProjectSelectView": ProjectSelectView,
-                "ModelCreateView": ModelCreateView,
-                "ModelSelectView": ModelSelectView,
-                # Other Popup Views
-                "AddContextView": AddContextView,
-                "ResidualCheckView": ResidualCheckView,
-                "ResidualCheckConfirmView": ResidualCheckConfirmView,
-                "ManageIntrusiveOrResidualContextsView": ManageIntrusiveOrResidualContextsView,
-                "RemoveContextView": RemoveContextView,
-                "RemoveStratigraphicRelationshipView": RemoveStratigraphicRelationshipView,
-                "DatafilePreviewView": DatafilePreviewView,
-                "CalibrateModelSelectView": CalibrateModelSelectView,
-                "MCMCProgressView": MCMCProgressView,
-                "ResidualOrIntrusiveView": ResidualOrIntrusiveView,
-            }
+            return
 
-            # Temporary view-only cli options for testing views
-            print("--view options:")
-            for i, v in enumerate(views):
-                print(f"  {i}: {v}")
-            viewClass = views[list(views.keys())[0]]
-
-            if viewName is not None:
-                if viewName not in views:
-                    raise Exception(f"--view {viewName} is not valid")
-                viewClass = views[viewName]
-            elif viewIdx is not None:
-                if viewIdx < 0 or viewIdx >= len(views):
-                    raise Exception(f"--viewidx {viewIdx} invalid, must be in range [0, {len(views)})")
-                viewClass = views[list(views.keys())[viewIdx]]
-
-            # Depending on if mainwindow or popupwindow, handle it differntly.
-            if issubclass(viewClass, BaseFrameView):
-                # This is gross
-                self.switch_presenter(viewClass.__name__.replace("View", ""))
-            elif issubclass(viewClass, BasePopupView):
-                v = viewClass(self.root, start_visible=False)
-                v.deiconify()
-                v.lift()
-            else:
-                viewClass(self.root)
-            self.root.mainloop()
+        # Show the initial view
+        self.switch_presenter("Splash")
+        # Trigger the project open process
+        self.main_window_presenters["Splash"].on_select_project()
+        # Start the render loop
+        self.root.mainloop()
