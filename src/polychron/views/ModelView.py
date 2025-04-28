@@ -168,7 +168,7 @@ class ModelView(BaseFrameView):
             "Equate context with another",
             "Place above other context",
             "Add new contexts",
-            "Supplementary data menu (BROKEN)",
+            # "Supplementary data menu (BROKEN)", # @todo see https://github.com/bryonymoody/PolyChron/issues/69
         ]
         self.variable = tk.StringVar(self.littlecanvas)
         self.variable.set("Node Action")
