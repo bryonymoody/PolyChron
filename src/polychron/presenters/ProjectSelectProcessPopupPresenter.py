@@ -64,6 +64,9 @@ class ProjectSelectProcessPopupPresenter(BasePopupPresenter, Navigator):
             self.presenters[name].update_view()
             # Re-place the frame using grid, with settings remembered from before
             self.presenters[name].view.grid()
+            # Give it focus for any keybind events
+            self.presenters[name].view.focus_set()
+
         else:
             raise Exception("@todo better error missing frame")
 

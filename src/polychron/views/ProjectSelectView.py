@@ -44,7 +44,8 @@ class ProjectSelectView(BaseFrameView):
         """Callback function for the load button, which is also bound for <Return> events with a list box selected"""
         if callback is not None:
             self.load_button.config(command=callback)
-            # self.top.bind('<Return>', (lambda event: self.load_model(proj_dir))) # @todo
+            self.project_listbox.bind("<Return>", lambda event: callback())
+            self.project_listbox.bind("<Double-1>", lambda event: callback())
 
     def bind_back_button(self, callback: Callable[[], Optional[Any]]) -> None:
         if callback is not None:

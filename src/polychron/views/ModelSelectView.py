@@ -48,7 +48,8 @@ class ModelSelectView(BaseFrameView):
         """Bind the callback for when the load_button is pressed & when enter is pressed with a list item selected"""
         if callback is not None:
             self.load_button.config(command=callback)
-            # self.top.bind('<Return>', callback) # @todo self.cleanup2()
+            self.model_listbox.bind("<Return>", lambda event: callback())
+            self.model_listbox.bind("<Double-1>", lambda event: callback())
 
     def bind_back_button(self, callback: Callable[[], Optional[Any]]) -> None:
         """Bind the callback for when the back_button is pressed"""
