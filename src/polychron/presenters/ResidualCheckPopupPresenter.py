@@ -21,7 +21,7 @@ class ResidualCheckPopupPresenter(BasePopupPresenter, Mediator):
         super().__init__(mediator, view, model)
 
         # Build a dictionary of child presenter-view pairings
-        self.current_presenter = None
+        self.current_presenter_key = None
         self.presenters: Dict[str, BaseFramePresenter] = {
             "residual_check": ResidualCheckPresenter(self, ResidualCheckView(self.view.container), self.model),
             "residual_check_confirm": ResidualCheckConfirmPresenter(
@@ -44,18 +44,31 @@ class ResidualCheckPopupPresenter(BasePopupPresenter, Mediator):
     def update_view(self) -> None:
         pass  # @todo
 
-    def switch_presenter(self, name: str):
-        if name in self.presenters:
-            # Hide the current presenter if set
-            if self.current_presenter is not None and self.current_presenter in self.presenters:
-                self.presenters[self.current_presenter].view.grid_remove()
-            # Re-place the frame using grid, with settings remembered from before
-            self.current_presenter = name
-            self.presenters[name].view.grid()
+    def get_presenter(self, key: Optional[str]):
+        if key in self.presenters:
+            return self.presenters[key]
         else:
-            raise Exception(f"@todo better error missing frame {name} {self.presenters}")
+            return None
 
-    def close_window(self, reason: str = None):
+    def switch_presenter(self, key: Optional[str]):
+        if new_presenter := self.get_presenter(key):
+            # Hide the current presenter if set
+            if current_presenter := self.get_presenter(self.current_presenter_key):
+                current_presenter.view.grid_remove()
+                self.current_presenter_key = None
+
+            # Update the now-current view
+            self.current_presenter_key = key
+            # Apply any view updates in case the model has been changed since last rendered
+            new_presenter.update_view()
+            # Re-place the frame using grid, with settings remembered from before
+            new_presenter.view.grid()
+            # Give it focus for any keybind events
+            new_presenter.view.focus_set()
+        else:
+            raise Exception(f"@todo better error missing frame {key} {self.presenters}")
+
+    def close_window(self, reason: Optional[str] = None):
         # @todo
         # Close the view
         self.view.destroy()

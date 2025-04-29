@@ -59,9 +59,9 @@ class GUIApp(Mediator):
         self.projects_directory_obj: ProjectsDirectory = ProjectsDirectory(path=self.config.projects_directory)
 
         # Construct the views and presenters for main window views (i.e. not-popups)
-        self.current_main_window_presenter: Optional[str] = None
+        self.current_presenter_key: Optional[str] = None
         # @todo - decide on and use the appropriate data object for the MVP model parameter for each display. May need to
-        self.main_window_presenters: Dict[str, BaseFramePresenter] = {
+        self.presenters: Dict[str, BaseFramePresenter] = {
             "Splash": SplashPresenter(self, SplashView(self.container), self.projects_directory_obj),
             "Model": ModelPresenter(self, ModelView(self.container), self.projects_directory_obj),
             "DatingResults": DatingResultsPresenter(
@@ -71,7 +71,7 @@ class GUIApp(Mediator):
 
         # Place each main window within the container
         # @todo - make this part of a common base class mainWindowFrameView?
-        for presenter in self.main_window_presenters.values():
+        for presenter in self.presenters.values():
             presenter.view.grid(row=0, column=0, sticky="nsew")
             # Immeditely hide the frame, but remember it's settings.
             presenter.view.grid_remove()
@@ -86,28 +86,32 @@ class GUIApp(Mediator):
             title += f" | {suffix}"
         self.root.title(title)
 
-    def switch_presenter(self, name: str):
-        """Show a speicfic frame/view by it's name on the main window"""
-        if name in self.main_window_presenters:
+    def get_presenter(self, key: Optional[str]):
+        if key is not None and key in self.presenters:
+            return self.presenters[key]
+        else:
+            return None
+
+    def switch_presenter(self, key: Optional[str]):
+        if new_presenter := self.get_presenter(key):
             # Hide the current presenter if set
-            if (
-                self.current_main_window_presenter is not None
-                and self.current_main_window_presenter in self.main_window_presenters
-            ):
-                self.main_window_presenters[self.current_main_window_presenter].view.grid_remove()
-                self.current_main_window_presenter = None
+            if current_presenter := self.get_presenter(self.current_presenter_key):
+                current_presenter.view.grid_remove()
+                self.current_presenter_key = None
 
             # Update the now-current view
-            self.current_main_window_presenter = name
+            self.current_presenter_key = key
             # Apply any view updates in case the model has been changed since last rendered
-            self.main_window_presenters[name].update_view()
+            new_presenter.update_view()
             # Re-place the frame using grid, with settings remembered from before
-            self.main_window_presenters[name].view.grid()
+            new_presenter.view.grid()
+            # Give it focus for any keybind events
+            new_presenter.view.focus_set()
 
             # @todo - move the title logic to the presenter and just call an appropraite method here
             if (
-                name == "Model"
-                or name == "DatingResults"
+                key == "Model"
+                or key == "DatingResults"
                 and self.projects_directory_obj.selected_project is not None
                 and self.projects_directory_obj.selected_model is not None
             ):
@@ -116,7 +120,6 @@ class GUIApp(Mediator):
                 )
             else:
                 self.set_window_title()
-
         else:
             raise Exception("@todo better error missing frame")
 
@@ -168,8 +171,8 @@ class GUIApp(Mediator):
         # If a tab name was provided (temporary development feature), display it and return. @todo remove
         if tabName is not None:
             # If the TabName is invalid, warn and just render the splash tab
-            if tabName not in self.main_window_presenters:
-                print(f"Warning: Invalid --tab {tabName}. Choose from {list(self.main_window_presenters.keys())}")
+            if tabName not in self.presenters:
+                print(f"Warning: Invalid --tab {tabName}. Choose from {list(self.presenters.keys())}")
                 tabName = "Splash"
             self.switch_presenter(tabName)
             self.root.mainloop()
@@ -178,6 +181,6 @@ class GUIApp(Mediator):
         # Show the initial view
         self.switch_presenter("Splash")
         # Trigger the project open process
-        self.main_window_presenters["Splash"].on_select_project()
+        self.presenters["Splash"].on_select_project()
         # Start the render loop
         self.root.mainloop()
