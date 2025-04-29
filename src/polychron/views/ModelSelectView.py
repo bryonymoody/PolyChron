@@ -6,7 +6,10 @@ from .BaseFrameView import BaseFrameView
 
 
 class ModelSelectView(BaseFrameView):
-    """Passive view for Model loading/selection"""
+    """Passive view for Model loading/selection
+
+    @todo @enhancement - Include the current project name in this view.
+    """
 
     def __init__(self, parent: tk.Frame):
         """Construct the view, without binding any callbacks"""

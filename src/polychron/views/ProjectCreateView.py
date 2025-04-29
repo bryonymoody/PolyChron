@@ -16,23 +16,27 @@ class ProjectCreateView(BaseFrameView):
         # Set this element's background to white @todo use a theme?
         self.config(background="white")
 
-        # Variable for storing the value provided by the user
-        self.folder = tk.StringVar()
-
+        # Add a text label
         self.text_1 = tk.Label(self, text="Input project name:", bg="white", font=("helvetica 14 bold"), fg="#2F4858")
         self.text_1.place(relx=0.4, rely=0.2)
-        self.user_input = tk.Entry(self, textvariable=self.folder)
+
+        # Add an text input element
+        self.user_input = tk.Entry(self)
         self.user_input.place(relx=0.35, rely=0.4, relwidth=0.3, relheight=0.08)
+
+        # Add a submit button
         self.submit_button = tk.Button(self, text="Submit ", bg="#ec9949", font=("Helvetica 12 bold"), fg="#2F4858")
-        # self.top.bind('<Return>', (lambda event: self.new_model(self.folder.get()))) # @todo
         self.submit_button.place(relx=0.66, rely=0.4)
+
+        # Add a back button
         self.back_button = tk.Button(self, text="Back", bg="#dcdcdc", font=("helvetica 12 bold"), fg="#2F4858")
         self.back_button.place(relx=0.21, rely=0.01)
 
     def bind_submit_button(self, callback: Callable[[], Optional[Any]]) -> None:
-        """Bind the callback for when the submit_button is pressed"""
+        """Bind the callback for when the submit_button is pressed, or when the enter button is pressed."""
         if callback is not None:
             self.submit_button.config(command=callback)
+            # self.top.bind('<Return>', command) # @todo
 
     def bind_back_button(self, callback: Callable[[], Optional[Any]]) -> None:
         """Bind the callback for when the back_button is pressed"""
@@ -41,4 +45,4 @@ class ProjectCreateView(BaseFrameView):
 
     def get_name(self) -> str:
         """Get the user-provided name of the project"""
-        return str(self.folder)
+        return self.user_input.get()

@@ -32,12 +32,53 @@ class ProjectsDirectory:
     
     @todo This is more UI than underlying data, so may need a better home."""
 
+    new_project: Optional[str] = field(default=None, init=False, repr=False)
+    """The name of a new project to be created.
+
+    Excluded from the __init__ method (and __repr__)
+    
+    @todo This is more UI state than core ProjectsDirectory data, althoguh should be validated agianst it. 
+    @todo Should this be only settable via a method which also does the validation?
+    """
+
+    new_model: Optional[str] = field(default=None, init=False, repr=False)
+    """The name of a new model to be created.
+
+    Excluded from the __init__ method (and __repr__)
+    
+    @todo This is more UI state than core ProjectsDirectory data, althoguh should be validated agianst it. 
+    @todo Should this be only settable via a method which also does the validation?
+    """
+
     def load(self) -> None:
         """Load the projects for the current path
 
         @todo - real implementation which loads from disk
         """
         self.projects = self.get_demo_projects()
+
+    def create_model(self, project_name: str, model_name: str) -> None:
+        """Create a new model in the named project (which may also be new).
+
+        @todo - this does not actually create anything on disk
+        @todo input validation here on both parameters
+        """
+        if project_name not in self.projects:
+            self.projects[project_name] = Project(name=project_name, path=self.path / project_name)
+        project = self.projects[project_name]
+        if model_name in project.models:
+            # @todo - better error handling here.
+            raise Exception(f"{model_name} already present in {project_name}")
+        else:
+            project.models[model_name] = Model(name=model_name, path=project.path / model_name)
+
+    def create_model_from_self(self) -> None:
+        # @todo - validation and errors, or remove this method and just incorparte into create_model with optional params.
+        project_name = self.new_project or self.selected_project
+        self.create_model(project_name, self.new_model)
+        # Also make sure the new_x becomes selected_x for subsequent stesp. @todo refactor this out somewhere along the way. This is a bit grim really.
+        self.selected_project = project_name
+        self.selected_model = self.new_model
 
     def get_demo_projects(self) -> dict[str, Project]:
         """Build a dictionary of not-real projects for development / demo purposes

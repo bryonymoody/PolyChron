@@ -44,14 +44,22 @@ class ModelSelectPresenter(BaseFramePresenter):
             print("Warning: No model selected. @todo this in gui", file=stderr)
 
     def on_back_button(self) -> None:
-        """When the Back button is pressed, update the previous view and switch to it"""
-        # @todo - this back button needs to be a true back button, not just go back to project_create (matching 0.1 behaviour)
-        self.navigator.switch_presenter("project_create")
+        """When the Back button is pressed, update the previous view and switch to it
+
+        Unlike polychron 0.1 which returned to the project create or load screen, this returns to the project select screen
+        """
+        # Clear any selected model value, just in case
+        self.model.selected_model = None
+        # A previous project should be known, so we can return to it. Fallback to the welcome view
+        if self.model.selected_project is not None and self.model.selected_project in self.model.projects:
+            self.navigator.switch_presenter("project_select")
+        else:
+            self.navigator.switch_presenter("project_welcome")
 
     def on_create_model_button(self) -> None:
         """When the load button is pressed, update the current modeldata and switch to the model_create view"""
         self.navigator.switch_presenter("model_create")
 
     def on_select(self, event=None) -> None:
-        """When a list item is selected, do soemthing @todo"""
-        print(f"selected model {self.view.get_selected_model()}")  # @todo
+        """When a list item is selected"""
+        pass  # @todo - could update state here instead of only on click?

@@ -68,7 +68,6 @@ class ProjectSelectProcessPopupPresenter(BasePopupPresenter, Navigator):
             raise Exception("@todo better error missing frame")
 
     def close_navigator(self, reason: str = None):
-        print("@todo update global applciations state")
         # 3.10 required for match, so using elif
         if reason is None:
             pass

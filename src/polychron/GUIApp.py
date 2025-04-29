@@ -25,6 +25,8 @@ class GUIApp(Navigator):
     This includes code which used to belong to `MainFrame`
 
     This is the only class/file which should import tkinter / ThemedTK other than View classes (unless needed for typehinting?)
+
+    @todo @enhancement ensure all tk.messagebox calls withint the app have the appropriate parent set (or replace with in-window messages)
     """
 
     def __init__(self) -> None:

@@ -43,8 +43,9 @@ class ProjectSelectPresenter(BaseFramePresenter):
 
     def on_back_button(self) -> None:
         """When the Back button is pressed, update the previous view and switch to it"""
+        self.model.selected_project = None
         self.navigator.switch_presenter("project_welcome")
 
     def on_select(self, event=None) -> None:
-        """When a list item is selected, do soemthing @todo"""
-        print(f"selected project {self.view.get_selected_project()}")  # @todo
+        """When a list item is selected, do soemthing"""
+        pass  # @todo

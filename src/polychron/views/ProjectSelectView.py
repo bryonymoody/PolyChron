@@ -6,7 +6,9 @@ from .BaseFrameView import BaseFrameView
 
 
 class ProjectSelectView(BaseFrameView):
-    """Passive view for project loading/selection"""
+    """Passive view for project loading/selection
+
+    @todo @enhancement - On return to this view, pre-populate the previously selected list entry."""
 
     def __init__(self, parent: tk.Frame):
         """Construct the view, without binding any callbacks"""

@@ -1,5 +1,5 @@
 import pathlib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .Model import Model
 
@@ -17,5 +17,5 @@ class Project:
     @todo - this and name are not both required, could have parent_path and an dynamic path? (i.e. avoid duplication during construction)
     """
 
-    models: dict[str, Model]
+    models: dict[str, Model] = field(default_factory=dict)
     """A dictionary of models within this project, with their name as the key"""

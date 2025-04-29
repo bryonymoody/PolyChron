@@ -1,3 +1,5 @@
+from sys import stderr
+from tkinter import messagebox as messagebox
 from typing import Any, Optional
 
 from ..interfaces import Navigator
@@ -22,12 +24,40 @@ class ModelCreatePresenter(BaseFramePresenter):
         pass  # @todo
 
     def on_submit_button(self) -> None:
-        """When the submit button is pressed, update the data model and close the view"""
-        # @todo input validation, both for new projects and existing projects (i.e. needs knowledge about where this view was from)
-        print("@todo - Validate model name input and update global application state")
-        self.navigator.close_navigator("new_model")
+        """When the submit button is pressed, update the data model, validate and close the view or present an error"""
+        new_model_name: str = self.view.get_name()
+        if len(new_model_name) > 0:
+            # Validate that the model name is not already in use for the current project.
+            # @todo - abstract this check into the appropriate model class.
+            # If not a new project, check if the model name is in use
+            is_new_project = self.model.new_project is not None and len(self.model.new_project) > 0
+            if not is_new_project:
+                project = self.model.projects[self.model.selected_project]
+                if new_model_name in project.models:
+                    # @todo - abstract use of tk.messagebox into the presenter or view base classes?
+                    messagebox.showerror(
+                        "Tips", "The folder name exists, please change it", parent=self.view
+                    )  # @todo better error.
+
+            # On success, update state, report it's ok and close the popup / switch to the model view
+            self.model.new_model = new_model_name
+            # @todo - shouldn't throw but might. Do better error handling here.
+            self.model.create_model_from_self()
+            messagebox.showinfo("Tips:", "model created successfully!", parent=self.view)
+            # Close the model loading popup.
+            self.navigator.close_navigator("new_model")
+        else:
+            print("Warning: a project name must be provided. @todo GUI error message", file=stderr)
 
     def on_back_button(self) -> None:
-        """When the back button is pressed, return to the previous view"""
-        # @todo make this a true back button. For now this always returns to the project_create page, when it should be bale to return to project_create or model_select
-        self.navigator.switch_presenter("project_create")
+        """When the back button is pressed, return to the previous view
+
+        This behaves differntly than polychron 0.1, by returning to the previous view rather than always new project creation"""
+        # Clear any value from the the models new_model property
+        self.model.new_model = None
+        # If there is a new_project defined, go back to project create
+        if self.model.new_project is not None and len(self.model.new_project) > 0:
+            self.navigator.switch_presenter("project_create")
+        else:
+            # Otherwise go back to the model_select view
+            self.navigator.switch_presenter("model_select")
