@@ -49,11 +49,14 @@ class ProjectWelcomeView(BaseFrameView):
             self, text="Load existing project", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6"
         )
         self.load_button.place(relx=0.8, rely=0.9)
+        self.load_button.bind("<Return>", lambda event: self.load_button.invoke())
+
         # Add the create button with no command set
         self.create_button = tk.Button(
             self, text="Create new project", bg="#eff3f6", font=("Helvetica 12 bold"), fg="#2F4858"
         )
         self.create_button.place(relx=0.62, rely=0.9)
+        self.create_button.bind("<Return>", lambda event: self.create_button.invoke())
 
     def bind_load_button(self, callback: Callable[[], Optional[Any]]) -> None:
         """Bind the callback for when the load_button is pressed"""

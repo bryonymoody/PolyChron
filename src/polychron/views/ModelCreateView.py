@@ -29,16 +29,18 @@ class ModelCreateView(BaseFrameView):
         # Add a submit button
         self.submit_button = tk.Button(self, text="Submit ", bg="#ec9949", font=("Helvetica 12 bold"), fg="#2F4858")
         self.submit_button.place(relx=0.66, rely=0.4)
+        self.submit_button.bind("<Return>", lambda event: self.submit_button.invoke())
 
         # Add a back button
         self.back_button = tk.Button(self, text="Back", bg="#dcdcdc", font=("helvetica 12 bold"), fg="#2F4858")
         self.back_button.place(relx=0.21, rely=0.01)
+        self.back_button.bind("<Return>", lambda event: self.back_button.invoke())
 
     def bind_submit_button(self, callback: Callable[[], Optional[Any]]) -> None:
         """Bind the callback for when the submit_button is pressed"""
         if callback is not None:
             self.submit_button.config(command=callback)
-            # self.top.bind('<Return>', (lambda event: command(event))) # @todo
+            self.user_input.bind('<Return>', (lambda event: callback()))
 
     def bind_back_button(self, callback: Callable[[], Optional[Any]]) -> None:
         """Bind the callback for when the back button is pressed"""

@@ -37,12 +37,17 @@ class ModelSelectView(BaseFrameView):
             self, text="Load selected model", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6"
         )
         self.load_button.place(relx=0.8, rely=0.9, relwidth=0.195)
+        self.load_button.bind("<Return>", lambda event: self.load_button.invoke())
+
         self.back_button = tk.Button(self, text="Back", bg="#eff3f6", font=("Helvetica 12 bold"), fg="#2F4858")
         self.back_button.place(relx=0.21, rely=0.01)
+        self.back_button.bind("<Return>", lambda event: self.back_button.invoke())
+
         self.create_model_button = tk.Button(
             self, text="Create new model", bg="#eff3f6", font=("Helvetica 12 bold"), fg="#2F4858"
         )
         self.create_model_button.place(relx=0.62, rely=0.9, relwidth=0.17)
+        self.create_model_button.bind("<Return>", lambda event: self.create_model_button.invoke())
 
     def bind_load_button(self, callback: Callable[[], Optional[Any]]) -> None:
         """Bind the callback for when the load_button is pressed & when enter is pressed with a list item selected"""

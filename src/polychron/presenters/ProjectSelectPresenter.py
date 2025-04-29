@@ -39,7 +39,7 @@ class ProjectSelectPresenter(BaseFramePresenter):
             # Switch views
             self.navigator.switch_presenter("model_select")
         else:
-            print("Warning: No project selected. @todo this in gui", file=stderr)
+            print("Warning: No project selected. @todo this in gui if mouse click not on enter?", file=stderr)
 
     def on_back_button(self) -> None:
         """When the Back button is pressed, update the previous view and switch to it"""
