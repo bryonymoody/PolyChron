@@ -90,5 +90,6 @@ class ProjectSelectProcessPopupPresenter(BasePopupPresenter, Mediator):
             raise Exception("@todo - bad reason for close_window.")
         # Close the view
         self.view.destroy()
+        self.view = None  # @todo this is mega dangerous / risky / will break things.
 
         # @todo - presumably this is a memory leak? as although the popup.destroy() is called, the presenter is never removed / is still in scope?

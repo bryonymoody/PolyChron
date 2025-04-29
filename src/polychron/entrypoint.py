@@ -18,9 +18,16 @@ def parse_cli(argv=None):
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--version", action="store_true", help="show version information and exit")
+    # @todo - consider using a 2 element --load instead of -p <p> -m <m>
     parser.add_argument(
-        "--tab", choices=["Splash", "Model", "DatingResults"], help="Temporary: select which tab to start on"
-    )  #  @todo remove this
+        "-p",
+        "--project",
+        type=str,
+        help="Specify a project to create or load, within the polychron projects directory",
+    )
+    parser.add_argument(
+        "-m", "--model", type=str, help="Specify the model to create or load, within -p/--project PROJECT"
+    )
 
     args = parser.parse_args(argv)
     return args
@@ -46,4 +53,4 @@ def main():
         from .GUIApp import GUIApp
 
         app = GUIApp()
-        app.launch(args.tab)
+        app.launch(project_name=args.project, model_name=args.model)

@@ -13,9 +13,11 @@ from .models.ProjectsDirectory import ProjectsDirectory
 from .presenters.BaseFramePresenter import BaseFramePresenter
 from .presenters.DatingResultsPresenter import DatingResultsPresenter
 from .presenters.ModelPresenter import ModelPresenter
+from .presenters.ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresenter
 from .presenters.SplashPresenter import SplashPresenter
 from .views.DatingResultsView import DatingResultsView
 from .views.ModelView import ModelView
+from .views.ProjectSelectProcessPopupView import ProjectSelectProcessPopupView
 from .views.SplashView import SplashView
 
 
@@ -162,25 +164,63 @@ class GUIApp(Mediator):
             # Apply the new window geometry
             self.root.geometry(new_geometry)
 
-    def launch(self, tabName: Optional[str]) -> None:
+    def launch(self, project_name: Optional[str] = None, model_name: Optional[str] = None) -> None:
         """Method to launch the GUIApp, i.e. start the render loop
 
-        @todo - remove the tabName param
+        Parameters:
+            project_name: An optional project to start with
+            model_name: An optional model, within the optional project, to start with
         """
 
-        # If a tab name was provided (temporary development feature), display it and return. @todo remove
-        if tabName is not None:
-            # If the TabName is invalid, warn and just render the splash tab
-            if tabName not in self.presenters:
-                print(f"Warning: Invalid --tab {tabName}. Choose from {list(self.presenters.keys())}")
-                tabName = "Splash"
-            self.switch_presenter(tabName)
-            self.root.mainloop()
-            return
-
-        # Show the initial view
+        # Set the initial view to the splash view
         self.switch_presenter("Splash")
-        # Trigger the project open process
-        self.presenters["Splash"].on_select_project()
+        splash_presenter = self.get_presenter("Splash")
+
+        # @todo - this is a bit gross and needs improving.
+        # Instantiate the child presenter and view, which otherwise would be done by SplashPresenter.on_select_project
+        popup_presenter = ProjectSelectProcessPopupPresenter(
+            self, ProjectSelectProcessPopupView(splash_presenter.view), self.projects_directory_obj
+        )
+
+        # If an initial project is provided, attempt to start with it
+        if project_name is not None:
+            # Load projects and models
+            self.projects_directory_obj.load()
+            # @todo - validate cli provided project / model names
+            # @todo - move this logic somewhere else & de-duplicate.
+            if project_name in self.projects_directory_obj.projects:
+                self.projects_directory_obj.selected_project = project_name
+                if model_name is not None:
+                    project = self.projects_directory_obj.projects[project_name]
+                    if model_name in project.models:
+                        self.projects_directory_obj.selected_model = model_name
+                        # Close the popup
+                        popup_presenter.close_window("load_model")
+                    else:
+                        self.projects_directory_obj.new_model = model_name
+                        # Create the new model and close
+                        self.projects_directory_obj.create_model_from_self()
+                        popup_presenter.close_window("new_model")
+                else:
+                    # Switch to the select model presenter, to allowe selection or input
+                    popup_presenter.switch_presenter("model_select")
+            else:
+                self.projects_directory_obj.new_project = project_name
+                if model_name is not None:
+                    self.projects_directory_obj.new_model = model_name
+                    # Create the new model and close
+                    self.projects_directory_obj.create_model_from_self()
+                    popup_presenter.close_window("new_model")
+                else:
+                    # switch to the create model page
+                    popup_presenter.switch_presenter("model_create")
+
+        # If the window has not been closed, make it visible and on top
+        # @todo - this is likely to need changing
+        if popup_presenter.view is not None:
+            # Ensure the project selection popup is visible and on top
+            popup_presenter.view.deiconify()
+            popup_presenter.view.lift()
+
         # Start the render loop
         self.root.mainloop()
