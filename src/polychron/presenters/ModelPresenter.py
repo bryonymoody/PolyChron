@@ -5,7 +5,7 @@ from typing import Any, Optional
 
 import pandas as pd
 
-from ..interfaces import Navigator
+from ..interfaces import Mediator
 from ..presenters.CalibrateModelSelectPresenter import CalibrateModelSelectPresenter
 from ..presenters.DatafilePreviewPresenter import DatafilePreviewPresenter
 from ..presenters.MCMCProgressPresenter import MCMCProgressPresenter
@@ -23,9 +23,9 @@ from .ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresent
 
 
 class ModelPresenter(BaseFramePresenter):
-    def __init__(self, navigator: Navigator, view: ModelView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: ModelView, model: Optional[Any] = None):
         # Call the parent class' consturctor
-        super().__init__(navigator, view, model)
+        super().__init__(mediator, view, model)
 
         # Properties
         self.strat_check: bool = False
@@ -57,8 +57,8 @@ class ModelPresenter(BaseFramePresenter):
         """
 
         # Bind callback functions for switching between the main view tabs
-        view.bind_sasd_tab_button(lambda: self.navigator.switch_presenter("Model"))
-        view.bind_dr_tab_button(lambda: self.navigator.switch_presenter("DatingResults"))
+        view.bind_sasd_tab_button(lambda: self.mediator.switch_presenter("Model"))
+        view.bind_dr_tab_button(lambda: self.mediator.switch_presenter("DatingResults"))
 
         # Bind menu callbacks
         # @todo other menus
@@ -116,7 +116,7 @@ class ModelPresenter(BaseFramePresenter):
         @todo - this allows multiple open project windows to be created, which is not ideal
         """
         # Create the popup presenter and view
-        popup_presenter = MCMCProgressPresenter(self.navigator, MCMCProgressView(self.view), self.model)
+        popup_presenter = MCMCProgressPresenter(self.mediator, MCMCProgressView(self.view), self.model)
         # Ensure it is visible and on top
         popup_presenter.view.deiconify()
         popup_presenter.view.lift()
@@ -128,7 +128,7 @@ class ModelPresenter(BaseFramePresenter):
         # Close the popup
         popup_presenter.close_view()
         # Change to the DatingResults tab (assuming the calibration ran successfully @todo)
-        self.navigator.switch_presenter("DatingResults")
+        self.mediator.switch_presenter("DatingResults")
 
         # @todo - esnure the presenter is destroyed
 
@@ -140,7 +140,7 @@ class ModelPresenter(BaseFramePresenter):
 
         @todo - this allows multiple open project windows to be created, which is not ideal
         """
-        popup_presenter = CalibrateModelSelectPresenter(self.navigator, CalibrateModelSelectView(self.view), self.model)
+        popup_presenter = CalibrateModelSelectPresenter(self.mediator, CalibrateModelSelectView(self.view), self.model)
         # Ensure it is visible and on top
         popup_presenter.view.deiconify()
         popup_presenter.view.lift()
@@ -183,13 +183,13 @@ class ModelPresenter(BaseFramePresenter):
         if MsgBox == "yes":
             # Create and show the residual or intrusive presetner
             popup_presenter = ResidualOrIntrusivePresenter(
-                self.navigator, ResidualOrIntrusiveView(self.view), self.model
+                self.mediator, ResidualOrIntrusiveView(self.view), self.model
             )
             popup_presenter.view.deiconify()
             popup_presenter.view.lift()  # @todo - not sure these are neccesary
         else:
             # If not, show the residual check presenter, formerly popupWindow3
-            popup_presenter = ResidualCheckPopupPresenter(self.navigator, ResidualCheckPopupView(self.view), self.model)
+            popup_presenter = ResidualCheckPopupPresenter(self.mediator, ResidualCheckPopupView(self.view), self.model)
             popup_presenter.view.deiconify()
             popup_presenter.view.lift()  # @todo - not sure these are neccesary
 
@@ -200,7 +200,7 @@ class ModelPresenter(BaseFramePresenter):
         """
         # @todo set and get model data appropriately
         temp_model = {"df": df, "result": "cancel"}
-        popup_presenter = DatafilePreviewPresenter(self.navigator, DatafilePreviewView(self.view), temp_model)
+        popup_presenter = DatafilePreviewPresenter(self.mediator, DatafilePreviewView(self.view), temp_model)
         popup_presenter.view.deiconify()
         popup_presenter.view.lift()  # @todo - not sure these are neccesary
 
@@ -401,7 +401,7 @@ class ModelPresenter(BaseFramePresenter):
     def close_application(self) -> None:
         """Close polychron gracefully via File > Exit"""
         # @todo - alert on any unsaved changed?
-        self.navigator.close_navigator("exit")
+        self.mediator.close_window("exit")
 
     def phasing(self):
         """Callback function for View > Display Stratigraphic diagram in phases
@@ -483,7 +483,7 @@ class ModelPresenter(BaseFramePresenter):
 
         # Instantiate the child presenter and view
         popup_presenter = ProjectSelectProcessPopupPresenter(
-            self.navigator, ProjectSelectProcessPopupView(self.view), self.model
+            self.mediator, ProjectSelectProcessPopupView(self.view), self.model
         )
         # Ensure it is visible and on top
         popup_presenter.view.deiconify()
@@ -498,7 +498,7 @@ class ModelPresenter(BaseFramePresenter):
         """
         # Instantiate the child presenter and view
         popup_presenter = ProjectSelectProcessPopupPresenter(
-            self.navigator, ProjectSelectProcessPopupView(self.view), self.model
+            self.mediator, ProjectSelectProcessPopupView(self.view), self.model
         )
         # Switch to the model select page, app state should have the correct selected_project still
         popup_presenter.switch_presenter("model_select")
@@ -531,7 +531,7 @@ class ModelPresenter(BaseFramePresenter):
 
         # Instantiate the child presenter and view
         popup_presenter = ProjectSelectProcessPopupPresenter(
-            self.navigator, ProjectSelectProcessPopupView(self.view), self.model
+            self.mediator, ProjectSelectProcessPopupView(self.view), self.model
         )
         # Switch to the model select page, app state should have the correct selected_project still
         popup_presenter.switch_presenter("model_create")

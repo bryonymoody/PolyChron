@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from ..interfaces import Navigator
+from ..interfaces import Mediator
 from ..views.CalibrateModelSelectView import CalibrateModelSelectView
 from .BasePopupPresenter import BasePopupPresenter
 
@@ -13,9 +13,9 @@ class CalibrateModelSelectPresenter(BasePopupPresenter):
     @todo - is the triggering label accurate? I.e. is it models not projects?
     """
 
-    def __init__(self, navigator: Navigator, view: CalibrateModelSelectView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: CalibrateModelSelectView, model: Optional[Any] = None):
         # Call the parent class' consturctor
-        super().__init__(navigator, view, model)
+        super().__init__(mediator, view, model)
 
         # Bind buttons
         self.view.bind_ok_button(self.on_ok_button)

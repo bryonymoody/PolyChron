@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from ..interfaces import Navigator
+from ..interfaces import Mediator
 from ..views.ManageIntrusiveOrResidualContextsView import ManageIntrusiveOrResidualContextsView
 from .BasePopupPresenter import BasePopupPresenter
 
@@ -8,12 +8,12 @@ from .BasePopupPresenter import BasePopupPresenter
 class ManageIntrusiveOrResidualContextsPresenter(BasePopupPresenter):
     """Presenter for managing the MCMC progress bar popup view.
 
-    When MCMC calibration has completed, and the popup closes, the navigator should change to the DatingResults tab
+    When MCMC calibration has completed, and the popup closes, the DatingResults tab should be loaded
     """
 
-    def __init__(self, navigator: Navigator, view: ManageIntrusiveOrResidualContextsView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: ManageIntrusiveOrResidualContextsView, model: Optional[Any] = None):
         # Call the parent class' consturctor
-        super().__init__(navigator, view, model)
+        super().__init__(mediator, view, model)
 
         # Bind the back button
         self.view.bind_back_button(lambda: self.on_back())

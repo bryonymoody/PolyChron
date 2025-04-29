@@ -2,15 +2,15 @@ from sys import stderr
 from tkinter import messagebox as messagebox
 from typing import Any, Optional
 
-from ..interfaces import Navigator
+from ..interfaces import Mediator
 from ..views.ModelCreateView import ModelCreateView
 from .BaseFramePresenter import BaseFramePresenter
 
 
 class ModelCreatePresenter(BaseFramePresenter):
-    def __init__(self, navigator: Navigator, view: ModelCreateView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: ModelCreateView, model: Optional[Any] = None):
         # Call the parent class' consturctor
-        super().__init__(navigator, view, model)
+        super().__init__(mediator, view, model)
 
         # Bind button callbacks to presenter methods
         view.bind_submit_button(lambda: self.on_submit_button())
@@ -45,7 +45,7 @@ class ModelCreatePresenter(BaseFramePresenter):
             self.model.create_model_from_self()
             messagebox.showinfo("Tips:", "model created successfully!", parent=self.view)
             # Close the model loading popup.
-            self.navigator.close_navigator("new_model")
+            self.mediator.close_window("new_model")
         else:
             print("Warning: a project name must be provided. @todo GUI error message", file=stderr)
 
@@ -57,7 +57,7 @@ class ModelCreatePresenter(BaseFramePresenter):
         self.model.new_model = None
         # If there is a new_project defined, go back to project create
         if self.model.new_project is not None and len(self.model.new_project) > 0:
-            self.navigator.switch_presenter("project_create")
+            self.mediator.switch_presenter("project_create")
         else:
             # Otherwise go back to the model_select view
-            self.navigator.switch_presenter("model_select")
+            self.mediator.switch_presenter("model_select")

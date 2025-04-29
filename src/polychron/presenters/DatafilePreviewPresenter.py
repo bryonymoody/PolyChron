@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from ..interfaces import Navigator
+from ..interfaces import Mediator
 from ..views.DatafilePreviewView import DatafilePreviewView
 from .BasePopupPresenter import BasePopupPresenter
 
@@ -11,9 +11,9 @@ class DatafilePreviewPresenter(BasePopupPresenter):
     Formerly `popupWindow7`, used when opening a csv-like file
     """
 
-    def __init__(self, navigator: Navigator, view: DatafilePreviewView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: DatafilePreviewView, model: Optional[Any] = None):
         # Call the parent class' consturctor
-        super().__init__(navigator, view, model)
+        super().__init__(mediator, view, model)
 
         # Bind buttons
         self.view.bind_load_button(self.on_load_button)

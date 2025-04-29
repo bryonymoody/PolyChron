@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional
 
-from ..interfaces import Navigator
+from ..interfaces import Mediator
 from ..presenters.BaseFramePresenter import BaseFramePresenter
 from ..presenters.BasePopupPresenter import BasePopupPresenter
 from ..presenters.ResidualCheckConfirmPresenter import ResidualCheckConfirmPresenter
@@ -10,15 +10,15 @@ from ..views.ResidualCheckPopupView import ResidualCheckPopupView
 from ..views.ResidualCheckView import ResidualCheckView
 
 
-class ResidualCheckPopupPresenter(BasePopupPresenter, Navigator):
+class ResidualCheckPopupPresenter(BasePopupPresenter, Mediator):
     """Presenter for the residual check process, as a container which contains the 2 underlying presenter-view pairs.
 
     @todo this can probably be refactored nicer
     """
 
-    def __init__(self, navigator: Navigator, view: ResidualCheckPopupView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: ResidualCheckPopupView, model: Optional[Any] = None):
         # Call the parent class' consturctor
-        super().__init__(navigator, view, model)
+        super().__init__(mediator, view, model)
 
         # Build a dictionary of child presenter-view pairings
         self.current_presenter = None
@@ -55,7 +55,7 @@ class ResidualCheckPopupPresenter(BasePopupPresenter, Navigator):
         else:
             raise Exception(f"@todo better error missing frame {name} {self.presenters}")
 
-    def close_navigator(self, reason: str = None):
+    def close_window(self, reason: str = None):
         # @todo
         # Close the view
         self.view.destroy()

@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from ..interfaces import Navigator
+from ..interfaces import Mediator
 from ..views.ResidualCheckView import ResidualCheckView
 from .BaseFramePresenter import BaseFramePresenter
 
@@ -11,9 +11,9 @@ class ResidualCheckPresenter(BaseFramePresenter):
     @todo - createa a popup for this and the confirmation version
     """
 
-    def __init__(self, navigator: Navigator, view: ResidualCheckView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: ResidualCheckView, model: Optional[Any] = None):
         # Call the parent class' consturctor
-        super().__init__(navigator, view, model)
+        super().__init__(mediator, view, model)
 
         # Bind the confirm groups button
         self.view.bind_confirm_button(lambda: self.on_confirm())
@@ -29,4 +29,4 @@ class ResidualCheckPresenter(BaseFramePresenter):
 
     def on_confirm(self) -> None:
         # @todo trigger changes in the model for the confirm view
-        self.navigator.switch_presenter("residual_check_confirm")
+        self.mediator.switch_presenter("residual_check_confirm")

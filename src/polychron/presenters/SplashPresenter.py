@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from ..interfaces import Navigator
+from ..interfaces import Mediator
 from ..views.ProjectSelectProcessPopupView import ProjectSelectProcessPopupView
 from ..views.SplashView import SplashView
 from .BaseFramePresenter import BaseFramePresenter
@@ -8,9 +8,9 @@ from .ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresent
 
 
 class SplashPresenter(BaseFramePresenter):
-    def __init__(self, navigator: Navigator, view: SplashView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: SplashView, model: Optional[Any] = None):
         # Call the parent class' consturctor
-        super().__init__(navigator, view, model)
+        super().__init__(mediator, view, model)
 
         self.child_presenter: Optional[ProjectSelectProcessPopupPresenter] = None
 
@@ -28,7 +28,7 @@ class SplashPresenter(BaseFramePresenter):
 
         # Instantiate the child presenter and view
         popup_presenter = ProjectSelectProcessPopupPresenter(
-            self.navigator, ProjectSelectProcessPopupView(self.view), self.model
+            self.mediator, ProjectSelectProcessPopupView(self.view), self.model
         )
         # Ensure it is visible and on top
         popup_presenter.view.deiconify()

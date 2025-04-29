@@ -3,7 +3,7 @@ import sys
 import time
 from typing import Any, Optional
 
-from ..interfaces import Navigator
+from ..interfaces import Mediator
 from ..views.MCMCProgressView import MCMCProgressView
 from .BasePopupPresenter import BasePopupPresenter
 
@@ -44,12 +44,12 @@ def mock_mcmc():
 class MCMCProgressPresenter(BasePopupPresenter):
     """Presenter for managing the MCMC progress bar popup view.
 
-    When MCMC calibration has completed, and the popup closes, the navigator should change to the DatingResults tab
+    When MCMC calibration has completed, and the popup closes, change to the DatingResults tab
     """
 
-    def __init__(self, navigator: Navigator, view: MCMCProgressView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: MCMCProgressView, model: Optional[Any] = None):
         # Call the parent class' consturctor
-        super().__init__(navigator, view, model)
+        super().__init__(mediator, view, model)
 
         # Prevent the window from being closed with a noop lambda
         # @todo - do something cleaner about cancelling an in-progress calibration

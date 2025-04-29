@@ -38,7 +38,7 @@ class ProjectCreateView(BaseFrameView):
         """Bind the callback for when the submit_button is pressed, or when the enter button is pressed."""
         if callback is not None:
             self.submit_button.config(command=callback)
-            self.user_input.bind('<Return>', (lambda event: callback()))
+            self.user_input.bind("<Return>", (lambda event: callback()))
 
     def bind_back_button(self, callback: Callable[[], Optional[Any]]) -> None:
         """Bind the callback for when the back_button is pressed"""

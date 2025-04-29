@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional
 
-from ..interfaces import Navigator
+from ..interfaces import Mediator
 from ..views.ModelCreateView import ModelCreateView
 from ..views.ModelSelectView import ModelSelectView
 from ..views.ProjectCreateView import ProjectCreateView
@@ -16,19 +16,19 @@ from .ProjectSelectPresenter import ProjectSelectPresenter
 from .ProjectWelcomePresenter import ProjectWelcomePresenter
 
 
-class ProjectSelectProcessPopupPresenter(BasePopupPresenter, Navigator):
+class ProjectSelectProcessPopupPresenter(BasePopupPresenter, Mediator):
     """Presenter for the project new or select process, which is a mult-frame presenter, much like the main window.
 
-    @todo - this is a bit different from a regular PopupPresenter, as it contains multiple views & itself probable needs to be a Navigator. Some of this could be abstracted.
+    @todo - this is a bit different from a regular PopupPresenter, as it contains multiple views & itself probable needs to be a Mediator. Some of this could be abstracted.
 
     @todo - this class name is terrible. Maybe split presenters/views into submopdules for mainwindow/popup etc
 
-    @todo - rename Navigator & Navigator protocols, something like MultiPresenterNavigator?
+    @todo - rename Mediator & Mediator protocols, something like MultiPresenterMediator?
     """
 
-    def __init__(self, navigator: Navigator, view: ProjectSelectProcessPopupView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: ProjectSelectProcessPopupView, model: Optional[Any] = None):
         # Call the parent class' consturctor
-        super().__init__(navigator, view, model)
+        super().__init__(mediator, view, model)
 
         # Build a dictionary of child presenter-view pairings
         self.current_presenter = None
@@ -70,18 +70,18 @@ class ProjectSelectProcessPopupPresenter(BasePopupPresenter, Navigator):
         else:
             raise Exception("@todo better error missing frame")
 
-    def close_navigator(self, reason: str = None):
+    def close_window(self, reason: str = None):
         # 3.10 required for match, so using elif
         if reason is None:
             pass
         elif reason == "new_model":
             # @todo - update model state in the relevant view
-            self.navigator.switch_presenter("Model")
+            self.mediator.switch_presenter("Model")
         elif reason == "load_model":
             # @todo - update model state in the relevant view
-            self.navigator.switch_presenter("Model")
+            self.mediator.switch_presenter("Model")
         else:
-            raise Exception("@todo - bad reason for close_navigator.")
+            raise Exception("@todo - bad reason for close_window.")
         # Close the view
         self.view.destroy()
 

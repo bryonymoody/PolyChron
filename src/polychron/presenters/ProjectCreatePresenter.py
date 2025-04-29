@@ -1,15 +1,15 @@
 from sys import stderr
 from typing import Any, Optional
 
-from ..interfaces import Navigator
+from ..interfaces import Mediator
 from ..views.ProjectCreateView import ProjectCreateView
 from .BaseFramePresenter import BaseFramePresenter
 
 
 class ProjectCreatePresenter(BaseFramePresenter):
-    def __init__(self, navigator: Navigator, view: ProjectCreateView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: ProjectCreateView, model: Optional[Any] = None):
         # Call the parent class' consturctor
-        super().__init__(navigator, view, model)
+        super().__init__(mediator, view, model)
 
         # Bind button callbacks to presenter methods
         view.bind_submit_button(lambda: self.on_submit_button())
@@ -30,7 +30,7 @@ class ProjectCreatePresenter(BaseFramePresenter):
             # @todo - polychron 0.1 does not perform this check.
             self.model.new_project = new_project_name
             # Switch to the model creation view
-            self.navigator.switch_presenter("model_create")
+            self.mediator.switch_presenter("model_create")
         else:
             print("Warning: a project name must be provieded. @todo GUI error message", file=stderr)
 
@@ -39,4 +39,4 @@ class ProjectCreatePresenter(BaseFramePresenter):
         # @todo double check this is the only option for the back button / implement a true back button.
         # Clear the new project name
         self.model.new_project = None
-        self.navigator.switch_presenter("project_welcome")
+        self.mediator.switch_presenter("project_welcome")

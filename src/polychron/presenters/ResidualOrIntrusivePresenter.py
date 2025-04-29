@@ -1,22 +1,22 @@
 from typing import Any, Literal, Optional
 
-from ..interfaces import Navigator
+from ..interfaces import Mediator
 from ..presenters.ManageIntrusiveOrResidualContextsPresenter import ManageIntrusiveOrResidualContextsPresenter
 from ..views.ManageIntrusiveOrResidualContextsView import ManageIntrusiveOrResidualContextsView
 from ..views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
 from .BasePopupPresenter import BasePopupPresenter
 
 
-# @todo - this needs to be closable by child popups, need to think about Navigator more.
-class ResidualOrIntrusivePresenter(BasePopupPresenter, Navigator):
+# @todo - this needs to be closable by child popups, may need Mediator changes (or just in mediater.close call the parents mediator close based on the reason?)
+class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
     """Presenter for managing the MCMC progress bar popup view.
 
-    When MCMC calibration has completed, and the popup closes, the navigator should change to the DatingResults tab
+    When MCMC calibration has completed, and the popup closes, the mediator should change to the DatingResults tab
     """
 
-    def __init__(self, navigator: Navigator, view: ResidualOrIntrusiveView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: ResidualOrIntrusiveView, model: Optional[Any] = None):
         # Call the parent class' consturctor
-        super().__init__(navigator, view, model)
+        super().__init__(mediator, view, model)
 
         self.mode: Optional[Literal["resid", "intru"]] = None  # @todo propper enum
 
@@ -69,7 +69,7 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Navigator):
         """When the proceed button is pressed, open the next popup window for managing intrusive or residual contexts (formerly popup4_wrapper)"""
 
         popup_presenter = ManageIntrusiveOrResidualContextsPresenter(
-            self.navigator, ManageIntrusiveOrResidualContextsView(self.view), self.model
+            self.mediator, ManageIntrusiveOrResidualContextsView(self.view), self.model
         )
         popup_presenter.view.deiconify()
         popup_presenter.view.lift()  # @todo - not sure these are neccesary

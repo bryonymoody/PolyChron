@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from ..interfaces import Navigator
+from ..interfaces import Mediator
 from ..views.AddContextView import AddContextView
 from .BasePopupPresenter import BasePopupPresenter
 
@@ -11,9 +11,9 @@ class AddContextPresenter(BasePopupPresenter):
     Formerly `popupWindow`
     """
 
-    def __init__(self, navigator: Navigator, view: AddContextView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: AddContextView, model: Optional[Any] = None):
         # Call the parent class' consturctor
-        super().__init__(navigator, view, model)
+        super().__init__(mediator, view, model)
 
         # Bind the OK button
         self.view.bind_ok_button(self.on_ok)

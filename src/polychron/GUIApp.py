@@ -8,7 +8,7 @@ from typing import Any, Dict, Optional
 from ttkthemes import ThemedTk
 
 from .Config import Config
-from .interfaces import Navigator
+from .interfaces import Mediator
 from .models.ProjectsDirectory import ProjectsDirectory
 from .presenters.BaseFramePresenter import BaseFramePresenter
 from .presenters.DatingResultsPresenter import DatingResultsPresenter
@@ -19,7 +19,7 @@ from .views.ModelView import ModelView
 from .views.SplashView import SplashView
 
 
-class GUIApp(Navigator):
+class GUIApp(Mediator):
     """Main GUIApp which is provides the main entry point, initialises the Models, Views and Presenters and opens the main window.
 
     This includes code which used to belong to `MainFrame`
@@ -120,9 +120,9 @@ class GUIApp(Navigator):
         else:
             raise Exception("@todo better error missing frame")
 
-    def close_navigator(self, reason: Optional[str] = None) -> None:
+    def close_window(self, reason: Optional[str] = None) -> None:
         print(
-            "@todo - decide on if this should existr, or implement GUIApp::close_navigator or separate a Navigator and ClosableNavigator"
+            "@todo - decide on if this should existr, or implement GUIApp::close_window or separate a Mediator and ClosableMediator"
         )
         self.exit_application()
 

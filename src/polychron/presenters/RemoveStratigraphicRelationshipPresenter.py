@@ -1,6 +1,6 @@
 from typing import Any, Optional
 
-from ..interfaces import Navigator
+from ..interfaces import Mediator
 from ..views.RemoveStratigraphicRelationshipView import RemoveStratigraphicRelationshipView
 from .BasePopupPresenter import BasePopupPresenter
 
@@ -11,9 +11,9 @@ class RemoveStratigraphicRelationshipPresenter(BasePopupPresenter):
     Formerly `popupWindow6`, called by StartPage.edge_del_popup, triggered when "Delete stratigraphic relationship" is selected on an edge
     """
 
-    def __init__(self, navigator: Navigator, view: RemoveStratigraphicRelationshipView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: RemoveStratigraphicRelationshipView, model: Optional[Any] = None):
         # Call the parent class' consturctor
-        super().__init__(navigator, view, model)
+        super().__init__(mediator, view, model)
 
         # Bind buttons
         self.view.bind_ok_button(self.on_ok_button)
