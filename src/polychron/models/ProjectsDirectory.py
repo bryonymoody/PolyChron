@@ -80,6 +80,28 @@ class ProjectsDirectory:
         self.selected_project = project_name
         self.selected_model = self.new_model
 
+    def get_current_project(self) -> Optional[Project]:
+        """Get the current project if one is selected
+
+        @todo - feels like this should belong elsewhere (along with select_x and new_x)"""
+        if self.selected_project is not None and self.selected_project in self.projects:
+            return self.projects[self.selected_project]
+        else:
+            return None
+
+    def get_current_model(self) -> Optional[Model]:
+        """Get the current model if one is selected.
+
+        @todo - feels like this should belong elsewhere (along with select_x and new_x)"""
+        if (
+            self.selected_model is not None
+            and (project := self.get_current_project()) is not None
+            and self.selected_model in project.models
+        ):
+            return project.models[self.selected_model]
+        else:
+            return None
+
     def get_demo_projects(self) -> dict[str, Project]:
         """Build a dictionary of not-real projects for development / demo purposes
 

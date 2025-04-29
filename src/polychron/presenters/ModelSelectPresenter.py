@@ -7,6 +7,11 @@ from .BaseFramePresenter import BaseFramePresenter
 
 
 class ModelSelectPresenter(BaseFramePresenter):
+    """Presenter for a frame allowing the user to select a model from a list of models within a project, or a button to create a new one.
+
+    @todo - Sort the list of models?
+    """
+
     def __init__(self, navigator: Navigator, view: ModelSelectView, model: Optional[Any] = None):
         # Call the parent class' consturctor
         super().__init__(navigator, view, model)

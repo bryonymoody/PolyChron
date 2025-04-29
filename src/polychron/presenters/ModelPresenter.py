@@ -15,9 +15,11 @@ from ..views.CalibrateModelSelectView import CalibrateModelSelectView
 from ..views.DatafilePreviewView import DatafilePreviewView
 from ..views.MCMCProgressView import MCMCProgressView
 from ..views.ModelView import ModelView
+from ..views.ProjectSelectProcessPopupView import ProjectSelectProcessPopupView
 from ..views.ResidualCheckPopupView import ResidualCheckPopupView
 from ..views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
 from .BaseFramePresenter import BaseFramePresenter
+from .ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresenter
 
 
 class ModelPresenter(BaseFramePresenter):
@@ -69,10 +71,10 @@ class ModelPresenter(BaseFramePresenter):
                 "Load context grouping file (.csv)": lambda: self.open_context_grouping_file(),
                 "Load group relationship file (.csv)": lambda: self.open_group_relationship_file(),
                 "Load context equalities file (.csv)": lambda: self.open_scientific_dating_file(),
-                "Load new project": lambda: print("@todo"),
-                "Load existing model": lambda: print("@todo"),
-                "Save changes as current model": lambda: print("@todo"),
-                "Save changes as new model": lambda: print("@todo"),
+                "Load new project": lambda: self.load_project(),
+                "Load existing model": lambda: self.load_existing_model(),
+                "Save changes as current model": lambda: self.save_as_current(),
+                "Save changes as new model": lambda: self.save_as_new_model(),
                 "Exit": lambda: self.close_application(),
             }
         )
@@ -473,3 +475,70 @@ class ModelPresenter(BaseFramePresenter):
         Formerly StartPage.check_list_gen
         """
         self.view.update_datacanvas_checklist(self.strat_check, self.date_check, self.phase_check, self.phase_rel_check)
+
+    def load_project(self) -> None:
+        """open a popup dialog to load a model from a different project
+
+        Formerly a call to load_Window(MAIN_FRAME)"""
+
+        # Instantiate the child presenter and view
+        popup_presenter = ProjectSelectProcessPopupPresenter(
+            self.navigator, ProjectSelectProcessPopupView(self.view), self.model
+        )
+        # Ensure it is visible and on top
+        popup_presenter.view.deiconify()
+        popup_presenter.view.lift()
+
+    def load_existing_model(self) -> None:
+        """Open a popup dialog to load an existing model from the current project (althoug possible to go back?)
+
+        Formerly a call to load_Window(MAIN_FRAME, proj_dir)
+
+        @todo - the ProjectSelectProcessPopupPresenter having a separte model object here than the ModelView would be useful, to avoid the back button followed by closing the popup causing issues
+        """
+        # Instantiate the child presenter and view
+        popup_presenter = ProjectSelectProcessPopupPresenter(
+            self.navigator, ProjectSelectProcessPopupView(self.view), self.model
+        )
+        # Switch to the model select page, app state should have the correct selected_project still
+        popup_presenter.switch_presenter("model_select")
+        # Ensure it is visible and on top
+        popup_presenter.view.deiconify()
+        popup_presenter.view.lift()
+
+    def save_as_current(self) -> None:
+        """Save the current state of the model in-place
+
+        Formerly StartPage.save_state_1"""
+        if model := self.model.get_current_model():
+            model.save()
+        else:
+            pass  # @todo handle gracefully, but this should never occur.
+
+    def save_as_new_model(self) -> None:
+        """Save the current state of the model, as a new model (with a new name) initially in the same project (although possible to put in a new project)
+
+        @todo - in PolyChron 0.1, save as new model maintains current state in a new project, but does not save the state to disk until save_as_current is called. On load however, this fails to load anything. Query with Bryony the intended behaviour.
+        Error: dot: can't open fi_new_chrono
+
+        @todo - in PolyChron 0.1, if the new model name is already taken, the popup is presented but the window closes anyway rather than allowing a new name to be made.
+
+        @todo - in PolyChron 0.1, it's possible to press Back, enter a new project name, and then a new model name. This just creates a blank model in the new project. Decide how this should behave / if the back button should even be there.
+
+        Formerly StartPage.refresh_4_new_model"""
+        # Open the project saving dialogue, starting with the new_model view in this current project
+        # On close of the popup via the save button, save the model.
+
+        # Instantiate the child presenter and view
+        popup_presenter = ProjectSelectProcessPopupPresenter(
+            self.navigator, ProjectSelectProcessPopupView(self.view), self.model
+        )
+        # Switch to the model select page, app state should have the correct selected_project still
+        popup_presenter.switch_presenter("model_create")
+        # Ensure it is visible and on top
+        popup_presenter.view.deiconify()
+        popup_presenter.view.lift()
+
+        print("@todo - save_as_new_model partially implemented")
+        # @todo - Ensure that data is copied, not replaced.
+        # model.save()
