@@ -6,11 +6,13 @@ from typing import Any, Optional
 import pandas as pd
 
 from ..interfaces import Mediator
+from ..models.Model import Model
 from ..presenters.CalibrateModelSelectPresenter import CalibrateModelSelectPresenter
 from ..presenters.DatafilePreviewPresenter import DatafilePreviewPresenter
 from ..presenters.MCMCProgressPresenter import MCMCProgressPresenter
 from ..presenters.ResidualCheckPopupPresenter import ResidualCheckPopupPresenter
 from ..presenters.ResidualOrIntrusivePresenter import ResidualOrIntrusivePresenter
+from ..util import imgrender
 from ..views.CalibrateModelSelectView import CalibrateModelSelectView
 from ..views.DatafilePreviewView import DatafilePreviewView
 from ..views.MCMCProgressView import MCMCProgressView
@@ -31,29 +33,37 @@ class ModelPresenter(BaseFramePresenter):
         self.strat_check: bool = False
         """If a strat file has been loaded or not
         
-        @todo - Should this actually belong to the ModelModel?
-        @todo - initalse these variables with values from the model?
+        @todo - Should this actually belong to the .model.Model?
+        @todo - initalse these variables with values from the model on load?
         """
 
         self.date_check: bool = False
         """If a data file has been loaded or not
         
-        @todo - Should this actually belong to the ModelModel?
-        @todo - initalse these variables with values from the model?
+        @todo - Should this actually belong to the .model.Model?
+        @todo - initalse these variables with values from the model on load?
         """
 
         self.phase_check: bool = False
         """If a phase file has been loaded or not
         
-        @todo - Should this actually belong to the ModelModel?
-        @todo - initalse these variables with values from the model?
+        @todo - Should this actually belong to the .model.Model?
+        @todo - initalse these variables with values from the model on load?
         """
 
         self.phase_rel_check: bool = False
         """If a phase_rel file has been loaded or not
         
-        @todo - Should this actually belong to the ModelModel?
-        @todo - initalse these variables with values from the model?
+        @todo - Should this actually belong to the .model.Model?
+        @todo - initalse these variables with values from the model on load?
+        """
+
+        self.phase_true: int = 0
+        """If stratigraphic diagram should be rendered in phases or not
+        
+        @todo - make a bool
+        @todo - should this belong to the .model.Model?
+        @todo - initalse these variables with values from the model on load?
         """
 
         # Bind callback functions for switching between the main view tabs
@@ -260,14 +270,33 @@ class ModelPresenter(BaseFramePresenter):
 
         if file is not None:
             try:
-                # @todo finish this.
-                # self.littlecanvas.delete('all')
-                self.stratfile = pd.read_csv(file, dtype=str)
-                load_it = self.file_popup(self.stratfile)
+                # @todo - rename model, it's confusing.
+                model_model: Model = self.model.get_current_model()
+                df = pd.read_csv(file, dtype=str)
+                # @todo - Validate the parsed df here, so the errors can be included in the file popup?
+                load_it = self.file_popup(df)
                 if load_it == "load":
-                    # @todo rest of open_file2
+                    # update the model with the dataframe, perofrming post processing, producing the graph
+                    model_model.set_strat_df(df)
                     tk.messagebox.showinfo("Success", "Stratigraphic data loaded")
+                    # Mark the strat file as loaded @todo this can just be implicit from the model's state
+                    self.strat_check = True
+                    # Update the check list
                     self.check_list_gen()
+
+                    # Render the image in phases or not
+                    if self.phase_true == 1:
+                        print("@todo use imgrender_phase")
+                        # self.image = imgrender_phase(model_model.strat_graph)
+                    else:
+                        model_model.image = imgrender(
+                            model_model.strat_graph,
+                            self.view.littlecanvas.winfo_width(),
+                            self.view.littlecanvas.winfo_height(),
+                        )  # @todo - get the view width/height cleaner
+                    # Update the view
+                    self.view.update_littlecanvas(model_model.image)
+
                 else:
                     pass  # @todo this case.
             except ValueError:
@@ -411,6 +440,7 @@ class ModelPresenter(BaseFramePresenter):
         Formerly StartPage.phasing
 
         """
+        self.phase_true = 1
         pass  # @todo - implement this method
         # global phase_true, node_df
         # phase_true = 1

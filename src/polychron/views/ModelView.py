@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, Dict, Optional
 
+from PIL import ImageTk
+
 from .BaseFrameView import BaseFrameView
 
 
@@ -403,3 +405,73 @@ class ModelView(BaseFrameView):
         self.datalittlecanvas.pack()
         self.datalittlecanvas.create_text(10, 110, anchor="nw", text=rels, font=("Helvetica 12 bold"), fill=col4)
         self.datalittlecanvas.pack()
+
+    def update_littlecanvas(self, image):
+        """Update the image within the littlecanvas element
+
+        @todo bindings"""
+        self.image = image  # @todo don't store this in the view.
+        self.littlecanvas.delete("all")
+        self.littlecanvas.img = ImageTk.PhotoImage(self.image)
+        self.littlecanvas_img = self.littlecanvas.create_image(0, 0, anchor="nw", image=self.littlecanvas.img)
+        self.width, self.height = self.image.size
+        # self.imscale = 1.0 #, self.littlecanvas.winfo_height()/self.image.size[1])# scale for the canvaas image
+        self.delta = 1.1  # zoom magnitude
+        # Put image into container rectangle and use it to set proper coordinates to the image
+        self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
+        # self.bind("<Configure>", self.resize) @todo
+        # self.littlecanvas.bind("<Configure>", self.resize) @todo
+        # self.delnodes = [] # @todo
+        # self.delnodes_meta = [] # @todo
+        # self.littlecanvas.bind("<Button-3>", self.preClick) @todo
+        self.imscale = min(921 / self.image.size[0], 702 / self.image.size[1])
+        self.littlecanvas.scale("all", 0, 0, self.delta, self.delta)  # rescale all canvas objects
+        self.show_image()
+
+    def show_image(self):
+        """Show image on the Canvas
+
+        @todo the logic for this should probably be elsewhere / add parameters?"""
+        self.width, self.height = self.image.size  # @todo
+
+        bbox1 = [0, 0, int(self.image.size[0] * self.imscale), int(self.image.size[1] * self.imscale)]
+        # Remove 1 pixel shift at the sides of the bbox1
+        bbox1 = (bbox1[0] + 1, bbox1[1] + 1, bbox1[2] - 1, bbox1[3] - 1)
+        bbox2 = (
+            self.littlecanvas.canvasx(0),  # get visible area of the canvas
+            self.littlecanvas.canvasy(0),
+            self.littlecanvas.canvasx(self.littlecanvas.winfo_width()),
+            self.littlecanvas.canvasy(self.littlecanvas.winfo_height()),
+        )
+        if int(bbox2[3]) == 1:
+            bbox2 = [0, 0, 0.96 * 0.99 * 0.97 * 1000, 0.99 * 0.37 * 2000 * 0.96]
+        bbox = [
+            min(bbox1[0], bbox2[0]),
+            min(bbox1[1], bbox2[1]),  # get scroll region box
+            max(bbox1[2], bbox2[2]),
+            max(bbox1[3], bbox2[3]),
+        ]
+        bbox1 = [0, 0, int(self.image.size[0] * self.imscale), int(self.image.size[1] * self.imscale)]
+        if bbox[0] == bbox2[0] and bbox[2] == bbox2[2]:  # whole image in the visible area
+            bbox[0] = bbox1[0]
+            bbox[2] = bbox1[2]
+        if bbox[1] == bbox2[1] and bbox[3] == bbox2[3]:  # whole image in the visible area
+            bbox[1] = bbox1[1]
+            bbox[3] = bbox1[3]
+        self.littlecanvas.configure(scrollregion=bbox)  # set scroll region
+        x_1 = max(bbox2[0] - bbox1[0], 0)  # get coordinates (x1,y1,x2,y2) of the image tile
+        y_1 = max(bbox2[1] - bbox1[1], 0)
+        x_2 = min(bbox2[2], bbox1[2]) - bbox1[0]
+        y_2 = min(bbox2[3], bbox1[3]) - bbox1[1]
+
+        if int(x_2 - x_1) > 0 and int(y_2 - y_1) > 0:  # show image if it in the visible area
+            x_img = min(int(x_2 / self.imscale), self.width)  # sometimes it is larger on 1 pixel
+            y_img = min(int(y_2 / self.imscale), self.height)  # ...and sometimes not
+            image = self.image.crop((int(x_1 / self.imscale), int(y_1 / self.imscale), x_img, y_img))
+            self.imagetk = ImageTk.PhotoImage(image.resize((int(x_2 - x_1), int(y_2 - y_1))))
+            self.littlecanvas.delete(self.littlecanvas_img)
+            self.imageid = self.littlecanvas.create_image(
+                max(bbox2[0], bbox1[0]), max(bbox2[1], bbox1[1]), anchor="nw", image=self.imagetk
+            )
+            self.transx, self.transy = bbox2[0], bbox2[1]
+            self.littlecanvas.imagetk = self.imagetk
