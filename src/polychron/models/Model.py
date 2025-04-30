@@ -9,7 +9,11 @@ from PIL import Image
 
 @dataclass
 class Model:
-    """MVP Model representing a polychron model."""
+    """MVP Model representing a polychron model.
+
+    @todo - refactor some parts out into other clasess (which this has an isntance of)
+    @todo - add setters/getters to avoid direct access of values which are not intended to be directly mutable.
+    """
 
     name: str
     """The name of the model within the project (unique)"""
@@ -84,10 +88,12 @@ class Model:
         """Save the current state of this model to disk at self.path"""
         print(f"@todo - Model.save({self.path})")
 
-    def set_strat_df(self, df: pd.DataFrame) -> bool:
-        """Provided a dataframe for stratigraphic relationships, set the values locally and post-process it to produce the stratgiraphic graph"""
+    def set_strat_df(self, df: pd.DataFrame) -> None:
+        """Provided a dataframe for stratigraphic relationships, set the values locally and post-process it to produce the stratgiraphic graph
 
-        self.strat_df = df
+        @todo return value"""
+
+        self.strat_df = df.copy()
         G = nx.DiGraph(graph_attr={"splines": "ortho"})
         set1 = set(self.strat_df.iloc[:, 0])
         set2 = set(self.strat_df.iloc[:, 1])
@@ -104,3 +110,50 @@ class Model:
                 edges.append(a)
         G.add_edges_from(edges, arrowhead="none")
         self.strat_graph = G
+
+    def set_date_df(self, df: pd.DataFrame) -> None:
+        """Provided a dataframe for date information, set the values locally and perform follow up actions
+
+        @todo return value"""
+        # Store a copy of the dataframe
+        self.date_df = df.copy()
+        # Post process
+        self.date_df = self.date_df.applymap(str)
+        # @todo - better handling of loading strat graph after date.
+        if self.strat_graph:
+            for i, j in enumerate(self.date_df["context"]):
+                self.strat_graph.nodes()[str(j)].update(
+                    {"Determination": [self.date_df["date"][i], self.date_df["error"][i]]}
+                )
+        # @todo - consider a better way to manage this.
+        self.context_no_unordered = list(self.strat_graph.nodes())
+
+    def set_phase_df(self, df: pd.DataFrame) -> None:
+        """Provided a dataframe for stratigraphic relationships, set the values locally and post-process it to produce the stratgiraphic graph
+
+        Formerly phasefile
+
+        @todo validation
+
+        @todo return value"""
+        # Store a copy of the dataframe
+        self.phase_df = df.copy()
+        # Post processing of the dataframe
+        # @todo - better handling of loading strat graph after date.
+        if self.strat_graph:
+            for i, j in enumerate(self.phase_df["context"]):
+                self.strat_graph.nodes()[str(j)].update({"Group": self.phase_df["Group"][i]})
+
+    def set_phase_rel_df(self, df: pd.DataFrame, phase_rels: List[Tuple[str, str]]) -> None:
+        """Provided a dataframe for stratigraphic relationships, set the values locally and post-process it to produce the stratgiraphic graph
+
+        @todo - make this consistent with other setters.
+
+        @todo validate the incoming df here (and/or elsewhere)
+
+        @todo return value"""
+        # Store a copy of the dataframe
+        self.phase_rel_df = df.copy()
+        # Store a copy of the list of tuples extracted from teh dataframe
+        self.phase_rels = phase_rels.copy()
+        # Post processing of the dataframe

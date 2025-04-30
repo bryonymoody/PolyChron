@@ -426,6 +426,7 @@ class ModelView(BaseFrameView):
         # self.littlecanvas.bind("<Button-3>", self.preClick) @todo
         self.imscale = min(921 / self.image.size[0], 702 / self.image.size[1])
         self.littlecanvas.scale("all", 0, 0, self.delta, self.delta)  # rescale all canvas objects
+        # self.canvas.delete('all') # @todo - this was in phasing, but not open_file2
         self.show_image()
 
     def show_image(self):

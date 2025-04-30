@@ -40,19 +40,19 @@ class GUIApp(Mediator):
         # Construct the root tkinter window, as a themed TK app
         self.root: ThemedTk = ThemedTk(theme="arc")
 
-        # style / font configuration options. 
+        # style / font configuration options.
         # @todo - abstract into a method somewhere
         # @todo - check these actually behave as intended.
         # style.set_theme("arc")
         style = ThemedStyle(self.root)
         default_font = tkFont.nametofont("TkDefaultFont")
-        default_font.configure(size=12, weight = 'bold')
+        default_font.configure(size=12, weight="bold")
         style = ttk.Style(self.root)
-        style.configure('TEntry', font=('Helvetica', 12, 'bold'))
-        style.configure('TButton', font=('Helvetica', 12, 'bold'))
-        style.configure('TLabel', font=('Helvetica', 12, 'bold'))
-        style.configure('TOptionMenu', font=('Helvetica', 12, 'bold'))
-        style.configure('TTreeView', font=('Helvetica', 12, 'bold'))
+        style.configure("TEntry", font=("Helvetica", 12, "bold"))
+        style.configure("TButton", font=("Helvetica", 12, "bold"))
+        style.configure("TLabel", font=("Helvetica", 12, "bold"))
+        style.configure("TOptionMenu", font=("Helvetica", 12, "bold"))
+        style.configure("TTreeView", font=("Helvetica", 12, "bold"))
 
         # Set the window title
         self.set_window_title()

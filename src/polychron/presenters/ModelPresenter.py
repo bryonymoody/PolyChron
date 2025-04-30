@@ -117,8 +117,39 @@ class ModelPresenter(BaseFramePresenter):
         # Update data
         self.check_list_gen()
 
+        # Update the view to reflect the current staet of the model
+
     def update_view(self) -> None:
-        pass  # @todo
+        """Update the view to reflect the current state of the model
+
+        @todo expand this"""
+        # Get the actual model
+        # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
+        model_model: Model = self.model.get_current_model()
+
+        # If the model has an @todo abstrac this to reduce duplication
+        if model_model.strat_df is not None:
+            if self.phase_true == 1:
+                model_model.strat_image = imgrender_phase(model_model.strat_graph)
+            else:
+                model_model.strat_image = imgrender(
+                    model_model.strat_graph,
+                    self.view.littlecanvas.winfo_width(),
+                    self.view.littlecanvas.winfo_height(),
+                )  # @todo - get the view width/height cleaner
+            # Update the view
+            self.view.update_littlecanvas(model_model.strat_image)
+
+        # Make sure that the check marks are up to date
+        if model_model.strat_df is not None:
+            self.strat_check = True
+        if model_model.date_df is not None:
+            self.date_check = True
+        if model_model.phase_df is not None:
+            self.phase_check = True
+        if model_model.phase_rel_df is not None:
+            self.phase_rel_check = True
+        self.check_list_gen()
 
     def popup_calibrate_model(self) -> None:
         """Callback function for when Tools -> Calibrate model is selected
@@ -287,15 +318,15 @@ class ModelPresenter(BaseFramePresenter):
 
                     # Render the image in phases or not
                     if self.phase_true == 1:
-                        model_model.image = imgrender_phase(model_model.strat_graph)
+                        model_model.strat_image = imgrender_phase(model_model.strat_graph)
                     else:
-                        model_model.image = imgrender(
+                        model_model.strat_image = imgrender(
                             model_model.strat_graph,
                             self.view.littlecanvas.winfo_width(),
                             self.view.littlecanvas.winfo_height(),
                         )  # @todo - get the view width/height cleaner
                     # Update the view
-                    self.view.update_littlecanvas(model_model.image)
+                    self.view.update_littlecanvas(model_model.strat_image)
 
                 else:
                     pass  # @todo this case.
@@ -319,21 +350,16 @@ class ModelPresenter(BaseFramePresenter):
             try:
                 # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
                 model_model: Model = self.model.get_current_model()
-                model_model.date_df = pd.read_csv(file)
-                model_model.date_df = model_model.date_df.applymap(str)
-                load_it = self.file_popup(model_model.date_df)
+                df = pd.read_csv(file)
+                df = df.applymap(str)
+                load_it = self.file_popup(df)
                 if load_it == "load":
-                    # @todo - move this logic into Model
-                    for i, j in enumerate(model_model.date_df["context"]):
-                        model_model.strat_graph.nodes()[str(j)].update(
-                            {"Determination": [model_model.date_df["date"][i], model_model.date_df["error"][i]]}
-                        )
-                    model_model.context_no_unordered = list(model_model.strat_graph.nodes())  # @todo
+                    model_model.set_date_df(df)
                     self.date_check = True
                     self.check_list_gen()
                     tk.messagebox.showinfo("Success", "Scientific dating data loaded")
                 else:
-                    pass  # @todo - shoudl this also show an error when the user chooses not to press load?
+                    pass  # @todo - should this also show an error when the user chooses not to press load?
             except ValueError:
                 tk.messagebox.showerror("showerror", "Data not loaded, please try again")
 
@@ -353,16 +379,16 @@ class ModelPresenter(BaseFramePresenter):
             try:
                 # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
                 model_model: Model = self.model.get_current_model()
-                model_model.phasefile = pd.read_csv(file)
-                model_model.phasefile = model_model.phasefile.applymap(str)
-                load_it = self.file_popup(model_model.phasefile)
+                df = pd.read_csv(file)
+                df = df.applymap(str)
+                load_it = self.file_popup(df)
                 if load_it == "load":
-                    # @todo - move this logic into Model
-                    for i, j in enumerate(model_model.phasefile["context"]):
-                        model_model.strat_graph.nodes()[str(j)].update({"Group": model_model.phasefile["Group"][i]})
-                self.phase_check = True
-                self.check_list_gen()
-                tk.messagebox.showinfo("Success", "Grouping data loaded")
+                    model_model.set_phase_df(df)
+                    self.phase_check = True
+                    self.check_list_gen()
+                    tk.messagebox.showinfo("Success", "Grouping data loaded")
+                else:
+                    pass  # @todo - should this also show an error when the user chooses not to press load?
             except ValueError:
                 tk.messagebox.showerror("showerror", "Data not loaded, please try again")
 
@@ -382,14 +408,12 @@ class ModelPresenter(BaseFramePresenter):
             try:
                 # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
                 model_model: Model = self.model.get_current_model()
-                phase_rel_df = pd.read_csv(file)
-                model_model.phase_rels = [
-                    (str(phase_rel_df["above"][i]), str(phase_rel_df["below"][i])) for i in range(len(phase_rel_df))
-                ]
+                df = pd.read_csv(file)
+                # @todo - de-duplicate this into the model
+                phase_rels = [(str(df["above"][i]), str(df["below"][i])) for i in range(len(df))]
                 # @todo - this is not an actual input file preview like the others, but a preview of the reshaped data. i.e. titles don't match.
-                load_it = self.file_popup(
-                    pd.DataFrame(model_model.phase_rels, columns=["Younger group", "Older group"])
-                )
+                load_it = self.file_popup(pd.DataFrame(phase_rels, columns=["Younger group", "Older group"]))
+                model_model.set_phase_rel_df(df, phase_rels)
                 if load_it:
                     pass  # @todo - 0.1 doesn't check the result / handle the paths differently.
                 self.phase_rel_check = True
@@ -461,9 +485,9 @@ class ModelPresenter(BaseFramePresenter):
         # Render the strat graph in pahse mode, if there is one to render, updating the model and view
         model_model: Model = self.model.get_current_model()
         if model_model.strat_graph is not None:
-            model_model.image = imgrender_phase(model_model.strat_graph)
+            model_model.strat_image = imgrender_phase(model_model.strat_graph)
             # Update the rendered image in the canvas
-            self.view.update_littlecanvas(model_model.image)
+            self.view.update_littlecanvas(model_model.strat_image)
 
     def calibrate_node_delete_variations(self) -> None:
         """Callback function when Tools > Calibrate node delete variations (alpha)

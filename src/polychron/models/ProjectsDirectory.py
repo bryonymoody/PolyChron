@@ -2,6 +2,8 @@ import pathlib
 from dataclasses import dataclass, field
 from typing import Optional
 
+import pandas as pd
+
 from ..models.Model import Model
 from ..models.Project import Project
 
@@ -125,13 +127,69 @@ class ProjectsDirectory:
                     "two": Model(name="two", path=self.path / "Bar" / "two"),
                 },
             ),
-            "Baz": Project(
-                name="Baz",
-                path=self.path / "Baz",
+            "demo": Project(
+                name="demo",
+                path=self.path / "demo",
                 models={
-                    "one": Model(name="one", path=self.path / "Baz" / "one"),
-                    "two": Model(name="two", path=self.path / "Baz" / "two"),
+                    "demo": Model(name="one", path=self.path / "demo" / "demo"),
                 },
             ),
         }
+
+        # Manually "load" some model data for the demo model, pre serialisation / de-serialisation
+        # @todo - this is temporary.
+        demo_model = projects["demo"].models["demo"]
+
+        # Strat file from csv
+        demo_model.set_strat_df(
+            pd.DataFrame(
+                [
+                    ["a", "b"],
+                    ["b", "c"],
+                    ["b", "d"],
+                    ["b", "e"],
+                    ["d", "f"],
+                    ["e", "h"],
+                ],
+                columns=["above", "below"],
+            )
+        )
+        demo_model.set_date_df(
+            pd.DataFrame(
+                [
+                    ["a", 3400, 80],
+                    ["b", 3300, 75],
+                    ["c", 3250, 80],
+                    ["d", 3225, 75],
+                    ["e", 3200, 80],
+                    ["f", 3150, 75],
+                    ["h", 3100, 65],
+                ],
+                columns=["context", "date", "error"],
+            )
+        )
+        demo_model.set_phase_df(
+            pd.DataFrame(
+                [
+                    ["a", 2],
+                    ["b", 2],
+                    ["c", 1],
+                    ["d", 1],
+                    ["e", 1],
+                    ["f", 1],
+                    ["h", 1],
+                ],
+                columns=["context", "Group"],
+            )
+        )
+        demo_model.set_phase_rel_df(
+            pd.DataFrame(
+                [
+                    [2, 1],
+                ],
+                columns=["above", "below"],
+            ), 
+            phase_rels = [(2, 1)] # @todo - make this actually dynamic
+        )
+
         return projects
