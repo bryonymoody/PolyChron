@@ -25,6 +25,10 @@ from .ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresent
 
 
 class ModelPresenter(BaseFramePresenter):
+    """Presenter for the main model tab
+
+    @todo - re-order methods and properties to be logical (rather than in order of porting)"""
+
     def __init__(self, mediator: Mediator, view: ModelView, model: Optional[Any] = None):
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
@@ -101,7 +105,7 @@ class ModelPresenter(BaseFramePresenter):
             }
         )
 
-        # Bind button clicks        
+        # Bind button clicks
         # Bind the "Data loaded" button callback
         self.display_data_var = "hidden"  # @todo - enum, save this as state?
         self.view.bind_data_button(lambda: self.on_data_button())
