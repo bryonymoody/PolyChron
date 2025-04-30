@@ -2,10 +2,12 @@
 
 import re
 import tkinter as tk
+import tkinter.font as tkFont
 from importlib.metadata import version
+from tkinter import ttk
 from typing import Any, Dict, Optional
 
-from ttkthemes import ThemedTk
+from ttkthemes import ThemedStyle, ThemedTk
 
 from .Config import Config
 from .interfaces import Mediator
@@ -37,6 +39,20 @@ class GUIApp(Mediator):
 
         # Construct the root tkinter window, as a themed TK app
         self.root: ThemedTk = ThemedTk(theme="arc")
+
+        # style / font configuration options. 
+        # @todo - abstract into a method somewhere
+        # @todo - check these actually behave as intended.
+        # style.set_theme("arc")
+        style = ThemedStyle(self.root)
+        default_font = tkFont.nametofont("TkDefaultFont")
+        default_font.configure(size=12, weight = 'bold')
+        style = ttk.Style(self.root)
+        style.configure('TEntry', font=('Helvetica', 12, 'bold'))
+        style.configure('TButton', font=('Helvetica', 12, 'bold'))
+        style.configure('TLabel', font=('Helvetica', 12, 'bold'))
+        style.configure('TOptionMenu', font=('Helvetica', 12, 'bold'))
+        style.configure('TTreeView', font=('Helvetica', 12, 'bold'))
 
         # Set the window title
         self.set_window_title()
