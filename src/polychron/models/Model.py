@@ -84,6 +84,15 @@ class Model:
     @todo - make this only settable by method?
     """
 
+    equal_rel_df: Optional[pd.DataFrame] = field(default=None)
+    """Dataframe containing context equality relationship information loaded from disk
+    
+    Fromerly  just phase_rel_df in StartPage.open_file5
+
+    @todo - define and validate the column names?
+    
+    @todo - refactor this to be it's own model class which performs validation etc?"""
+
     def save(self):
         """Save the current state of this model to disk at self.path"""
         print(f"@todo - Model.save({self.path})")
@@ -129,7 +138,7 @@ class Model:
         self.context_no_unordered = list(self.strat_graph.nodes())
 
     def set_phase_df(self, df: pd.DataFrame) -> None:
-        """Provided a dataframe for stratigraphic relationships, set the values locally and post-process it to produce the stratgiraphic graph
+        """Provided a dataframe for phase / context grouping information, set the values locally and perform post processing
 
         Formerly phasefile
 
@@ -145,7 +154,7 @@ class Model:
                 self.strat_graph.nodes()[str(j)].update({"Group": self.phase_df["Group"][i]})
 
     def set_phase_rel_df(self, df: pd.DataFrame, phase_rels: List[Tuple[str, str]]) -> None:
-        """Provided a dataframe for stratigraphic relationships, set the values locally and post-process it to produce the stratgiraphic graph
+        """Provided a dataframe for phase / group relationships information, set the values locally and post-process
 
         @todo - make this consistent with other setters.
 
@@ -157,3 +166,26 @@ class Model:
         # Store a copy of the list of tuples extracted from teh dataframe
         self.phase_rels = phase_rels.copy()
         # Post processing of the dataframe
+
+    def set_equal_rel_df(self, df: pd.DataFrame) -> None:
+        """Provided a dataframe for context equality relationship information, set the values locally and post-process
+
+        @todo - make this consistent with other setters.
+
+        @todo validate the incoming df here (and/or elsewhere). I.e. c,d; d,c is a runtime error.
+
+        @todo return value"""
+        # Store a copy of the dataframe
+        self.equal_rel_df = df.copy()
+
+        # Post processing of the dataframe
+        self.equal_rel_df = self.equal_rel_df.applymap(str)
+        context_1 = list(self.equal_rel_df.iloc[:, 0])
+        context_2 = list(self.equal_rel_df.iloc[:, 1])
+        for k, j in enumerate(context_1):
+            self.strat_graph = nx.contracted_nodes(self.strat_graph, j, context_2[k])
+            x_nod = list(self.strat_graph)
+            newnode = str(j) + " = " + str(context_2[k])
+            y_nod = [newnode if i == j else i for i in x_nod]
+            mapping = dict(zip(x_nod, y_nod))
+            self.strat_graph = nx.relabel_nodes(self.strat_graph, mapping)

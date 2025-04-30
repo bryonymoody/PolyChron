@@ -80,7 +80,7 @@ class ModelPresenter(BaseFramePresenter):
                 "Load scientific dating file (.csv)": lambda: self.open_scientific_dating_file(),
                 "Load context grouping file (.csv)": lambda: self.open_context_grouping_file(),
                 "Load group relationship file (.csv)": lambda: self.open_group_relationship_file(),
-                "Load context equalities file (.csv)": lambda: self.open_scientific_dating_file(),
+                "Load context equalities file (.csv)": lambda: self.open_context_equalities_file(),
                 "Load new project": lambda: self.load_project(),
                 "Load existing model": lambda: self.load_existing_model(),
                 "Save changes as current model": lambda: self.save_as_current(),
@@ -427,38 +427,32 @@ class ModelPresenter(BaseFramePresenter):
 
         Formerly StartPage.open_file6
 
-        @todo - abstract askfileopen somewhere else to limit importing tkinter?
-
-        @todo - finish implementing this with the actual model
+        @todo - Show a preview of this to the user to match other file loading?
 
         @todo - Column and value validation (within the data model, with exceptions handeled here?)
         """
         file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
         if file is not None:
             try:
-                equal_rel_df = pd.read_csv(file)
-                self.equal_rel_df = equal_rel_df.applymap(str)
-                # @todo - finish this
+                # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
+                model_model: Model = self.model.get_current_model()
+                df = pd.read_csv(file)
+                df = df.applymap(str)
+                # Update the model & post process, updating the graph
+                model_model.set_equal_rel_df(df)
                 # @todo - this method did not open a file_preview / popup.
-                # context_1 = list(self.equal_rel_df.iloc[:, 0])
-                # context_2 = list(self.equal_rel_df.iloc[:, 1])
-                # for k, j in enumerate(context_1):
-                #     self.graph = nx.contracted_nodes(self.graph, j, context_2[k])
-                #     x_nod = list(self.graph)
-                #     newnode = str(j) + " = " + str(context_2[k])
-                #     y_nod = [newnode if i == j else i for i in x_nod]
-                #     mapping = dict(zip(x_nod, y_nod))
-                #     self.graph = nx.relabel_nodes(self.graph, mapping)
-                # if phase_true == 1:
-                #     imgrender_phase(self.graph)
-                # else:
-                #     imgrender(self.graph, self.littlecanvas.winfo_width(), self.littlecanvas.winfo_height())
-                # self.image = Image.open('testdag.png')
-                # scale_factor = min(self.littlecanvas.winfo_width()/self.image_ws.size[0], self.littlecanvas.winfo_height()/self.image_ws.size[1])
-                # self.image = self.image_ws.resize((int(self.image_ws.size[0]*scale_factor), int(self.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
-                # self.width, self.height = self.image.size
-                # self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
-                # self.show_image()
+
+                # Render the image in phases or not @todo - abstract this repeated block
+                if self.phase_true == 1:
+                    model_model.strat_image = imgrender_phase(model_model.strat_graph)
+                else:
+                    model_model.strat_image = imgrender(
+                        model_model.strat_graph,
+                        self.view.littlecanvas.winfo_width(),
+                        self.view.littlecanvas.winfo_height(),
+                    )  # @todo - get the view width/height cleaner
+                # Update the view, showing the new image
+                self.view.update_littlecanvas(model_model.strat_image)
                 tk.messagebox.showinfo("Success", "Equal contexts data loaded")
             except ValueError:
                 tk.messagebox.showerror("showerror", "Data not loaded, please try again")
