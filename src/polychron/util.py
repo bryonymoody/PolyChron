@@ -223,6 +223,6 @@ def edge_of_phase(test1, pset, node_list, node_info):
                 phase_lst = [list(mydict.values()).index(j) for j in list(mydict.values()) if test1[i[0]][0] in j]
                 key_1 = list(mydict.keys())[phase_lst[0]]  # trying to find phase of other value
                 x_l.append(test1[i[0]][0])
-                y_l.append(str(key_1 + "_below"))
+                y_l.append(str(key_1) + "_below")
                 phase_tracker.append((key_1, key))
     return x_l, y_l, mydict.keys(), phase_tracker, mydict
