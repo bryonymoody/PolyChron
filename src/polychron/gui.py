@@ -1043,16 +1043,7 @@ class popupWindow9(object):
           dist_probs = np.array([(np.sqrt(ll2[1][i])-np.sqrt(j))**2 for i,j in enumerate(ll1[1])])
           h = 1 - 1/np.sqrt(2)*(np.sqrt(np.sum(dist_probs)))
           return h
-      
-      # def prob_from_samples(self, x_temp, A, P, lim=0.95, probs=0):
-      #   if probs == 0:
-      #       x_temp = np.array(x_temp)
-      #       n = P - A + 1
-      #       probs, x_vals = np.histogram(x_temp, range = (A, P), bins=n, density=1)
-      #   df = pd.DataFrame({'Theta':x_vals[1:], 'Posterior':probs})
-      #   y = df.sort_values(by=['Theta'], ascending=False)
-      #   posterior_theta = np.array(y['Theta']) 
-      #   return posterior_theta
+
         
       def node_importance(self, graph):
            G = graph.to_undirected() # setting up undirected graph          
