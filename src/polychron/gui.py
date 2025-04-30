@@ -1856,54 +1856,6 @@ class StartPage(tk.Frame):
                 
                 self.littlecanvas2.bind("<Configure>", self.resize2)
 
-            
-    def onRight(self, *args):
-        '''makes test menu appear after right click '''
-        self.littlecanvas.unbind("Button-1>")
-        self.littlecanvas.bind("<Button-1>", self.onLeft)
-        # Here we fetch our X and Y coordinates of the cursor RELATIVE to the window
-        self.cursorx = int(self.littlecanvas.winfo_pointerx() - self.littlecanvas.winfo_rootx())
-        self.cursory = int(self.littlecanvas.winfo_pointery() - self.littlecanvas.winfo_rooty())
-        if self.image != "noimage":
-            x_scal = self.cursorx + self.transx
-            y_scal = self.cursory + self.transy
-            self.node = self.nodecheck(x_scal, y_scal)
-        # Now we define our right click menu canvas
-        # And here is where we use our X and Y variables, to place the menu where our cursor is,
-        # That's how right click menus should be placed.
-        self.testmenu.place(x=self.cursorx, y=self.cursory)
-        # This is for packing our options onto the canvas, to prevent the canvas from resizing.
-        # This is extremely useful if you split your program into multiple canvases or frames
-        # and the pack method is forcing them to resize.
-        self.testmenu.pack_propagate(0)
-        # Here is our label on the right click menu for deleting a row, notice the cursor
-        # value, which will give us a pointy finger when you hover over the option.
-        self.testmenuWidth = len(max(self.OptionList, key=len))
-        self.testmenu.config(width=self.testmenuWidth)
-        # This function is for removing the canvas when an option is clicked.
-
-    def preClick(self, *args):
-        '''makes test menu appear and removes any previous test menu'''
-        try:
-            self.testmenu.place_forget()
-            self.onRight()
-        except Exception:
-            self.onRight()
-
-    # Hide menu when left clicking
-    def onLeft(self, *args):
-        '''hides menu when left clicking'''
-        try:
-            self.testmenu.place_forget()
-        except Exception:
-            pass
-    def file_popup(self, file):
-        self.nodedel=popupWindow7(self.canvas, file)
-        self.canvas["state"] = "disabled" 
-        self.master.wait_window(self.nodedel.top)
-        self.canvas["state"] = "normal"
-        return self.nodedel.value
-
     def open_file1(self):
         '''opens dot file'''
         global node_df, FILE_INPUT, phase_true

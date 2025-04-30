@@ -174,9 +174,12 @@ class ModelView(BaseFrameView):
         ]
         self.variable = tk.StringVar(self.littlecanvas)
         self.variable.set("Node Action")
+
+        self.__testmenu_callback: Callable[[], Optional[Any]] = lambda event: None
+        """reference to the callback method for the test menu, as it does not appear that an OptionMenu(command) can be changed after construction."""
         self.testmenu = ttk.OptionMenu(
-            self.littlecanvas, self.variable, self.OptionList[0], *self.OptionList
-        )  # , command=self.nodes)
+            self.littlecanvas, self.variable, self.OptionList[0], *self.OptionList, command=self.__testmenu_callback
+        )
         # meta data table
         self.labelcanvas3 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg="#33658a")
         self.labelcanvas3.place(relx=0.755, rely=0.695, relwidth=0.17, relheight=0.029)
@@ -242,9 +245,14 @@ class ModelView(BaseFrameView):
 
         tk.Misc.lift(self.littlecanvas)
 
-    def bind_testmenu_commands(self) -> None:
-        """Bind commands for the stratigraphic graph right-click menu @todo"""
-        pass
+    def bind_testmenu_commands(self, callback: Callable[[], Optional[Any]]) -> None:
+        """Bind the callback for the stratigraphic graph right-click menu
+        
+        ttk.OptionMenu doesn not accept commadns to .config, only on the constructor? So in this case the view contains a reference to the callback
+
+        @todo rename testmenu and this method
+        """
+        self.__testmenu_callback = callback
 
     def bind_sasd_tab_button(self, callback: Callable[[], Optional[Any]]) -> None:
         """Bind the callback for when the sasd_tab_button is pressed"""
@@ -260,6 +268,46 @@ class ModelView(BaseFrameView):
         """Bind the callback for when the data_button is pressed"""
         if callback is not None:
             self.data_button.config(command=callback)
+
+    def bind_littlecanvas_callback(self, sequence: str, callback: Callable[[], Optional[Any]]):
+        """Bind a single callback to the specified sequence on the littlecavnas. This is an alternative to an all in one bind method, as the canvas repeatedly gets cleared"""
+        self.littlecanvas.bind(sequence, callback)
+
+    def unbind_littlecanvas_callback(self, sequence: str):
+        """Unbind a single callback to the specified sequence on the littlecavnas. This is an alternative to an all in one bind method, as the canvas repeatedly gets cleared"""
+        self.littlecanvas.unbind(sequence)
+
+    def show_testmenu(self, has_image: bool):
+        """Show the test menu within the little canvas at the cursors' coordinates
+        
+        Formerly part of StartPage.onRight
+
+        Parameters:
+            has_image: If the little canvas has been rendered with an image or not.
+        """
+        # Get the curosr position relative to the window / canvas
+        cursor_x = int(self.littlecanvas.winfo_pointerx() - self.littlecanvas.winfo_rootx())
+        cursor_y = int(self.littlecanvas.winfo_pointery() - self.littlecanvas.winfo_rooty())
+
+        # @todo find the node being clicked on, but the view doens't know anthing about the graph
+        # if has_image:
+            # x_scal = self.cursorx + self.transx
+            # y_scal = self.cursory + self.transy
+            # self.node = self.nodecheck(x_scal, y_scal)
+
+        # Now we define our right click menu canvas
+        # And here is where we use our X and Y variables, to place the menu where our cursor is,
+        # That's how right click menus should be placed.
+        self.testmenu.place(x=cursor_x, y=cursor_y)
+        # This is for packing our options onto the canvas, to prevent the canvas from resizing.
+        # This is extremely useful if you split your program into multiple canvases or frames
+        # and the pack method is forcing them to resize.
+        self.testmenu.pack_propagate(0)
+        # Here is our label on the right click menu for deleting a row, notice the cursor
+        # value, which will give us a pointy finger when you hover over the option.
+        testmenuWidth = len(max(self.OptionList, key=len))
+        self.testmenu.config(width=testmenuWidth)
+
 
     def bind_littlecanvas_events(
         self,
@@ -426,7 +474,6 @@ class ModelView(BaseFrameView):
         # self.littlecanvas.bind("<Button-3>", self.preClick) @todo
         self.imscale = min(921 / self.image.size[0], 702 / self.image.size[1])
         self.littlecanvas.scale("all", 0, 0, self.delta, self.delta)  # rescale all canvas objects
-        # self.canvas.delete('all') # @todo - this was in phasing, but not open_file2
         self.show_image()
 
     def show_image(self):

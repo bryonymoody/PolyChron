@@ -110,7 +110,12 @@ class ModelPresenter(BaseFramePresenter):
         self.display_data_var = "hidden"  # @todo - enum, save this as state?
         self.view.bind_data_button(lambda: self.on_data_button())
 
+        # Bind the callback for activating the testmenu
+        self.view.bind_testmenu_commands(lambda event: self.on_testmenu(event))
+
         # Bind mouse & keyboard events
+        self.view.bind_littlecanvas_callback("<Button-3>", lambda event: self.pre_click(event))
+
         # @todo
 
         # Update the view to reflect the current staet of the model
@@ -515,6 +520,51 @@ class ModelPresenter(BaseFramePresenter):
         elif self.display_data_var == "onshow":
             self.view.lift_littelcanvas()
             self.display_data_var = "hidden"
+
+    def on_testmenu(self, event) -> None:
+        """Callback for when the testmenu is selected (the right option menu when right clicking on the littlecanvas)
+
+        Formerly StartPage.nodes
+
+        @todo - split this into much smaller methods
+        """
+        print("@todo - on_testmenu()/nodes()") # @todod
+
+    def pre_click(self, *args):
+        '''makes test menu appear and removes any previous test menu
+        
+        formerly StartMenu.preClick'''
+        try:
+            self.testmenu.place_forget()
+            self.on_right()
+        except Exception:
+            self.on_right()
+
+    def on_left(self, *args):
+        '''hides menu when left clicking
+        
+        Formerly StartMenu.onLeft'''
+        try:
+            self.testmenu.place_forget()
+        except Exception:
+            pass
+
+    def on_right(self, *args) -> None:
+        """Makes the test menu appear after right click
+        
+        Formerly StartPage.onRight"""
+        # Unbind and rebind on_left. @todo this feels wrong.
+        self.view.unbind_littlecanvas_callback("<Button-1>")
+        self.view.bind_littlecanvas_callback("<Button-1>", self.on_left)
+        # Show the right click menu
+        model_model: Model = self.model.get_current_model()
+        has_image = model_model.strat_image is not None
+        self.view.show_testmenu(has_image)
+        # @todo implement node selection int he model-presenter
+        # if self.image != "noimage":
+        #     x_scal = self.cursorx + self.transx
+        #     y_scal = self.cursory + self.transy
+        #     self.node = self.nodecheck(x_scal, y_scal)
 
     def check_list_gen(self) -> None:
         """Update the contents of the datacanvas checklist based on provided model state
