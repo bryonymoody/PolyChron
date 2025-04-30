@@ -47,42 +47,12 @@ POLYCHRON_PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
 os.chdir(POLYCHRON_PROJECTS_DIR)
 old_stdout = sys.stdout
 
-
-class StdoutRedirector(object):
-    def __init__(self, text_area, pb1):
-        '''allows us to rimedirect    
-        output to the app canvases'''     
-        self.text_area = text_area
-        self.pb1 = pb1
-
-    def write(self, str):
-        '''writes to canvas'''        
-   #     self.text_area.update_idletasks()
-        self.pb1.update_idletasks
-        #self.text_area.destroy()
-        str1 = re.findall(r'\d+', str)
-        if len(str1) != 0:
-              self.text_area['text'] = str1[0] + "% complete"
-              self.pb1['value'] = int(str1[0])
-              self.text_area.update_idletasks()
-            #  self.text_area.see(1.0)
-    def flush(self):
-        pass
 #global variables
-phase_true = 0
 load_check = 'not_loaded'
 mcmc_check = 'mcmc_notloaded'
 proj_dir = ""
 SCRIPT_DIR = pathlib.Path(__file__).parent # Path to directory containing this script
 CALIBRATION = pd.read_csv(SCRIPT_DIR / "resources" / "linear_interpolation.txt")
-
-def trim(im_trim):
-    """Trims images down"""
-    bg_trim = Image.new(im_trim.mode, im_trim.size)
-    diff = ImageChops.difference(im_trim, bg_trim)
-    diff = ImageChops.add(diff, diff, 2.0, -100)
-    bbox = diff.getbbox()
-    return im_trim.crop(bbox)
 
 def clear_all(tree):
    for item in tree.get_children():
@@ -103,48 +73,6 @@ def node_del_fixed(graph, node):
             if k not in graph_check.edges():
                 graph.remove_edge(k[0], k[1])
     return graph
- 
-
-def polygonfunc(i):
-    '''finds node coords of a kite'''
-    x = re.findall(r'points="(.*?)"', i)[0].replace(' ', ',')
-    a = x.split(",")
-    #if loop checks if it's a rectangle or a kite then gets the right coords
-    if -1*float(a[7]) == -1*float(a[3]):
-        coords_converted = [float(a[2]), float(a[6]), -1*float(a[5]), -1*float(a[1])]
-    else:
-        coords_converted = [float(a[2]), float(a[6]), -1*float(a[7]), -1*float(a[3])]
-    return coords_converted
-
-def ellipsefunc(i):
-    '''finds coords from dot file for ellipse nodes'''
-    x = re.findall(r'cx=(.*?)/>', i)[0].replace(' ', ',')
-    x = x.replace('cy=', '').replace('rx=', '').replace('ry=', '').replace('"', '')
-    a = x.split(",")
-    coords_converted = [float(a[0]) - float(a[2]), float(a[0]) + float(a[2]),
-                        -1*float(a[1]) - float(a[3]), -1*float(a[1]) + float(a[3])]
-    return coords_converted
-
-def node_coords_fromjson(graph):
-    """Gets coordinates of each node"""
-    global phase_true
-    if ('pydot' in str(type(graph))):
-        graphs = graph
-    else:   
-        graphs = nx.nx_pydot.to_pydot(graph)
-    svg_string = str(graphs.create_svg())
-    scale_info = re.search('points=(.*?)/>', svg_string).group(1).replace(' ', ',')
-    scale_info = scale_info.split(",")
-    scale = [float(scale_info[4]), -1*float(scale_info[3])]
-    coords_x = re.findall(r'id="node(.*?)</text>', svg_string)
-    coords_temp = [polygonfunc(i) if "points" in i else ellipsefunc(i) for i in coords_x]
-    node_test = re.findall(r'node">\\n<title>(.*?)</title>', svg_string)
-    node_list = [i.replace('&#45;', '-') for i in node_test]
-
-    new_pos = dict(zip(node_list, coords_temp))
-    df = pd.DataFrame.from_dict(new_pos, orient='index',
-                                columns=['x_lower', 'x_upper', 'y_lower', 'y_upper'])  
-    return df, scale
 
 def all_node_info(node_list, x_image, node_info):
     """obtains node attributes from original dot file"""
@@ -445,54 +373,6 @@ def chrono_edge_add(file_graph, graph_data, xs_ys, phasedict, phase_trck, post_d
     return(file_graph, phi_ref, null_phases)
 
 
-
-def imgrender(file, canv_width, canv_height):
-    global node_df
-    """renders png from dotfile""" 
-    file.graph['graph']={'splines':'ortho'}
-    write_dot(file, 'fi_new')    
-     ####code to get colours####
-#    f_string = open(str('fi_new'), "r")
- #   f = f_string.read()
-##    f = f.replace('{', '{ splines = "ortho";', 1)
-  #  g = pydot.graph_from_dot_data(f)
-   # graph = g[0]
- #   graph.write_dot('fi_neww')
-    render('dot', 'png', 'fi_new')
-    render('dot', 'svg', 'fi_new')
-    inp = Image.open("fi_new.png")
-    inp_final = trim(inp)
-  #  scale_factor = min(canv_width/inp.size[0], canv_height/inp.size[1])  
-#    print(scale_factor)        
- #   inp_final = inp.resize((int(inp.size[0]*scale_factor), int(inp.size[1]*scale_factor)), Image.ANTIALIAS)       
-    inp_final.save("testdag.png")
-    outp = Image.open("testdag.png")
-    node_df = node_coords_fromjson(file)
-#     str_size = "\"" + str(int((canv_height)/96))+ ","+str(int((canv_width)/96)) + "!" +"\""
-#     file.graph['graph']={'splines':'ortho', 'size' : str(2417/90)+ ","+str(2016/96)}#str_size}
-#     graph_check = nx.transitive_reduction(file)
-#     if file.edges() != graph_check.edges():
-#        edges1 = list(file).copy()
-#        for k in edges1:
-#            if k not in graph_check.edges():
-#                file(k[0], k[1])
-#     write_dot(file, 'fi_new')    
-#     render('dot', 'png', 'fi_new')
-#     fig = sg.fromfile('fi_new.svg')
-#     img_size = fig.get_size()
-#     img_size = [int(i.replace("pt", "")) for i in img_size]
-#     scale_factor = min(canv_width/img_size[0], canv_height/img_size[1])
-#     fig.set_size((str(int((img_size[0]*scale_factor))), str(int((img_size[1]*scale_factor)*1))))
-#     fig.save('myimage2.svg')
-#     cairosvg.svg2png(url='myimage2.svg', write_to='testdag.png')
-# #    
-#  #   write_dot(file, 'fi_new')    
-#   #  render('dot', 'png', 'fi_new')
-#     outp = Image.open("fi_new.png")
-#     outp = trim(outp)
-#     node_df = node_coords_fromjson(file)
-    return outp
-
 def imgrender2(canv_width, canv_height):
     """renders png from dotfile"""
     global load_check, node_df
@@ -509,120 +389,10 @@ def imgrender2(canv_width, canv_height):
         outp = 'No_image'
     return outp
 
-def edge_of_phase(test1, pset, node_list, node_info):
-    """find nodes on edge of each phase"""
-    x_l = []
-    y_l = []
-    mydict = {}
-    phase_tracker = []
-    if FILE_INPUT is not None:
-        for i in enumerate(pset):
-            temp_nodes_list = []
-            for j in enumerate(node_list):
-                if node_info[j[0]]["fillcolor"] == pset[i[0]]:
-                    temp_nodes_list.append(node_list[j[0]])
-                    p_phase = str(pset[i[0]][pset[i[0]].rfind("/")+1:len(pset[i[0]])])
-                    node_info[j[0]].update({"Group":p_phase})
-                mydict[str(pset[i[0]][pset[i[0]].rfind("/")+1:len(pset[i[0]])])] = temp_nodes_list
-    else:
-        for i in enumerate(pset):
-            temp_nodes_list = []
-            for j in enumerate(node_list):
-                if node_info[j[0]]["Group"] == pset[i[0]]:
-                    temp_nodes_list.append(node_list[j[0]])
-                mydict[pset[i[0]]] = temp_nodes_list
-    for i in enumerate(test1):
-        for key in mydict:
-            if test1[i[0]][1] in mydict[key] and test1[i[0]][0] not in mydict[key]:
-                x_l.append(test1[i[0]][1])
-                y_l.append(key)
-                phase_lst = [list(mydict.values()).index(j) for j in list(mydict.values()) if
-                             test1[i[0]][0] in j]
-                key_1 = (list(mydict.keys())[phase_lst[0]]) #trying to find phase of other value
-                x_l.append(test1[i[0]][0])
-                y_l.append(str(key_1 + "_below"))
-                phase_tracker.append((key_1, key))
-    return x_l, y_l, mydict.keys(), phase_tracker, mydict
-
-def phase_info_func(file_graph):
-   # t0 = time.time()
-    """returns a dictionary of phases and nodes in each phase"""
-    res = []
-    node_list = list(file_graph.nodes)
-    nd = dict(file_graph.nodes(data=True))
-    node_info = [nd[i] for i in node_list]
-    if FILE_INPUT is not None:
-        phase = nx.get_node_attributes(file_graph, "fillcolor")
-        phase_norm = [phase[ph][phase[ph].rfind("/")+1:len(phase[ph])] for ph in phase]
-# ####code to get colours####
-        f_str = open(str(FILE_INPUT), "r")
-        dotstr = f_str.read()
-        dotstr = dotstr.replace(";<", "@<")
-        dotstr = dotstr.replace("14.0", "50.0")
-##change any ';>' to '@>' then back again after
-        x_phaseinf = dotstr.rsplit(";")
-        for i in enumerate(x_phaseinf):
-            x_phaseinf[i[0]] = x_phaseinf[i[0]].replace("@<", ";<")
-        for key in phase.keys():
-            res.append(phase[key])
-    else:
-        phase1 = nx.get_node_attributes(file_graph, "Group")
-        for key in phase1.keys():
-            res.append(phase1[key])
-        phase_norm = res
-    x_l, y_l, phase_list, phase_trck, phase_dic = edge_of_phase(list(nx.line_graph(file_graph)),
-                                                                list(set(res)), node_list, node_info)
-    reversed_dict = {}
-    if len(phase_list) > 1:
-        testdic = dict(zip(x_l, y_l))
-        for key, value in testdic.items():
-            reversed_dict.setdefault(value, [])
-            reversed_dict[value].append(key)
-    return reversed_dict, [phase_norm, node_list, phase_list, phase_trck], [x_l, y_l], phase_dic
-
 def alp_beta_node_add(x, graph):
     '''adds an alpha and beta node to node x'''
     graph.add_node("a_" + str(x), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
     graph.add_node("b_" + str(x), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
-
-def rank_func(tes, file_content):
-  #  t0 = time.time()
-    """adds strings into dot string to make nodes of the same phase the same rank"""
-    rank_same = []
-    for key in tes.keys():
-        x_rank = tes[key]
-        y_1 = str(x_rank)
-        y_2 = y_1.replace("[", "")
-        y_3 = y_2.replace("]", "")
-        y_4 = y_3.replace("'", "")
-        y_5 = y_4.replace(",", ";")
-        x_2 = "{rank = same; "+y_5+";}\n"
-        rank_same.append(x_2)
-    rank_string = ''.join(rank_same)[:-1]
-    new_string = file_content[:-2] + rank_string + file_content[-2]
-    return new_string
-
-def imgrender_phase(file):
-    global node_df
-  #  t0 = time.time()
-    """Renders image from dot file with all nodes of the same phase collected together"""
-    write_dot(file, 'fi_new.txt')
-    my_file = open("fi_new.txt")
-    file_content = my_file.read()
-    new_string = rank_func(phase_info_func(file)[0], file_content)
-    textfile = open('fi_new.txt', 'w')
-    textfile.write(new_string)
-    textfile.close()
-    (graph,) = pydot.graph_from_dot_file('fi_new.txt')
-    graph.write_png('test.png')
-    inp = Image.open("test.png")
-    inp = trim(inp)
-            # Call the real .tkraise
-    inp.save("testdag.png")
-    outp = Image.open("testdag.png")
-    node_df = node_coords_fromjson(graph)
-    return outp
-
 
 
 class popupWindow(object):
@@ -3989,27 +3759,3 @@ class PageTwo(object):
         self.container = self.graphcanvas.create_rectangle(0, 0, self.width2, self.height2, width=0)
         self.show_image2()
         return node
-
-# Global scoping of MAIN_FRAME is currently required for state saving behaviour, prior to refactoring.
-MAIN_FRAME = MainFrame()
-style = ThemedStyle(MAIN_FRAME)
-style.set_theme("arc")
-# f = tkFont.Font(family='helvetica', size=10, weight='bold')
-# s = ttk.Style()
-# s.configure('.', font=f)
-default_font = tkFont.nametofont("TkDefaultFont")
-default_font.configure(size=12, weight = 'bold')
-style = ttk.Style(MAIN_FRAME)
-style.configure('TEntry', font=('Helvetica', 12, 'bold'))
-style.configure('TButton', font=('Helvetica', 12, 'bold'))
-style.configure('TLabel', font=('Helvetica', 12, 'bold'))
-style.configure('TOptionMenu', font=('Helvetica', 12, 'bold'))
-style.configure('TTreeView', font=('Helvetica', 12, 'bold'))
-MAIN_FRAME.option_add("*Font", default_font)
-MAIN_FRAME.geometry("2000x1000")
-MAIN_FRAME.title(f"PolyChron {version('polychron')}")
-
-def main():
-    """Main method as the entry point for launching the GUI
-    """
-    MAIN_FRAME.mainloop()
