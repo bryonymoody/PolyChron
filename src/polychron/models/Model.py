@@ -1,6 +1,6 @@
 import pathlib
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Any, List, Optional, Tuple
 
 import networkx as nx
 import pandas as pd
@@ -22,18 +22,63 @@ class Model:
 
     strat_df: Optional[pd.DataFrame] = field(default=None)
     """The stratigraphic file from CSV, if loaded.
+
+    Formerly StartPage.stratfile
     
     @todo - refactor this to be it's own model class which performs validation etc?"""
 
     strat_graph: Optional[nx.DiGraph] = field(default=None)
     """Stratigraphic Graph as a networkx digraph, after loading from csv / .dot and post processed.
+
+    Mutate when other files are loaded.
     
-    @todo - refactor this and others to only be setable by methods?"""
+    @todo - refactor this and others to only be setable by methods?
+    
+    @todo @enhancement - When a new strat_df is loaded, clear other members, or re-apply the smae changes to strat_graph?
+    """
 
     strat_image: Optional[Image.Image] = field(default=None)
     """Rendered version of the stratigraphic graph as an image, for whicle a handle must be kept for persistence.
 
     @todo Could belong to the presenter instead"""
+
+    date_df: Optional[pd.DataFrame] = field(default=None)
+    """Dataframe containing scientific dating information loaded from disk
+    
+    Fromerly StartPage.datefile
+
+    @todo - refactor this to be it's own model class which performs validation etc?"""
+
+    context_no_unordered: Optional[List[Any]] = field(default=None)
+    """A list of stratigraphic graph nodes, initially populated within open_scientific_dating_file before being used elsewhere.
+
+    @todo - correct annotation
+    @todo - better name? make this private/protected?
+    @todo - does this belong to a separate class which represents a stratigraphic graph instead?
+    @todo - make this only settable by method?
+    """
+
+    phase_df: Optional[pd.DataFrame] = field(default=None)
+    """Dataframe containing phase / context grouping information loaded from disk
+    
+    Fromerly StartPage.phasefile
+
+    @todo - refactor this to be it's own model class which performs validation etc?"""
+
+    phase_rel_df: Optional[pd.DataFrame] = field(default=None)
+    """Dataframe containing phase / group relationships information loaded from disk
+    
+    Fromerly  just phase_rel_df in StartPage.open_file5
+    
+    @todo - refactor this to be it's own model class which performs validation etc?"""
+
+    phase_rels: Optional[List[Tuple[str, str]]] = field(default=None)
+    """A list of tuples of group/phase labels, (above, below) for the relative relationships between two groups/phases
+
+    @todo - better name? make this private/protected?
+    @todo - does this belong to a separate class which represents a stratigraphic graph instead?
+    @todo - make this only settable by method?
+    """
 
     def save(self):
         """Save the current state of this model to disk at self.path"""

@@ -262,15 +262,15 @@ class ModelPresenter(BaseFramePresenter):
 
         @todo - abstract askfileopen somewhere else to limit importing tkinter?
 
-        @todo - finish implementing this with the actual model
-
         @todo - Column and value validation (within the data model, with exceptions handeled here?)
+
+        @todo - if a new strat file is loaded over the top of an old one, what should happen to the other bits of data?
         """
         file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
 
         if file is not None:
             try:
-                # @todo - rename model, it's confusing.
+                # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
                 model_model: Model = self.model.get_current_model()
                 df = pd.read_csv(file, dtype=str)
                 # @todo - Validate the parsed df here, so the errors can be included in the file popup?
@@ -317,21 +317,23 @@ class ModelPresenter(BaseFramePresenter):
 
         if file is not None:
             try:
-                self.datefile = pd.read_csv(file)
-                self.datefile = self.datefile.applymap(str)
-                load_it = self.file_popup(self.datefile)
+                # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
+                model_model: Model = self.model.get_current_model()
+                model_model.date_df = pd.read_csv(file)
+                model_model.date_df = model_model.date_df.applymap(str)
+                load_it = self.file_popup(model_model.date_df)
                 if load_it == "load":
-                    pass  # @todo
-                    # for i, j in enumerate(self.datefile["context"]):
-                    # self.graph.nodes()[str(j)].update(
-                    #     {"Determination": [self.datefile["date"][i], self.datefile["error"][i]]}
-                    # )
-                    # self.context_no_unordered = list(self.graph.nodes()) # @todo
+                    # @todo - move this logic into Model
+                    for i, j in enumerate(model_model.date_df["context"]):
+                        model_model.strat_graph.nodes()[str(j)].update(
+                            {"Determination": [model_model.date_df["date"][i], model_model.date_df["error"][i]]}
+                        )
+                    model_model.context_no_unordered = list(model_model.strat_graph.nodes())  # @todo
                     self.date_check = True
                     self.check_list_gen()
                     tk.messagebox.showinfo("Success", "Scientific dating data loaded")
                 else:
-                    pass  # @todo
+                    pass  # @todo - shoudl this also show an error when the user chooses not to press load?
             except ValueError:
                 tk.messagebox.showerror("showerror", "Data not loaded, please try again")
 
@@ -342,19 +344,22 @@ class ModelPresenter(BaseFramePresenter):
 
         @todo - abstract askfileopen somewhere else to limit importing tkinter?
 
-        @todo - finish implementing this with the actual model
+        @todo - Consistent use of terms - phase vs group.
 
         @todo - Column and value validation (within the data model, with exceptions handeled here?)
         """
         file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
         if file is not None:
             try:
-                self.phasefile = pd.read_csv(file)
-                self.phasefile = self.phasefile.applymap(str)
-                load_it = self.file_popup(self.phasefile)
+                # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
+                model_model: Model = self.model.get_current_model()
+                model_model.phasefile = pd.read_csv(file)
+                model_model.phasefile = model_model.phasefile.applymap(str)
+                load_it = self.file_popup(model_model.phasefile)
                 if load_it == "load":
-                    for i, j in enumerate(self.phasefile["context"]):
-                        self.graph.nodes()[str(j)].update({"Group": self.phasefile["Group"][i]})
+                    # @todo - move this logic into Model
+                    for i, j in enumerate(model_model.phasefile["context"]):
+                        model_model.strat_graph.nodes()[str(j)].update({"Group": model_model.phasefile["Group"][i]})
                 self.phase_check = True
                 self.check_list_gen()
                 tk.messagebox.showinfo("Success", "Grouping data loaded")
@@ -368,18 +373,25 @@ class ModelPresenter(BaseFramePresenter):
 
         @todo - abstract askfileopen somewhere else to limit importing tkinter?
 
-        @todo - finish implementing this with the actual model
+        @todo - Nothing happens with the result from file_popup here. I.e. pressing load or not doesn't matter.
 
         @todo - Column and value validation (within the data model, with exceptions handeled here?)
         """
         file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
         if file is not None:
             try:
+                # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
+                model_model: Model = self.model.get_current_model()
                 phase_rel_df = pd.read_csv(file)
-                self.phase_rels = [
+                model_model.phase_rels = [
                     (str(phase_rel_df["above"][i]), str(phase_rel_df["below"][i])) for i in range(len(phase_rel_df))
                 ]
-                self.file_popup(pd.DataFrame(self.phase_rels, columns=["Younger group", "Older group"]))
+                # @todo - this is not an actual input file preview like the others, but a preview of the reshaped data. i.e. titles don't match.
+                load_it = self.file_popup(
+                    pd.DataFrame(model_model.phase_rels, columns=["Younger group", "Older group"])
+                )
+                if load_it:
+                    pass  # @todo - 0.1 doesn't check the result / handle the paths differently.
                 self.phase_rel_check = True
                 self.check_list_gen()
                 tk.messagebox.showinfo("Success", "Group relationships data loaded")
