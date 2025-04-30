@@ -126,6 +126,9 @@ class ModelPresenter(BaseFramePresenter):
         # Get the actual model
         # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
         model_model: Model = self.model.get_current_model()
+        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
+        if model_model is None:
+            return
 
         # If the model has an @todo abstrac this to reduce duplication
         if model_model.strat_df is not None:
