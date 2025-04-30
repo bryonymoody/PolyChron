@@ -12,7 +12,7 @@ from ..presenters.DatafilePreviewPresenter import DatafilePreviewPresenter
 from ..presenters.MCMCProgressPresenter import MCMCProgressPresenter
 from ..presenters.ResidualCheckPopupPresenter import ResidualCheckPopupPresenter
 from ..presenters.ResidualOrIntrusivePresenter import ResidualOrIntrusivePresenter
-from ..util import imgrender
+from ..util import imgrender, imgrender_phase
 from ..views.CalibrateModelSelectView import CalibrateModelSelectView
 from ..views.DatafilePreviewView import DatafilePreviewView
 from ..views.MCMCProgressView import MCMCProgressView
@@ -61,7 +61,7 @@ class ModelPresenter(BaseFramePresenter):
         self.phase_true: int = 0
         """If stratigraphic diagram should be rendered in phases or not
         
-        @todo - make a bool
+        @todo - make a bool, rename
         @todo - should this belong to the .model.Model?
         @todo - initalse these variables with values from the model on load?
         """
@@ -226,6 +226,7 @@ class ModelPresenter(BaseFramePresenter):
         Formerly StartPage.open_file1
 
         @todo - Implement this, once a "valid" dotfile for this is found.
+        @todo - Need to fixup the use of FILE_INPUT in funcs like phase_info_func once this is implemented.
         """
         # @todo
         # global node_df, FILE_INPUT, phase_true
@@ -286,8 +287,7 @@ class ModelPresenter(BaseFramePresenter):
 
                     # Render the image in phases or not
                     if self.phase_true == 1:
-                        print("@todo use imgrender_phase")
-                        # self.image = imgrender_phase(model_model.strat_graph)
+                        model_model.image = imgrender_phase(model_model.strat_graph)
                     else:
                         model_model.image = imgrender(
                             model_model.strat_graph,
@@ -451,30 +451,19 @@ class ModelPresenter(BaseFramePresenter):
 
         Formerly StartPage.phasing
 
+        @todo - Make this toggle on and off, rather than just on.
+
+        @todo - need a test case which actually renders differntly when in phasing mode.
         """
+        # Store a flag marking this as being enabled
         self.phase_true = 1
-        pass  # @todo - implement this method
-        # global phase_true, node_df
-        # phase_true = 1
-        # self.image = imgrender_phase(self.graph)
-        # self.littlecanvas.img = ImageTk.PhotoImage(self.image)
-        # self.littlecanvas_img = self.littlecanvas.create_image(0, 0, anchor="nw",
-        #                                                        image=self.littlecanvas.img)
-        # self.width, self.height = self.image.size
-        # # self.imscale = 1.0  # scale for the canvaas image
-        # self.delta = 1.1  # zoom magnitude
-        # # Put image into container rectangle and use it to set proper coordinates to the image
-        # self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
-        # self.imscale  = min(921/self.image.size[0], 702/self.image.size[1])
-        # self.littlecanvas.scale('all', 0, 0, self.delta, self.delta)  # rescale all canvas objects
-        # self.show_image()
-        # self.bind("<Configure>", self.resize)
-        # self.littlecanvas.bind("<Configure>", self.resize)
-        # self.delnodes = []
-        # self.delnodes_meta = []
-        # self.canvas.delete('all')
-        # self.littlecanvas.bind("<Button-3>", self.preClick)
-        # self.show_image()
+
+        # Render the strat graph in pahse mode, if there is one to render, updating the model and view
+        model_model: Model = self.model.get_current_model()
+        if model_model.strat_graph is not None:
+            model_model.image = imgrender_phase(model_model.strat_graph)
+            # Update the rendered image in the canvas
+            self.view.update_littlecanvas(model_model.image)
 
     def calibrate_node_delete_variations(self) -> None:
         """Callback function when Tools > Calibrate node delete variations (alpha)
