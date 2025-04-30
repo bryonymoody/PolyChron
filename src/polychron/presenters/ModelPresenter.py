@@ -71,8 +71,6 @@ class ModelPresenter(BaseFramePresenter):
         view.bind_dr_tab_button(lambda: self.mediator.switch_presenter("DatingResults"))
 
         # Bind menu callbacks
-        # @todo other menus
-
         self.view.bind_file_menu_callbacks(
             {
                 "Load stratigraphic diagram file (.dot)": lambda: self.open_strat_dot_file(),
@@ -88,13 +86,11 @@ class ModelPresenter(BaseFramePresenter):
                 "Exit": lambda: self.close_application(),
             }
         )
-
         self.view.bind_view_menu_callbacks(
             {
                 "Display Stratigraphic diagram in phases": lambda: self.phasing(),
             }
         )
-
         self.view.bind_tool_menu_callbacks(
             {
                 "Render chronological graph": lambda: self.chronograph_render_wrap(),
@@ -105,8 +101,7 @@ class ModelPresenter(BaseFramePresenter):
             }
         )
 
-        # Bind button clicks
-        # @todo
+        # Bind button clicks        
         # Bind the "Data loaded" button callback
         self.display_data_var = "hidden"  # @todo - enum, save this as state?
         self.view.bind_data_button(lambda: self.on_data_button())
@@ -114,10 +109,8 @@ class ModelPresenter(BaseFramePresenter):
         # Bind mouse & keyboard events
         # @todo
 
-        # Update data
-        self.check_list_gen()
-
         # Update the view to reflect the current staet of the model
+        self.update_view()
 
     def update_view(self) -> None:
         """Update the view to reflect the current state of the model
