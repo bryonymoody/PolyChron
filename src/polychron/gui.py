@@ -31,12 +31,6 @@ from tkinter import simpledialog
 import tkinter.font as tkFont
 from tkinter.messagebox import askquestion
 import csv
-# Currently unused dependencies
-# import svgutils.transform as sg
-# from svglib.svglib import svg2rlg
-# from reportlab.graphics import renderPDF, renderPM
-# from svglib.svglib import svg2rlg
-# import cairosvg
 from importlib.metadata import version # requires python >= 3.8
 import packaging.version
 # Get the absolute path to a directory in the users home dir
@@ -479,46 +473,6 @@ class popupWindow2(object):
             self.entry6 = ttk.Entry(self.canvas2)
             self.canvas2.create_window(90, 130, window=self.entry6, width=50)
             self.canvas2.create_window(90, 90, window=self.label6)
-
-
-    # def testcom(self):
-    #     """metadata menu 2 update"""
-    #     #these if loops clean up after user input for chaging meta data
-    #     if self.variable_a.get() == "Group":
-    #         if self.variable_b.get() == "Input Group":
-    #             self.graph.nodes()[str(self.entry3.get())].update({"Group":self.entry6.get()})
-    #             self.label6.destroy()
-    #             self.entry6.destroy()
-    #         else:
-    #             self.graph.nodes()[str(self.entry3.get())].update({"Group":self.variable_b.get()})
-    #     elif self.variable_a.get() == "Determination":
-    #         if self.variable_b.get() == "Input date":
-    #             self.graph.nodes()[str(self.entry3.get())].update({"Determination": [self.entry4.get(), self.entry5.get()]})
-    #             self.label4.destroy()
-    #             self.entry4.destroy()
-    #             self.label5.destroy()
-    #             self.entry5.destroy()
-    #         else:
-    #             self.graph.nodes()[str(self.entry3.get())].update({"Determination":self.variable_b.get()})
-    #     elif self.variable_a.get() == "Find_Type":
-    #         self.graph.nodes()[str(self.entry3.get())].update({"Find_Type":self.variable_b.get()})
-    # #    self.canvas2.create_window((0, 0), window=self.metatext, anchor='nw')
-    #     self.meta1 = pd.DataFrame.from_dict(self.graph.nodes()[str(self.entry3.get())],
-    #                                         orient='index')
-    #     self.meta2 = self.meta1.loc["Determination":"Group",]
-    #     self.meta2.columns = ["Data"]
-    #     if self.meta2.loc["Determination"][0] != "None":
-    #         self.meta2.loc["Determination"][0] = str(self.meta2.loc["Determination"][0][0]) + " +- " + str(self.meta2.loc["Determination"][0][1]) + " Carbon BP"
-    #     #self.canvas.itemconfig(self.metatext_id, text="Metadata of node " + str(self.entry3),  font='helvetica 12 bold')
-    #     cols = list(self.meta2.columns)
-    #     tree = ttk.Treeview(self.canvas)
-    #     tree["columns"] = cols
-    #     tree.place(relx=0.76, rely=0.65)
-    #     tree.column("Data", anchor="w")
-    #     tree.heading("Data", text="Data", anchor='w')
-    #     for index, row in self.meta2.iterrows():
-    #         tree.insert("", 0, text=index, values=list(row))
-
 
     def update_options(self, *args):
         """updates metadata drop down menu 1"""
