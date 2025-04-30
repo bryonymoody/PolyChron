@@ -488,8 +488,6 @@ class ModelPresenter(BaseFramePresenter):
 
         Formerly StartPage.display_data_func
 
-        @todo finish implementing this
-
         @todo enum
         """
 
