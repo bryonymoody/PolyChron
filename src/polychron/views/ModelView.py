@@ -255,6 +255,10 @@ class ModelView(BaseFrameView):
         """Return the most recent value for the testmenu"""
         return self.__testmenu_variable.get()
 
+    def set_testmenu_selection(self, value: str) -> None:
+        """Set the value for the testmenu"""
+        return self.__testmenu_variable.set(str)
+
     def bind_testmenu_commands(self, callback: Callable[[], Optional[Any]]) -> None:
         """Bind the callback for the stratigraphic graph right-click menu
 

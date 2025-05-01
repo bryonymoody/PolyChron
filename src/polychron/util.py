@@ -1,13 +1,15 @@
+import ast
 import pathlib
 import re
 import tempfile
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Set, Tuple
 
 import networkx as nx
+import numpy as np
 import pandas as pd
 import pydot
 from graphviz import render
-from networkx.drawing.nx_pydot import write_dot
+from networkx.drawing.nx_pydot import read_dot, write_dot
 from PIL import Image, ImageChops
 
 """Utiltiy methods which do not (yet) have a home
@@ -234,6 +236,7 @@ def node_del_fixed(graph: nx.DiGraph, node: str) -> nx.DiGraph:
     """Remove a node from the graph, replacing edges where possible
 
     @todo - this probably belongs in model.Model?
+    @todo - find a better home
     """
     in_nodes = [i[0] for i in list(graph.in_edges(node))]
     out_nodes = [i[1] for i in list(graph.out_edges(node))]
@@ -249,3 +252,366 @@ def node_del_fixed(graph: nx.DiGraph, node: str) -> nx.DiGraph:
             if k not in graph_check.edges():
                 graph.remove_edge(k[0], k[1])
     return graph
+
+
+def all_node_info(node_list: List[Any], x_image: List[str], node_info: List[Any]) -> List[Any]:
+    """obtains node attributes from original dot file
+
+    @todo - no need to node_info the value passed in by reference
+    @todo - full docstrings and typehints
+    @todo - find a better home
+    """
+    for i in node_list:
+        for j in x_image:
+            b_string = re.search('"(.*)" ', j)
+            if b_string is not None:
+                if i == b_string.group(1):
+                    if i in j and "->" not in j:
+                        tset = j[(j.index("[") + 1) : (len(j) - 1)]
+                        atr_new = tset.replace("] [", "','")
+                        atr_new = atr_new.replace("=", "':' ")
+                        atr_new = atr_new.replace("' \"", '"')
+                        atr_new = atr_new.replace("\"'", '"')
+                        atr_new = atr_new.replace("' ", "'")
+                        atr_newer = str("{'" + atr_new + "}")
+                        dicc = ast.literal_eval(atr_newer)
+                        node_info.append(dicc)
+    return node_info
+
+
+def phase_length_finder(con_1: Any, con_2: Any, resultsdict: Dict[Any, Any]) -> List[Any]:
+    """finding the phase length between any two contexts or phase boundaries
+
+    @todo - full docstrings and typehints
+    @todo - find a better home
+    """
+    phase_lengths = []
+    x_3 = resultsdict[con_1]
+    x_4 = resultsdict[con_2]
+    for i in range(len(x_3)):
+        phase_lengths.append(np.abs(x_3[i] - x_4[i]))
+    un_phase_lens = []
+    for i in range(len(phase_lengths) - 1):
+        if phase_lengths[i] != phase_lengths[i + 1]:
+            un_phase_lens.append(phase_lengths[i])
+    return phase_lengths
+
+
+def imagefunc(dotfile: Any) -> Any:
+    """Sets note attributes to a dot string from the provided file
+
+    @todo - full docstrings and typehints
+    @todo - find a better home"""
+    file = read_dot(dotfile)
+    #  code to get colours####
+    f_string = open(str(dotfile), "r")
+    dotstr = f_string.read()
+    dotstr = dotstr.replace(";<", "@<")
+    dotstr = dotstr.replace("14.0", "50.0")
+    # change any ';>' to '@>' then back again after
+    x_image = dotstr.rsplit(";")
+    for i in enumerate(x_image):
+        x_image[i[0]] = x_image[i[0]].replace("@<", ";<")
+    node_list = list(file.nodes)
+    node_info_init = list()
+    node_info = all_node_info(node_list, x_image, node_info_init)
+    for k in enumerate(node_list):
+        node_info[k[0]].update(
+            {"Determination": "None", "Find_Type": "None", "Group": node_info[k[0]]["fillcolor"], "color": "black"}
+        )
+    individ_attrs = zip(node_list, node_info)
+    attrs = dict(individ_attrs)  # add the dictionary of attributed to a node
+    nx.set_node_attributes(file, attrs)
+    return file
+
+
+def phase_relabel(graph: nx.DiGraph) -> nx.DiGraph:
+    """relabels the phase labels to be alphas and betas, for display only,
+    still refer to them with a's and b's
+
+    @todo - full docstrings and typehints
+    @todo - find a better home"""
+    label_dict = {}
+    for i in graph.nodes():
+        if "a_" in i:
+            if "b_" in i:
+                label_str = i.replace("a_", "<&alpha;<SUB>")
+                label_str = label_str.replace(" = b_", "</SUB> = &beta;<SUB>") + "</SUB>>"
+                label_dict[i] = label_str
+            else:
+                label_str = i.replace("a_", "<&alpha;<SUB> ") + "</SUB>>"
+                label_dict[i] = label_str
+        elif ("b_" in i) and ("a_" not in i):
+            label_str = i.replace("b_", "<&beta;<SUB>") + "</SUB>>"
+            label_dict[i] = label_str
+    # sets the new phase labels to the node attribute labels
+    nx.set_node_attributes(graph, label_dict, "label")
+    return graph
+
+
+def alp_beta_node_add(x: Any, graph: nx.DiGraph) -> None:
+    """adds an alpha and beta node to node x
+
+    @todo - full docstrings and typehints
+    @todo - find a better home"""
+    graph.add_node("a_" + str(x), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
+    graph.add_node("b_" + str(x), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
+
+
+def phase_labels(phi_ref, POST_PHASE, phi_accept, all_samps_phi) -> Tuple[List[str], Dict[str, Any], Dict[str, Any]]:
+    """provides phase limits for a phase
+
+    @todo - full docstrings and typehints
+    @todo - find a better home"""
+    labels = ["a_" + str(phi_ref[0])]
+    i = 0
+    results_dict = {labels[0]: phi_accept[i]}
+    all_results_dict = {labels[0]: all_samps_phi[i]}
+    for a_val in enumerate(POST_PHASE):
+        i = i + 1
+        if a_val[1] == "abutting":
+            labels.append("b_" + str(phi_ref[a_val[0]]) + " = a_" + str(phi_ref[a_val[0] + 1]))
+            results_dict["a_" + str(phi_ref[a_val[0] + 1]) + " = b_" + str(phi_ref[a_val[0]])] = phi_accept[i]
+            all_results_dict["a_" + str(phi_ref[a_val[0] + 1]) + " = b_" + str(phi_ref[a_val[0]])] = all_samps_phi[i]
+        # results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
+        elif a_val[1] == "end":
+            labels.append("b_" + str(phi_ref[-1]))
+            results_dict["b_" + str(phi_ref[a_val[0]])] = phi_accept[i]
+            all_results_dict["b_" + str(phi_ref[a_val[0]])] = all_samps_phi[i]
+        elif a_val == "gap":
+            labels.append("b_" + str(phi_ref[a_val[0]]))
+            labels.append("a_" + str(phi_ref[a_val[0] + 1]))
+            results_dict["b_" + str(phi_ref[a_val[0]])] = phi_accept[i]
+            all_results_dict["b_" + str(phi_ref[a_val[0]])] = all_samps_phi[i]
+            i = i + 1
+            results_dict["a_" + str(phi_ref[a_val[0] + 1])] = phi_accept[i]
+            all_results_dict["a_" + str(phi_ref[a_val[0] + 1])] = all_samps_phi[i]
+        else:
+            labels.append("a_" + str(phi_ref[a_val[0] + 1]))
+            labels.append("b_" + str(phi_ref[a_val[0]]))
+            results_dict["a_" + str(phi_ref[a_val[0] + 1])] = phi_accept[i]
+            all_results_dict["a_" + str(phi_ref[a_val[0] + 1])] = all_samps_phi[i]
+            i = i + 1
+            results_dict["b_" + str(phi_ref[a_val[0]])] = phi_accept[i]
+            all_results_dict["b_" + str(phi_ref[a_val[0]])] = all_samps_phi[i]
+    # returns dictionary of results do we can plot probability density functions
+    return labels, results_dict, all_results_dict
+
+
+def del_empty_phases(phi_ref: List[Any], del_phase: Set[Any], phasedict: Dict[str, Any]) -> List[List[Any]]:
+    """checks for any phase rels that need changing due to missing dates
+
+    @todo - full docstrings and typehints
+    @todo - find a better home"""
+    del_phase = [i for i in phi_ref if i in del_phase]
+    del_phase_dict_1 = {}
+    for j in del_phase:
+        del_phase_dict = {}
+        rels_list = [i for i in phasedict.keys() if j in i]
+        for rels in rels_list:
+            if rels[0] == j:
+                del_phase_dict["lower"] = rels[1]
+            if rels[1] == j:
+                del_phase_dict["upper"] = rels[0]
+        del_phase_dict_1[j] = del_phase_dict
+    if phi_ref[-1] in del_phase_dict_1.keys():
+        del_phase_dict_1[phi_ref[-1]]["upper"] = "end"
+    if phi_ref[0] in del_phase_dict_1.keys():
+        del_phase_dict_1[phi_ref[0]]["lower"] = "start"
+    # We then have to run the loop again in case any phases are next to eachother, this checks that
+    for j in del_phase:
+        rels_list = [i for i in phasedict.keys() if j in i]
+        for rels in rels_list:
+            if rels[0] == j:
+                if rels[1] in del_phase:
+                    del_phase_dict_1[j]["lower"] = del_phase_dict_1[rels[1]]["lower"]
+    del_phase.reverse()
+    for k in del_phase:
+        rels_list = [i for i in phasedict.keys() if k in i]
+        for rels in rels_list:
+            if rels[1] == k:
+                if rels[0] in del_phase:
+                    del_phase_dict_1[k]["upper"] = del_phase_dict_1[rels[0]]["upper"]
+    new_phase_rels = [
+        [del_phase_dict_1[l]["upper"], del_phase_dict_1[l]["lower"]]
+        for l in del_phase_dict_1.keys()
+        if del_phase_dict_1[l]["upper"] != "end"
+        if del_phase_dict_1[l]["lower"] != "start"
+    ]
+    return new_phase_rels
+
+
+def phase_rels_delete_empty(
+    file_graph: nx.DiGraph, new_phase_rels, p_list, phasedict, phase_nodes, graph_data
+) -> Tuple[nx.DiGraph, List[str], Dict[str, str]]:
+    """adds edges between phases that had gaps due to no contexts being left in them
+
+    @todo - full docstrings and typehints
+    @todo - find a better home"""
+    phase_relabel(file_graph)
+    # adds edges between phases that had gaps due to no contexts being left in them
+    label_dict = {}
+    null_phases = []  # keep track of phases we need to delete
+    [file_graph.add_edge("a_" + str(i[0]), "b_" + str(i[1]), arrowhead="none") for i in new_phase_rels]
+    for p in p_list:
+        relation = phasedict[p]
+        if relation == "gap":
+            if p[0] not in graph_data[1][2]:
+                phasedict.pop[p]
+                null_phases.append(p)
+            elif p[1] not in graph_data[1][2]:
+                null_phases.append(p)
+            else:
+                file_graph.add_edge("a_" + str(p[0]), "b_" + str(p[1]), arrowhead="none")
+        if relation == "overlap":
+            if p[0] not in graph_data[1][2]:
+                null_phases.append(p)
+            elif p[1] not in graph_data[1][2]:
+                null_phases.append(p)
+            else:
+                file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[0]), arrowhead="none")
+        if relation == "abutting":
+            if p[0] not in graph_data[1][2]:
+                null_phases.append(p)
+            elif p[1] not in graph_data[1][2]:
+                null_phases.append(p)
+            else:
+                file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
+                x_nod = list(file_graph)
+                newnode = str("a_" + str(p[0]) + " = " + "b_" + str(p[1]))
+                label_str = "<&alpha;<SUB>" + str(p[0]) + "</SUB> = &beta;<SUB>" + str(p[1]) + "</SUB>>"
+                label_dict[newnode] = label_str
+                phase_nodes.append("a_" + str(p[0]) + " = " + "b_" + str(p[1]))
+                y_nod = [newnode if i == "a_" + str(p[0]) else i for i in x_nod]
+                mapping = dict(zip(x_nod, y_nod))
+                file_graph = nx.relabel_nodes(file_graph, mapping)
+    return file_graph, null_phases, label_dict
+
+
+def chrono_edge_add(
+    file_graph: nx.DiGraph,
+    graph_data,
+    xs_ys,
+    phasedict,
+    phase_trck,
+    post_dict: Dict[Any, Any],
+    prev_dict: Dict[Any, Any],
+) -> Tuple[nx.DiGraph, List[Any], List[str]]:
+    """chrono_edge_add
+
+    @todo - full docstrings and typehints
+    @todo - find a better home
+    """
+    xs = xs_ys[0]
+    ys = xs_ys[1]
+    phase_nodes = []
+    phase_norm, node_list = graph_data[1][0], graph_data[1][1]
+    all_node_phase = dict(zip(node_list, phase_norm))
+    for i in node_list:  # loop adds edges between phases
+        if i not in xs:
+            if i not in ys:
+                file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrowhead="none")
+                file_graph.add_edge(i, "a_" + str(all_node_phase[i]), arrowhead="none")
+            else:
+                file_graph.add_edge(i, "a_" + str(all_node_phase[i]), arrowhead="none")
+        elif i in xs:
+            if i not in ys:
+                file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrowhead="none")
+    if phasedict is not None:
+        p_list = list(set(phase_trck))  # phases before any get removed due to having no dates
+
+        phase_nodes.append("a_" + str(p_list[0][0]))
+        up_phase = [i[0] for i in p_list]
+        low_phase = [i[1] for i in p_list]
+        act_phases = set(up_phase + low_phase)  # actual phases we are working with
+        del_phase = act_phases - set(graph_data[1][2])
+        graph = nx.DiGraph(graph_attr={"splines": "ortho"})
+        if len(phase_trck) != 0:
+            graph.add_edges_from(phase_trck, arrows="none")
+            phi_ref = list(reversed(list(nx.topological_sort(graph))))
+            graph_temp = nx.transitive_reduction(graph)
+            a = set(graph.edges())
+            b = set(graph_temp.edges())
+            if len(list(a - b)) != 0:
+                rem = list(a - b)[0]
+                file_graph.remove_edge(rem[0], rem[1])
+        new_phase_rels = del_empty_phases(phi_ref, del_phase, phasedict)
+        # changes diplay labels to alpha ans betas
+        file_graph, null_phases, label_dict = phase_rels_delete_empty(
+            file_graph, new_phase_rels, p_list, phasedict, phase_nodes, graph_data
+        )
+
+        phi_ref = [i for i in phi_ref if i in set(graph_data[1][2])]
+        phase_nodes.append("b_" + str(p_list[len(p_list) - 1][0]))
+
+    # replace phase rels with gap for phases adjoined due to missing phases
+    for i in new_phase_rels:
+        post_dict[i[1]] = "gap"
+        prev_dict[i[0]] = "gap"
+    nx.set_node_attributes(file_graph, label_dict, "label")
+    return (file_graph, phi_ref, null_phases)
+
+
+def chrono_edge_remov(file_graph: nx.DiGraph) -> Tuple[nx.DiGraph, List[List[Any]], List[Any], List[Any]]:
+    """removes any excess edges so we can render the chronograph
+
+    @todo - full docstrings and typehints
+    @todo - find a better home"""
+    xs, ys = [], []
+    # gets a list of all the edges and splits into above and below
+    for x, y in list(file_graph.edges):
+        xs.append(x)
+        ys.append(y)
+    graph_data = phase_info_func(file_graph)
+    phase_list = list(graph_data[1][2])
+    phase_dic = graph_data[3]
+    # case with more than one phase
+    if len(phase_list) != 1:
+        if len(graph_data[1][3]) == 0:
+            file_graph.add_edge(phase_dic[phase_list[0]][0], phase_dic[phase_list[1]][0], arrowhead="none")
+            graph_data = phase_info_func(file_graph)
+        x_l, y_l = graph_data[2][0], graph_data[2][1]
+        evenlist, oddlist, elist, olist = [], [], [], []
+        for i in range(len(x_l)):
+            if i % 2 == 0:
+                evenlist.append(x_l[i])
+                elist.append(y_l[i])
+            else:
+                oddlist.append(x_l[i])
+                olist.append(y_l[i])
+        for j in range(len(evenlist)):
+            file_graph.remove_edge(oddlist[j], evenlist[j])
+
+        for node in phase_list:
+            alp_beta_node_add(node, file_graph)
+        file_graph = phase_relabel(file_graph)
+
+        for i, j in enumerate(elist):
+            file_graph.add_edge("b_" + str(j), evenlist[i], arrowhead="none")
+        for i, j in enumerate(olist):
+            file_graph.add_edge(oddlist[i], "a_" + str(j.replace("_below", "")), arrowhead="none")
+    # case when there's only one phase
+    elif len(phase_list) == 1:
+        evenlist = []
+        oddlist = []
+        for nd in graph_data[1][1]:
+            if len(list(file_graph.predecessors(nd))) == 0:
+                evenlist.append(nd)  # if no predecesors, adds to list for nodes to connect to phase boundary
+            if len(list(file_graph.edges(nd))) == 0:
+                oddlist.append(nd)
+        for node in list(phase_list):
+            alp_beta_node_add(node, file_graph)
+        for node in list(phase_list):
+            alp_beta_node_add(node, file_graph)
+        phase_lab = phase_list[0]
+        for z in evenlist:
+            file_graph.add_edge("b_" + str(phase_lab), z, arrowhead="none")
+
+        for m in oddlist:
+            file_graph.add_edge(m, "a_" + str(phase_lab), arrowhead="none")
+    # graph data gives 1) phases in a dict and nodes at the edge of that phase,
+    # 2) phases for each context, 3) contexts, 4) phases in "below form",
+    # 5)dictionary of phases and contexts in them
+    # xs, ys gives any edges removed becuase phase boundaries need to go in
+    # list of phases
+    return graph_data, [xs, ys], phase_list
