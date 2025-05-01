@@ -29,12 +29,7 @@ POLYCHRON_PROJECTS_DIR.mkdir(parents=True, exist_ok=True)
 os.chdir(POLYCHRON_PROJECTS_DIR)
 old_stdout = sys.stdout
 
-#global variables
-load_check = 'not_loaded'
-mcmc_check = 'mcmc_notloaded'
-proj_dir = ""
 SCRIPT_DIR = pathlib.Path(__file__).parent # Path to directory containing this script
-CALIBRATION = pd.read_csv(SCRIPT_DIR / "resources" / "linear_interpolation.txt")
 
 def clear_all(tree):
    for item in tree.get_children():
@@ -1307,7 +1302,6 @@ class popupWindow10(object):
 class load_Window(object):
     # @note - this was triggered after a model was created. Not yet (fully) reimplemetned @todo
     def create_file(self, folder_dir, load):  
-        global proj_dir
         dirs = os.path.join(POLYCHRON_PROJECTS_DIR, folder_dir, self.model.get())
         dirs2 = os.path.join(dirs, "stratigraphic_graph")
         dirs3 = os.path.join(dirs, "chronological_graph")

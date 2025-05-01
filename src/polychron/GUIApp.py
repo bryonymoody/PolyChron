@@ -11,6 +11,7 @@ from ttkthemes import ThemedStyle, ThemedTk
 
 from .Config import Config
 from .interfaces import Mediator
+from .models.InterpolationData import InterpolationData
 from .models.ProjectsDirectory import ProjectsDirectory
 from .presenters.BaseFramePresenter import BaseFramePresenter
 from .presenters.DatingResultsPresenter import DatingResultsPresenter
@@ -75,6 +76,11 @@ class GUIApp(Mediator):
         # @todo - may need to have a ProjectsDirectory object which does not actually parse the Project/Models, but instead just provides accessors.
         # @todo rename.
         self.projects_directory_obj: ProjectsDirectory = ProjectsDirectory(path=self.config.projects_directory)
+
+        # @todo - move this to where it is needed, though checking on startup is nice.
+        self.calibration: InterpolationData = InterpolationData()
+        # self.calibration.load() # @todo
+        # print(self.calibration.get_dataframe()) # @todo
 
         # Construct the views and presenters for main window views (i.e. not-popups)
         self.current_presenter_key: Optional[str] = None
