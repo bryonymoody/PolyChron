@@ -74,7 +74,9 @@ def rank_func(tes, file_content):
 
 
 def node_coords_fromjson(graph):
-    """Gets coordinates of each node"""
+    """Gets coordinates of each node
+
+    @todo - rename this method? it's actually from svg?"""
     global phase_true
     if "pydot" in str(type(graph)):
         graphs = graph
@@ -226,3 +228,24 @@ def edge_of_phase(test1, pset, node_list, node_info):
                 y_l.append(str(key_1) + "_below")
                 phase_tracker.append((key_1, key))
     return x_l, y_l, mydict.keys(), phase_tracker, mydict
+
+
+def node_del_fixed(graph: nx.DiGraph, node: str) -> nx.DiGraph:
+    """Remove a node from the graph, replacing edges where possible
+
+    @todo - this probably belongs in model.Model?
+    """
+    in_nodes = [i[0] for i in list(graph.in_edges(node))]
+    out_nodes = [i[1] for i in list(graph.out_edges(node))]
+    graph.remove_node(node)
+    for i in in_nodes:
+        for j in out_nodes:
+            graph.add_edge(i, j, arrowhead="none")
+
+    graph_check = nx.transitive_reduction(graph)
+    if graph.edges() != graph_check.edges():
+        edges1 = list(graph.edges()).copy()
+        for k in edges1:
+            if k not in graph_check.edges():
+                graph.remove_edge(k[0], k[1])
+    return graph

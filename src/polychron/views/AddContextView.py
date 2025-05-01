@@ -23,22 +23,24 @@ class AddContextView(BasePopupView):
         self.geometry("1000x400")
         self.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
 
-        # pop up window to allow us to enter a context that we want to change the meta data for
+        # Label
         self.label = ttk.Label(self, text="Context Number")
         self.label.pack()
-        self.entry = ttk.Entry(self)  # allows us to keep t6rack of the number we've entered
+
+        # User input
+        self.entry = ttk.Entry(self)
         self.entry.pack()
+
+        # Button
         self.ok_button = ttk.Button(self, text="Ok")  # gets ridof the popup
         self.ok_button.pack()
-        self.value = tk.StringVar(self)
 
-    # @todo
-    # def cleanup(self):
-    #     '''destroys popupWindow'''
-    #     self.value = self.e.get()
-    #     self.destroy()
+        # @todo - cancel button?
 
     def bind_ok_button(self, callback: Callable[[], Optional[Any]]) -> None:
         """Bind the callback for when the ok_button is pressed"""
         if callback is not None:
             self.ok_button.config(command=callback)
+
+    def get_input(self) -> str:
+        return self.entry.get()

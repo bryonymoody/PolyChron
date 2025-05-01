@@ -26,6 +26,7 @@ class AddContextPresenter(BasePopupPresenter):
 
     def on_ok(self) -> None:
         """When the OK button is pressed, validate user in put, update the model and close the popup"""
-        # @todo - validate input and if ok update the model / trigger follow on actions.
+        # @todo - validate user input, here before closing the popup?
+        self.model["value"] = self.view.get_input()
+        # Close the popup
         self.close_view()
-        # @todo - this is prolly a memory leak.

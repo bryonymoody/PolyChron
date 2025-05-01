@@ -63,6 +63,7 @@ class BasePopupPresenter(ABC):
     def close_view(self, event: Optional[Any] = None) -> None:
         """Close the popup aftger performing any actions. This method should be overridden by presenters which require graceful destruction
 
-        @todo consider if this should be an abstract method or not"""
+        @todo consider if this should be an abstract method or not
+        """
         self.view.destroy()
         # @todo - a destroyed view object is not very useful? in which case the presenter is no longer useful either?

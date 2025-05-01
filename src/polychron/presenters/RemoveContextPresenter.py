@@ -22,11 +22,13 @@ class RemoveContextPresenter(BasePopupPresenter):
         self.update_view()
 
     def update_view(self) -> None:
-        pass  # @todo
+        if "context" in self.model:
+            self.view.update_label(self.model["context"])
 
     def on_ok_button(self) -> None:
         """When the ok button is pressed, store the dataframe in the model and close the popup"""
-        # @todo - validate input and if ok update the model / trigger follow on actions.
-        # self.value=self.text.get('1.0', 'end')
+        # @todo - validate input if it's required?
+        # Store the provided reason in the model
+        self.model["reason"] = self.view.get_reason()
+        # Close the popup
         self.close_view()
-        # @todo - this is prolly a memory leak.

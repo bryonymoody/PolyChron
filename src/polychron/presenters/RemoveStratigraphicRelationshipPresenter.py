@@ -22,7 +22,9 @@ class RemoveStratigraphicRelationshipPresenter(BasePopupPresenter):
         self.update_view()
 
     def update_view(self) -> None:
-        pass  # @todo
+        if "context_a" in self.model and "context_b" in self.model:
+            edge_label = f"{self.model['context_a']} and {self.model['context_b']}"
+            self.view.update_label(edge_label)
 
     def on_ok_button(self) -> None:
         """When the ok button is pressed, store the dataframe in the model and close the popup"""

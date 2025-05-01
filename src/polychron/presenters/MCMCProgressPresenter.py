@@ -1,9 +1,10 @@
 import re
 import sys
 import time
-from typing import Any, Optional
+from typing import Optional
 
 from ..interfaces import Mediator
+from ..models.Model import Model
 from ..views.MCMCProgressView import MCMCProgressView
 from .BasePopupPresenter import BasePopupPresenter
 
@@ -45,9 +46,11 @@ class MCMCProgressPresenter(BasePopupPresenter):
     """Presenter for managing the MCMC progress bar popup view.
 
     When MCMC calibration has completed, and the popup closes, change to the DatingResults tab
+
+    @todo - when calibrated, this may do multiple passes, but the progress bad is only for the current pass
     """
 
-    def __init__(self, mediator: Mediator, view: MCMCProgressView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: MCMCProgressView, model: Optional[Model] = None):
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 
@@ -60,21 +63,45 @@ class MCMCProgressPresenter(BasePopupPresenter):
         self.update_view()
 
     def run(self):
-        self.view.update_progress(0)
-        # @todo - instead of redirecting stdout, pass a file descriptor to the mcmc function for progress writing, or just store a value in this presenters model?
-        # Save the old stdout
-        old_stdout = sys.stdout
-        # Redirect stdout
-        sys.stdout = StdoutRedirector(self.view.output_label, self.view.progress_bar)
+        """Runs model calibration for the current model
 
+        @todo - move the actual calibration into the model
+        @todo - finish the actual implemetnation
+        """
+        # Do nothing if the model is not set
+        if self.model is None:
+            return
+        # @todo - do nothing if the model is not ready for calibration
+        # Set progress to none
+        self.view.update_progress(0)
+        # Setup stdout redirection
+        # @todo - instead of redirecting stdout, pass a file descriptor to the mcmc function for progress writing, or just store a value in this presenters model?
+        old_stdout = sys.stdout
+        sys.stdout = StdoutRedirector(self.view.output_label, self.view.progress_bar)
         # Run the MCMC calibration
         # @todo replace with the actual method
         mock_mcmc()
-        # Restore the old stdout
-        sys.stdout = old_stdout
+        # self.ACCEPT = [[]]
+        # while min([len(i) for i in self.ACCEPT]) < 50000:
+        #     # @todo - which of these need to be stored int he class etc.
+        #     (
+        #         self.CONTEXT_NO,
+        #         self.ACCEPT,
+        #         self.PHI_ACCEPT,
+        #         self.PHI_REF,
+        #         self.A,
+        #         self.P,
+        #         self.ALL_SAMPS_CONT,
+        #         self.ALL_SAMPS_PHI,
+        #         self.resultsdict,
+        #         self.all_results_dict,
+        #     ) = self.MCMC_func()
 
-        # Mark the model as having been calibrated
-        # @todo
+        # Update the model state to show it as having been calibrated
+        self.model.mcmc_check = True
+
+        # Restore the original stdout
+        sys.stdout = old_stdout
 
     def update_view(self) -> None:
         pass

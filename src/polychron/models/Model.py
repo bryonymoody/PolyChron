@@ -1,10 +1,14 @@
 import pathlib
+import tempfile
 from dataclasses import dataclass, field
 from typing import Any, List, Optional, Tuple
 
 import networkx as nx
 import pandas as pd
+from graphviz import render
 from PIL import Image
+
+from ..util import trim
 
 
 @dataclass
@@ -93,6 +97,61 @@ class Model:
     
     @todo - refactor this to be it's own model class which performs validation etc?"""
 
+    load_check: bool = False
+    """If the chronological graph has been rendered for the current state of the model
+    
+    Formerly a global load_check, where "loaded" is now True and "not_loaded" is False.
+
+    @todo - make this a private / protected
+    @todo - rename
+    @todo - double check all occurences have been met
+    """
+
+    chrono_dag: Optional[nx.DiGraph] = field(default=None)
+    """Chronological directed graph, produced by rendereing the chronological graph
+    
+    @todo - move function which generates this into this class (or an object for the chronograph with it's other bits)
+    @todo - rename?
+    @todo - setter&getter with protected member?
+
+    """
+
+    chrono_image: Optional[Image.Image] = field(default=None)
+    """Rendered version of the Chronological graph as an image, for whicle a handle must be kept for persistence and to avoid regenerating when not required.
+
+    When load_check is True, this image is valid for the current state of the Model.
+
+    @todo - migrate generation of this into a class method, and only provide a public getter.
+
+    Formerly StartPage.image2
+    """
+
+    mcmc_check: bool = False
+    """If the model has been calibrated
+    
+    Formerly a global mcmc_check, where "mcmc_loaded" is now True and "mcmc_notloaded" is False.
+
+    @todo - make this a private / protected
+    @todo - rename
+    @todo - double check all occurences have been met
+    """
+
+    delnodes: List[Tuple[str, str]] = field(default_factory=list)
+    """List of deleted nodes and the reason they were deleted
+    
+    Formerly StartPage.delnodes and StartPage.delnodes_meta
+    @todo - make a list of a dataclass instead? Not using a dict so the same node can be deleted, added, then deleted again
+    """
+
+    deledges: List[Tuple[str, str, str]] = field(default_factory=list)
+    """List of deleted edges and the reason they were deleted
+
+    Each entry is the a node, b node and reason.
+    
+    Formerly StartPage.edges_del and StartPage.deledges_meta
+    @todo - make a list of a dataclass instead? Not using a dict so the same node can be deleted, added, then deleted again
+    """
+
     def save(self):
         """Save the current state of this model to disk at self.path"""
         print(f"@todo - Model.save({self.path})")
@@ -163,7 +222,7 @@ class Model:
         @todo return value"""
         # Store a copy of the dataframe
         self.phase_rel_df = df.copy()
-        # Store a copy of the list of tuples extracted from teh dataframe
+        # Store a copy of the list of tuples extracted from the dataframe
         self.phase_rels = phase_rels.copy()
         # Post processing of the dataframe
 
@@ -189,3 +248,91 @@ class Model:
             y_nod = [newnode if i == j else i for i in x_nod]
             mapping = dict(zip(x_nod, y_nod))
             self.strat_graph = nx.relabel_nodes(self.strat_graph, mapping)
+
+    def render_chrono_png(self, canv_width: int, canv_height: int) -> Image.Image:
+        """Render the chronological graph
+
+        Formerly imgrender2
+
+        @todo - set member variable rather than returning?
+        @todo - Consistent parameters with imgrender?
+        @todo - working dir / set paths explicitly"""
+        workdir = (
+            pathlib.Path(tempfile.gettempdir()) / "polychron" / "temp"
+        )  # @todo actually do this in the model folder?
+        workdir.mkdir(parents=True, exist_ok=True)
+        fi_new_chrono = workdir / "fi_new_chrono"  # @todo make this a model member?
+        if self.load_check and fi_new_chrono.is_file():
+            # @todo actually use more than self.load_check - i.e. have a member variable which is a path to fi_new_chrono
+            # @todo - 2 instances of polychron open for the same model will be in a disk-state race. Need to add a model lock?
+            render("dot", "png", fi_new_chrono)
+            render("dot", "svg", fi_new_chrono)  # @todo - is the svg needed?
+            inp = Image.open(workdir / "fi_new_chrono.png")
+            inp_final = trim(inp)
+            # scale_factor = min(canv_width/inp.size[0], canv_height/inp.size[1])
+            # inp_final = inp.resize((int(inp.size[0]*scale_factor), int(inp.size[1]*scale_factor)), Image.ANTIALIAS)
+            inp_final.save(workdir / "testdag_chrono.png")
+            outp = Image.open(workdir / "testdag_chrono.png")
+        else:
+            outp = None  # formerly 'No_image'
+        return outp
+
+    def reopen_strat_image(self):
+        """Re-open the stratigraphic image from disk
+
+        Used when the window is reiszed as the in memory copy may have been resized
+
+        Formerly part of StartPage.resize
+
+        @todo - instead of re-opening from disk, maybe keep a separate in-memory copy.
+        @todo - actual path"""
+        workdir = (
+            pathlib.Path(tempfile.gettempdir()) / "polychron" / "temp"
+        )  # @todo actually do this in the model folder?
+        workdir.mkdir(parents=True, exist_ok=True)
+        png_path = workdir / "testdag.png"
+        if png_path.is_file():
+            self.strat_image = Image.open(png_path)
+
+    def reopen_chrono_image(self):
+        """Re-open the chrono image from disk
+
+        Used when the window is reiszed as the in memory copy may have been resized
+
+        Formerly part of StartPage.resize2
+
+        @todo - instead of re-opening from disk, maybe keep a separate in-memory copy.
+        @todo - actual path"""
+        workdir = (
+            pathlib.Path(tempfile.gettempdir()) / "polychron" / "temp"
+        )  # @todo actually do this in the model folder?
+        workdir.mkdir(parents=True, exist_ok=True)
+        png_path = workdir / "testdag_chrono.png"
+        if png_path.is_file():
+            self.chrono_image = Image.open(png_path)
+
+    def record_deleted_node(self, context: str, reason: Optional[str] = None) -> None:
+        """Method to add a node to the list of deleted nodes
+
+        Patameters:
+            context: the context / node which was removed
+            reason: the reason the node was deleted, if provided.
+
+        Todo:
+            @todo Make this the only way to mutate delnodes?
+        """
+        self.delnodes.append((context, reason))
+
+    def record_deleted_edge(self, context_a: str, context_b: str, reason: Optional[str] = None) -> None:
+        """Method to add an edge to the list of deleted edges
+
+        Patameters:
+            context_a: one context from the edge
+            context_a: the other context from the edge
+            reason: the reason the node was deleted, if provided.
+
+        Todo:
+            @todo Make this the only way to mutate deledges?
+            @todo include the ccall to remove_edge here (or anotehr func which does both)
+        """
+        self.deledges.append((context_a, context_b, reason))
