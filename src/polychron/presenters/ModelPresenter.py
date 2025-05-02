@@ -627,7 +627,7 @@ class ModelPresenter(BaseFramePresenter):
 
         # Render the strat graph in pahse mode, if there is one to render, updating the model and view
         model_model: Model = self.model.get_current_model()
-        if model_model.strat_graph is not None:
+        if model_model is not None and model_model.strat_graph is not None:
             model_model.strat_image = imgrender_phase(model_model.strat_graph)
             # Update the rendered image in the canvas
             self.view.update_littlecanvas(model_model.strat_image)

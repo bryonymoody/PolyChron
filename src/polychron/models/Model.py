@@ -231,7 +231,7 @@ class Model:
 
         @todo - make this consistent with other setters.
 
-        @todo validate the incoming df here (and/or elsewhere). I.e. c,d; d,c is a runtime error.
+        @todo validate the incoming df here (and/or elsewhere). I.e. c,d; d,c is a runtime error, or loading a context equalities file that has alrady been applied is an error
 
         @todo return value"""
         # Store a copy of the dataframe
