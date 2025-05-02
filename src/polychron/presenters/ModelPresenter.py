@@ -166,13 +166,20 @@ class ModelPresenter(BaseFramePresenter):
     def update_view(self) -> None:
         """Update the view to reflect the current state of the model
 
-        @todo expand this"""
+        @todo Ensure that this method updates each UI element for the current model (if there is one). I.e. both graphs, + 3 tables + data loaded drop down + presenter properties like the selected node."""
         # Get the actual model
         # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
         model_model: Model = self.model.get_current_model()
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
+            # @todo if there is no model, reset everything to empty
             return
+
+        # Update each presenter property
+        # @todo - should phase_true be updated?
+
+        # Update the view
+        # @todo
 
         # If the model has an @todo abstrac this to reduce duplication
         if model_model.strat_df is not None:
@@ -1019,6 +1026,8 @@ class ModelPresenter(BaseFramePresenter):
         popup_presenter.view.deiconify()
         popup_presenter.view.lift()
 
+        self.update_view()
+
     def load_existing_model(self) -> None:
         """Open a popup dialog to load an existing model from the current project (althoug possible to go back?)
 
@@ -1035,6 +1044,8 @@ class ModelPresenter(BaseFramePresenter):
         # Ensure it is visible and on top
         popup_presenter.view.deiconify()
         popup_presenter.view.lift()
+
+        self.update_view()
 
     def save_as_current(self) -> None:
         """Save the current state of the model in-place
