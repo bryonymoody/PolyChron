@@ -191,13 +191,13 @@ class ProjectsDirectory:
             ),
             phase_rels=[(2, 1)],  # @todo - make this actually dynamic
         )
-        demo_model.set_equal_rel_df(
-            pd.DataFrame(
-                [
-                    ["c", "d"],
-                ],
-                columns=["left", "right"],
-            )
-        )
+        # demo_model.set_equal_rel_df(
+        #     pd.DataFrame(
+        #         [
+        #             ["c", "d"],
+        #         ],
+        #         columns=["left", "right"],
+        #     )
+        # )
 
         return projects

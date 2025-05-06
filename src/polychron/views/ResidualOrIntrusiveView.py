@@ -2,11 +2,13 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, List, Optional
 
+from PIL import ImageTk
+
 from .BasePopupView import BasePopupView
 
 
 class ResidualOrIntrusiveView(BasePopupView):
-    """View for users to provide input on whether contexts are residual or inclusive during chronological graph rendering
+    """View for users to provide input on whether contexts are residual or intrusive during chronological graph rendering
 
     Formerly part of `PageTwo`
 
@@ -17,7 +19,19 @@ class ResidualOrIntrusiveView(BasePopupView):
         # Call the parent class constructor
         super().__init__(parent, start_visible)
 
+        # @todo view level proeprties that might need documenting or removing or refactoring?
+        self.imscale2 = 1.0
+        self.delta2 = 1.1
+        self.icon = None
+        self.transx2 = 0
+        self.transy2 = 0
+        # in-memory rendered image. @todo should this actually belong to the model?
+        self.image = None
+        self.width2 = 0
+        self.height2 = 0
+
         # @todo cleaner popup separation?
+        self.title("Identify Residual or Intrusive Contexts")
         self.configure(bg="#AEC7D6")
         self.geometry("2000x1000")  # @todo - differnt geometry?
         self.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
@@ -28,7 +42,7 @@ class ResidualOrIntrusiveView(BasePopupView):
             self.canvas, bd=0, bg="white", selectborderwidth=0, highlightthickness=0, insertwidth=0
         )
         self.graphcanvas.place(relx=0.02, rely=0.05, relwidth=0.35, relheight=0.9)
-        # @todo - this label suggests blue boxes, but green is used.
+        # @todo - this label suggests blue boxes, but green is used. https://github.com/bryonymoody/PolyChron/issues/68
         self.label = tk.Message(
             self,
             text="Using this page: \n\n Please click on the buttons below to set into residual or intrusive mode. Then double right click on any context to set as residual/intrusive. \n\n Note that orange boxes denote intrusive contexts and blue boxes denote residual contexts. \n\n If you have clicked on a context by mistake, double right click to remove any label attributed to the context.",
@@ -36,7 +50,7 @@ class ResidualOrIntrusiveView(BasePopupView):
         self.label.place(relx=0.4, rely=0.05)
         self.resid_title_label = ttk.Label(self.canvas, text="Residual Contexts")
         self.resid_title_label.place(relx=0.4, rely=0.4)
-        self.graphcanvas.update()
+        self.graphcanvas.update()  # @todo - is this neccessary?
         self.residcanvas = tk.Canvas(
             self.canvas, bd=0, bg="white", selectborderwidth=0, highlightthickness=0, insertwidth=0
         )
@@ -63,8 +77,6 @@ class ResidualOrIntrusiveView(BasePopupView):
         self.residual_mode_button.place(relx=0.44, rely=0.35, relwidth=0.09, relheight=0.03)
         self.intrusive_mode_button = tk.Button(self, text="Intrusive mode")
         self.intrusive_mode_button.place(relx=0.54, rely=0.35, relwidth=0.09, relheight=0.03)
-
-        # self.parent.wait_window(self) # @todo
 
         # @todo - move these to tests
         # self.set_resid_label_text(["foo", "bar"])
@@ -124,3 +136,123 @@ class ResidualOrIntrusiveView(BasePopupView):
         self.graphcanvas.bind("<Double-Button-3>", callback_node_click)
         self.graphcanvas.bind("<Button-1>", callback_move_from)
         self.graphcanvas.bind("<B1-Motion>", callback_move_to)
+
+    def wheel2(self, event):
+        """Zoom with mouse wheel
+
+        Formerly (part of) PageTwo.wheel
+
+        @todo this abstraction could probably be improved
+        @todo - rename this, doesn't need 2"""
+        x_zoom = self.graphcanvas.canvasx(event.x)
+        y_zoom = self.graphcanvas.canvasy(event.y)
+        bbox = self.graphcanvas.bbox(self.container)  # get image area
+        if bbox[0] < x_zoom < bbox[2] and bbox[1] < y_zoom < bbox[3]:
+            pass  # Ok! Inside the image
+        else:
+            return  # zoom only inside image area
+        scale2 = 1.0
+        # Respond to Linux (event.num) or Windows (event.delta) wheel event
+        if event.num == 5 or event.delta == -120:  # scroll down
+            i = min(self.width2, self.height2)
+            if int(i * self.imscale2) < 30:
+                return  # image is less than 30 pixels
+            self.imscale2 /= self.delta2
+            scale2 /= self.delta2
+        if event.num == 4 or event.delta == 120:  # scroll up
+            i = min(self.graphcanvas.winfo_width(), self.graphcanvas.winfo_height())
+            if i < self.imscale2:
+                return  # 1 pixel is bigger than the visible area
+            self.imscale2 *= self.delta2
+            scale2 *= self.delta2
+        self.graphcanvas.scale("all", 0, 0, scale2, scale2)  # rescale all canvas objects
+        self.show_image2()
+
+    def autozoom(self, event):
+        """Zoom with mouse wheel
+
+        Formerly StartPage.autozoom
+
+        @toldo - this is unsused. Delete?
+
+        @todo rename?"""
+        x_zoom = self.graphcanvas.canvasx(event.x)
+        y_zoom = self.graphcanvas.canvasy(event.y)
+        bbox = self.graphcanvas.bbox(self.container)  # get image area
+        if bbox[0] < x_zoom < bbox[2] and bbox[1] < y_zoom < bbox[3]:
+            pass  # Ok! Inside the image
+        else:
+            return  # zoom only inside image area
+        scale2 = 1.0
+        # Respond to Linux (event.num) or Windows (event.delta) wheel event
+        if event.num == 5 or event.delta == -120:  # scroll down
+            i = min(self.width2, self.height2)
+            if int(i * self.imscale2) < 30:
+                return  # image is less than 30 pixels
+            self.imscale2 /= self.delta2
+            scale2 /= self.delta2
+        if event.num == 4 or event.delta == 120:  # scroll up
+            i = min(self.graphcanvas.winfo_width(), self.graphcanvas.winfo_height())
+            if i < self.imscale2:
+                return  # 1 pixel is bigger than the visible area
+            self.imscale2 *= self.delta2
+            scale2 *= self.delta2
+        self.graphcanvas.scale("all", 0, 0, scale2, scale2)  # rescale all canvas objects
+        self.show_image2()
+
+    def show_image2(self):
+        print("show_image2")
+        """Show image on the Canvas
+
+        @todo the logic for this should probably be elsewhere / add parameters?
+        @todo - rename this, doesn't need 2
+        @todo - can probably refactor this as common canvas zooming behaviour with other views"""
+
+        # startpage = self.controller.get_page('StartPage') # @todo not needed?
+        # startpage.update_idletasks()
+        bbox1 = [0, 0, int(self.image.size[0] * self.imscale2), int(self.image.size[1] * self.imscale2)]
+        # Remove 1 pixel shift at the sides of the bbox1
+        bbox1 = (bbox1[0] + 1, bbox1[1] + 1, bbox1[2] - 1, bbox1[3] - 1)
+        bbox2 = (
+            self.graphcanvas.canvasx(0),  # get visible area of the canvas
+            self.graphcanvas.canvasy(0),
+            self.graphcanvas.canvasx(self.graphcanvas.winfo_width()),
+            self.graphcanvas.canvasy(self.graphcanvas.winfo_height()),
+        )
+        bbox = [
+            min(bbox1[0], bbox2[0]),
+            min(bbox1[1], bbox2[1]),  # get scroll region box
+            max(bbox1[2], bbox2[2]),
+            max(bbox1[3], bbox2[3]),
+        ]
+        bbox1 = [0, 0, int(self.image.size[0] * self.imscale2), int(self.image.size[1] * self.imscale2)]
+        if bbox[0] == bbox2[0] and bbox[2] == bbox2[2]:  # whole image in the visible area
+            bbox[0] = bbox1[0]
+            bbox[2] = bbox1[2]
+        if bbox[1] == bbox2[1] and bbox[3] == bbox2[3]:  # whole image in the visible area
+            bbox[1] = bbox1[1]
+            bbox[3] = bbox1[3]
+        self.graphcanvas.configure(scrollregion=bbox)  # set scroll region
+        x_1 = max(bbox2[0] - bbox1[0], 0)  # get coordinates (x1,y1,x2,y2) of the image tile
+        y_1 = max(bbox2[1] - bbox1[1], 0)
+        x_2 = min(bbox2[2], bbox1[2]) - bbox1[0]
+        y_2 = min(bbox2[3], bbox1[3]) - bbox1[1]
+
+        if int(x_2 - x_1) > 0 and int(y_2 - y_1) > 0:  # show image if it in the visible area
+            x_img = min(int(x_2 / self.imscale2), self.width2)  # sometimes it is larger on 1 pixel
+            y_img = min(int(y_2 / self.imscale2), self.height2)  # ...and sometimes not
+            image2 = self.image.crop((int(x_1 / self.imscale2), int(y_1 / self.imscale2), x_img, y_img))
+            self.graphcanvas.delete(self.icon)
+            self.icon = ImageTk.PhotoImage(image2.resize((int(x_2 - x_1), int(y_2 - y_1))))
+            self.imageid2 = self.graphcanvas.create_image(
+                max(bbox2[0], bbox1[0]), max(bbox2[1], bbox1[1]), anchor="nw", image=self.icon
+            )
+            self.transx2, self.transy2 = bbox2[0], bbox2[1]
+        self.graphcanvas.update()
+
+    def tkraise(self, aboveThis=None) -> None:
+        """Loads the graph and ensures this window is raised above another.
+
+        Formerly PageTwo.tkraise"""
+        self.load_graph()
+        super().tkraise(aboveThis)

@@ -152,6 +152,31 @@ class Model:
     @todo - make a list of a dataclass instead? Not using a dict so the same node can be deleted, added, then deleted again
     """
 
+    resid_or_intru_strat_graph: Optional[nx.DiGraph] = field(default=None)
+    """Copy of strat_graph for the residual or intrusive window
+
+    This is mutated to show which nodes have been marked as residual or intrusive.
+
+    Formerly PageTwo.graphcopy
+
+    @todo - move this a model class for the residual or intrusive page.
+    """
+    resid_or_intru_strat_image: Optional[Image.Image] = field(default=None)
+    """Rendered version of the Chronological graph as an image, with node colours set to highlight residual or intrusive nodes.
+
+    Formerly PageTwo.image
+
+    @todo - move this a model class for the residual or intrusive page.
+    """
+
+    phase_true: int = 0
+    """If stratigraphic diagrams should be rendered in phases or not
+    
+    @todo - make a bool, rename
+    @todo - should this belong to the .model.Model?
+    @todo - initalse these variables with values from the model on load?
+    """
+
     def save(self):
         """Save the current state of this model to disk at self.path"""
         print(f"@todo - Model.save({self.path})")

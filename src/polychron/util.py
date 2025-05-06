@@ -79,7 +79,6 @@ def node_coords_fromjson(graph):
     """Gets coordinates of each node
 
     @todo - rename this method? it's actually from svg?"""
-    global phase_true
     if "pydot" in str(type(graph)):
         graphs = graph
     else:
@@ -103,7 +102,8 @@ def imgrender(file: nx.DiGraph, canv_width: int, canv_height: int) -> Image.Imag
 
     @todo - this belongs in models.Model?
     @todo - rename file parameter
-    @todo - make sure this is doing things in a sensible working directory?"""
+    @todo - make sure this is doing things in a sensible working directory?
+    @todo - make this render to differnt files when called for the residual vs intrusive graph compared"""
 
     workdir = pathlib.Path(tempfile.gettempdir()) / "polychron" / "temp"  # @todo actually do this in the model folder?
     workdir.mkdir(parents=True, exist_ok=True)
@@ -127,7 +127,8 @@ def imgrender_phase(file: nx.DiGraph) -> Image.Image:
     @todo - this belongs in models.Model?
     @todo - rename file parameter
     @todo - Consistent parameters with imgrender?
-    @todo - working dir / set paths explicitly"""
+    @todo - working dir / set paths explicitly
+    @todo - make this render to differnt files when called for the residual vs intrusive graph compared"""
     workdir = pathlib.Path(tempfile.gettempdir()) / "polychron" / "temp"  # @todo actually do this in the model folder?
     workdir.mkdir(parents=True, exist_ok=True)
     # global node_df
