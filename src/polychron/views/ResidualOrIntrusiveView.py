@@ -201,7 +201,6 @@ class ResidualOrIntrusiveView(BasePopupView):
         self.show_image2()
 
     def show_image2(self):
-        print("show_image2")
         """Show image on the Canvas
 
         @todo the logic for this should probably be elsewhere / add parameters?
@@ -248,6 +247,7 @@ class ResidualOrIntrusiveView(BasePopupView):
                 max(bbox2[0], bbox1[0]), max(bbox2[1], bbox1[1]), anchor="nw", image=self.icon
             )
             self.transx2, self.transy2 = bbox2[0], bbox2[1]
+
         self.graphcanvas.update()
 
     def tkraise(self, aboveThis=None) -> None:

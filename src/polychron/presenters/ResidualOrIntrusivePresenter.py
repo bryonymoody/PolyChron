@@ -9,7 +9,6 @@ import networkx as nx
 from PIL import Image, ImageTk
 
 from ..interfaces import Mediator
-from ..models.Model import Model
 from ..presenters.ManageIntrusiveOrResidualContextsPresenter import ManageIntrusiveOrResidualContextsPresenter
 from ..util import imgrender, imgrender_phase, node_coords_fromjson
 from ..views.ManageIntrusiveOrResidualContextsView import ManageIntrusiveOrResidualContextsView
@@ -51,6 +50,16 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
         # Bind canvas/graph interaction. @todo lambdas?
         self.view.bind_graphcanvas_events(self.on_wheel2, self.resid_node_click, self.move_from2, self.move_to2)
 
+        # @todo - this could belong to a presenter sspecific model?
+        # @todo load_graph should only be called once, though this block could/should be abstracted a little.
+        if self.model.strat_graph is not None:
+            self.model.resid_or_intru_strat_graph = self.load_graph()
+            self.view.imscale2 = min(921 / self.view.image.size[0], 702 / self.view.image.size[1])
+            self.view.graphcanvas.scale("all", 0, 0, self.view.delta2, self.view.delta2)  # rescale all canvas objects
+            self.view.show_image2()
+        # Ensure the canvas is up to date
+        self.view.graphcanvas.update()
+
         # Update view information to reflect the current state of the model
         self.update_view()
 
@@ -72,16 +81,6 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
         else:
             self.view.set_residual_mode_button_background("light gray")
             self.view.set_intrusive_mode_button_background("light gray")
-
-        # @todo - this could belong to a presenter sspecific model?
-        # If the model includes a rendered strat graph
-        if self.model.strat_graph is not None:
-            self.model.resid_or_intru_strat_graph = self.load_graph()
-            self.view.imscale2 = min(921 / self.view.image.size[0], 702 / self.view.image.size[1])
-            self.view.graphcanvas.scale("all", 0, 0, self.view.delta2, self.view.delta2)  # rescale all canvas objects
-            self.view.show_image2()
-        # Ensure the canvas is up to date
-        self.view.graphcanvas.update()
 
         # Update lists @todo
         # self.view.set_resid_label_text
@@ -124,11 +123,10 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
         @todo - this is leaking tkinter into the presenter. Abstract this away a little?
         @todo - rename this, doesn't need the 2?
         """
-        model_model: Optional[Model] = self.model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
-        if model_model is None:
+        if self.model is None:
             return
-        if model_model.strat_image is not None:
+        if self.view.image is not None:  # @todo is view.image correct here?
             self.view.graphcanvas.scan_mark(event.x, event.y)  # @todo tkinter in presenter
 
     def move_to2(self, event):
@@ -139,11 +137,10 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
         @todo - this is leaking tkinter into the presenter. Abstract this away a little?
         @todo - rename this, doesn't need the 2?
         """
-        model_model: Optional[Model] = self.model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
-        if model_model is None:
+        if self.model is None:
             return
-        if model_model.strat_image is not None:
+        if self.view.image is not None:  # @todo is view.image correct here?
             self.view.graphcanvas.scan_dragto(event.x, event.y, gain=1)  # @todo tkinter in presenter
             self.view.show_image2()
 
