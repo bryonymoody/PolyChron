@@ -10,6 +10,8 @@ class BasePopupView(tk.Toplevel):
     @todo - should this contain a Toplevel rahter than extend one? I.e. prevent tkinter leaking out of the view
 
     @todo - make this more complex
+
+    @todo - start visisble=False breaks winfo_width/height until it has been made visible, but without it the window placement is not centered over the parent, so will need to provide +x+y to geometry strings, computed relateive to the root window (parent may be a tkframe, though maybe it should be enforced as a topLevel (or have parent and parentTL))
     """
 
     def __init__(self, parent: tk.Toplevel, start_visible=False):
