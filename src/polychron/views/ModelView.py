@@ -530,6 +530,12 @@ class ModelView(BaseFrameView):
             self.transx, self.transy = bbox2[0], bbox2[1]
             self.littlecanvas.imagetk = self.imagetk
 
+    def clear_littlecanvas2(self):
+        """Delete all elments from within the littlecavnas2
+
+        @todo - rename to mention chrono graph instead."""
+        self.littlecanvas2.delete("all")
+
     def update_littlecanvas2(self, image):
         """Update the image within the littlecanvas2 element - i.e. the chronological graph.
 
