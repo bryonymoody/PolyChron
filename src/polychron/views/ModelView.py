@@ -644,7 +644,6 @@ class ModelView(BaseFrameView):
                 return  # 1 pixel is bigger than the visible area
             self.imscale *= self.delta
             scale *= self.delta
-        #    print(scale)
         self.littlecanvas.scale("all", 0, 0, scale, scale)  # rescale all canvas objects
         self.show_image()
 

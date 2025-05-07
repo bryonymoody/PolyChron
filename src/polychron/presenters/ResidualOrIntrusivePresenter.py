@@ -51,7 +51,6 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
         # @todo load_graph should only be called once, though this block could/should be abstracted a little.
         if self.model.strat_graph is not None:
             self.model.resid_or_intru_strat_graph = self.load_graph()
-            print(self.view.image)
             self.view.imscale2 = min(921 / self.view.image.size[0], 702 / self.view.image.size[1])
             self.view.graphcanvas.scale("all", 0, 0, self.view.delta2, self.view.delta2)  # rescale all canvas objects
             self.view.show_image2()
@@ -110,7 +109,8 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
         )
         popup_presenter.view.deiconify()
         popup_presenter.view.lift()  # @todo - not sure these are neccesary
-        print("@todo destroy this window?")
+        self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
+        # @todo - to match polychron 0.1, this should also destroy the parent window, but that prevents back actually being a back button.
 
     def move_from2(self, event):
         """Remembers previous coordinates for scrolling with the mouse

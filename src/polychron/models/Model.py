@@ -1,7 +1,7 @@
 import pathlib
 import tempfile
 from dataclasses import dataclass, field
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import networkx as nx
 import pandas as pd
@@ -184,6 +184,22 @@ class Model:
     Formerly PageTwo.resid_list
 
     @todo - move this a model class for the residual or intrusive page.
+    """
+
+    intru_dropdowns: Dict[str, str] = field(default_factory=dict)
+    """Dict of selected drop down choice for intrusive context/nodes.
+
+    @todo - move this a model class for the residual or intrusive page?
+    @todo - rename?
+    @todo - make this a Dict[str, Enum] or Dict[str, Optional[Literal[]]]? 
+    """
+
+    resid_dropdowns: Dict[str, str] = field(default_factory=dict)
+    """Dict of selected drop down choice for intrusive context/nodes.
+
+    @todo - move this a model class for the residual or intrusive page?
+    @todo - rename?
+    @todo - make this a Dict[str, Enum] or Dict[str, Optional[Literal[]]]? 
     """
 
     phase_true: int = 0

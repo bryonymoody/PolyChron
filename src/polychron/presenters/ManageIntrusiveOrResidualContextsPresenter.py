@@ -1,7 +1,9 @@
 from typing import Any, Optional
 
 from ..interfaces import Mediator
+from ..presenters.ResidualCheckPopupPresenter import ResidualCheckPopupPresenter
 from ..views.ManageIntrusiveOrResidualContextsView import ManageIntrusiveOrResidualContextsView
+from ..views.ResidualCheckPopupView import ResidualCheckPopupView
 from .BasePopupPresenter import BasePopupPresenter
 
 
@@ -19,8 +21,16 @@ class ManageIntrusiveOrResidualContextsPresenter(BasePopupPresenter):
         self.view.bind_back_button(lambda: self.on_back())
         # Bind the proceed button
         self.view.bind_proceed_button(lambda: self.on_proceed())
+
+        # Initialise the view's drop down elements
+        if self.model is not None:
+            self.view.create_dropdowns(self.model.resid_list, self.model.intru_list)
+
         # Update the view
         self.update_view()
+
+    def update_view(self) -> None:
+        pass
 
     def on_back(self) -> None:
         """Callback for when the back button is pressed, which closes the popup (and previous popup origianlly)"""
@@ -28,13 +38,37 @@ class ManageIntrusiveOrResidualContextsPresenter(BasePopupPresenter):
         self.close_view()
 
     def on_proceed(self) -> None:
-        """Callback for when the back button is pressed, which closes the popup (and previous popup origianlly)"""
-        print("@todo - actually update the data model before closing the window?")
+        """Callback for when the back button is pressed, which closes the popup (and previous popup origianlly)
+
+        Formerly (some of) popupWindow4.move_to_graph
+        """
+
+        # Update the model with the selected values for the intrusive and residual drop downs.
+        self.model.resid_dropdowns = self.view.get_resid_dropdown_selections()
+        self.model.intru_dropdowns = self.view.get_intru_dropdown_selections()
+
+        # Create popup3
+        # @todo - abstract this somewhere else? as this will be duplicated in modelPresenter.resid_check
+
+        # show the residual check presenter, formerly popupWindow3
+        popup_presenter = ResidualCheckPopupPresenter(self.mediator, ResidualCheckPopupView(self.view), self.model)
+        popup_presenter.view.deiconify()
+        popup_presenter.view.lift()  # @todo - not sure these are neccesary
+        self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
+        # self.popup3 = popupWindow3(startpage, startpage.graph, startpage.littlecanvas2, startpage.phase_rels, self.dropdown_ns, self.dropdown_intru, self.resid_list, self.intru_list)
+
+        # Setup inputs for the MCMC function
+        # @todo - make sure these are in Model for now.
+        # self.CONT_TYPE = self.popup3.CONT_TYPE
+        # self.prev_phase = self.popup3.prev_phase
+        # self.post_phase = self.popup3.post_phase
+        # self.phi_ref = self.popup3.phi_ref
+        # self.context_no_unordered = self.popup3.context_no_unordered
+        # self.graphcopy = self.popup3.graphcopy
+        # self.node_del_tracker = self.popup3.node_del_tracker
+
+        # Close the popup
         self.close_view()
-        # also close the parent popup.
+        # Also close the parent popup.
         # @todo - do this nicely, this is probably a leak of the presenter and view objects
         self.view.parent.destroy()
-
-    def update_view(self) -> None:
-        # @todo - update view elements aas required once data is present
-        pass
