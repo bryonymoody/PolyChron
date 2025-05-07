@@ -488,6 +488,9 @@ class ManageGroupRelationshipsView(BasePopupView):
         self.label_dict = {}
 
         w, h = self.canvas.winfo_width(), self.canvas.winfo_height()
+        # @todo - temp workaround - if winfo_width is not returning a real value, use req instead. Not found the correct object/timing for calling update / update_idletasks on yet (incl self or parent, parent.parent or the acual root...)
+        if w == 1 and h == 1:
+            w, h = self.canvas.winfo_reqwidth(), self.canvas.winfo_reqheight()
         m = len(phase_labels)
 
         for idx, phase_label in enumerate(phase_labels):
