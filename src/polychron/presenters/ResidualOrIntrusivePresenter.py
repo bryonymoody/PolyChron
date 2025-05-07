@@ -107,7 +107,6 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
         popup_presenter = ManageIntrusiveOrResidualContextsPresenter(
             self.mediator, ManageIntrusiveOrResidualContextsView(self.view), self.model
         )
-        popup_presenter.view.deiconify()
         popup_presenter.view.lift()  # @todo - not sure these are neccesary
         self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
         # @todo - to match polychron 0.1, this should also destroy the parent window, but that prevents back actually being a back button.

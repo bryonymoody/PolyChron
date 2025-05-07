@@ -10,10 +10,10 @@ class MCMCProgressView(BasePopupView):
     Formely within `StartPage::load_mcmc`, triggered by tools > calibrate model
     """
 
-    def __init__(self, parent: tk.Frame, start_visible=False):
+    def __init__(self, parent: tk.Frame):
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent, start_visible)
+        super().__init__(parent)
 
         # self.geometry("%dx%d%+d%+d" % (700, 200, 600, 400))  # @todo - handle geometry setting elsewhere
         self.geometry("700x200")

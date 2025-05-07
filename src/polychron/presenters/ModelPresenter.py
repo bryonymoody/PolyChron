@@ -213,7 +213,6 @@ class ModelPresenter(BaseFramePresenter):
         # Create the popup presenter and view
         popup_presenter = MCMCProgressPresenter(self.mediator, MCMCProgressView(self.view), model_model)
         # Ensure it is visible and on top
-        popup_presenter.view.deiconify()
         popup_presenter.view.lift()
         # Run the calibration
         # @todo - gracefully handle errors during calibration
@@ -240,7 +239,6 @@ class ModelPresenter(BaseFramePresenter):
         """
         popup_presenter = CalibrateModelSelectPresenter(self.mediator, CalibrateModelSelectView(self.view), self.model)
         # Ensure it is visible and on top
-        popup_presenter.view.deiconify()
         popup_presenter.view.lift()
 
         # Calibrate the selected models
@@ -338,7 +336,6 @@ class ModelPresenter(BaseFramePresenter):
             popup_presenter = ResidualOrIntrusivePresenter(
                 self.mediator, ResidualOrIntrusiveView(self.view), self.model.get_current_model()
             )
-            popup_presenter.view.deiconify()
             popup_presenter.view.lift()  # @todo - not sure these are neccesary
             # self.popup3 = pagetwo.popup4 # @todo - equiv
             # Wait for teh popup to be closed
@@ -350,7 +347,6 @@ class ModelPresenter(BaseFramePresenter):
             popup_presenter = ManageGroupRelationshipsPresenter(
                 self.mediator, ManageGroupRelationshipsView(self.view), self.model.get_current_model()
             )
-            popup_presenter.view.deiconify()
             popup_presenter.view.lift()  # @todo - not sure these are neccesary
             self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
 
@@ -362,7 +358,6 @@ class ModelPresenter(BaseFramePresenter):
         # @todo set and get model data appropriately
         temp_model = {"df": df, "result": "cancel"}
         popup_presenter = DatafilePreviewPresenter(self.mediator, DatafilePreviewView(self.view), temp_model)
-        popup_presenter.view.deiconify()
         popup_presenter.view.lift()  # @todo - not sure these are neccesary
 
         # Prevent the view's canvas element from being interacted with?
@@ -750,7 +745,6 @@ class ModelPresenter(BaseFramePresenter):
 
         popup_data = {"value": None}  # @todo - temp. use a proppert object.
         popup_presenter = AddContextPresenter(self.mediator, AddContextView(self.view), popup_data)
-        popup_presenter.view.deiconify()
         popup_presenter.view.lift()
         self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
         self.node = popup_data["value"]
@@ -1002,7 +996,6 @@ class ModelPresenter(BaseFramePresenter):
             self.mediator, ProjectSelectProcessPopupView(self.view), self.model
         )
         # Ensure it is visible and on top
-        popup_presenter.view.deiconify()
         popup_presenter.view.lift()
 
         self.update_view()
@@ -1021,7 +1014,6 @@ class ModelPresenter(BaseFramePresenter):
         # Switch to the model select page, app state should have the correct selected_project still
         popup_presenter.switch_presenter("model_select")
         # Ensure it is visible and on top
-        popup_presenter.view.deiconify()
         popup_presenter.view.lift()
 
         self.update_view()
@@ -1056,7 +1048,6 @@ class ModelPresenter(BaseFramePresenter):
         # Switch to the model select page, app state should have the correct selected_project still
         popup_presenter.switch_presenter("model_create")
         # Ensure it is visible and on top
-        popup_presenter.view.deiconify()
         popup_presenter.view.lift()
 
         print("@todo - save_as_new_model partially implemented")
@@ -1292,7 +1283,6 @@ class ModelPresenter(BaseFramePresenter):
         # Create the popup window, formerly popupWindow5
         popup_presenter = RemoveContextPresenter(self.mediator, RemoveContextView(self.view), data)
         # self.canvas["state"] = "disabled" # @todo
-        popup_presenter.view.deiconify()
         popup_presenter.view.lift()
         self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
         # self.canvas["state"] = "normal" # @todo
@@ -1318,7 +1308,6 @@ class ModelPresenter(BaseFramePresenter):
             self.mediator, RemoveStratigraphicRelationshipView(self.view), data
         )
         # self.canvas["state"] = "disabled" # @todo
-        popup_presenter.view.deiconify()
         popup_presenter.view.lift()
         self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
         # self.canvas["state"] = "normal" # @todo

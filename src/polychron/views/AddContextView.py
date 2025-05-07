@@ -13,10 +13,10 @@ class AddContextView(BasePopupView):
     Formerly `popupWindow`
     """
 
-    def __init__(self, parent: tk.Frame, start_visible=False):
+    def __init__(self, parent: tk.Frame):
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent, start_visible)
+        super().__init__(parent)
 
         # @todo cleaner popup separation?
         self.configure(bg="#AEC7D6")

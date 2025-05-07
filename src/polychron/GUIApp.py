@@ -241,7 +241,6 @@ class GUIApp(Mediator):
         # @todo - this is likely to need changing
         if popup_presenter.view is not None:
             # Ensure the project selection popup is visible and on top
-            popup_presenter.view.deiconify()
             popup_presenter.view.lift()
 
         # Start the render loop

@@ -11,10 +11,10 @@ class ManageIntrusiveOrResidualContextsView(BasePopupView):
     Formerly `popupWindow4`. This is a popup window triggered after ResidualOrIntrusive input
     """
 
-    def __init__(self, parent: tk.Frame, start_visible=False):
+    def __init__(self, parent: tk.Frame):
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent, start_visible)
+        super().__init__(parent)
 
         self.__intru_dropdown_labels = {}
         """Dict of tkinter label widgets for intrusive nodes"""

@@ -11,10 +11,10 @@ class DatafilePreviewView(BasePopupView):
     Formerly `popupWindow7`, called by numerous `open_fileX` methods in StartPage
     """
 
-    def __init__(self, parent: tk.Frame, start_visible=False):
+    def __init__(self, parent: tk.Frame):
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent, start_visible)
+        super().__init__(parent)
 
         # self.configure(bg ='white') # @todo popupwindow7 doesn't have a background.
         # self.geometry("1000x400") # @todo popupwindow7 doesn't have a fixed geometry defined

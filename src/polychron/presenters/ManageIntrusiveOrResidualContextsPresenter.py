@@ -53,7 +53,6 @@ class ManageIntrusiveOrResidualContextsPresenter(BasePopupPresenter):
         popup_presenter = ManageGroupRelationshipsPresenter(
             self.mediator, ManageGroupRelationshipsView(self.view), self.model
         )
-        popup_presenter.view.deiconify()
         popup_presenter.view.lift()  # @todo - not sure these are neccesary
         self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
 
