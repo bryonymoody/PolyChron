@@ -83,7 +83,7 @@ class ManageGroupRelationshipsPresenter(BasePopupPresenter):
                 self.CONT_TYPE.pop(np.where(np.array(self.context_no_unordered) == i)[0][0])
                 self.context_no_unordered.remove(
                     i
-                )  # self.model.resid_list[i]) # @todo - this is incorrect. i is not an index? Should this be an enumerate?
+                )  # self.model.resid_list[i]) # @todo - this was incorrect. i is not an index? Should this be an enumerate?
 
         for j in self.model.intru_list:
             if self.model.intru_dropdowns[j] == "Treat as TAQ":
