@@ -1,8 +1,6 @@
 import copy
 import pathlib
 import tempfile
-import tkinter as tk  # @todo - refactor into view,  this should not be imported into this file
-from tkinter import ttk  # @todo - refactor into view,  this should not be imported into this file
 from typing import Any, Literal, Optional
 
 import networkx as nx
@@ -16,11 +14,14 @@ from ..views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
 from .BasePopupPresenter import BasePopupPresenter
 
 
-# @todo - this needs to be closable by child popups, may need Mediator changes (or just in mediater.close call the parents mediator close based on the reason?)
 class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
     """Presenter for managing the MCMC progress bar popup view.
 
     When MCMC calibration has completed, and the popup closes, the mediator should change to the DatingResults tab
+
+    @todo - image does not show when view is first opened (with a model attached), does when changed. Unclear why
+    @todo - further view/presenter refactoring required.
+    @todo - this needs to be closable by child popups, may need Mediator changes (or just in mediater.close call the parents mediator close based on the reason?)
     """
 
     def __init__(self, mediator: Mediator, view: ResidualOrIntrusiveView, model: Optional[Any] = None):
@@ -33,10 +34,6 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
         Formerly PageTwo.modevariable
 
         @todo Enum rather than Literal?"""
-
-        # @todo preesnter variables that might need to move?
-        self.intru_list = []
-        self.resid_list = []
 
         # Bind enabling residual mode
         self.view.bind_residual_mode_button(lambda: self.on_resid_button())
@@ -54,6 +51,7 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
         # @todo load_graph should only be called once, though this block could/should be abstracted a little.
         if self.model.strat_graph is not None:
             self.model.resid_or_intru_strat_graph = self.load_graph()
+            print(self.view.image)
             self.view.imscale2 = min(921 / self.view.image.size[0], 702 / self.view.image.size[1])
             self.view.graphcanvas.scale("all", 0, 0, self.view.delta2, self.view.delta2)  # rescale all canvas objects
             self.view.show_image2()
@@ -82,9 +80,8 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
             self.view.set_residual_mode_button_background("light gray")
             self.view.set_intrusive_mode_button_background("light gray")
 
-        # Update lists @todo
-        # self.view.set_resid_label_text
-        # self.view.set_intru_label_text
+        self.view.set_intru_label_text(self.model.intru_list)
+        self.view.set_resid_label_text(self.model.resid_list)
 
     def set_mode(self, mode: Literal["resid", "intru"]) -> None:
         """Set the current mode, and update the view accordingly.
@@ -181,35 +178,31 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
         node = self.nodecheck(x_scal, y_scal)
         outline = nx.get_node_attributes(self.model.resid_or_intru_strat_graph, "color")
         # changes colour of the node outline to represent: intrustive (green), residual (orange) or none (black)
-        if (node in self.resid_list) and (self.mode != "intru"):
-            self.resid_list.remove(node)
+        if (node in self.model.resid_list) and (self.mode != "intru"):
+            self.model.resid_list.remove(node)
             outline[node] = "black"
-        elif (node in self.resid_list) and (self.mode == "intru"):
-            self.resid_list.remove(node)
+        elif (node in self.model.resid_list) and (self.mode == "intru"):
+            self.model.resid_list.remove(node)
             outline[node] = "green"
-            self.intru_list.append(node)
-        elif (node in self.intru_list) and (self.mode != "resid"):
-            self.intru_list.remove(node)
+            self.model.intru_list.append(node)
+        elif (node in self.model.intru_list) and (self.mode != "resid"):
+            self.model.intru_list.remove(node)
             outline[node] = "black"
-        elif (node in self.intru_list) and (self.mode == "resid"):
-            self.intru_list.remove(node)
-            self.resid_list.append(node)
+        elif (node in self.model.intru_list) and (self.mode == "resid"):
+            self.model.intru_list.remove(node)
+            self.model.resid_list.append(node)
             outline[node] = "orange"
-        elif (self.mode == "resid") and (node not in self.resid_list):
-            self.resid_list.append(node)
+        elif (self.mode == "resid") and (node not in self.model.resid_list):
+            self.model.resid_list.append(node)
             outline[node] = "orange"
-        elif self.mode == "intru" and (node not in self.intru_list):
-            self.intru_list.append(node)
+        elif self.mode == "intru" and (node not in self.model.intru_list):
+            self.model.intru_list.append(node)
             outline[node] = "green"
-        self.view.resid_label = ttk.Label(self.view.residcanvas, text=str(self.resid_list).replace("'", "")[1:-1])
-        self.view.resid_label.place(relx=0, rely=0, relwidth=1, relheight=1)
-        self.view.intru_label = ttk.Label(self.view.intrucanvas, text=str(self.intru_list).replace("'", "")[1:-1])
-        self.view.intru_label.place(relx=0, rely=0, relwidth=1, relheight=1)
-        # adds scrollbars to the canvas
-        scroll_bar1 = ttk.Scrollbar(self.view.residcanvas)
-        scroll_bar1.pack(side=tk.RIGHT)
-        scroll_bar2 = ttk.Scrollbar(self.view.intrucanvas)
-        scroll_bar2.pack(side=tk.RIGHT)
+
+        # Update the list of intrusive and residual contexts in-place.
+        self.view.set_intru_label_text(self.model.intru_list)
+        self.view.set_resid_label_text(self.model.resid_list)
+
         # updates the node outline colour
         nx.set_node_attributes(self.model.resid_or_intru_strat_graph, outline, "color")
         # @todo - abstract this into a models.Model or simialr

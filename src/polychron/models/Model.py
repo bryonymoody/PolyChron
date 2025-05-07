@@ -161,10 +161,27 @@ class Model:
 
     @todo - move this a model class for the residual or intrusive page.
     """
+
     resid_or_intru_strat_image: Optional[Image.Image] = field(default=None)
     """Rendered version of the Chronological graph as an image, with node colours set to highlight residual or intrusive nodes.
 
     Formerly PageTwo.image
+
+    @todo - move this a model class for the residual or intrusive page.
+    """
+
+    intru_list: List[str] = field(default_factory=list)
+    """List of intrusive contexts/nodes.
+
+    Formerly PageTwo.intru_list
+
+    @todo - move this a model class for the residual or intrusive page.
+    """
+
+    resid_list: List[str] = field(default_factory=list)
+    """List of residual contexts/nodes.
+
+    Formerly PageTwo.resid_list
 
     @todo - move this a model class for the residual or intrusive page.
     """

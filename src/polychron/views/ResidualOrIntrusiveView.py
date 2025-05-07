@@ -25,10 +25,9 @@ class ResidualOrIntrusiveView(BasePopupView):
         self.icon = None
         self.transx2 = 0
         self.transy2 = 0
-        # in-memory rendered image. @todo should this actually belong to the model?
-        self.image = None
         self.width2 = 0
         self.height2 = 0
+        self.image = None  # in-memory rendered image. @todo should this actually belong to the model?
 
         # @todo cleaner popup separation?
         self.title("Identify Residual or Intrusive Contexts")
@@ -42,6 +41,11 @@ class ResidualOrIntrusiveView(BasePopupView):
             self.canvas, bd=0, bg="white", selectborderwidth=0, highlightthickness=0, insertwidth=0
         )
         self.graphcanvas.place(relx=0.02, rely=0.05, relwidth=0.35, relheight=0.9)
+        self.graphcanvas.update()  # @todo - is this neccessary?
+        self.container = self.graphcanvas.create_rectangle(
+            0, 0, self.graphcanvas.winfo_width(), self.graphcanvas.winfo_height(), width=0
+        )  # @todo this should be the image width and height?
+
         # @todo - this label suggests blue boxes, but green is used. https://github.com/bryonymoody/PolyChron/issues/68
         self.label = tk.Message(
             self,
@@ -50,7 +54,6 @@ class ResidualOrIntrusiveView(BasePopupView):
         self.label.place(relx=0.4, rely=0.05)
         self.resid_title_label = ttk.Label(self.canvas, text="Residual Contexts")
         self.resid_title_label.place(relx=0.4, rely=0.4)
-        self.graphcanvas.update()  # @todo - is this neccessary?
         self.residcanvas = tk.Canvas(
             self.canvas, bd=0, bg="white", selectborderwidth=0, highlightthickness=0, insertwidth=0
         )
@@ -78,9 +81,7 @@ class ResidualOrIntrusiveView(BasePopupView):
         self.intrusive_mode_button = tk.Button(self, text="Intrusive mode")
         self.intrusive_mode_button.place(relx=0.54, rely=0.35, relwidth=0.09, relheight=0.03)
 
-        # @todo - move these to tests
-        # self.set_resid_label_text(["foo", "bar"])
-        # self.set_intru_label_text(["foo", "bar", "baz"])
+        self.show_image2()
 
     def set_resid_label_text(self, resid_list: List[str]):
         """Update the intrusive list
@@ -206,6 +207,9 @@ class ResidualOrIntrusiveView(BasePopupView):
         @todo the logic for this should probably be elsewhere / add parameters?
         @todo - rename this, doesn't need 2
         @todo - can probably refactor this as common canvas zooming behaviour with other views"""
+
+        if self.image is None:
+            return
 
         # startpage = self.controller.get_page('StartPage') # @todo not needed?
         # startpage.update_idletasks()
