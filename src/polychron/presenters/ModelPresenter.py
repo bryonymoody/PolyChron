@@ -269,33 +269,15 @@ class ModelPresenter(BaseFramePresenter):
                 "Chronological DAG already loaded, are you sure you want to write over it? You can copy this model in the file menu if you want to consider multiple models",
             )
             if answer == "yes":
-                print("@todo - finish chronograph_render_wrap")
                 self.refresh_4_new_model()  # @todo self.controller, proj_dir, load=False)
                 model_model.load_check = False
-                # self.littlecanvas2.delete("all")
+                self.view.clear_littlecanvas2()
                 model_model.chrono_dag = self.chronograph_render()
-                # startpage = self.controller.get_page("StartPage")
-                # startpage.CONT_TYPE = self.popup3.CONT_TYPE
-                # startpage.prev_phase = self.popup3.prev_phase
-                # startpage.post_phase = self.popup3.post_phase
-                # startpage.phi_ref = self.popup3.phi_ref
-                # startpage.context_no_unordered = self.popup3.context_no_unordered
-                # startpage.graphcopy = self.popup3.graphcopy
-                # startpage.node_del_tracker = self.popup3.node_del_tracker
             else:
                 pass  # @todo - do somethign in this case? Query intended behaviour.
         else:
-            print("@todo - finish chronograph_render_wrap")
-            # self.littlecanvas2.delete("all")
+            self.view.clear_littlecanvas2()
             model_model.chrono_dag = self.chronograph_render()
-            # startpage = self.controller.get_page("StartPage")
-            # startpage.CONT_TYPE = self.popup3.CONT_TYPE
-            # startpage.prev_phase = self.popup3.prev_phase
-            # startpage.post_phase = self.popup3.post_phase
-            # startpage.phi_ref = self.popup3.phi_ref
-            # startpage.context_no_unordered = self.popup3.context_no_unordered
-            # startpage.graphcopy = self.popup3.graphcopy
-            # startpage.node_del_tracker = self.popup3.node_del_tracker
 
     def chronograph_render(self) -> Optional[nx.DiGraph]:
         """initiates residual checking function then renders the graph when thats done
@@ -314,8 +296,9 @@ class ModelPresenter(BaseFramePresenter):
         # If the chronograph has not already been rendered/loaded for the current state of the model, render it.
         if not model_model.load_check:
             model_model.load_check = True
-            # Check for residuals
+            # Check for residuals & update model state when aproved
             self.resid_check()
+            # @todo - better handling of backing out of this process.
             # Render the chronological graph
             model_model.chrono_image = model_model.render_chrono_png(
                 self.view.littlecanvas2.winfo_width(),
@@ -334,13 +317,12 @@ class ModelPresenter(BaseFramePresenter):
                     model_model.load_check = False
             else:
                 pass  # @todo - should this also set model_model.load_check = False?
-        # @todo - return the actual graph produced
-        print("@todo - chronograph_render needs to return the actual graph object")
-        # return self.popup3.graphcopy @todo
-        return None
+        return model_model.chrono_dag  # superfluous?
 
     def resid_check(self):
         """Loads a text box to check if the user thinks any samples are residual
+
+        When the popupwindows have been closed (correctly) the model will have been updated accordingly.
 
         @todo - should the import of tk be moved into a view  / wrap tk.messagebox?
         @todo - is this the most appropraite place for this method? (think so)

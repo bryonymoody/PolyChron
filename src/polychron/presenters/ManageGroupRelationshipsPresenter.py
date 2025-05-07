@@ -290,8 +290,16 @@ class ManageGroupRelationshipsPresenter(BasePopupPresenter):
         # @todo move this into the model?
         write_dot(self.graphcopy, workdir / "fi_new_chrono")
 
+        # write output variables into the Model once it is confirmed.
+        # @todo - might be better for this presenter to own a deep copy, which on confirmation is updated? Thoguht that won't be useful for any on-disk files?
+        self.model.CONT_TYPE = self.CONT_TYPE
+        self.model.prev_phase = self.prev_phase
+        self.model.post_phase = self.post_phase
+        self.model.phi_ref = self.phi_ref
+        self.model.context_no_unordered = self.context_no_unordered
+        self.model.strat_graph = self.graphcopy  # @todo - is this correct? does it need to be graphcopy in the model?
+        self.model.node_del_tracker = self.node_del_tracker
         # Close the popupwindow
-        # @todo update model data here?
         self.close_window()
 
     def close_window(self, reason: Optional[str] = None):

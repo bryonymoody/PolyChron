@@ -47,9 +47,8 @@ class ManageIntrusiveOrResidualContextsPresenter(BasePopupPresenter):
         self.model.resid_dropdowns = self.view.get_resid_dropdown_selections()
         self.model.intru_dropdowns = self.view.get_intru_dropdown_selections()
 
-        # Create popup3
+        # Create the group relationship manager
         # @todo - abstract this somewhere else? as this will be duplicated in modelPresenter.resid_check
-
         # show the residual check presenter, formerly popupWindow3
         popup_presenter = ManageGroupRelationshipsPresenter(
             self.mediator, ManageGroupRelationshipsView(self.view), self.model
@@ -57,17 +56,6 @@ class ManageIntrusiveOrResidualContextsPresenter(BasePopupPresenter):
         popup_presenter.view.deiconify()
         popup_presenter.view.lift()  # @todo - not sure these are neccesary
         self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
-        # self.popup3 = popupWindow3(startpage, startpage.graph, startpage.littlecanvas2, startpage.phase_rels, self.dropdown_ns, self.dropdown_intru, self.resid_list, self.intru_list)
-
-        # Setup inputs for the MCMC function
-        # @todo - make sure these are in Model for now.
-        # self.CONT_TYPE = self.popup3.CONT_TYPE
-        # self.prev_phase = self.popup3.prev_phase
-        # self.post_phase = self.popup3.post_phase
-        # self.phi_ref = self.popup3.phi_ref
-        # self.context_no_unordered = self.popup3.context_no_unordered
-        # self.graphcopy = self.popup3.graphcopy
-        # self.node_del_tracker = self.popup3.node_del_tracker
 
         # Close the popup
         self.close_view()

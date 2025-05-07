@@ -1,7 +1,7 @@
 import pathlib
 import tempfile
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple
 
 import networkx as nx
 import pandas as pd
@@ -113,7 +113,6 @@ class Model:
     @todo - move function which generates this into this class (or an object for the chronograph with it's other bits)
     @todo - rename?
     @todo - setter&getter with protected member?
-
     """
 
     chrono_image: Optional[Image.Image] = field(default=None)
@@ -209,6 +208,35 @@ class Model:
     @todo - should this belong to the .model.Model?
     @todo - initalse these variables with values from the model on load?
     """
+
+    CONT_TYPE: List[Literal["normal", "residual", "intrusive"]] = field(default_factory=list)
+    """Context types, in the same order as context_no_unordered.
+    
+    Used for calibration / MCMC"""
+
+    prev_phase: List[str] = field(default_factory=list)
+    """List of previous phases, with "start" as the 0th value.
+    
+    Initialised in ManageGroupRelationshipsPresenter.full_chronograph_func
+
+    @todo determine order?"""
+
+    post_phase: List[str] = field(default_factory=list)
+    """List of post phases, with "end" as the final value.
+    
+    Initialised in ManageGroupRelationshipsPresenter.full_chronograph_func
+
+    @todo determine order?"""
+
+    phi_ref: List[str] = field(default_factory=list)
+    """Ordered list of context labels.
+    
+    @todo - ask bryony for a better description"""
+
+    node_del_tracker: List[str] = field(default_factory=list)
+    """List of contexts / nodes for which there was insufficent node or phase info, and has been removed during group relationship management
+    
+    @todo - double check this description"""
 
     def save(self):
         """Save the current state of this model to disk at self.path"""
