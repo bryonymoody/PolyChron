@@ -538,6 +538,7 @@ class ModelView(BaseFrameView):
         @todo - rename method
         @todo - which of these values are actually needed as class members?
         """
+        self.image2 = image  # @todo don't store this in the view.
 
         self.littlecanvas2.delete("all")
         self.littlecanvas2.img = ImageTk.PhotoImage(image)

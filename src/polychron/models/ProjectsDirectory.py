@@ -157,13 +157,13 @@ class ProjectsDirectory:
         demo_model.set_date_df(
             pd.DataFrame(
                 [
-                    ["a", 3400, 80],
-                    ["b", 3300, 75],
-                    ["c", 3250, 80],
-                    ["d", 3225, 75],
-                    ["e", 3200, 80],
-                    ["f", 3150, 75],
-                    ["h", 3100, 65],
+                    ["a", "3400", "80"],
+                    ["b", "3300", "75"],
+                    ["c", "3250", "80"],
+                    ["d", "3225", "75"],
+                    ["e", "3200", "80"],
+                    ["f", "3150", "75"],
+                    ["h", "3100", "65"],
                 ],
                 columns=["context", "date", "error"],
             )
@@ -171,13 +171,13 @@ class ProjectsDirectory:
         demo_model.set_phase_df(
             pd.DataFrame(
                 [
-                    ["a", 2],
-                    ["b", 2],
-                    ["c", 1],
-                    ["d", 1],
-                    ["e", 1],
-                    ["f", 1],
-                    ["h", 1],
+                    ["a", "2"],
+                    ["b", "2"],
+                    ["c", "1"],
+                    ["d", "1"],
+                    ["e", "1"],
+                    ["f", "1"],
+                    ["h", "1"],
                 ],
                 columns=["context", "Group"],
             )
@@ -185,11 +185,11 @@ class ProjectsDirectory:
         demo_model.set_phase_rel_df(
             pd.DataFrame(
                 [
-                    [2, 1],
+                    ["2", "1"],
                 ],
                 columns=["above", "below"],
             ),
-            phase_rels=[(2, 1)],  # @todo - make this actually dynamic
+            phase_rels=[("2", "1")],  # @todo - make this actually dynamic
         )
         # demo_model.set_equal_rel_df(
         #     pd.DataFrame(
@@ -199,5 +199,6 @@ class ProjectsDirectory:
         #         columns=["left", "right"],
         #     )
         # )
+        # @todo - make everytyhign more type safe, so not everything needs to be read in from csv as strings?
 
         return projects

@@ -1,10 +1,10 @@
 from typing import Any, Optional
 
 from ..interfaces import Mediator
-from ..presenters.ResidualCheckPopupPresenter import ResidualCheckPopupPresenter
+from ..views.ManageGroupRelationshipsView import ManageGroupRelationshipsView
 from ..views.ManageIntrusiveOrResidualContextsView import ManageIntrusiveOrResidualContextsView
-from ..views.ResidualCheckPopupView import ResidualCheckPopupView
 from .BasePopupPresenter import BasePopupPresenter
+from .ManageGroupRelationshipsPresenter import ManageGroupRelationshipsPresenter
 
 
 class ManageIntrusiveOrResidualContextsPresenter(BasePopupPresenter):
@@ -51,7 +51,9 @@ class ManageIntrusiveOrResidualContextsPresenter(BasePopupPresenter):
         # @todo - abstract this somewhere else? as this will be duplicated in modelPresenter.resid_check
 
         # show the residual check presenter, formerly popupWindow3
-        popup_presenter = ResidualCheckPopupPresenter(self.mediator, ResidualCheckPopupView(self.view), self.model)
+        popup_presenter = ManageGroupRelationshipsPresenter(
+            self.mediator, ManageGroupRelationshipsView(self.view), self.model
+        )
         popup_presenter.view.deiconify()
         popup_presenter.view.lift()  # @todo - not sure these are neccesary
         self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?

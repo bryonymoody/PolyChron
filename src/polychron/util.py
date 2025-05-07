@@ -448,7 +448,8 @@ def phase_rels_delete_empty(
     """adds edges between phases that had gaps due to no contexts being left in them
 
     @todo - full docstrings and typehints
-    @todo - find a better home"""
+    @todo - find a better home
+    @todo - make this more robust / error nicer if p is not in pahse dict (i.e. when users have not got the correct older/newer group relationships)"""
     phase_relabel(file_graph)
     # adds edges between phases that had gaps due to no contexts being left in them
     label_dict = {}

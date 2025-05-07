@@ -18,20 +18,20 @@ from ..presenters.DatafilePreviewPresenter import DatafilePreviewPresenter
 from ..presenters.MCMCProgressPresenter import MCMCProgressPresenter
 from ..presenters.RemoveContextPresenter import RemoveContextPresenter
 from ..presenters.RemoveStratigraphicRelationshipPresenter import RemoveStratigraphicRelationshipPresenter
-from ..presenters.ResidualCheckPopupPresenter import ResidualCheckPopupPresenter
 from ..presenters.ResidualOrIntrusivePresenter import ResidualOrIntrusivePresenter
 from ..util import imgrender, imgrender_phase, node_coords_fromjson, node_del_fixed
 from ..views.AddContextView import AddContextView
 from ..views.CalibrateModelSelectView import CalibrateModelSelectView
 from ..views.DatafilePreviewView import DatafilePreviewView
+from ..views.ManageGroupRelationshipsView import ManageGroupRelationshipsView
 from ..views.MCMCProgressView import MCMCProgressView
 from ..views.ModelView import ModelView
 from ..views.ProjectSelectProcessPopupView import ProjectSelectProcessPopupView
 from ..views.RemoveContextView import RemoveContextView
 from ..views.RemoveStratigraphicRelationshipView import RemoveStratigraphicRelationshipView
-from ..views.ResidualCheckPopupView import ResidualCheckPopupView
 from ..views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
 from .BaseFramePresenter import BaseFramePresenter
+from .ManageGroupRelationshipsPresenter import ManageGroupRelationshipsPresenter
 from .ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresenter
 
 
@@ -328,7 +328,7 @@ class ModelPresenter(BaseFramePresenter):
                     # Update the view including rebinding events which may have been removed
                     self.view.update_littlecanvas2(model_model.chrono_image)
                     self.view.bind_littlecanvas2_callback("<Configure>", self.on_resize_2)
-                    self.show_image2()
+                    self.view.show_image2()
                 except (RuntimeError, TypeError, NameError):
                     # If any error enountered, make sure to mark the graph as not actually rendered.
                     model_model.load_check = False
@@ -365,8 +365,8 @@ class ModelPresenter(BaseFramePresenter):
             # If not, show the residual check presenter, formerly popupWindow3
             # @todo - store a handle to this popup?, formerly self.popup3?
             # @todo provide a specialised models class as the model
-            popup_presenter = ResidualCheckPopupPresenter(
-                self.mediator, ResidualCheckPopupView(self.view), self.model.get_current_model()
+            popup_presenter = ManageGroupRelationshipsPresenter(
+                self.mediator, ManageGroupRelationshipsView(self.view), self.model.get_current_model()
             )
             popup_presenter.view.deiconify()
             popup_presenter.view.lift()  # @todo - not sure these are neccesary
