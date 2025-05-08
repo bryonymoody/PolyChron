@@ -9,40 +9,9 @@ from tkinter.filedialog import askopenfile
 import pickle
 
 class popupWindow8(object):
-     def __init__(self, master, path):
-         self.master = master
-         self.path = path
-         model_list_prev = [d for d in os.listdir(path) if os.path.isdir(path + '/' + d)]
-         model_list = []
-         for i in model_list_prev:
-             mod_path = str(path) + "/" + str(i) + "/python_only/save.pickle"
-             with open(mod_path, "rb") as f:
-                 data = pickle.load(f)
-                 load_check = data['load_check']
-             if load_check == "loaded":
-                model_list.append(i)
-
-
-             
-         self.top=tk.Toplevel(master)
-         self.top.configure(bg ='white')
-         self.top.title("Model calibration")
-         self.top.geometry("1000x400")
-         self.l=tk.Label(self.top,text="Which model/s would you like calibrate?", bg ='white', font='helvetica 12', fg = '#2f4858')
-         self.l.place(relx = 0.3, rely = 0.1)
-         self.e=tk.Listbox(self.top, font='helvetica 12', fg = '#2f4858', selectmode='multiple')
-         self.e.place(relx = 0.3, rely = 0.2, relheight= 0.5, relwidth = 0.5)
-  #       self.e.bind('<<ListboxSelect>>',tk.CurSelet)
-         for items in model_list:
-             self.e.insert('end',items)
-         self.b=tk.Button(self.top,text='OK',command=self.cleanup,  bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6')
-         self.b.place(relx = 0.3, rely = 0.7)
-         self.b=tk.Button(self.top,text='Select all',command=self.selectall,  bg = '#2F4858', font = ('Helvetica 12 bold'),  fg = '#eff3f6')
-         self.b.place(relx = 0.6, rely = 0.7)
-     def selectall(self):
-         self.e.select_set(0, 'end')
-    
-     def save_state_1(self, j):
+    # Not sure how this is differnet than Model.save in general. 
+    # Triggered during cleanup. 
+    def save_state_1(self, j):
         global mcmc_check, load_check, FILE_INPUT
         
         vars_list_1 = dir(self)
@@ -64,7 +33,7 @@ class popupWindow8(object):
             tk.messagebox.showinfo('Success', 'Your model has been saved')
         except Exception:
             tk.messagebox.showerror('Error', 'File not saved')             
-     def load_cal_data(self, j):
+    def load_cal_data(self, j):
         global mcmc_check, load_check, FILE_INPUT
         with open(self.path + "/" + str(j) + '/python_only/save.pickle', "rb") as f:
             data = pickle.load(f)
@@ -74,16 +43,6 @@ class popupWindow8(object):
             FILE_INPUT = data['file_input']
             load_check = data['load_check']
             mcmc_check = data['mcmc_check']
-        
-     def cleanup(self):
-         global mcmc_check
-         values = [self.e.get(idx) for idx in self.e.curselection()]
-         for i in values:
-             self.load_cal_data(i)
-             self.CONTEXT_NO, self.ACCEPT, self.PHI_ACCEPT, self.PHI_REF, self.A, self.P, self.ALL_SAMPS_CONT, self.ALL_SAMPS_PHI, self.resultsdict, self.all_results_dict = self.master.MCMC_func()
-             mcmc_check = 'mcmc_loaded'
-             self.save_state_1(i)
-         self.top.destroy()
 
 # @todo - not implemented yet, no tkinter code so didn't fit the pattern of other popup classes
 # When runnign this, cli output coutns from 0 to 100 mutliple times, with the occasional "File not saved" due to pickle erroring.

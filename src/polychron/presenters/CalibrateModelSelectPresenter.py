@@ -11,6 +11,7 @@ class CalibrateModelSelectPresenter(BasePopupPresenter):
     Formerly `popupWindow8`, used from "tool > Calibrate multiple projects from project"
 
     @todo - is the triggering label accurate? I.e. is it models not projects?
+    @todo - update isntruction to clarify that only models which have load_it are available?
     """
 
     def __init__(self, mediator: Mediator, view: CalibrateModelSelectView, model: Optional[Any] = None):
@@ -25,19 +26,54 @@ class CalibrateModelSelectPresenter(BasePopupPresenter):
         self.update_view()
 
     def update_view(self) -> None:
-        # self.view.list_box.insert("end", "foo")
-        # self.view.list_box.insert("end", "bar")
-        pass  # @todo
+        # For each model in the project which has required input files, add an entry to the list to choose from
+        # @todo make this part of a custom models class, or ProjectsDirectory
+        model_list = []
+        if self.model is not None:
+            project = self.model.get_current_project()
+            if project is not None:
+                model_list = [name for name, model in project.models.items() if model.load_check]
+
+        self.view.update_model_list(model_list)
 
     def on_ok_button(self) -> None:
-        """When the load button is pressed, validate user input, update the model and perform the appropraite action"""
-        # @todo - validate input and if ok update the model / trigger follow on actions.
+        """When the load button is pressed, validate user input, update the model and perform the appropraite action
+
+        Formerly popupWindow8.cleanup
+
+        @todo progress bar for batch calibration?"""
+
+        if self.model is not None:
+            project = self.model.get_current_project()
+            if project is not None:
+                selected_models = self.view.get_selected_models()
+                print(selected_models)
+                # @todo verify the selected models exist and are loadable.
+                # For each selected model, calibrate and save
+                for model_name in selected_models:
+                    if model_name in project.models:
+                        model = project.models[model_name]
+                        # @todo - why does this not have the < 50000 while loop?
+                        # @todo - as all of these get stored in the model, why not just make mcmc_func mutate itself?
+
+                        (
+                            model.CONTEXT_NO,
+                            model.ACCEPT,
+                            model.PHI_ACCEPT,
+                            model.phi_ref,
+                            model.A,
+                            model.P,
+                            model.ALL_SAMPS_CONT,
+                            model.ALL_SAMPS_PHI,
+                            model.resultsdict,
+                            model.all_results_dict,
+                        ) = model.MCMC_func()
+                        model.mcmc_check = True
+                        model.save()
+        # Close the popup
         self.close_view()
-        # @todo - this is prolly a memory leak.
 
     def on_select_all(self) -> None:
         """When the OK button is pressed, select all rows in the list"""
         # @todo - validate input and if ok update the model / trigger follow on actions.
-        self.view.list_box.select_set(
-            0, "end"
-        )  # @todo - should this be abstracted into the passive view to remove tkinter use here?
+        self.view.select_all_models()

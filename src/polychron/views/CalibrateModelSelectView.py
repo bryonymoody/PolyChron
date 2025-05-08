@@ -1,5 +1,5 @@
 import tkinter as tk
-from typing import Any, Callable, Optional
+from typing import Any, Callable, List, Optional
 
 from .BasePopupView import BasePopupView
 
@@ -21,30 +21,21 @@ class CalibrateModelSelectView(BasePopupView):
         self.geometry("1000x400")
         self.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
 
-        # @todo - implement loading / data population in the presenter / model
-        # self.path = path
-        # model_list_prev = [d for d in os.listdir(path) if os.path.isdir(path + '/' + d)]
-        # model_list = []
-        # for i in model_list_prev:
-        #     mod_path = str(path) + "/" + str(i) + "/python_only/save.pickle"
-        #     with open(mod_path, "rb") as f:
-        #         data = pickle.load(f)
-        #         load_check = data['load_check']
-        #     if load_check == "loaded":
-        #         model_list.append(i)
-
+        # Add instruction text
         self.label = tk.Label(
             self, text="Which model/s would you like calibrate?", bg="white", font="helvetica 12", fg="#2f4858"
         )
         self.label.place(relx=0.3, rely=0.1)
+
+        # Add an (emtpy) list for selections to be made from.
         self.list_box = tk.Listbox(self, font="helvetica 12", fg="#2f4858", selectmode="multiple")
         self.list_box.place(relx=0.3, rely=0.2, relheight=0.5, relwidth=0.5)
-        # self.list_box.bind('<<ListboxSelect>>',tk.CurSelet)
-        # @todo provide method to populate list with data
-        # for items in model_list:
-        #     self.list_box.insert('end',items)
+
+        # Add an OK button
         self.ok_button = tk.Button(self, text="OK", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6")
         self.ok_button.place(relx=0.3, rely=0.7)
+
+        # Add a button for selecting all possible models
         self.select_all_button = tk.Button(
             self, text="Select all", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6"
         )
@@ -59,3 +50,16 @@ class CalibrateModelSelectView(BasePopupView):
         """Bind the callback for when the select_all_button is pressed"""
         if callback is not None:
             self.select_all_button.config(command=callback)
+
+    def update_model_list(self, model_list: List[str]) -> None:
+        """Update the list box with the names of models from the current project which are ready for calibration."""
+        for model_name in model_list:
+            self.list_box.insert("end", model_name)
+
+    def select_all_models(self) -> None:
+        """select all models within the UI"""
+        self.list_box.select_set(0, "end")
+
+    def get_selected_models(self) -> List[str]:
+        """Get a list of selected model names from the listbox"""
+        return [self.list_box.get(i) for i in self.list_box.curselection()]

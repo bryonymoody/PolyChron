@@ -228,17 +228,15 @@ class ModelPresenter(BaseFramePresenter):
         """Callback function for when Tools -> Calibrate multiple projects from project is selected
 
         Opens a new popup box allowing the user to select which models from a list to calibrate as a batch.
-        On close, depending on if any models were selected or not, the models are subsequently calibrated
+
+        Formerly popupWindow8
 
         @todo - this allows multiple open project windows to be created, which is not ideal
+        @todo - this does not autoclose the window on O
         """
         popup_presenter = CalibrateModelSelectPresenter(self.mediator, CalibrateModelSelectView(self.view), self.model)
         # Ensure it is visible and on top
         popup_presenter.view.lift()
-
-        # Calibrate the selected models
-        # see popupwindow8::cleanup
-        pass  # @todo
 
     def chronograph_render_wrap(self):
         """wraps chronograph render so we can assign a variable when runing the func using a button
