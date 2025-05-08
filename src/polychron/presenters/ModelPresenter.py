@@ -896,6 +896,10 @@ class ModelPresenter(BaseFramePresenter):
         if model_model is None:
             return
 
+        # If no node was selected, do nothing.
+        if self.node == "no node":
+            return
+
         stratinfo = self.stratfunc(self.node)
         metadict2 = {}
         metadict = model_model.strat_graph.nodes()[str(self.node)]
