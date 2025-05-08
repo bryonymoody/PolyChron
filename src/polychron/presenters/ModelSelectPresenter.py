@@ -12,7 +12,7 @@ class ModelSelectPresenter(BaseFramePresenter):
     @todo - Sort the list of models?
     """
 
-    def __init__(self, mediator: Mediator, view: ModelSelectView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: ModelSelectView, model: Optional[Any] = None) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

@@ -46,7 +46,7 @@ class ModelPresenter(BaseFramePresenter):
     @todo - move imports which are only required in one function into the function to avoid polluting namespaces?
     """
 
-    def __init__(self, mediator: Mediator, view: ModelView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: ModelView, model: Optional[Any] = None) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 
@@ -238,7 +238,7 @@ class ModelPresenter(BaseFramePresenter):
         # Ensure it is visible and on top
         popup_presenter.view.lift()
 
-    def chronograph_render_wrap(self):
+    def chronograph_render_wrap(self) -> None:
         """wraps chronograph render so we can assign a variable when runing the func using a button
 
         @todo - migrate some of this code into the Model.
@@ -310,7 +310,7 @@ class ModelPresenter(BaseFramePresenter):
                 pass  # @todo - should this also set model_model.load_check = False?
         return model_model.chrono_dag  # superfluous?
 
-    def resid_check(self):
+    def resid_check(self) -> None:
         """Loads a text box to check if the user thinks any samples are residual
 
         When the popupwindows have been closed (correctly) the model will have been updated accordingly.
@@ -572,7 +572,7 @@ class ModelPresenter(BaseFramePresenter):
         # @todo - alert on any unsaved changed?
         self.mediator.close_window("exit")
 
-    def phasing(self):
+    def phasing(self) -> None:
         """Callback function for View > Display Stratigraphic diagram in phases
 
         Runs image render function with phases on seperate levels
@@ -691,7 +691,7 @@ class ModelPresenter(BaseFramePresenter):
         self.view.bind_littlecanvas_callback("<Button-1>", self.move_from)  # Shoudl this not be on_left? @todo
         self.view.bind_littlecanvas_callback("<MouseWheel>", self.on_wheel)
 
-    def testmenu_delete_context(self):
+    def testmenu_delete_context(self) -> None:
         """Callback function from the testmenu for deleting a single context"""
         # Get the Model object
         model_model: Optional[Model] = self.model.get_current_model()
@@ -714,7 +714,7 @@ class ModelPresenter(BaseFramePresenter):
             model_model.record_deleted_node(self.node, nodedel_reason)
             self.view.append_deleted_node(self.node, nodedel_reason)
 
-    def testmenu_add_new_contexts(self):
+    def testmenu_add_new_contexts(self) -> None:
         """Callback function from the testmenu for adding contexts"""
         # Get the Model object
         model_model: Optional[Model] = self.model.get_current_model()
@@ -755,7 +755,7 @@ class ModelPresenter(BaseFramePresenter):
         temp = temp + str(ednodes.replace("'", ""))
         return temp
 
-    def testmenu_delete_strat_with(self):
+    def testmenu_delete_strat_with(self) -> None:
         """Callback function from the testmenu for deleting stratigrahic relationship edges
 
         @todo - further refactoring?
@@ -797,7 +797,7 @@ class ModelPresenter(BaseFramePresenter):
         self.view.remove_testmenu_entry("Delete stratigraphic relationship with " + str(self.edge_nodes[0]))
         self.edge_nodes = []
 
-    def testmenu_place_above(self):
+    def testmenu_place_above(self) -> None:
         """Callback function from the testmenu for adding stratigrahic relationship"""
         # Get the Model object
         model_model: Optional[Model] = self.model.get_current_model()
@@ -819,7 +819,7 @@ class ModelPresenter(BaseFramePresenter):
         self.view.remove_testmenu_entry("Place " + str(self.edge_nodes[0]) + " Above")
         self.edge_nodes = []
 
-    def testmenu_delete_stratigraphic_prep(self):
+    def testmenu_delete_stratigraphic_prep(self) -> None:
         """Callback function from the testmenu for deleting stratigraphic relationships, adding an option to the menu when a node was selected."""
         # Get the Model object
         model_model: Optional[Model] = self.model.get_current_model()
@@ -835,7 +835,7 @@ class ModelPresenter(BaseFramePresenter):
             "Delete stratigraphic relationship with " + str(self.edge_nodes[0])
         )  # @todo use fstrings rather than explicit casting
 
-    def testmenu_equate_context_with(self):
+    def testmenu_equate_context_with(self) -> None:
         """Callback function from the testmenu to equate two contexts (when one has already been selected)"""
         # Get the Model object
         model_model: Optional[Model] = self.model.get_current_model()
@@ -867,7 +867,7 @@ class ModelPresenter(BaseFramePresenter):
         self.view.remove_testmenu_entry("Equate context with " + str(self.comb_nodes[0]))
         self.comb_nodes = []
 
-    def testmenu_equate_context_prep(self):
+    def testmenu_equate_context_prep(self) -> None:
         """Callback function from the testmenu which sets up menu to equate context for when user picks next node"""
         # Get the Model object
         model_model: Optional[Model] = self.model.get_current_model()
@@ -879,7 +879,7 @@ class ModelPresenter(BaseFramePresenter):
         self.comb_nodes = np.append(self.comb_nodes, self.node)
         self.view.append_testmenu_entry("Equate context with " + str(self.comb_nodes[0]))
 
-    def testmenu_supplementary_menu(self):
+    def testmenu_supplementary_menu(self) -> None:
         """Callback function from the testmenu for users to provide additional supplementary data
 
         I.e. launches what was formerly popupWindow2
@@ -888,7 +888,7 @@ class ModelPresenter(BaseFramePresenter):
         """
         pass
 
-    def testmenu_get_supplementary_for_context(self):
+    def testmenu_get_supplementary_for_context(self) -> None:
         """Callback function from the testmenu to show supplementary data for the selected context/node"""
         # Get the Model object
         model_model: Optional[Model] = self.model.get_current_model()
@@ -912,7 +912,7 @@ class ModelPresenter(BaseFramePresenter):
             )
         self.view.update_supplementary_data_table(self.node, meta)
 
-    def testmenu_place_above_prep(self):
+    def testmenu_place_above_prep(self) -> None:
         """Callback function from the testmenu which sets up for placing one context above another"""
         # Get the Model object
         model_model: Optional[Model] = self.model.get_current_model()
@@ -926,14 +926,14 @@ class ModelPresenter(BaseFramePresenter):
         self.edge_nodes = np.append(self.edge_nodes, self.node)
         self.view.append_testmenu_entry("Place " + str(self.edge_nodes[0]) + " Above")
 
-    def refresh_4_new_model(self):
+    def refresh_4_new_model(self) -> None:
         """@todo"""
         print("@todo implement refresh_4_new_model")
         # extra_top = load_Window.new_model(load_Window(MAIN_FRAME), proj_dir, load)
         # self.wait_window(extra_top)
         # # self.save_state_1()
 
-    def pre_click(self, *args):
+    def pre_click(self, *args) -> None:
         """makes test menu appear and removes any previous test menu
 
         formerly StartMenu.preClick"""
@@ -943,7 +943,7 @@ class ModelPresenter(BaseFramePresenter):
         except Exception:
             self.on_right()
 
-    def on_left(self, *args):
+    def on_left(self, *args) -> None:
         """hides menu when left clicking
 
         Formerly StartMenu.onLeft"""
@@ -1042,7 +1042,7 @@ class ModelPresenter(BaseFramePresenter):
         # @todo - Ensure that data is copied, not replaced.
         # model.save()
 
-    def on_resize(self, event):
+    def on_resize(self, event: Any) -> None:
         """resizes image on canvas
 
         Formerly StartPage.resize
@@ -1061,7 +1061,7 @@ class ModelPresenter(BaseFramePresenter):
         if model_model.strat_image is not None:
             self.view.update_littlecanvas_image_only(model_model.strat_image, event)
 
-    def on_resize_2(self, event):
+    def on_resize_2(self, event: Any) -> None:
         """resizes image on canvas2
 
         Formerly StartPage.resize2
@@ -1079,7 +1079,7 @@ class ModelPresenter(BaseFramePresenter):
             # Update the image in the view
             self.view.update_littlecanvas2_image_only(model_model.chrono_image, event)
 
-    def move_from(self, event):
+    def move_from(self, event: Any) -> None:
         """Remembers previous coordinates for scrolling with the mouse
 
         Formerly StartPage.move_from
@@ -1092,7 +1092,7 @@ class ModelPresenter(BaseFramePresenter):
         if model_model.strat_image is not None:
             self.view.littlecanvas.scan_mark(event.x, event.y)  # @todo tkinter in presenter
 
-    def move_to(self, event):
+    def move_to(self, event: Any) -> None:
         """Drag (move) canvas to the new position
 
         Formerly StartPage.move_to
@@ -1106,7 +1106,7 @@ class ModelPresenter(BaseFramePresenter):
             self.view.littlecanvas.scan_dragto(event.x, event.y, gain=1)  # @todo tkinter in presenter
             self.view.show_image()
 
-    def move_from2(self, event):
+    def move_from2(self, event: Any) -> None:
         """Remembers previous coordinates for scrolling with the mouse
 
         Formerly StartPage.move_from2
@@ -1119,7 +1119,7 @@ class ModelPresenter(BaseFramePresenter):
         if model_model.chrono_image is not None:
             self.view.littlecanvas2.scan_mark(event.x, event.y)  # @todo tkinter in presenter
 
-    def move_to2(self, event):
+    def move_to2(self, event: Any) -> None:
         """Drag (move) canvas to the new position
 
         Formerly StartPage.move_to2
@@ -1133,7 +1133,7 @@ class ModelPresenter(BaseFramePresenter):
             self.view.littlecanvas2.scan_dragto(event.x, event.y, gain=1)  # @todo tkinter in presenter
             self.view.show_image2()
 
-    def on_wheel(self, event):
+    def on_wheel(self, event: Any) -> None:
         """Zoom with mouse wheel for the stratigraphic image canvas
 
         Formerly StartPage.wheel
@@ -1141,7 +1141,7 @@ class ModelPresenter(BaseFramePresenter):
         @todo refactor to use view methods rather than directly accessing view members and leaking tkinter"""
         self.view.wheel(event)
 
-    def on_wheel2(self, event):
+    def on_wheel2(self, event: Any) -> None:
         """Zoom with mouse wheel for the chronological image canvas
 
         Formerly StartPage.wheel2
@@ -1149,7 +1149,7 @@ class ModelPresenter(BaseFramePresenter):
         @todo refactor to use view methods rather than directly accessing view members and leaking tkinter"""
         self.view.wheel2(event)
 
-    def addedge(self, edgevec):
+    def addedge(self, edgevec: List[str]) -> None:
         """adds an edge relationship (edgevec) to graph and rerenders the graph
 
         Formerly StartPage.addedge
@@ -1180,7 +1180,7 @@ class ModelPresenter(BaseFramePresenter):
             )  # @todo - get the view width/height cleaner
         self.view.update_littlecanvas(model_model.strat_image)
 
-    def stratfunc(self, node):
+    def stratfunc(self, node: str) -> None:
         """obtains strat relationships for node
 
         Formerly StartPage.stratfunc
@@ -1214,7 +1214,7 @@ class ModelPresenter(BaseFramePresenter):
                 str2 = str2 + ", " + j
         return [str1, str2]
 
-    def nodecheck(self, x_current, y_current) -> str:
+    def nodecheck(self, x_current: int, y_current: int) -> str:
         """returns the node that corresponds to the mouse cooridinates
 
         Formerly StartPage.nodecheck

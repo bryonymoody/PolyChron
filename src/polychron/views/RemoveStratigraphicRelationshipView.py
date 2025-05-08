@@ -13,7 +13,7 @@ class RemoveStratigraphicRelationshipView(BasePopupView):
     @todo - Add the option to not remove the relationship, i.e. cancel / go back?
     """
 
-    def __init__(self, parent: tk.Frame):
+    def __init__(self, parent: tk.Frame) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
         super().__init__(parent)
@@ -49,7 +49,7 @@ class RemoveStratigraphicRelationshipView(BasePopupView):
         if callback is not None:
             self.ok_button.config(command=callback)
 
-    def update_label(self, edge_label: Optional[str] = None):
+    def update_label(self, edge_label: Optional[str] = None) -> None:
         """Update the label text to include the edge being removed."""
         edge_label = "these contexts" if edge_label is None else f"'{edge_label}'"
         self.label.configure(text=f"Why are you deleting the stratigraphic relationship between {edge_label}?")

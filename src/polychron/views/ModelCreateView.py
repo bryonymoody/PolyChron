@@ -10,7 +10,7 @@ class ModelCreateView(BaseFrameView):
     @todo @enhancement - Include the current project name in this view.
     """
 
-    def __init__(self, parent: tk.Frame):
+    def __init__(self, parent: tk.Frame) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
         super().__init__(parent)

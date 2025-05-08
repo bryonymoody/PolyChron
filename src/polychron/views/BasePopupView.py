@@ -10,7 +10,7 @@ class BasePopupView(tk.Toplevel):
     @todo - should this contain a Toplevel rahter than extend one? I.e. prevent tkinter leaking out of the view
     """
 
-    def __init__(self, parent: tk.Toplevel):
+    def __init__(self, parent: tk.Toplevel) -> None:
         """Call the base class (Toplevel) constructor"""
         # Call the tk.Toplevel's constructor providing the parent/master element
         super().__init__(parent)
@@ -18,12 +18,12 @@ class BasePopupView(tk.Toplevel):
         self.parent = parent
         """A reference to the parent frame"""
 
-    def register_keybinds(self, bindings: Dict[str, Callable[[], Optional[Any]]]):
+    def register_keybinds(self, bindings: Dict[str, Callable[[], Optional[Any]]]) -> None:
         """Register window-wide key bindings"""
         for sequence, callback in bindings.items():
             self.bind(sequence, callback)
 
-    def register_protocols(self, bindings: Dict[str, Callable[[], Optional[Any]]]):
+    def register_protocols(self, bindings: Dict[str, Callable[[], Optional[Any]]]) -> None:
         """Register protocols with the window
 
         i.e. what happens when the window is closed using the OS decorations"""

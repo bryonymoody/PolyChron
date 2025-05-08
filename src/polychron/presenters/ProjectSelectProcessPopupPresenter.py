@@ -26,7 +26,7 @@ class ProjectSelectProcessPopupPresenter(BasePopupPresenter, Mediator):
     @todo - rename Mediator & Mediator protocols, something like MultiPresenterMediator?
     """
 
-    def __init__(self, mediator: Mediator, view: ProjectSelectProcessPopupView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: ProjectSelectProcessPopupView, model: Optional[Any] = None) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 
@@ -52,13 +52,13 @@ class ProjectSelectProcessPopupPresenter(BasePopupPresenter, Mediator):
     def update_view(self) -> None:
         pass  # @todo
 
-    def get_presenter(self, key: Optional[str]):
+    def get_presenter(self, key: Optional[str]) -> Optional[BaseFramePresenter]:
         if key is not None and key in self.presenters:
             return self.presenters[key]
         else:
             return None
 
-    def switch_presenter(self, key: Optional[str]):
+    def switch_presenter(self, key: Optional[str]) -> None:
         if new_presenter := self.get_presenter(key):
             # Hide the current presenter if set
             if current_presenter := self.get_presenter(self.current_presenter_key):
@@ -76,7 +76,7 @@ class ProjectSelectProcessPopupPresenter(BasePopupPresenter, Mediator):
         else:
             raise Exception("@todo better error missing frame")
 
-    def close_window(self, reason: str = None):
+    def close_window(self, reason: str = None) -> None:
         # 3.10 required for match, so using elif
         if reason is None:
             pass

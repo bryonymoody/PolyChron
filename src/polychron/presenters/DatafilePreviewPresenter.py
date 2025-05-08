@@ -11,7 +11,7 @@ class DatafilePreviewPresenter(BasePopupPresenter):
     Formerly `popupWindow7`, used when opening a csv-like file
     """
 
-    def __init__(self, mediator: Mediator, view: DatafilePreviewView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: DatafilePreviewView, model: Optional[Any] = None) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

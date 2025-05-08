@@ -3,7 +3,7 @@ from tkinter import ttk
 from typing import Any, Callable, Dict, Optional, Tuple
 
 import pandas as pd
-from PIL import ImageTk
+from PIL import Image, ImageTk
 
 from .BaseFrameView import BaseFrameView
 
@@ -19,7 +19,7 @@ class ModelView(BaseFrameView):
         @todo - Make the testmenu have a default option of "Node Action" which appears to have been intended?
     """
 
-    def __init__(self, parent: tk.Frame):
+    def __init__(self, parent: tk.Frame) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the base class constructor
         super().__init__(parent)
@@ -283,19 +283,19 @@ class ModelView(BaseFrameView):
         if callback is not None:
             self.data_button.config(command=callback)
 
-    def bind_littlecanvas_callback(self, sequence: str, callback: Callable[[], Optional[Any]]):
+    def bind_littlecanvas_callback(self, sequence: str, callback: Callable[[], Optional[Any]]) -> None:
         """Bind a single callback to the specified sequence on the littlecanvas. This is an alternative to an all in one bind method, as the canvas repeatedly gets cleared"""
         self.littlecanvas.bind(sequence, callback)
 
-    def unbind_littlecanvas_callback(self, sequence: str):
+    def unbind_littlecanvas_callback(self, sequence: str) -> None:
         """Unbind a single callback to the specified sequence on the littlecanvas. This is an alternative to an all in one bind method, as the canvas repeatedly gets cleared"""
         self.littlecanvas.unbind(sequence)
 
-    def bind_littlecanvas2_callback(self, sequence: str, callback: Callable[[], Optional[Any]]):
+    def bind_littlecanvas2_callback(self, sequence: str, callback: Callable[[], Optional[Any]]) -> None:
         """Bind a single callback to the specified sequence on the littlecanvas2. This is an alternative to an all in one bind method, as the canvas repeatedly gets cleared"""
         self.littlecanvas2.bind(sequence, callback)
 
-    def unbind_littlecanvas2_callback(self, sequence: str):
+    def unbind_littlecanvas2_callback(self, sequence: str) -> None:
         """Unbind a single callback to the specified sequence on the littlecanvas2. This is an alternative to an all in one bind method, as the canvas repeatedly gets cleared"""
         self.littlecanvas2.unbind(sequence)
 
@@ -465,7 +465,7 @@ class ModelView(BaseFrameView):
         self.datalittlecanvas.create_text(10, 110, anchor="nw", text=rels, font=("Helvetica 12 bold"), fill=col4)
         self.datalittlecanvas.pack()
 
-    def update_littlecanvas(self, image):
+    def update_littlecanvas(self, image) -> None:
         """Update the image within the littlecanvas element
 
         @todo bindings"""
@@ -484,7 +484,7 @@ class ModelView(BaseFrameView):
         self.littlecanvas.scale("all", 0, 0, self.delta, self.delta)  # rescale all canvas objects
         self.show_image()
 
-    def show_image(self):
+    def show_image(self) -> None:
         """Show image on the Canvas
 
         @todo the logic for this should probably be elsewhere / add parameters?"""
@@ -530,13 +530,13 @@ class ModelView(BaseFrameView):
             self.transx, self.transy = bbox2[0], bbox2[1]
             self.littlecanvas.imagetk = self.imagetk
 
-    def clear_littlecanvas2(self):
+    def clear_littlecanvas2(self) -> None:
         """Delete all elments from within the littlecavnas2
 
         @todo - rename to mention chrono graph instead."""
         self.littlecanvas2.delete("all")
 
-    def update_littlecanvas2(self, image):
+    def update_littlecanvas2(self, image: Image.Image) -> None:
         """Update the image within the littlecanvas2 element - i.e. the chronological graph.
 
         @todo type hints
@@ -558,7 +558,7 @@ class ModelView(BaseFrameView):
         self.littlecanvas2.scale("all", 0, 0, self.delta2, self.delta2)  # rescale all canvas objects
         self.show_image2()
 
-    def show_image2(self):
+    def show_image2(self) -> None:
         """Show image on the 2nd Canvas
 
         @todo the logic for this should probably be elsewhere / add parameters?
@@ -604,7 +604,7 @@ class ModelView(BaseFrameView):
             self.transx2, self.transy2 = bbox2[0], bbox2[1]
             self.littlecanvas2.imagetk2 = self.imagetk2
 
-    def update_littlecanvas_image_only(self, image, event):
+    def update_littlecanvas_image_only(self, image: Image.Image, event: Any) -> None:
         """Update the image within the littlecanvas, during resizing.
 
         @todo - this and the other update method can probably be combined
@@ -614,7 +614,7 @@ class ModelView(BaseFrameView):
         self.h_1 = event.height  # @todo - not used
         self.littlecanvas.itemconfig(self.littlecanvas_img, image=self.littlecanvas.img)
 
-    def update_littlecanvas2_image_only(self, image, event):
+    def update_littlecanvas2_image_only(self, image: Image.Image, event: Any) -> None:
         """Update the image within the littlecanvas2, during resizing.
 
         @todo - this and the other update method can probably be combined
@@ -624,7 +624,7 @@ class ModelView(BaseFrameView):
         self.h_1 = event.height  # @todo - not used
         self.littlecanvas.itemconfig(self.littlecanvas_img, image=self.littlecanvas.img)
 
-    def wheel(self, event):
+    def wheel(self, event: Any) -> None:
         """Zoom with mouse wheel for the stratigraphic image canvas
 
         Formerly (part of) StartPage.wheel
@@ -654,7 +654,7 @@ class ModelView(BaseFrameView):
         self.littlecanvas.scale("all", 0, 0, scale, scale)  # rescale all canvas objects
         self.show_image()
 
-    def wheel2(self, event):
+    def wheel2(self, event: Any) -> None:
         """Zoom with mouse wheel for the stratigraphic image canvas
 
         Formerly (part of) StartPage.wheel
@@ -706,7 +706,7 @@ class ModelView(BaseFrameView):
         """
         self.tree3.insert("", "end", text=edge_label, values=[meta])
 
-    def append_testmenu_entry(self, text) -> None:
+    def append_testmenu_entry(self, text: str) -> None:
         """Append an entry to the end of the right click testmenu.
 
         @todo - insert instead?
@@ -720,7 +720,7 @@ class ModelView(BaseFrameView):
             command=self.__testmenu_callback,
         )
 
-    def remove_testmenu_entry(self, text) -> None:
+    def remove_testmenu_entry(self, text: str) -> None:
         """Remove an entry to the end of the right click testmenu.
 
         @todo - edit instead of overwrite self.testmenu"""

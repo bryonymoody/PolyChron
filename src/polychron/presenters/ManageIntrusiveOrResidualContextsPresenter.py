@@ -13,7 +13,9 @@ class ManageIntrusiveOrResidualContextsPresenter(BasePopupPresenter):
     When MCMC calibration has completed, and the popup closes, the DatingResults tab should be loaded
     """
 
-    def __init__(self, mediator: Mediator, view: ManageIntrusiveOrResidualContextsView, model: Optional[Any] = None):
+    def __init__(
+        self, mediator: Mediator, view: ManageIntrusiveOrResidualContextsView, model: Optional[Any] = None
+    ) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

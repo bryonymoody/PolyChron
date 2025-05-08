@@ -1,5 +1,7 @@
 import re
 import sys
+import tkinter as tk
+from tkinter import ttk
 from typing import Optional
 
 from ..interfaces import Mediator
@@ -10,22 +12,22 @@ from .BasePopupPresenter import BasePopupPresenter
 
 # @todo - refactor this, should be doable without a stdrediector
 class StdoutRedirector(object):
-    def __init__(self, text_area, pb1):
+    def __init__(self, text_area: tk.Label, pb1: ttk.Progressbar) -> None:
         """allows us to rimedirect
         output to the app canvases"""
         self.text_area = text_area
         self.pb1 = pb1
 
-    def write(self, str):
+    def write(self, text: str) -> None:
         """writes to canvas"""
         self.pb1.update_idletasks
-        str1 = re.findall(r"\d+", str)
+        str1 = re.findall(r"\d+", text)
         if len(str1) != 0:
             self.text_area["text"] = f"{str1[0]}% complete"
             self.pb1["value"] = f"{str1[0]}"
             self.text_area.update_idletasks()
 
-    def flush(self):
+    def flush(self) -> None:
         pass
 
 
@@ -37,7 +39,7 @@ class MCMCProgressPresenter(BasePopupPresenter):
     @todo - when calibrated, this may do multiple passes, but the progress bad is only for the current pass
     """
 
-    def __init__(self, mediator: Mediator, view: MCMCProgressView, model: Optional[Model] = None):
+    def __init__(self, mediator: Mediator, view: MCMCProgressView, model: Optional[Model] = None) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 
@@ -49,7 +51,7 @@ class MCMCProgressPresenter(BasePopupPresenter):
         # Update view information to reflect the current state of the model
         self.update_view()
 
-    def run(self):
+    def run(self) -> None:
         """Runs model calibration for the current model
 
         @todo - move the actual calibration into the model

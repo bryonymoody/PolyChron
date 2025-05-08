@@ -20,7 +20,7 @@ class ManageGroupRelationshipsPresenter(BasePopupPresenter):
     @todo - createa a popup for this and the confirmation version
     """
 
-    def __init__(self, mediator: Mediator, view: ManageGroupRelationshipsView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: ManageGroupRelationshipsView, model: Optional[Any] = None) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 
@@ -147,7 +147,7 @@ class ManageGroupRelationshipsPresenter(BasePopupPresenter):
         self.view.on_back()
         self.view.update_tree_2col(self.model.phase_rels)
 
-    def get_coords(self):
+    def get_coords(self) -> None:
         """Triggered when confirming the provided layout of phase relationships.
 
         Builds prev_dict, post_dict and menudict based on the relative postiions of the phase boxes before updating the view to the 2nd stage.
@@ -302,6 +302,6 @@ class ManageGroupRelationshipsPresenter(BasePopupPresenter):
         # Close the popupwindow
         self.close_window()
 
-    def close_window(self, reason: Optional[str] = None):
+    def close_window(self, reason: Optional[str] = None) -> None:
         # Close the view
         self.view.destroy()

@@ -7,7 +7,7 @@ from .BaseFramePresenter import BaseFramePresenter
 
 
 class ProjectCreatePresenter(BaseFramePresenter):
-    def __init__(self, mediator: Mediator, view: ProjectCreateView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: ProjectCreateView, model: Optional[Any] = None) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

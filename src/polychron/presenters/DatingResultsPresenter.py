@@ -105,7 +105,7 @@ class DatingResultsPresenter(BaseFramePresenter):
         Formerly clear_results_list"""
         self.clear_results_list()  # @todo
 
-    def pre_click(self, *args):
+    def pre_click(self, *args) -> None:
         """makes test menu appear and removes any previous test menu
 
         formerly PageOne.preClick"""
@@ -115,7 +115,7 @@ class DatingResultsPresenter(BaseFramePresenter):
         except Exception:
             self.on_right()
 
-    def on_left(self, *args):
+    def on_left(self, *args) -> None:
         """hides menu when left clicking
 
         Formerly PageOne.onLeft"""
@@ -149,7 +149,7 @@ class DatingResultsPresenter(BaseFramePresenter):
         @todo refactor to use view methods rather than directly accessing view members and leaking tkinter"""
         self.view.wheel2(event)
 
-    def on_canvas_move_from2(self, event):
+    def on_canvas_move_from2(self, event: Any) -> None:
         """Remembers previous coordinates for scrolling with the mouse
 
         Formerly PageOne.move_from2
@@ -162,7 +162,7 @@ class DatingResultsPresenter(BaseFramePresenter):
         if model_model.chrono_image is not None:
             self.view.littlecanvas2.scan_mark(event.x, event.y)  # @todo tkinter in presenter
 
-    def on_canvas_move_to2(self, event):
+    def on_canvas_move_to2(self, event: Any) -> None:
         """Drag (move) canvas to the new position
 
         Formerly PageOne.move_to2
@@ -200,7 +200,7 @@ class DatingResultsPresenter(BaseFramePresenter):
                 # Update the view with the image
                 self.view.update_littlecanvas2(model_model.chrono_image)
 
-    def tkraise(self, aboveThis=None) -> None:
+    def tkraise(self, aboveThis: Optional[Any] = None) -> None:
         """Loads the graph and ensures this window is raised above another.
 
         @todo - make this get called when switcing to this presenter.
@@ -209,7 +209,7 @@ class DatingResultsPresenter(BaseFramePresenter):
         self.chronograph_render_post()
         super().tkraise(aboveThis)
 
-    def nodecheck(self, x_current, y_current):
+    def nodecheck(self, x_current: int, y_current: int) -> str:
         """returns the node that corresponds to the mouse cooridinates
 
         Formerly PageOne.nodecheck
@@ -241,7 +241,7 @@ class DatingResultsPresenter(BaseFramePresenter):
                 nx.set_node_attributes(model_model.chrono_dag, outline, "color")
         return node_inside
 
-    def clear_results_list(self):
+    def clear_results_list(self) -> None:
         """deletes nodes from results lists
 
         Formerly PageOne.clear_results_list
@@ -254,7 +254,7 @@ class DatingResultsPresenter(BaseFramePresenter):
         # Clear the table.
         self.view.clear_tree_phases()
 
-    def get_hpd_interval(self):
+    def get_hpd_interval(self) -> None:
         """loads hpd intervals into the results page
 
         Formerly PageOne.get_hpd_interval
@@ -292,7 +292,7 @@ class DatingResultsPresenter(BaseFramePresenter):
                 # Update the view
                 self.view.update_hpd_interval(USER_INP, intervals)
 
-    def on_testmenu2(self, currentevent):
+    def on_testmenu2(self, currentevent: Any) -> None:
         """finds nodes in the chronodag on results page
 
         Formerly PageOn.node_finder
@@ -392,7 +392,7 @@ class DatingResultsPresenter(BaseFramePresenter):
             "Get time elapsed between " + str(self.phase_len_nodes[0]) + " and another context"
         )
 
-    def mcmc_output(self):
+    def mcmc_output(self) -> None:
         """loads posterior density plots into the graph
 
         Formerly PageOne.mcmc_output"""

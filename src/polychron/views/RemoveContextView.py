@@ -10,7 +10,7 @@ class RemoveContextView(BasePopupView):
     Formerly `popupWindow5`
     """
 
-    def __init__(self, parent: tk.Frame):
+    def __init__(self, parent: tk.Frame) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
         super().__init__(parent)
@@ -45,7 +45,7 @@ class RemoveContextView(BasePopupView):
         if callback is not None:
             self.ok_button.config(command=callback)
 
-    def update_label(self, context: Optional[str] = None):
+    def update_label(self, context: Optional[str] = None) -> None:
         """Update the label text to include the context being removed."""
         context_name = "this context" if context is None else f"'{context}'"
         self.label.configure(text=f"Why are you removing {context_name} from your stratigraphy?")

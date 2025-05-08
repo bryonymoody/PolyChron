@@ -6,7 +6,7 @@ from .BasePopupView import BasePopupView
 class ProjectSelectProcessPopupView(BasePopupView):
     """View for the project selection popup window, which contains the frames that the view(s) for each step are placed into and switched between."""
 
-    def __init__(self, parent: tk.Frame):
+    def __init__(self, parent: tk.Frame) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
         super().__init__(parent)

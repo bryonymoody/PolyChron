@@ -434,7 +434,7 @@ class Model:
             outp = None  # formerly 'No_image'
         return outp
 
-    def reopen_strat_image(self):
+    def reopen_strat_image(self) -> None:
         """Re-open the stratigraphic image from disk
 
         Used when the window is reiszed as the in memory copy may have been resized
@@ -451,7 +451,7 @@ class Model:
         if png_path.is_file():
             self.strat_image = Image.open(png_path)
 
-    def reopen_chrono_image(self):
+    def reopen_chrono_image(self) -> None:
         """Re-open the chrono image from disk
 
         Used when the window is reiszed as the in memory copy may have been resized

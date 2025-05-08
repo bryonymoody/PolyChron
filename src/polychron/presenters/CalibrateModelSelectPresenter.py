@@ -14,7 +14,7 @@ class CalibrateModelSelectPresenter(BasePopupPresenter):
     @todo - update isntruction to clarify that only models which have load_it are available?
     """
 
-    def __init__(self, mediator: Mediator, view: CalibrateModelSelectView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: CalibrateModelSelectView, model: Optional[Any] = None) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

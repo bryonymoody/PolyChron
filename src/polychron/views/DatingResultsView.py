@@ -21,7 +21,7 @@ class DatingResultsView(BaseFrameView):
     @todo - rename a lot of the tk references.
     """
 
-    def __init__(self, parent: tk.Frame):
+    def __init__(self, parent: tk.Frame) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
         super().__init__(parent)
@@ -462,7 +462,7 @@ class DatingResultsView(BaseFrameView):
         else:
             return None, None
 
-    def update_hpd_interval(self, USER_INP: str, intervals: List[Tuple[str, str]]):
+    def update_hpd_interval(self, USER_INP: str, intervals: List[Tuple[str, str]]) -> None:
         """UI parts of loads hpd intervals into the results page
 
         Formerly PageOne.get_hpd_interval
@@ -482,7 +482,7 @@ class DatingResultsView(BaseFrameView):
         scrollbar.grid(row=0, column=1, sticky="nsew")
         self.littlecanvas_a.create_text(150, 80, text=hpd_str, fill="#0A3200")
 
-    def update_hpd_interval_3col(self, intervals: List[Tuple[str, str, str]]):
+    def update_hpd_interval_3col(self, intervals: List[Tuple[str, str, str]]) -> None:
         """UI parts of loads hpd intervals into the results page, with 3 clumsn this time?
 
         Formerly PageOne.get_hpd_interval
@@ -531,7 +531,7 @@ class DatingResultsView(BaseFrameView):
             command=self.__testmenu2_callback,
         )
 
-    def hide_canvas_plt(self):
+    def hide_canvas_plt(self) -> None:
         if self.canvas_plt is not None:
             self.canvas_plt.get_tk_widget().pack_forget()
 
@@ -542,12 +542,12 @@ class DatingResultsView(BaseFrameView):
         if id:
             self.littlecanvas3.delete(self.littlecanvas3_id)
 
-    def clear_tree_phases(self):
+    def clear_tree_phases(self) -> None:
         if self.tree_phases is not None:
             for item in self.tree_phases.get_children():
                 self.tree_phases.delete(item)
 
-    def update_littlecanvas3(self, results_list: List[str]):
+    def update_littlecanvas3(self, results_list: List[str]) -> None:
         """Update the contents of littlecanvas3
 
         Formerly part of PageOne.chornograph_render_post
@@ -565,13 +565,13 @@ class DatingResultsView(BaseFrameView):
             5, 10, anchor="nw", text=cont_canvas_list, fill="#0A3200", font=("Helvetica 12 bold")
         )
 
-    def show_canvas_plot(self, fig: Figure):
+    def show_canvas_plot(self, fig: Figure) -> None:
         """Add (or reaplce) the visible plot with the provided figure"""
         self.canvas_plt = FigureCanvasTkAgg(fig, master=self.littlecanvas)
         self.canvas_plt.get_tk_widget().place(relx=0, rely=0, relwidth=1)
         self.canvas_plt.draw_idle()
 
-    def show_canvas_plot_with_toolbar(self, fig: Figure):
+    def show_canvas_plot_with_toolbar(self, fig: Figure) -> None:
         """Add (or reaplce) the visible plot with the provided figure
 
         @todo - combine with show_canvas_plot, but one uses pack and the other uses place"""

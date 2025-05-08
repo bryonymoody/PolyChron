@@ -24,7 +24,7 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
     @todo - this needs to be closable by child popups, may need Mediator changes (or just in mediater.close call the parents mediator close based on the reason?)
     """
 
-    def __init__(self, mediator: Mediator, view: ResidualOrIntrusiveView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: ResidualOrIntrusiveView, model: Optional[Any] = None) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 
@@ -111,7 +111,7 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
         self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
         # @todo - to match polychron 0.1, this should also destroy the parent window, but that prevents back actually being a back button.
 
-    def move_from2(self, event):
+    def move_from2(self, event: Any) -> None:
         """Remembers previous coordinates for scrolling with the mouse
 
         Formerly PageTwo.move_from2
@@ -125,7 +125,7 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
         if self.view.image is not None:  # @todo is view.image correct here?
             self.view.graphcanvas.scan_mark(event.x, event.y)  # @todo tkinter in presenter
 
-    def move_to2(self, event):
+    def move_to2(self, event: Any) -> None:
         """Drag (move) canvas to the new position
 
         Formerly PageTwo.move_to2
@@ -140,7 +140,7 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
             self.view.graphcanvas.scan_dragto(event.x, event.y, gain=1)  # @todo tkinter in presenter
             self.view.show_image2()
 
-    def on_wheel2(self, event):
+    def on_wheel2(self, event: Any) -> None:
         """Zoom with mouse wheel for the chronological image canvas
 
         Formerly PageTwo.wheel2
@@ -149,7 +149,7 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
         @todo - rename this, doesn't need the 2?"""
         self.view.wheel2(event)
 
-    def resid_node_click(self, event):
+    def resid_node_click(self, event: Any) -> None:
         """Gets node that you're clicking on and sets it as the right colour depending on if it's residual or intrusive
 
         Formerly PageTwo.resid_node_click
@@ -224,7 +224,7 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
 
         return node
 
-    def nodecheck(self, x_current, y_current):
+    def nodecheck(self, x_current: int, y_current: int) -> str:
         """returns the node that corresponds to the mouse cooridinates
 
         Formerly PageTwo.nodecheck
@@ -263,7 +263,7 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
                     nx.set_node_attributes(self.model.resid_or_intru_strat_graph, outline, "color")
         return node_inside
 
-    def load_graph(self):
+    def load_graph(self) -> None:
         """loads graph on results page
 
         Formerly PageTwo.load_graph

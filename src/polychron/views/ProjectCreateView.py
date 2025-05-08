@@ -8,7 +8,7 @@ from .BaseFrameView import BaseFrameView
 class ProjectCreateView(BaseFrameView):
     """Passive view for project creation"""
 
-    def __init__(self, parent: tk.Frame):
+    def __init__(self, parent: tk.Frame) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
         super().__init__(parent)

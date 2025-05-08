@@ -11,7 +11,9 @@ class RemoveStratigraphicRelationshipPresenter(BasePopupPresenter):
     Formerly `popupWindow6`, called by StartPage.edge_del_popup, triggered when "Delete stratigraphic relationship" is selected on an edge
     """
 
-    def __init__(self, mediator: Mediator, view: RemoveStratigraphicRelationshipView, model: Optional[Any] = None):
+    def __init__(
+        self, mediator: Mediator, view: RemoveStratigraphicRelationshipView, model: Optional[Any] = None
+    ) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

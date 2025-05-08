@@ -11,10 +11,9 @@ class ResidualOrIntrusiveView(BasePopupView):
     """View for users to provide input on whether contexts are residual or intrusive during chronological graph rendering
 
     Formerly part of `PageTwo`
-
     """
 
-    def __init__(self, parent: tk.Frame):
+    def __init__(self, parent: tk.Frame) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
         super().__init__(parent)
@@ -83,14 +82,14 @@ class ResidualOrIntrusiveView(BasePopupView):
 
         self.show_image2()
 
-    def set_resid_label_text(self, resid_list: List[str]):
+    def set_resid_label_text(self, resid_list: List[str]) -> None:
         """Update the intrusive list
 
         @todo - check this behaves as intended, it might make a copy?
         """
         self.resid_label["text"] = str(resid_list).replace("'", "")[1:-1]
 
-    def set_intru_label_text(self, intru_list: List[str]):
+    def set_intru_label_text(self, intru_list: List[str]) -> None:
         """Update the intrusive list
 
         @todo - check this behaves as intended, it might make a copy?
@@ -112,10 +111,10 @@ class ResidualOrIntrusiveView(BasePopupView):
         if callback is not None:
             self.intrusive_mode_button.config(command=callback)
 
-    def set_residual_mode_button_background(self, color: str):
+    def set_residual_mode_button_background(self, color: str) -> None:
         self.residual_mode_button.config(background=str(color))
 
-    def set_intrusive_mode_button_background(self, color: str):
+    def set_intrusive_mode_button_background(self, color: str) -> None:
         self.intrusive_mode_button.config(background=str(color))
 
     def bind_graphcanvas_events(
@@ -138,7 +137,7 @@ class ResidualOrIntrusiveView(BasePopupView):
         self.graphcanvas.bind("<Button-1>", callback_move_from)
         self.graphcanvas.bind("<B1-Motion>", callback_move_to)
 
-    def wheel2(self, event):
+    def wheel2(self, event: Any) -> None:
         """Zoom with mouse wheel
 
         Formerly (part of) PageTwo.wheel
@@ -169,7 +168,7 @@ class ResidualOrIntrusiveView(BasePopupView):
         self.graphcanvas.scale("all", 0, 0, scale2, scale2)  # rescale all canvas objects
         self.show_image2()
 
-    def autozoom(self, event):
+    def autozoom(self, event: Any) -> None:
         """Zoom with mouse wheel
 
         Formerly StartPage.autozoom
@@ -201,7 +200,7 @@ class ResidualOrIntrusiveView(BasePopupView):
         self.graphcanvas.scale("all", 0, 0, scale2, scale2)  # rescale all canvas objects
         self.show_image2()
 
-    def show_image2(self):
+    def show_image2(self) -> None:
         """Show image on the Canvas
 
         @todo the logic for this should probably be elsewhere / add parameters?

@@ -10,7 +10,7 @@ class ProjectSelectView(BaseFrameView):
 
     @todo @enhancement - On return to this view, pre-populate the previously selected list entry."""
 
-    def __init__(self, parent: tk.Frame):
+    def __init__(self, parent: tk.Frame) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
         super().__init__(parent)
@@ -59,7 +59,7 @@ class ProjectSelectView(BaseFrameView):
         if callback is not None:
             self.project_listbox.bind("<<ListboxSelect>>", callback)
 
-    def update_project_list(self, project_names: List[str]):
+    def update_project_list(self, project_names: List[str]) -> None:
         """Update the list of projects to choose from to include the provided list of project names"""
         # Clear old entries
         self.project_listbox.delete(0, tk.END)

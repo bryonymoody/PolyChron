@@ -10,7 +10,7 @@ class MCMCProgressView(BasePopupView):
     Formely within `StartPage::load_mcmc`, triggered by tools > calibrate model
     """
 
-    def __init__(self, parent: tk.Frame):
+    def __init__(self, parent: tk.Frame) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
         super().__init__(parent)
@@ -32,9 +32,12 @@ class MCMCProgressView(BasePopupView):
         self.progress_bar = ttk.Progressbar(self.backcanvas, orient=tk.HORIZONTAL, length=400, mode="indeterminate")
         self.progress_bar.place(relx=0.2, rely=0.56)
 
-    def update_progress(self, percent: int):
+    def update_progress(self, percent: int) -> None:
+        """Update the progress bar and text label with current progress
+
         # @todo - assert integer is between 0 and 100 inclusive
         # @todo - should this be split into 2 methods which just sets a passed in string and integer separately from the appropriate presenter, to make this view more passive
         # i.e. move as much testing as possible out of the view?
+        """
         self.output_label["text"] = f"{percent}% complete"
         self.progress_bar["value"] = percent

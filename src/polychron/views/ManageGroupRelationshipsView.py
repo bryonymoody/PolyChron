@@ -15,7 +15,7 @@ class ManageGroupRelationshipsView(BasePopupView):
     @todo - make this a popup rather than child of parent?
     """
 
-    def __init__(self, parent: tk.Frame):
+    def __init__(self, parent: tk.Frame) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
         super().__init__(parent)

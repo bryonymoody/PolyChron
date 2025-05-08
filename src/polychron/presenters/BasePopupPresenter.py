@@ -13,7 +13,7 @@ class BasePopupPresenter(ABC):
     @todo rename, Base is superflous.
     """
 
-    def __init__(self, mediator: Mediator, view: type[BasePopupView], model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: type[BasePopupView], model: Optional[Any] = None) -> None:
         """Initialise the presenter
 
         Args:

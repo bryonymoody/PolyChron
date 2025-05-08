@@ -11,7 +11,7 @@ class RemoveContextPresenter(BasePopupPresenter):
     Formerly `popupWindow5`, called by StartPage.node_del_popup, triggered when "Delete context" is selected on a node
     """
 
-    def __init__(self, mediator: Mediator, view: RemoveContextView, model: Optional[Any] = None):
+    def __init__(self, mediator: Mediator, view: RemoveContextView, model: Optional[Any] = None) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

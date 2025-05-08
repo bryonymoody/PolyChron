@@ -109,13 +109,13 @@ class GUIApp(Mediator):
             title += f" | {suffix}"
         self.root.title(title)
 
-    def get_presenter(self, key: Optional[str]):
+    def get_presenter(self, key: Optional[str]) -> Optional[BaseFramePresenter]:
         if key is not None and key in self.presenters:
             return self.presenters[key]
         else:
             return None
 
-    def switch_presenter(self, key: Optional[str]):
+    def switch_presenter(self, key: Optional[str]) -> None:
         if new_presenter := self.get_presenter(key):
             # Hide the current presenter if set
             if current_presenter := self.get_presenter(self.current_presenter_key):
@@ -152,12 +152,12 @@ class GUIApp(Mediator):
         )
         self.exit_application()
 
-    def register_global_keybinds(self):
+    def register_global_keybinds(self) -> None:
         """Register application-wide key bindings"""
         # ctrl+w to close the window @todo this might need changing for sub-windows..
         self.root.bind("<Control-w>", self.exit_application)
 
-    def register_protocols(self):
+    def register_protocols(self) -> None:
         """Register protocols with the root window - i.e. what to do on (graceful) application exit"""
         self.root.protocol("WM_DELETE_WINDOW", self.exit_application)
 

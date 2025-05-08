@@ -7,7 +7,7 @@ import argparse
 from importlib.metadata import version
 
 
-def parse_cli(argv=None):
+def parse_cli(argv=None) -> argparse.Namespace:
     """Parse and return command line arguments
 
     Args:
@@ -33,7 +33,7 @@ def parse_cli(argv=None):
     return args
 
 
-def print_version():
+def print_version() -> None:
     """Print the version of PolyChron to stdout
 
     Note:
@@ -42,7 +42,7 @@ def print_version():
     print(f"PolyChron {version('polychron')}")
 
 
-def main():
+def main() -> None:
     """Main method as the entry point for launching the GUI"""
     args = parse_cli()
     # If version requested on the command line, provide it
