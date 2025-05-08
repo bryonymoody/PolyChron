@@ -222,7 +222,7 @@ class ModelPresenter(BaseFramePresenter):
         # Change to the DatingResults tab (assuming the calibration ran successfully @todo)
         self.mediator.switch_presenter("DatingResults")
 
-        # @todo -
+        # @todo - self.f_2 and self.newvars are never read. no need to store?
         # f = dir(self)
         # self.f_2 = [var for var in f if ("__" or "grid" or "get") not in var]
         # self.newvars = [var for var in self.f_2 if var not in self.f_1]
@@ -276,6 +276,7 @@ class ModelPresenter(BaseFramePresenter):
         else:
             self.view.clear_littlecanvas2()
             model_model.chrono_dag = self.chronograph_render()
+        print(model_model.chrono_dag)
 
     def chronograph_render(self) -> Optional[nx.DiGraph]:
         """initiates residual checking function then renders the graph when thats done
@@ -332,18 +333,14 @@ class ModelPresenter(BaseFramePresenter):
         )
         if MsgBox == "yes":
             # Create and show the residual or intrusive presenter
-            # @todo provide a specialised models class as the model
             popup_presenter = ResidualOrIntrusivePresenter(
                 self.mediator, ResidualOrIntrusiveView(self.view), self.model.get_current_model()
             )
             popup_presenter.view.lift()  # @todo - not sure these are neccesary
-            # self.popup3 = pagetwo.popup4 # @todo - equiv
-            # Wait for teh popup to be closed
+            # Wait for the popup to be closed
             self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
         else:
-            # If not, show the residual check presenter, formerly popupWindow3
-            # @todo - store a handle to this popup?, formerly self.popup3?
-            # @todo provide a specialised models class as the model
+            # If not, show the group relation ship management view/presenter, formerly popupWindow3
             popup_presenter = ManageGroupRelationshipsPresenter(
                 self.mediator, ManageGroupRelationshipsView(self.view), self.model.get_current_model()
             )

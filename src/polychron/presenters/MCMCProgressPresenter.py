@@ -1,6 +1,5 @@
 import re
 import sys
-import time
 from typing import Optional
 
 from ..interfaces import Mediator
@@ -30,18 +29,6 @@ class StdoutRedirector(object):
         pass
 
 
-def mock_mcmc():
-    """Method which mocks the running of the mcmc simulation prior to full model implementation.
-
-    @todo This will be removed once the data model is fully setup and real calibration can be used instead.
-    """
-    for i in range(0, 100, 12):
-        print(i)
-        time.sleep(0.5)
-    print(100)
-    time.sleep(1)
-
-
 class MCMCProgressPresenter(BasePopupPresenter):
     """Presenter for managing the MCMC progress bar popup view.
 
@@ -56,8 +43,8 @@ class MCMCProgressPresenter(BasePopupPresenter):
 
         # Prevent the window from being closed with a noop lambda
         # @todo - do something cleaner about cancelling an in-progress calibration
-        self.view.bind("<Control-w>", lambda *Args: None)
-        self.view.protocol("WM_DELETE_WINDOW", lambda: None)
+        # self.view.bind("<Control-w>", lambda *Args: None)
+        # self.view.protocol("WM_DELETE_WINDOW", lambda: None)
 
         # Update view information to reflect the current state of the model
         self.update_view()
@@ -79,23 +66,21 @@ class MCMCProgressPresenter(BasePopupPresenter):
         old_stdout = sys.stdout
         sys.stdout = StdoutRedirector(self.view.output_label, self.view.progress_bar)
         # Run the MCMC calibration
-        # @todo replace with the actual method
-        mock_mcmc()
-        # self.ACCEPT = [[]]
-        # while min([len(i) for i in self.ACCEPT]) < 50000:
-        #     # @todo - which of these need to be stored int he class etc.
-        #     (
-        #         self.CONTEXT_NO,
-        #         self.ACCEPT,
-        #         self.PHI_ACCEPT,
-        #         self.PHI_REF,
-        #         self.A,
-        #         self.P,
-        #         self.ALL_SAMPS_CONT,
-        #         self.ALL_SAMPS_PHI,
-        #         self.resultsdict,
-        #         self.all_results_dict,
-        #     ) = self.MCMC_func()
+        self.model.ACCEPT = [[]]
+        while min([len(i) for i in self.model.ACCEPT]) < 50000:
+            # @todo - as all of these get stored in the model, why not just make mcmc_func mutate itself?
+            (
+                self.model.CONTEXT_NO,
+                self.model.ACCEPT,
+                self.model.PHI_ACCEPT,
+                self.model.phi_ref,
+                self.model.A,
+                self.model.P,
+                self.model.ALL_SAMPS_CONT,
+                self.model.ALL_SAMPS_PHI,
+                self.model.resultsdict,
+                self.model.all_results_dict,
+            ) = self.model.MCMC_func()
 
         # Update the model state to show it as having been calibrated
         self.model.mcmc_check = True
@@ -105,4 +90,3 @@ class MCMCProgressPresenter(BasePopupPresenter):
 
     def update_view(self) -> None:
         pass
-        # self.view.update_progress(10)

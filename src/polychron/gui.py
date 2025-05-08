@@ -603,52 +603,6 @@ class load_Window(object):
 
 class StartPage(tk.Frame):
 
-    def __init__(self):
-        self.h_1 = 0
-        self.w_1 = 0
-        
-        self.transx = 0
-        self.transy = 0
-        self.meta1 = ""
-        self.mode = ""
-        self.node_del_tracker= []
-        ##### intial values for all the functions
-        self.delnodes = []
-        self.edge_nodes = []
-        self.comb_nodes = []
-        self.edges_del = []
-        self.temp = []
-        self.x_1 = 1
-        self.image = "noimage"
-        self.phase_rels = None
-        self.chrono_dag = None
-        self.imscale = 0
-        self.graph = None
-        self.littlecanvas_img = None
-        self.width = 0
-        self.height = 0
-        self.delta = 0
-        self.container = None
-        self.datefile = None
-        self.phasefile = None
-        self.CONTEXT_NO = 0
-        self.PHI_REF = None
-        self.prev_phase = []
-        self.post_phase = []
-        self.ACCEPT = None
-        self.PHI_ACCEPT = None
-        self.resultsdict = None
-        self.ALL_SAMPS_CONT = None
-        self.ALL_SAMPS_PHI = None
-        self.A = 0
-        self.P = 0
-        self.variable = 0
-        self.image2 = 'noimage'
-        self.resultsdict = {}
-        self.all_results_dict = {}
-        self.treeview_df = pd.DataFrame()
-        self.file_menubar = ttk.Menubutton(self, text = 'File')
-
     def save_state_1(self):
         global mcmc_check, load_check, FILE_INPUT
         #converting metadata treeview to dataframe
@@ -793,84 +747,6 @@ class StartPage(tk.Frame):
         self.canvas.delete("all")
         self.littlecanvas.bind("<Button-3>", self.preClick)
 
-    def MCMC_func(self):
-        """gathers all the inputs for the mcmc module and then runs it and returns resuslts dictionaries"""
-        context_no = [x for x in list(self.context_no_unordered) if x not in self.node_del_tracker]
-        TOPO = list(nx.topological_sort(self.chrono_dag))
-        self.TOPO_SORT = [x for x in TOPO if (x not in self.node_del_tracker) and (x in context_no)]
-        self.TOPO_SORT.reverse()
-        context_no = self.TOPO_SORT
-        self.key_ref = [list(self.phasefile["Group"])[list(self.phasefile["context"]).index(i)] for i in context_no]
-        self.CONT_TYPE = [self.CONT_TYPE[list(self.context_no_unordered).index(i)] for i in self.TOPO_SORT]
-        strat_vec = []
-        resids = [j for i, j in enumerate(context_no) if self.CONT_TYPE[i] == "residual"]
-        intrus = [j for i, j in enumerate(context_no) if self.CONT_TYPE[i] == "intrusive"]
-        for i, j in enumerate(context_no):
-            if self.CONT_TYPE[i] == "residual":
-                low = []
-                up = list(self.graph.predecessors(j))
-            elif self.CONT_TYPE[i] == "intrusive":
-                low = list(self.graph.successors(j))
-                up = []
-            else:
-                up = [k for k in self.graph.predecessors(j) if k not in resids]
-                low = [k for k in self.graph.successors(j) if k not in intrus]
-            strat_vec.append([up, low])
-        # strat_vec = [[list(self.graph.predecessors(i)), list(self.graph.successors(i))] for i in context_no]
-        self.RCD_EST = [int(list(self.datefile["date"])[list(self.datefile["context"]).index(i)]) for i in context_no]
-        self.RCD_ERR = [int(list(self.datefile["error"])[list(self.datefile["context"]).index(i)]) for i in context_no]
-        rcd_est = self.RCD_EST
-        rcd_err = self.RCD_ERR
-        self.prev_phase, self.post_phase = self.prev_phase, self.post_phase
-        input_1 = [
-            strat_vec,
-            rcd_est,
-            rcd_err,
-            self.key_ref,
-            context_no,
-            self.phi_ref,
-            self.prev_phase,
-            self.post_phase,
-            self.TOPO_SORT,
-            self.CONT_TYPE,
-        ]
-        f = open("input_file", "w")
-        writer = csv.writer(f)
-        #  for i in input_1:
-        writer.writerow(input_1)
-        f.close()
-        CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = mcmc.run_MCMC(
-            CALIBRATION,
-            strat_vec,
-            rcd_est,
-            rcd_err,
-            self.key_ref,
-            context_no,
-            self.phi_ref,
-            self.prev_phase,
-            self.post_phase,
-            self.TOPO_SORT,
-            self.CONT_TYPE,
-        )
-        phase_nodes, resultsdict, all_results_dict = phase_labels(PHI_REF, self.post_phase, PHI_ACCEPT, ALL_SAMPS_PHI)
-        for i, j in enumerate(CONTEXT_NO):
-            resultsdict[j] = ACCEPT[i]
-        for k, l in enumerate(CONTEXT_NO):
-            all_results_dict[l] = ALL_SAMPS_CONT[k]
-
-        return (
-            CONTEXT_NO,
-            ACCEPT,
-            PHI_ACCEPT,
-            PHI_REF,
-            A,
-            P,
-            ALL_SAMPS_CONT,
-            ALL_SAMPS_PHI,
-            resultsdict,
-            all_results_dict,
-        )
-
 class PageOne(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -893,7 +769,6 @@ class PageOne(tk.Frame):
         self.transx2 = 0
         self.transy2 = 0
         self.meta1 = ""
-#        self.metatext = ""
         self.mode = ""
         ##### intial values for all the functions
         self.delnodes = []

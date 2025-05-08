@@ -1,3 +1,4 @@
+import csv
 import pathlib
 import tempfile
 from dataclasses import dataclass, field
@@ -8,7 +9,9 @@ import pandas as pd
 from graphviz import render
 from PIL import Image
 
-from ..util import trim
+from ..automated_mcmc_ordering_coupling_copy import run_MCMC
+from ..util import phase_labels, trim
+from .InterpolationData import InterpolationData
 
 
 @dataclass
@@ -231,12 +234,80 @@ class Model:
     phi_ref: List[str] = field(default_factory=list)
     """Ordered list of context labels.
     
-    @todo - ask bryony for a better description"""
+    @todo - ask bryony for a better description
+    
+    Formerly StartPage.PHI_REF"""
 
     node_del_tracker: List[str] = field(default_factory=list)
     """List of contexts / nodes for which there was insufficent node or phase info, and has been removed during group relationship management
     
     @todo - double check this description"""
+
+    key_ref: List[Any] = field(default_factory=list)
+    """List of something @todo. Generated and used during calibration, used in popupWindow9/10 too 
+    
+    @todo better docstring
+    @todo rename?
+    """
+
+    CONTEXT_NO: List[Any] = field(default_factory=list)
+    """List of contexts? passed in to and returned by run_MCMC, 
+    @todo document it's contents
+    @todo typehint
+    @todo try and improve when it is set / read?"""
+
+    ACCEPT: List[List[Any]] = field(default_factory=lambda: [[]])
+    """An optional value returned from MCMC_func.
+    A list of lists, where the minimum inner list length is used to dermine if more rounds of MCMC are required?
+    
+    Formerly StartPage.ACCEPT
+    @todo - rename, rehome, typehint, docstring, maybe don't even store?
+    """
+
+    PHI_ACCEPT: Optional[Any] = field(default=None)
+    """An optional value returned from MCMC_func. Appears unused.
+    
+    Formerly StartPage.PHI_ACCEPT
+    @todo - rename, rehome, typehint, docstring, maybe don't even store?
+    """
+
+    A: int = field(default=0)
+    """An integer set as a result from MCMC_func. Never actually read so doesn't need storing?
+
+    Formerly StartPage.A
+    @todo - rename, rehome, maybe don't even store?"""
+
+    P: int = field(default=0)
+    """An integer set as a result from MCMC_func. Never actually read so doesn't need storing?
+
+    Formerly StartPage.P
+    @todo - rename, rehome, maybe don't even store?"""
+
+    ALL_SAMPS_CONT: Optional[Any] = field(default=None)
+    """An optional value, initailised to None which is a MCMC_func ouptut, that is not used anywhere?
+
+    Formerly StartPage.ALL_SAMPS_CONT
+    @todo - rename, rehome, typehint, maybe don't even store?"""
+
+    ALL_SAMPS_PHI: Optional[Any] = field(default=None)
+    """An optional value, initailised to None which is a MCMC_func ouptut, that is not used anywhere?
+
+    Formerly StartPage.ALL_SAMPS_PHI
+    @todo - rename, rehome, typehint, maybe don't even store?"""
+
+    resultsdict: Dict[Any, Any] = field(default_factory=dict)
+    """A dictionary of results? returned by MCMC_func, which is used for plotting the mcmc results.
+    
+    Formerly StartPage.resultsdict
+    @todo - rename, rehome, typehint, docstring
+    """
+
+    all_results_dict: Dict[Any, Any] = field(default_factory=dict)
+    """A dictionary of all_results? returned by MCMC_func, which is used to find the phase lenghts during node finding on the results page.
+    
+    Formerly StartPage.all_results_dict
+    @todo - rename, rehome, typehint, docstring
+    """
 
     def save(self):
         """Save the current state of this model to disk at self.path"""
@@ -422,3 +493,105 @@ class Model:
             @todo include the ccall to remove_edge here (or anotehr func which does both)
         """
         self.deledges.append((context_a, context_b, reason))
+
+    def MCMC_func(self) -> Tuple[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]:
+        """run the mcmc calibration on the current model, returning output values without (significantly) mutating state
+
+        gathers all the inputs for the mcmc module and then runs it and returns resuslts dictionaries
+
+        Returns a tuple of calibration results @todo move into a dataclass of it's own?
+
+        Formerly StartPage.MCMC_func
+        @todo type hints
+        @todo decide if this should mutate state or not (key_ref and CONT_TYPE). it does orinally, but might be better not to as mcmc func needs to be executed multiple times."""
+
+        # @todo - validate that the model is in a state which can be MCMC'd
+        if self.chrono_dag is None:
+            print("Error: model is not MCMC ready @todo.")
+            return  # @todo temp
+
+        context_no = [x for x in list(self.context_no_unordered) if x not in self.node_del_tracker]
+        topo = list(nx.topological_sort(self.chrono_dag))
+        topo_sort = [x for x in topo if (x not in self.node_del_tracker) and (x in context_no)]
+        topo_sort.reverse()
+        context_no = topo_sort
+        self.key_ref = [list(self.phase_df["Group"])[list(self.phase_df["context"]).index(i)] for i in context_no]
+        self.CONT_TYPE = [self.CONT_TYPE[list(self.context_no_unordered).index(i)] for i in topo_sort]
+        strat_vec = []
+        resids = [j for i, j in enumerate(context_no) if self.CONT_TYPE[i] == "residual"]
+        intrus = [j for i, j in enumerate(context_no) if self.CONT_TYPE[i] == "intrusive"]
+        # @todo - should this be strat_graph or chrono_dag???
+        for i, j in enumerate(context_no):
+            if self.CONT_TYPE[i] == "residual":
+                low = []
+                up = list(self.strat_graph.predecessors(j))
+            elif self.CONT_TYPE[i] == "intrusive":
+                low = list(self.strat_graph.successors(j))
+                up = []
+            else:
+                up = [k for k in self.strat_graph.predecessors(j) if k not in resids]
+                low = [k for k in self.strat_graph.successors(j) if k not in intrus]
+            strat_vec.append([up, low])
+        # strat_vec = [[list(self.strat_graph.predecessors(i)), list(self.strat_graph.successors(i))] for i in context_no]
+        rcd_est = [int(list(self.date_df["date"])[list(self.date_df["context"]).index(i)]) for i in context_no]
+        rcd_err = [int(list(self.date_df["error"])[list(self.date_df["context"]).index(i)]) for i in context_no]
+        # self.prev_phase, self.post_phase = self.prev_phase, self.post_phase  # @todo - redundent statement
+        # Write calibration inputs to disk in csv. @todo make optional?
+        input_1 = [
+            strat_vec,
+            rcd_est,
+            rcd_err,
+            self.key_ref,
+            context_no,
+            self.phi_ref,
+            self.prev_phase,
+            self.post_phase,
+            topo_sort,
+            self.CONT_TYPE,
+        ]
+        workdir = (
+            pathlib.Path(tempfile.gettempdir()) / "polychron" / "temp"
+        )  # @todo actually do this in the model folder?
+        workdir.mkdir(parents=True, exist_ok=True)
+        f = open(workdir / "input_file", "w")
+        writer = csv.writer(f)
+        #  for i in input_1:
+        writer.writerow(input_1)
+        f.close()
+
+        # Load calibration data. @todo - pass this into this method rather than loading here.
+        calibration: InterpolationData = InterpolationData()
+        calibration.load()
+
+        # @todo run_mcmc takes args, and also returns them, even when pass by ref?
+        CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = run_MCMC(
+            calibration.get_dataframe(),
+            strat_vec,
+            rcd_est,
+            rcd_err,
+            self.key_ref,
+            context_no,
+            self.phi_ref,
+            self.prev_phase,
+            self.post_phase,
+            topo_sort,
+            self.CONT_TYPE,
+        )
+        _, resultsdict, all_results_dict = phase_labels(PHI_REF, self.post_phase, PHI_ACCEPT, ALL_SAMPS_PHI)
+        for i, j in enumerate(CONTEXT_NO):
+            resultsdict[j] = ACCEPT[i]
+        for k, l in enumerate(CONTEXT_NO):
+            all_results_dict[l] = ALL_SAMPS_CONT[k]
+
+        return (
+            CONTEXT_NO,
+            ACCEPT,
+            PHI_ACCEPT,
+            PHI_REF,
+            A,
+            P,
+            ALL_SAMPS_CONT,
+            ALL_SAMPS_PHI,
+            resultsdict,
+            all_results_dict,
+        )
