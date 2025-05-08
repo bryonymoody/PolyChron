@@ -80,7 +80,6 @@ class GUIApp(Mediator):
         # @todo - move this to where it is needed, though checking on startup is nice.
         self.calibration: InterpolationData = InterpolationData()
         # self.calibration.load() # @todo
-        # print(self.calibration.get_dataframe()) # @todo
 
         # Construct the views and presenters for main window views (i.e. not-popups)
         self.current_presenter_key: Optional[str] = None

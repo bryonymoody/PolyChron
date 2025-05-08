@@ -167,11 +167,6 @@ class ModelPresenter(BaseFramePresenter):
             # @todo if there is no model, reset everything to empty
             return
 
-        # Update each presenter property
-
-        # Update the view
-        # @todo
-
         # If the model has an @todo abstrac this to reduce duplication
         if model_model.strat_df is not None:
             if model_model.phase_true == 1:
@@ -276,7 +271,6 @@ class ModelPresenter(BaseFramePresenter):
         else:
             self.view.clear_littlecanvas2()
             model_model.chrono_dag = self.chronograph_render()
-        print(model_model.chrono_dag)
 
     def chronograph_render(self) -> Optional[nx.DiGraph]:
         """initiates residual checking function then renders the graph when thats done
@@ -692,9 +686,8 @@ class ModelPresenter(BaseFramePresenter):
         # Should be covered by update_littlecanvas
         self.view.update_littlecanvas(model_model.strat_image)
         self.view.show_image()
-        self.view.set_testmenu_selection(
-            "Node Action"
-        )  # Reset the variable used by the test action. This doesn't appear to actually set the title of the sub-ment
+        # Reset the variable used by the test action. This doesn't appear to actually set the title of the sub-menu
+        self.view.set_testmenu_selection("Node Action")
         # Update some bindings.
         self.view.unbind_littlecanvas_callback("<Button-1>")
         self.view.bind_littlecanvas_callback("<Button-1>", self.move_from)  # Shoudl this not be on_left? @todo
@@ -947,7 +940,7 @@ class ModelPresenter(BaseFramePresenter):
 
         formerly StartMenu.preClick"""
         try:
-            self.testmenu.place_forget()
+            self.view.testmenu.place_forget()
             self.on_right()
         except Exception:
             self.on_right()
@@ -957,7 +950,7 @@ class ModelPresenter(BaseFramePresenter):
 
         Formerly StartMenu.onLeft"""
         try:
-            self.testmenu.place_forget()
+            self.view.testmenu.place_forget()
         except Exception:
             pass
 

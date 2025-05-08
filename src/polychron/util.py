@@ -331,7 +331,8 @@ def phase_relabel(graph: nx.DiGraph) -> nx.DiGraph:
     still refer to them with a's and b's
 
     @todo - full docstrings and typehints
-    @todo - find a better home"""
+    @todo - find a better home
+    @todo - this prevents nodes from including a_ form users. Either need to explicitly prevent this, or to make this more niche / unlikely to occur?"""
     label_dict = {}
     for i in graph.nodes():
         if "a_" in i:

@@ -257,7 +257,7 @@ class ModelView(BaseFrameView):
 
     def set_testmenu_selection(self, value: str) -> None:
         """Set the value for the testmenu"""
-        return self.__testmenu_variable.set(str)
+        return self.__testmenu_variable.set(value)
 
     def bind_testmenu_commands(self, callback: Callable[[], Optional[Any]]) -> None:
         """Bind the callback for the stratigraphic graph right-click menu
