@@ -51,7 +51,7 @@ class RemoveStratigraphicRelationshipView(BasePopupView):
 
     def update_label(self, edge_label: Optional[str] = None) -> None:
         """Update the label text to include the edge being removed."""
-        edge_label = "these contexts" if edge_label is None else f"'{edge_label}'"
+        edge_label = "these contexts" if edge_label is None else f"{edge_label}"
         self.label.configure(text=f"Why are you deleting the stratigraphic relationship between {edge_label}?")
 
     def get_reason(self) -> str:
