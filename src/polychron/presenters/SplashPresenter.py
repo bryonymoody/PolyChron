@@ -20,7 +20,7 @@ class SplashPresenter(BaseFramePresenter):
         # Does not display anything, i.e model is always None
         pass
 
-    def on_select_project(self):
+    def on_select_project(self) -> None:
         """Function which is called when File > Select Project is selected. I.e. open the popup preesnter for selecting a project.
 
         @todo - this allows multiple open project windows to be created, which is not ideal
