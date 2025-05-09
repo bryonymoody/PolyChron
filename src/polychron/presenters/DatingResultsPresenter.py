@@ -185,16 +185,8 @@ class DatingResultsPresenter(BaseFramePresenter):
 
         if model_model.load_check:
             # @todo - better handling of backing out of this process.
-            # Render the chronological graph
-            # @todo - check if the render is up to date to avoid re-rendering?
-            # @todo - make sure that this doesn't need to be unique from the chrono dag used on StartPage?
-            model_model.chrono_image = model_model.render_chrono_png(
-                self.view.littlecanvas2.winfo_width(),
-                self.view.littlecanvas2.winfo_height(),
-            )
-            # scale_factor = min(self.littlecanvas2.winfo_width()/self.image_ws.size[0], self.littlecanvas2.winfo_height()/self.image_ws.size[1])
-            # model_model.chrono_image = self.image_ws.resize((int(self.image_ws.size[0]*scale_factor), int(self.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
-
+            # Render the chronological graph, mutating the model
+            model_model.render_chrono_graph()
             # If the render succeeded
             if model_model.chrono_image is not None:
                 # Update the view with the image

@@ -10,11 +10,13 @@ from typing import Any, Dict, List, Literal, Optional, Tuple
 
 import networkx as nx
 import pandas as pd
+import pydot
 from graphviz import render
+from networkx.drawing.nx_pydot import write_dot
 from PIL import Image
 
 from ..automated_mcmc_ordering_coupling_copy import run_MCMC
-from ..util import phase_labels, trim
+from ..util import node_coords_fromjson, phase_info_func, phase_labels, rank_func, trim
 from .InterpolationData import InterpolationData
 
 
@@ -24,6 +26,7 @@ class Model:
 
     @todo - refactor some parts out into other clasess (which this has an isntance of)
     @todo - add setters/getters to avoid direct access of values which are not intended to be directly mutable.
+    @todo - Multiple instances of the same model will both create files on disk, overwriting one another. Add locking to prevent this?
     """
 
     name: str
@@ -53,8 +56,6 @@ class Model:
     """Stratigraphic Graph as a networkx digraph, after loading from csv / .dot and post processed.
 
     Mutate when other files are loaded.
-    
-    @todo - refactor this and others to only be setable by methods?
     
     @todo @enhancement - When a new strat_df is loaded, clear other members, or re-apply the smae changes to strat_graph?
     """
@@ -176,7 +177,9 @@ class Model:
     """
 
     resid_or_intru_strat_image: Optional[Image.Image] = field(default=None)
-    """Rendered version of the Chronological graph as an image, with node colours set to highlight residual or intrusive nodes.
+    """Image handle for the rendered png of the stratigraphic graph with residual or intrusive node highlighting.
+
+    A handle to this needs to be maintained to avoid garbage collection
 
     Formerly PageTwo.image
 
@@ -514,13 +517,129 @@ class Model:
             mapping = dict(zip(x_nod, y_nod))
             self.strat_graph = nx.relabel_nodes(self.strat_graph, mapping)
 
-    def render_chrono_png(self, canv_width: int, canv_height: int) -> Image.Image:
-        """Render the chronological graph
+    def render_strat_graph(self) -> None:
+        """Render the sratigraphic graph as a png and svg, with or without phasing depending on model state. Also updates the locatison of each node via the svg
+
+        @todo - don't return?
+        @todo - de-duplicate"""
+        # Call the appropraite render_strat method, depending if the model is set up to render in phases or not.
+        if self.phase_true == 1:
+            self.__render_strat_graph_phase()
+        else:
+            self.__render_strat_graph()
+
+    def render_resid_or_intru_strat_graph(self) -> None:
+        """Render the residual or intrusive sratigraphic graph as a png and svg, with or without phasing depending on model state. Also updates the locatison of each node
+
+        This graph will have different presentation information to highlight which contexts have been marked as residual or intrusive.
+
+        @todo - don't return?
+        @todo - de-duplicate"""
+        # Call the appropraite render_strat method, depending if the model is set up to render in phases or not.
+        if self.phase_true == 1:
+            self.__render_resid_or_intru_strat_graph_phase()
+        else:
+            self.__render_resid_or_intru_strat_graph()
+
+    def __render_strat_graph(self) -> None:
+        """Render the stratigraphic graph mutating the Model state
+
+        Formerly imgrender
+
+        @todo - de-duplicate with the residual or intrusive verisons. Both might not striclty be required.
+        @todo - better filenames + subdirectory.
+        """
+
+        workdir = self.path  # @todo - make this render into a subfolder? 0.1 does not.
+        self.strat_graph.graph["graph"] = {"splines": "ortho"}
+        write_dot(self.strat_graph, workdir / "fi_new")
+        render("dot", "png", workdir / "fi_new")
+        render("dot", "svg", workdir / "fi_new")
+        inp = Image.open(workdir / "fi_new.png")
+        inp_final = trim(inp)
+        inp_final.save(workdir / "testdag.png")
+        self.strat_image = Image.open(workdir / "testdag.png")
+        self.node_df = node_coords_fromjson(self.strat_graph)
+
+    def __render_strat_graph_phase(self) -> None:
+        """Render the stratigraphic graph, with phasing mutating the Model state
+
+        Formerly imgrender_phase
+
+        @todo - de-duplicate with the residual or intrusive verisons. Both might not striclty be required.
+        @todo - better filenames + subdirectory."""
+        workdir = self.path  # @todo - make this render into a subfolder? 0.1 does not.
+
+        write_dot(self.strat_graph, workdir / "fi_new.txt")
+        my_file = open(workdir / "fi_new.txt")
+        file_content = my_file.read()
+        new_string = rank_func(phase_info_func(self.strat_graph)[0], file_content)
+        textfile = open(workdir / "fi_new.txt", "w")
+        textfile.write(new_string)
+        textfile.close()
+        (self.strat_graph,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")
+        self.strat_graph.write_png(workdir / "test.png")
+        inp = Image.open(workdir / "test.png")
+        inp = trim(inp)
+        # Call the real .tkraise
+        inp.save(workdir / "testdag.png")
+        self.strat_image = Image.open(workdir / "testdag.png")
+        self.node_df = node_coords_fromjson(self.strat_graph)
+
+    def __render_resid_or_intru_strat_graph(self) -> None:
+        """Render the stratigraphic graph mutating the Model state
+
+        Formerly imgrender
+
+        @todo - de-duplicate with the residual or intrusive verisons. Both might not striclty be required.
+        @todo - better filenames + subdirectory.
+        """
+
+        workdir = self.path / "resid_or_intru"  # @todo - make this render into a subfolder? 0.1 does not.
+        workdir.mkdir(exist_ok=True)
+
+        self.resid_or_intru_strat_graph.graph["graph"] = {"splines": "ortho"}
+        write_dot(self.resid_or_intru_strat_graph, workdir / "fi_new")
+        render("dot", "png", workdir / "fi_new")
+        render("dot", "svg", workdir / "fi_new")
+        inp = Image.open(workdir / "fi_new.png")
+        inp_final = trim(inp)
+        inp_final.save(workdir / "testdag.png")
+        self.resid_or_intru_strat_image = Image.open(workdir / "testdag.png")
+        self.node_df = node_coords_fromjson(self.resid_or_intru_strat_graph)
+
+    def __render_resid_or_intru_strat_graph_phase(self) -> None:
+        """Render the stratigraphic graph, with phasing mutating the Model state
+
+        Formerly imgrender_phase
+
+        @todo - de-duplicate with the residual or intrusive verisons. Both might not striclty be required.
+        @todo - better filenames + subdirectory."""
+        workdir = self.path / "resid_or_intru"  # @todo - make this render into a subfolder? 0.1 does not.
+        workdir.mkdir(exist_ok=True)
+
+        write_dot(self.resid_or_intru_strat_graph, workdir / "fi_new.txt")
+        my_file = open(workdir / "fi_new.txt")
+        file_content = my_file.read()
+        new_string = rank_func(phase_info_func(self.resid_or_intru_strat_graph)[0], file_content)
+        textfile = open(workdir / "fi_new.txt", "w")
+        textfile.write(new_string)
+        textfile.close()
+        (self.resid_or_intru_strat_graph,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")
+        self.resid_or_intru_strat_graph.write_png(workdir / "test.png")
+        inp = Image.open(workdir / "test.png")
+        inp = trim(inp)
+        # Call the real .tkraise
+        inp.save(workdir / "testdag.png")
+        self.resid_or_intru_strat_image = Image.open(workdir / "testdag.png")
+        self.node_df = node_coords_fromjson(self.resid_or_intru_strat_graph)
+
+    def render_chrono_graph(self) -> None:
+        """Render the chronological graph as a PNG and an SVG, mutating the Model state
 
         Formerly imgrender2
 
-        @todo - set member variable rather than returning?
-        @todo - Consistent parameters with imgrender?
+        @todo - better temporary file names / paths?
         @todo - working dir / set paths explicitly"""
         workdir = (
             pathlib.Path(tempfile.gettempdir()) / "polychron" / "temp"
@@ -528,8 +647,6 @@ class Model:
         workdir.mkdir(parents=True, exist_ok=True)
         fi_new_chrono = workdir / "fi_new_chrono"  # @todo make this a model member?
         if self.load_check and fi_new_chrono.is_file():
-            # @todo actually use more than self.load_check - i.e. have a member variable which is a path to fi_new_chrono
-            # @todo - 2 instances of polychron open for the same model will be in a disk-state race. Need to add a model lock?
             render("dot", "png", fi_new_chrono)
             render("dot", "svg", fi_new_chrono)  # @todo - is the svg needed?
             inp = Image.open(workdir / "fi_new_chrono.png")
@@ -537,10 +654,9 @@ class Model:
             # scale_factor = min(canv_width/inp.size[0], canv_height/inp.size[1])
             # inp_final = inp.resize((int(inp.size[0]*scale_factor), int(inp.size[1]*scale_factor)), Image.ANTIALIAS)
             inp_final.save(workdir / "testdag_chrono.png")
-            outp = Image.open(workdir / "testdag_chrono.png")
+            self.chrono_image = Image.open(workdir / "testdag_chrono.png")
         else:
-            outp = None  # formerly 'No_image'
-        return outp
+            self.chrono_image = None  # formerly 'No_image'
 
     def reopen_strat_image(self) -> None:
         """Re-open the stratigraphic image from disk

@@ -1,14 +1,12 @@
 import copy
-import pathlib
-import tempfile
 from typing import Any, Literal, Optional
 
 import networkx as nx
-from PIL import Image, ImageTk
+from PIL import ImageTk
 
 from ..interfaces import Mediator
 from ..presenters.ManageIntrusiveOrResidualContextsPresenter import ManageIntrusiveOrResidualContextsPresenter
-from ..util import imgrender, imgrender_phase, node_coords_fromjson
+from ..util import node_coords_fromjson
 from ..views.ManageIntrusiveOrResidualContextsView import ManageIntrusiveOrResidualContextsView
 from ..views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
 from .BasePopupPresenter import BasePopupPresenter
@@ -50,8 +48,9 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
         # @todo - this could belong to a presenter sspecific model?
         # @todo load_graph should only be called once, though this block could/should be abstracted a little.
         if self.model.strat_graph is not None:
-            self.model.resid_or_intru_strat_graph = self.load_graph()
-            self.view.imscale2 = min(921 / self.view.image.size[0], 702 / self.view.image.size[1])
+            self.load_graph()  # this mutates the model
+            # @todo - abstract some of this into a view method.
+            self.view.imscale2 = min(921 / self.view.image2.size[0], 702 / self.view.image2.size[1])
             self.view.graphcanvas.scale("all", 0, 0, self.view.delta2, self.view.delta2)  # rescale all canvas objects
             self.view.show_image2()
         # Ensure the canvas is up to date
@@ -122,7 +121,7 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if self.model is None:
             return
-        if self.view.image is not None:  # @todo is view.image correct here?
+        if self.view.image2 is not None:
             self.view.graphcanvas.scan_mark(event.x, event.y)  # @todo tkinter in presenter
 
     def move_to2(self, event: Any) -> None:
@@ -136,7 +135,7 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if self.model is None:
             return
-        if self.view.image is not None:  # @todo is view.image correct here?
+        if self.view.image2 is not None:
             self.view.graphcanvas.scan_dragto(event.x, event.y, gain=1)  # @todo tkinter in presenter
             self.view.show_image2()
 
@@ -161,11 +160,6 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
         """
         if self.model is None:
             return
-
-        # @todo - abstract the bits that require this elsewhere
-        workdir = (
-            pathlib.Path(tempfile.gettempdir()) / "polychron" / "temp"
-        )  # @todo actually do this in the model folder?
 
         # @todo - is this update idle tasks needed for correct mouse coords?
         # startpage = self.controller.get_page('StartPage')
@@ -204,24 +198,15 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
 
         # updates the node outline colour
         nx.set_node_attributes(self.model.resid_or_intru_strat_graph, outline, "color")
-        # @todo - abstract this into a models.Model or simialr
-        if self.model.phase_true == 1:
-            self.view.image = imgrender_phase(self.model.resid_or_intru_strat_graph)
-        else:
-            self.view.image = imgrender(
-                self.model.resid_or_intru_strat_graph,
-                self.view.graphcanvas.winfo_width(),
-                self.view.graphcanvas.winfo_height(),
-            )
-        # rerends the image of the strat DAG with right colours
-        self.view.image = Image.open(
-            workdir / "fi_new.png"
-        )  # @todo - make this a resid or intru specific temporary file, to not overwite the actual one?
-        width2, height2 = self.view.image.size
-        self.view.container = self.view.graphcanvas.create_rectangle(0, 0, width2, height2, width=0)
-        self.view.show_image2()
-        self.view.graphcanvas.update()
 
+        # re render the stratigraphic graph
+        self.model.render_resid_or_intru_strat_graph()
+
+        # Update the image in the view
+        if self.model.resid_or_intru_strat_image is not None:
+            self.view.update_littlecanvas2_image_only(self.model.resid_or_intru_strat_image)
+
+        # return the node which was clicked on
         return node
 
     def nodecheck(self, x_current: int, y_current: int) -> str:
@@ -248,7 +233,7 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
             node_df = node_df_con[0]
             xmax, ymax = node_df_con[1]
             # scales the coordinates using the canvas and image size
-            x, y = self.view.image.size
+            x, y = self.view.image2.size
             cavx = x * self.view.imscale2
             cany = y * self.view.imscale2
             xscale = (x_current) * (xmax) / cavx
@@ -285,21 +270,29 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
             fill[j] = "gray"
         nx.set_node_attributes(self.model.resid_or_intru_strat_graph, color, "color")
         nx.set_node_attributes(self.model.resid_or_intru_strat_graph, fill, "fontcolor")
-        if self.model.phase_true == 1:
-            self.view.image = imgrender_phase(self.model.resid_or_intru_strat_graph)
-        else:
-            self.view.image = imgrender(
-                self.model.resid_or_intru_strat_graph,
-                self.view.graphcanvas.winfo_width(),
-                self.view.graphcanvas.winfo_height(),
-            )
-        # scale_factor = min(self.view.graphcanvas.winfo_width()/self.view.image_ws.size[0], self.view.graphcanvas.winfo_height()/self.view.image_ws.size[1])
-        # self.view.image = self.view.image_ws.resize((int(self.view.image_ws.size[0]*scale_factor), int(self.view.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
-        self.view.icon = ImageTk.PhotoImage(self.view.image)
+
+        # render the stratigraphic graph
+        self.model.render_resid_or_intru_strat_graph()
+
+        # Update the image in the view
+        if self.model.resid_or_intru_strat_image is not None:
+            self.view.update_littlecanvas2_image_only(self.model.resid_or_intru_strat_image)
+
+        print("@todo - double check this is no longer required / standardisze")
+        self.view.icon = ImageTk.PhotoImage(self.view.image2)
         self.view.graphcanvas_img = self.view.graphcanvas.create_image(0, 0, anchor="nw", image=self.view.icon)
-        self.view.width2, self.view.height2 = self.view.image.size
+        self.view.width2, self.view.height2 = self.view.image2.size
         self.view.imscale2 = 1.0  # scale for the canvaas image
         self.view.delta2 = 1.1  # zoom magnitude
         # startpage.update_idletasks()
         self.view.container = self.view.graphcanvas.create_rectangle(0, 0, self.view.width2, self.view.height2, width=0)
-        return self.model.resid_or_intru_strat_graph
+        return
+
+    def tkraise(self, aboveThis=None) -> None:
+        """Loads the graph and ensures this window is raised above another.
+
+        Formerly PageTwo.tkraise
+
+        @todo remove? this is a tkitner leak that isn't strictyl required? instead it should be an on creation?"""
+        self.load_graph()
+        self.view.tkraise(aboveThis)

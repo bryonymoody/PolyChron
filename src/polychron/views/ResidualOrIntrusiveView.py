@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, List, Optional
 
-from PIL import ImageTk
+from PIL import Image, ImageTk
 
 from .BasePopupView import BasePopupView
 
@@ -26,7 +26,9 @@ class ResidualOrIntrusiveView(BasePopupView):
         self.transy2 = 0
         self.width2 = 0
         self.height2 = 0
-        self.image = None  # in-memory rendered image. @todo should this actually belong to the model?
+        self.image2: Optional[Image.Image] = (
+            None  # in-memory rendered image. @todo should this actually belong to the model?
+        )
 
         # @todo cleaner popup separation?
         self.title("Identify Residual or Intrusive Contexts")
@@ -200,6 +202,18 @@ class ResidualOrIntrusiveView(BasePopupView):
         self.graphcanvas.scale("all", 0, 0, scale2, scale2)  # rescale all canvas objects
         self.show_image2()
 
+    def update_littlecanvas2_image_only(self, image: Image.Image) -> None:
+        """Update the image within the littlecanvas2, during resizing.
+
+        @todo - this and the other update method can probably be combined
+        """
+        # rerends the image of the strat DAG with right colours
+        self.image2 = image
+        width2, height2 = self.image2.size
+        self.container = self.graphcanvas.create_rectangle(0, 0, width2, height2, width=0)
+        self.show_image2()
+        self.graphcanvas.update()
+
     def show_image2(self) -> None:
         """Show image on the Canvas
 
@@ -207,12 +221,12 @@ class ResidualOrIntrusiveView(BasePopupView):
         @todo - rename this, doesn't need 2
         @todo - can probably refactor this as common canvas zooming behaviour with other views"""
 
-        if self.image is None:
+        if self.image2 is None:
             return
 
         # startpage = self.controller.get_page('StartPage') # @todo not needed?
         # startpage.update_idletasks()
-        bbox1 = [0, 0, int(self.image.size[0] * self.imscale2), int(self.image.size[1] * self.imscale2)]
+        bbox1 = [0, 0, int(self.image2.size[0] * self.imscale2), int(self.image2.size[1] * self.imscale2)]
         # Remove 1 pixel shift at the sides of the bbox1
         bbox1 = (bbox1[0] + 1, bbox1[1] + 1, bbox1[2] - 1, bbox1[3] - 1)
         bbox2 = (
@@ -227,7 +241,7 @@ class ResidualOrIntrusiveView(BasePopupView):
             max(bbox1[2], bbox2[2]),
             max(bbox1[3], bbox2[3]),
         ]
-        bbox1 = [0, 0, int(self.image.size[0] * self.imscale2), int(self.image.size[1] * self.imscale2)]
+        bbox1 = [0, 0, int(self.image2.size[0] * self.imscale2), int(self.image2.size[1] * self.imscale2)]
         if bbox[0] == bbox2[0] and bbox[2] == bbox2[2]:  # whole image in the visible area
             bbox[0] = bbox1[0]
             bbox[2] = bbox1[2]
@@ -243,7 +257,7 @@ class ResidualOrIntrusiveView(BasePopupView):
         if int(x_2 - x_1) > 0 and int(y_2 - y_1) > 0:  # show image if it in the visible area
             x_img = min(int(x_2 / self.imscale2), self.width2)  # sometimes it is larger on 1 pixel
             y_img = min(int(y_2 / self.imscale2), self.height2)  # ...and sometimes not
-            image2 = self.image.crop((int(x_1 / self.imscale2), int(y_1 / self.imscale2), x_img, y_img))
+            image2 = self.image2.crop((int(x_1 / self.imscale2), int(y_1 / self.imscale2), x_img, y_img))
             self.graphcanvas.delete(self.icon)
             self.icon = ImageTk.PhotoImage(image2.resize((int(x_2 - x_1), int(y_2 - y_1))))
             self.imageid2 = self.graphcanvas.create_image(
@@ -252,10 +266,3 @@ class ResidualOrIntrusiveView(BasePopupView):
             self.transx2, self.transy2 = bbox2[0], bbox2[1]
 
         self.graphcanvas.update()
-
-    def tkraise(self, aboveThis=None) -> None:
-        """Loads the graph and ensures this window is raised above another.
-
-        Formerly PageTwo.tkraise"""
-        self.load_graph()
-        super().tkraise(aboveThis)

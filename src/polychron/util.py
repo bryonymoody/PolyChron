@@ -1,15 +1,11 @@
 import ast
-import pathlib
 import re
-import tempfile
 from typing import Any, Dict, List, Set, Tuple
 
 import networkx as nx
 import numpy as np
 import pandas as pd
-import pydot
-from graphviz import render
-from networkx.drawing.nx_pydot import read_dot, write_dot
+from networkx.drawing.nx_pydot import read_dot
 from PIL import Image, ImageChops
 
 """Utiltiy methods which do not (yet) have a home
@@ -95,59 +91,6 @@ def node_coords_fromjson(graph):
     new_pos = dict(zip(node_list, coords_temp))
     df = pd.DataFrame.from_dict(new_pos, orient="index", columns=["x_lower", "x_upper", "y_lower", "y_upper"])
     return df, scale
-
-
-def imgrender(file: nx.DiGraph, canv_width: int, canv_height: int) -> Image.Image:
-    """renders png from dotfile
-
-    @todo - this belongs in models.Model?
-    @todo - rename file parameter
-    @todo - make sure this is doing things in a sensible working directory?
-    @todo - make this render to differnt files when called for the residual vs intrusive graph compared"""
-
-    workdir = pathlib.Path(tempfile.gettempdir()) / "polychron" / "temp"  # @todo actually do this in the model folder?
-    workdir.mkdir(parents=True, exist_ok=True)
-
-    # global node_df
-    file.graph["graph"] = {"splines": "ortho"}
-    write_dot(file, workdir / "fi_new")
-    render("dot", "png", workdir / "fi_new")
-    render("dot", "svg", workdir / "fi_new")
-    inp = Image.open(workdir / "fi_new.png")
-    inp_final = trim(inp)
-    inp_final.save(workdir / "testdag.png")
-    outp = Image.open(workdir / "testdag.png")
-    # node_df = node_coords_fromjson(file) # @todo - this is global state that needs updating somewhere?. Make the method return a tuple instead?
-    return outp
-
-
-def imgrender_phase(file: nx.DiGraph) -> Image.Image:
-    """Renders image from dot file with all nodes of the same phase collected together
-
-    @todo - this belongs in models.Model?
-    @todo - rename file parameter
-    @todo - Consistent parameters with imgrender?
-    @todo - working dir / set paths explicitly
-    @todo - make this render to differnt files when called for the residual vs intrusive graph compared"""
-    workdir = pathlib.Path(tempfile.gettempdir()) / "polychron" / "temp"  # @todo actually do this in the model folder?
-    workdir.mkdir(parents=True, exist_ok=True)
-    # global node_df
-    write_dot(file, workdir / "fi_new.txt")
-    my_file = open(workdir / "fi_new.txt")
-    file_content = my_file.read()
-    new_string = rank_func(phase_info_func(file)[0], file_content)
-    textfile = open(workdir / "fi_new.txt", "w")
-    textfile.write(new_string)
-    textfile.close()
-    (graph,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")
-    graph.write_png(workdir / "test.png")
-    inp = Image.open(workdir / "test.png")
-    inp = trim(inp)
-    # Call the real .tkraise
-    inp.save(workdir / "testdag.png")
-    outp = Image.open(workdir / "testdag.png")
-    # node_df = node_coords_fromjson(file) # @todo - this is global state that needs updating somewhere?. Make the method return a tuple instead?
-    return outp
 
 
 def phase_info_func(file_graph: nx.DiGraph) -> Tuple[Dict[Any, Any], List[Any], List[Any], Any]:

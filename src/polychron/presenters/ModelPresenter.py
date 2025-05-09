@@ -19,7 +19,7 @@ from ..presenters.MCMCProgressPresenter import MCMCProgressPresenter
 from ..presenters.RemoveContextPresenter import RemoveContextPresenter
 from ..presenters.RemoveStratigraphicRelationshipPresenter import RemoveStratigraphicRelationshipPresenter
 from ..presenters.ResidualOrIntrusivePresenter import ResidualOrIntrusivePresenter
-from ..util import imagefunc, imgrender, imgrender_phase, node_coords_fromjson, node_del_fixed
+from ..util import imagefunc, node_coords_fromjson, node_del_fixed
 from ..views.AddContextView import AddContextView
 from ..views.CalibrateModelSelectView import CalibrateModelSelectView
 from ..views.DatafilePreviewView import DatafilePreviewView
@@ -167,16 +167,9 @@ class ModelPresenter(BaseFramePresenter):
             # @todo if there is no model, reset everything to empty
             return
 
-        # If the model has an @todo abstrac this to reduce duplication
+        # Render the image if possible
         if model_model.strat_df is not None:
-            if model_model.phase_true == 1:
-                model_model.strat_image = imgrender_phase(model_model.strat_graph)
-            else:
-                model_model.strat_image = imgrender(
-                    model_model.strat_graph,
-                    self.view.littlecanvas.winfo_width(),
-                    self.view.littlecanvas.winfo_height(),
-                )  # @todo - get the view width/height cleaner
+            model_model.render_strat_graph()
             # Update the view
             self.view.update_littlecanvas(model_model.strat_image)
             # self.bind("<Configure>", self.resize) @todo
@@ -290,11 +283,8 @@ class ModelPresenter(BaseFramePresenter):
             # Check for residuals & update model state when aproved
             self.resid_check()
             # @todo - better handling of backing out of this process.
-            # Render the chronological graph
-            model_model.chrono_image = model_model.render_chrono_png(
-                self.view.littlecanvas2.winfo_width(),
-                self.view.littlecanvas2.winfo_height(),
-            )  # @todo - get the view width/height cleaner
+            # Render the chronological graph, mutating the model
+            model_model.render_chrono_graph()
             # If the render succeeded
             if model_model.chrono_image is not None:
                 # Try and update the view
@@ -378,15 +368,7 @@ class ModelPresenter(BaseFramePresenter):
             model_model.strat_graph = nx.DiGraph(imagefunc(file.name), graph_attr={"splines": "ortho"})
 
             # Render the image in phases or not
-            if model_model.phase_true == 1:
-                model_model.strat_image = imgrender_phase(model_model.strat_graph)
-            else:
-                # @todo - 0.1 would not have worked, called imgrender with 1 param not 3.
-                model_model.strat_image = imgrender(
-                    model_model.strat_graph,
-                    self.view.littlecanvas.winfo_width(),
-                    self.view.littlecanvas.winfo_height(),
-                )  # @todo - get the view width/height cleaner
+            model_model.render_strat_graph()
 
             # Clear the list of deleted nodes. @todo method / part of setting the stratr graph?
             model_model.delnodes = []
@@ -428,14 +410,7 @@ class ModelPresenter(BaseFramePresenter):
                     self.check_list_gen()
 
                     # Render the image in phases or not
-                    if model_model.phase_true == 1:
-                        model_model.strat_image = imgrender_phase(model_model.strat_graph)
-                    else:
-                        model_model.strat_image = imgrender(
-                            model_model.strat_graph,
-                            self.view.littlecanvas.winfo_width(),
-                            self.view.littlecanvas.winfo_height(),
-                        )  # @todo - get the view width/height cleaner
+                    model_model.render_strat_graph()
 
                     # Clear the list of deleted nodes. @todo method / part of setting the stratr graph?
                     model_model.delnodes = []
@@ -560,15 +535,8 @@ class ModelPresenter(BaseFramePresenter):
                 model_model.set_equal_rel_df(df)
                 # @todo - this method did not open a file_preview / popup.
 
-                # Render the image in phases or not @todo - abstract this repeated block
-                if model_model.phase_true == 1:
-                    model_model.strat_image = imgrender_phase(model_model.strat_graph)
-                else:
-                    model_model.strat_image = imgrender(
-                        model_model.strat_graph,
-                        self.view.littlecanvas.winfo_width(),
-                        self.view.littlecanvas.winfo_height(),
-                    )  # @todo - get the view width/height cleaner
+                # Render the image in phases or not
+                model_model.render_strat_graph()
                 # Update the view, showing the new image
                 self.view.update_littlecanvas(model_model.strat_image)
                 # self.bind("<Configure>", self.resize) @todo
@@ -602,7 +570,7 @@ class ModelPresenter(BaseFramePresenter):
             model_model.phase_true = 1
 
             if model_model.strat_graph is not None:
-                model_model.strat_image = imgrender_phase(model_model.strat_graph)
+                model_model.render_strat_graph()
                 # Update the rendered image in the canvas
                 self.view.update_littlecanvas(model_model.strat_image)
                 # self.bind("<Configure>", self.resize) @todo
@@ -683,15 +651,7 @@ class ModelPresenter(BaseFramePresenter):
         if model_model is None:
             return
         # Update the image in the canvas
-        # @todo - abstract this into a method to avoid repetition
-        if model_model.phase_true == 1:
-            model_model.strat_image = imgrender_phase(model_model.strat_graph)
-        else:
-            model_model.strat_image = imgrender(
-                model_model.strat_graph,
-                self.view.littlecanvas.winfo_width(),
-                self.view.littlecanvas.winfo_height(),
-            )  # @todo - get the view width/height cleaner
+        model_model.render_strat_graph()
         # Should be covered by update_littlecanvas
         self.view.update_littlecanvas(model_model.strat_image)
         self.view.show_image()
@@ -1174,7 +1134,6 @@ class ModelPresenter(BaseFramePresenter):
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
-        # global node_df
         x_1 = edgevec[0]
         x_2 = edgevec[1]
         model_model.strat_graph.add_edge(x_1, x_2, arrowhead="none")
@@ -1185,14 +1144,7 @@ class ModelPresenter(BaseFramePresenter):
                 "Redundant relationship",
                 "That stratigraphic relationship is already implied by other relationships in the graph",
             )
-        if model_model.phase_true == 1:
-            model_model.strat_image = imgrender_phase(model_model.strat_graph)
-        else:
-            model_model.strat_image = imgrender(
-                model_model.strat_graph,
-                self.view.littlecanvas.winfo_width(),
-                self.view.littlecanvas.winfo_height(),
-            )  # @todo - get the view width/height cleaner
+        model_model.render_strat_graph()
         self.view.update_littlecanvas(model_model.strat_image)
 
     def stratfunc(self, node: str) -> None:
