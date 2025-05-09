@@ -1,5 +1,7 @@
 import csv
+import os
 import pathlib
+import sys
 import tempfile
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Literal, Optional, Tuple
@@ -315,6 +317,32 @@ class Model:
     Formerly StartPage.all_results_dict
     @todo - rename, rehome, typehint, docstring
     """
+
+    def create_dirs(self) -> bool:
+        """Create the expected directories for this model, including wokring directories.
+
+        Returns:
+            Boolean indicating success of directory creation
+
+        Formerly part of load_Window.create_file, popupWindow9.make_directories & popupWindow10.make_directories"""
+
+        try:
+            # Ensure the model (and implictly project) directory exists
+            self.path.mkdir(parents=True, exist_ok=True)
+            # Create each expected child directory. @todo make this class members instead so they can be accessed directly?
+            # @todo - these directories do not get consistently used by 0.1.
+            expected_child_dirs = ["stratigraphic_graph", "chronological_graph", "python_only", "mcmc_results"]
+            for child_dir in expected_child_dirs:
+                path = self.path / child_dir
+                path.mkdir(parents=True, exist_ok=True)
+
+            # Change the working dir to the model directory. @todo decide if this is desirbale or not.
+            os.chdir(self.path)
+
+        except Exception as e:
+            # @todo - better error handling. Should be due to permsissions, invalid filepaths or disk issues only
+            print(e, file=sys.stderr)
+            return False
 
     def save(self):
         """Save the current state of this model to disk at self.path"""

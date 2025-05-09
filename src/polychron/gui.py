@@ -202,19 +202,10 @@ class popupWindow9(object):
                     self.master.chrono_dag.remove_edge(b[0], b[1])
 
 
-      def make_directories(self, i):
-              dirs2 = os.path.join(i, "stratigraphic_graph")
-              dirs3 = os.path.join(i, "chronological_graph")
-              dirs4 = os.path.join(i, "python_only")
-              dirs5 = os.path.join(i, "mcmc_results")
-              os.makedirs(dirs2)
-              os.makedirs(dirs3)
-              os.makedirs(dirs4)
-              os.makedirs(dirs5)
-              os.chdir(i)
-              return dirs4
-      def selectall(self):
-          self.e.select_set(0, 'end')
+      def make_directories(self, i):   
+            # Model.create_dirs does most of this now. 
+            dirs4 = os.path.join(i, "python_only")
+            return dirs4
     
       def save_state_1(self, master, j):
          global mcmc_check, load_check, FILE_INPUT
@@ -452,19 +443,10 @@ class popupWindow10(object):
                     self.master.chrono_graph.remove_edge(b[0], b[1])
 
 
-      def make_directories(self, i):         
-              dirs2 = os.path.join(i, "stratigraphic_graph")
-              dirs3 = os.path.join(i, "chronological_graph")
-              dirs4 = os.path.join(i, "python_only")
-              dirs5 = os.path.join(i, "mcmc_results")
-              os.makedirs(dirs2)
-              os.makedirs(dirs3)
-              os.makedirs(dirs4)
-              os.makedirs(dirs5)
-              os.chdir(i)
-              return dirs4
-      def selectall(self):
-          self.e.select_set(0, 'end')
+      def make_directories(self, i):   
+            # Model.create_dirs does most of this now. 
+            dirs4 = os.path.join(i, "python_only")
+            return dirs4
     
       def save_state_1(self, master, j):
          global mcmc_check, load_check, FILE_INPUT
@@ -514,42 +496,6 @@ class popupWindow10(object):
              load_check = data['load_check']
              mcmc_check = data['mcmc_check']
 
-class load_Window(object):
-    # @note - this was triggered after a model was created. Not yet (fully) reimplemetned @todo
-    def create_file(self, folder_dir, load):  
-        dirs = os.path.join(POLYCHRON_PROJECTS_DIR, folder_dir, self.model.get())
-        dirs2 = os.path.join(dirs, "stratigraphic_graph")
-        dirs3 = os.path.join(dirs, "chronological_graph")
-        dirs4 = os.path.join(dirs, "python_only")
-        dirs5 = os.path.join(dirs, "mcmc_results")
-        if not os.path.exists(dirs):
-       #     os.makedirs(dirs)
-            os.makedirs(dirs)
-            os.makedirs(dirs2)
-            os.makedirs(dirs3)
-            os.makedirs(dirs4)
-            os.makedirs(dirs5)
-            os.chdir(dirs)
-            proj_dir = os.path.join(POLYCHRON_PROJECTS_DIR, folder_dir)
-            if load:
-                for F in (StartPage, PageOne):
-                    page_name = F.__name__
-                    frame = F(parent=self.master.container, controller=self.master)
-                    self.master.frames[page_name] = frame
-    
-                    # put all of the pages in the same location;
-                    # the one on the top of the stacking order
-                    # will be the one that is visible.
-                    frame.grid(row=0, column=0, sticky="nsew")        
-                    self.master.show_frame("StartPage")   
-            self.cleanup()
-            tk.messagebox.showinfo('Tips:','model created successfully!')
-            os.chdir(dirs)
-        else:
-            
-            tk.messagebox.showerror('Tips','The folder name exists, please change it')
-            self.cleanup()
-
 class StartPage(tk.Frame):
 
     def save_state_1(self):
@@ -561,7 +507,6 @@ class StartPage(tk.Frame):
             row_list.append((self.tree2.item(child)['text'],self.tree2.item(child)['values']))
         self.treeview_df = pd.DataFrame(row_list, columns=columns)
         vars_list_1 = dir(self)
-  #      self.node_importance(self.graph)
         var_list = [var for var in vars_list_1 if (('__' and 'grid' and 'get' and 'tkinter' and 'children') not in var) and (var[0] != '_')]          
         data = {}
         # Type names to not pickle when saving state. polychron is excluded to avoid classes which inherit from tk, this may be a bit too strong.
