@@ -157,7 +157,7 @@ def phase_info_func(file_graph: nx.DiGraph) -> Tuple[Dict[Any, Any], List[Any], 
     @todo - add/fix type annotations, param/variable names etc
     @todo - better handling of FILE_INPUT if/else, which is the path to the .dot file which has been opened (unless a .csv strat file has been opened since)
     """
-    FILE_INPUT = None  # @todo - make this actuall work when a gv file has been opened.
+    FILE_INPUT = None  # @todo - model.strat_dot_file_input
     res = []
     node_list = list(file_graph.nodes)
     nd = dict(file_graph.nodes(data=True))
@@ -199,7 +199,7 @@ def edge_of_phase(test1, pset, node_list, node_info):
     @todo - type annotations
     @todo - test/implement FILE_INPUT is not None branch for .dot file version
     """
-    FILE_INPUT = None  # @todo
+    FILE_INPUT = None  # @todo - model.strat_dot_file_input
     x_l = []
     y_l = []
     mydict = {}

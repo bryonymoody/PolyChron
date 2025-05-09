@@ -667,31 +667,3 @@ class StartPage(tk.Frame):
         self.littlecanvas.update()
         self.littlecanvas.scale("all", 0, 0, self.delta, self.delta)  # rescale all canvas objects
         self.show_image()
-
-    def open_file1(self):
-        """opens dot file"""
-        global node_df, FILE_INPUT, phase_true
-        file = askopenfile(mode="r", filetypes=[("Python Files", "*.dot")])
-        FILE_INPUT = file.name
-        self.graph = nx.DiGraph(imagefunc(file.name), graph_attr={"splines": "ortho"})
-        if phase_true == 1:
-            self.image = imgrender_phase(self.graph)
-        else:
-            self.image = imgrender(self.graph)
-        self.littlecanvas.img = ImageTk.PhotoImage(self.image)
-        self.littlecanvas_img = self.littlecanvas.create_image(0, 0, anchor="nw", image=self.littlecanvas.img)
-
-        self.width, self.height = self.image.size
-        self.imscale = 1.0  # scale for the canvaas image
-        #  self.imscale  = min(921/self.image.size[0], 702/self.image.size[1])
-        self.delta = 1.1  # zoom magnitude
-        # Put image into container rectangle and use it to set proper coordinates to the image
-        self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
-        self.bind("<Configure>", self.resize)
-        self.littlecanvas.scale("all", 0, 0, self.delta, self.delta)  # rescale all canvas objects
-        self.show_image()
-        self.littlecanvas.bind("<Configure>", self.resize)
-        self.delnodes = []
-        self.delnodes_meta = []
-        self.canvas.delete("all")
-        self.littlecanvas.bind("<Button-3>", self.preClick)

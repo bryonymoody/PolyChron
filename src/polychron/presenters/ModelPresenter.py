@@ -19,7 +19,7 @@ from ..presenters.MCMCProgressPresenter import MCMCProgressPresenter
 from ..presenters.RemoveContextPresenter import RemoveContextPresenter
 from ..presenters.RemoveStratigraphicRelationshipPresenter import RemoveStratigraphicRelationshipPresenter
 from ..presenters.ResidualOrIntrusivePresenter import ResidualOrIntrusivePresenter
-from ..util import imgrender, imgrender_phase, node_coords_fromjson, node_del_fixed
+from ..util import imagefunc, imgrender, imgrender_phase, node_coords_fromjson, node_del_fixed
 from ..views.AddContextView import AddContextView
 from ..views.CalibrateModelSelectView import CalibrateModelSelectView
 from ..views.DatafilePreviewView import DatafilePreviewView
@@ -361,35 +361,42 @@ class ModelPresenter(BaseFramePresenter):
         Formerly StartPage.open_file1
 
         @todo - Implement this, once a "valid" dotfile for this is found.
-        @todo - Need to fixup the use of FILE_INPUT in funcs like phase_info_func once this is implemented.
         """
-        # @todo
-        # global node_df, FILE_INPUT,
         file = askopenfile(mode="r", filetypes=[("DOT Files", "*.dot"), ("Graphviz Files", "*.gv")])
-        self.dot_file = file  # @todo - temp warning suppression
-        # FILE_INPUT = file.name
-        # self.graph = nx.DiGraph(imagefunc(file.name), graph_attr={'splines':'ortho'})
-        # if model_model.phase_true == 1:
-        #     self.image = imgrender_phase(self.graph)
-        # else:
-        #     self.image = imgrender(self.graph)
-        # self.littlecanvas.img = ImageTk.PhotoImage(self.image)
-        # self.littlecanvas_img = self.littlecanvas.create_image(0, 0, anchor="nw", image=self.littlecanvas.img)
+        if file is not None:
+            # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
+            model_model: Optional[Model] = self.model.get_current_model()
 
-        # self.width, self.height = self.image.size
-        # self.imscale = 1.0  # scale for the canvaas image
-        # # self.imscale  = min(921/self.image.size[0], 702/self.image.size[1])
-        # self.delta = 1.1  # zoom magnitude
-        # # Put image into container rectangle and use it to set proper coordinates to the image
-        # self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
-        # self.bind("<Configure>", self.resize)
-        # self.littlecanvas.scale('all', 0, 0, self.delta, self.delta)  # rescale all canvas objects
-        # self.show_image()
-        # self.littlecanvas.bind("<Configure>", self.resize)
-        # self.delnodes = []
-        # self.delnodes_meta = []
-        # self.canvas.delete('all')
-        # self.littlecanvas.bind("<Button-3>", self.preClick)
+            # Store the path, marking that the most rencent input was a .dot/gv file
+            model_model.set_strat_dot_file_input(file.name)
+
+            # @todo polychron 0.1 does not mark the strat as loaded in this case
+            # self.strat_check = True
+            # Update the check list
+            # self.check_list_gen()
+
+            model_model.strat_graph = nx.DiGraph(imagefunc(file.name), graph_attr={"splines": "ortho"})
+
+            # Render the image in phases or not
+            if model_model.phase_true == 1:
+                model_model.strat_image = imgrender_phase(model_model.strat_graph)
+            else:
+                # @todo - 0.1 would not have worked, called imgrender with 1 param not 3.
+                model_model.strat_image = imgrender(
+                    model_model.strat_graph,
+                    self.view.littlecanvas.winfo_width(),
+                    self.view.littlecanvas.winfo_height(),
+                )  # @todo - get the view width/height cleaner
+
+            # Clear the list of deleted nodes. @todo method / part of setting the stratr graph?
+            model_model.delnodes = []
+
+            # Update the view and any keybindings
+            self.view.update_littlecanvas(model_model.strat_image)
+            # self.bind("<Configure>", self.resize) @todo
+            self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
+            self.view.bind_littlecanvas_callback("<Button-3>", self.pre_click)
+            self.show_image()
 
     def open_strat_csv_file(self) -> None:
         """Callback function when File > Load stratigraphic relationship file (.csv) is selected, opening a plain text strat file
@@ -429,6 +436,10 @@ class ModelPresenter(BaseFramePresenter):
                             self.view.littlecanvas.winfo_width(),
                             self.view.littlecanvas.winfo_height(),
                         )  # @todo - get the view width/height cleaner
+
+                    # Clear the list of deleted nodes. @todo method / part of setting the stratr graph?
+                    model_model.delnodes = []
+
                     # Update the view and any keybindings
                     self.view.update_littlecanvas(model_model.strat_image)
                     # self.bind("<Configure>", self.resize) @todo

@@ -31,6 +31,13 @@ class Model:
     @todo - this and name are not both required, could have parent_path and an dynamic path? (i.e. avoid duplication during construction). Or even require path to be proivided for save() and load()
     """
 
+    strat_dot_file_input: Optional[pathlib.Path] = field(default=None)
+    """Stratigraphic path for .dot/.gv input
+    
+    Formerly StartPage.FILE_INPUT
+    
+    @todo rename"""
+
     strat_df: Optional[pd.DataFrame] = field(default=None)
     """The stratigraphic file from CSV, if loaded.
 
@@ -312,6 +319,10 @@ class Model:
     def save(self):
         """Save the current state of this model to disk at self.path"""
         print(f"@todo - Model.save({self.path})")
+
+    def set_strat_dot_file_input(self, file_input: str | pathlib.Path) -> None:
+        """provdided a .dot/.gv file path, set the model input."""
+        self.strat_dot_file_input = pathlib.Path(file_input)
 
     def set_strat_df(self, df: pd.DataFrame) -> None:
         """Provided a dataframe for stratigraphic relationships, set the values locally and post-process it to produce the stratgiraphic graph

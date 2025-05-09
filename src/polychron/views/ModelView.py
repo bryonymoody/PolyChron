@@ -478,8 +478,6 @@ class ModelView(BaseFrameView):
         self.delta = 1.1  # zoom magnitude
         # Put image into container rectangle and use it to set proper coordinates to the image
         self.container = self.littlecanvas.create_rectangle(0, 0, self.width, self.height, width=0)
-        # self.delnodes = [] # @todo
-        # self.delnodes_meta = [] # @todo
         self.imscale = min(921 / self.image.size[0], 702 / self.image.size[1])
         self.littlecanvas.scale("all", 0, 0, self.delta, self.delta)  # rescale all canvas objects
         self.show_image()
