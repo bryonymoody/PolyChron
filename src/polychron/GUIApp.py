@@ -158,10 +158,25 @@ class GUIApp(Mediator):
         """Register application-wide key bindings"""
         # ctrl+w to close the window @todo this might need changing for sub-windows..
         self.root.bind("<Control-w>", self.exit_application)
+        # ctrl+s to save the current model
+        self.root.bind("<Control-s>", self.save_current_model)
 
     def register_protocols(self) -> None:
         """Register protocols with the root window - i.e. what to do on (graceful) application exit"""
         self.root.protocol("WM_DELETE_WINDOW", self.exit_application)
+
+    def save_current_model(self, event: Optional[Any] = None) -> None:
+        """If a model is currently open, save it
+
+        @todo - this should probably be a keybind owned by the tab, which just calls the right method."""
+        if (
+            self.current_presenter_key == "Model"
+            or self.current_presenter_key == "DatingResults"
+            and self.projects_directory_obj.selected_project is not None
+            and self.projects_directory_obj.selected_model is not None
+        ):
+            model = self.projects_directory_obj.get_current_model()
+            model.save()
 
     def exit_application(self, event: Optional[Any] = None) -> None:
         """Callback function for graceful application exit via keybind or window manager close."""

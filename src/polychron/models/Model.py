@@ -1,9 +1,11 @@
 import csv
+import json
 import os
 import pathlib
 import sys
 import tempfile
 from dataclasses import dataclass, field
+from importlib.metadata import version
 from typing import Any, Dict, List, Literal, Optional, Tuple
 
 import networkx as nx
@@ -318,6 +320,76 @@ class Model:
     @todo - rename, rehome, typehint, docstring
     """
 
+    def to_json(self, pretty: bool = False):
+        """Serialise this object to JSON
+
+        @todo decide which bits to exclude form saving/loading, and generate on reconstruction instead.
+        @todo - how to handle dataframes, Image.Image, files on disk, relative vs abs paths in the case a directory has been copied.
+        """
+        data = self.__dict__.copy()
+        subset_keys = ["name", "path", ""]
+        data = {k: v for k, v in data.items() if k in subset_keys}
+
+        for k in data:
+            print(k, type(data[k]))
+        # Remove anything we don't want to save to disk @todo
+        # del data["key"]
+        # Convert types which cannot nateively be serialised to json to other representations
+        data["path"] = str(data["path"])
+        indent = 2 if pretty else None
+        return json.dumps({"polychron_version": version("polychron"), "model": data}, indent=indent)
+
+    def save(self):
+        """Save the current state of this model to disk at self.path"""
+        print(f"@todo - Model.save({self.path})")
+
+        if self.create_dirs():
+            json_s = self.to_json(pretty=True)
+            print(json_s)
+            json_path = self.path / "Model.json"  # @todo decide on this.
+            with open(json_path, "w") as f:
+                f.write(json_s)
+
+        print(
+            "@todo temp - immediately load from disk for testing purposes without breaking demo loading workflow yet."
+        )
+
+        new_model = Model.from_disk(self.path / "Model.json")
+        print(new_model)
+
+    @classmethod
+    def from_disk(cls, path: pathlib.Path) -> "Model":
+        """Get an instance of the model from serialised json on disk.
+
+        @todo how to handle version compatible saving/loading?
+        @todo rename method / wrap in a from_path() method which expects a json file + other sturctures?"""
+
+        if not path.is_file():
+            raise Exception("@todo file does not exist")
+
+        with open(path, "r") as f:
+            data = json.load(f)
+
+            # Raise an excpetion if required keys are missing
+            if "polychron_version" not in data:
+                # @todo - missing version might just mean we assume a current one?
+                raise Exception("@todo - bad json, missing version")
+            if "model" not in data:
+                raise Exception("@todo - bad json, missing model")
+
+            polychron_version = data["polychron_version"]
+            print(f"model saved with {polychron_version}")
+            if polychron_version == "0.2.0":
+                # @todo version specific stuff if required.
+                pass
+
+            model_data = data["model"]
+
+            # Convert back to specific types
+            model_data["path"] = pathlib.Path(model_data["path"])
+
+            return cls(**model_data)
+
     def create_dirs(self) -> bool:
         """Create the expected directories for this model, including wokring directories.
 
@@ -343,10 +415,7 @@ class Model:
             # @todo - better error handling. Should be due to permsissions, invalid filepaths or disk issues only
             print(e, file=sys.stderr)
             return False
-
-    def save(self):
-        """Save the current state of this model to disk at self.path"""
-        print(f"@todo - Model.save({self.path})")
+        return True
 
     def set_strat_dot_file_input(self, file_input: str | pathlib.Path) -> None:
         """provdided a .dot/.gv file path, set the model input."""

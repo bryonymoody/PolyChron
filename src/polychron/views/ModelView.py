@@ -59,38 +59,21 @@ class ModelView(BaseFrameView):
         file = tk.Menu(self.file_menubar, tearoff=0, bg="white", font=("helvetica 12 bold"))
         self.file_menubar["menu"] = file
         file.add_separator()
+        file.add_command(label="Load stratigraphic diagram file (.dot)", font="helvetica 12 bold")
+        file.add_command(label="Load stratigraphic relationship file (.csv)", font="helvetica 12 bold")
+        file.add_command(label="Load scientific dating file (.csv)", font="helvetica 12 bold")
+        file.add_command(label="Load context grouping file (.csv)", font="helvetica 12 bold")
+        file.add_command(label="Load group relationship file (.csv)", font="helvetica 12 bold")
+        file.add_command(label="Load context equalities file (.csv)", font="helvetica 12 bold")
+        file.add_command(label="Load new project", font="helvetica 12 bold")
+        file.add_command(label="Load existing model", font="helvetica 12 bold")
+        file.add_command(label="Save changes as current model", font="helvetica 12 bold", accelerator="Ctrl+s")
         file.add_command(
-            label="Load stratigraphic diagram file (.dot)", font="helvetica 12 bold"
-        )  # , command=lambda: self.open_file1()
-        file.add_command(
-            label="Load stratigraphic relationship file (.csv)", font="helvetica 12 bold"
-        )  # , command=lambda: self.open_file2(),font="helvetica 12 bold")
-        file.add_command(
-            label="Load scientific dating file (.csv)", font="helvetica 12 bold"
-        )  # , command=lambda: self.open_file3()
-        file.add_command(
-            label="Load context grouping file (.csv)", font="helvetica 12 bold"
-        )  # , command=lambda: self.open_file4()
-        file.add_command(
-            label="Load group relationship file (.csv)", font="helvetica 12 bold"
-        )  # , command=lambda: self.open_file5()
-        file.add_command(
-            label="Load context equalities file (.csv)", font="helvetica 12 bold"
-        )  # , command=lambda: self.open_file6()
-        file.add_command(
-            label="Load new project", font="helvetica 12 bold"
-        )  # , command = lambda: load_Window(MAIN_FRAME)
-        file.add_command(
-            label="Load existing model", font="helvetica 12 bold"
-        )  # , command = lambda: load_Window.load_model(load_Window(MAIN_FRAME), proj_dir)
-        file.add_command(
-            label="Save changes as current model", font="helvetica 12 bold"
-        )  # , command = lambda: self.save_state_1()
-        file.add_command(
-            label="Save changes as new model", font="helvetica 12 bold"
-        )  # , command = lambda: self.refresh_4_new_model(controller, proj_dir, load = False)
+            label="Save changes as new model",
+            font="helvetica 12 bold",  # , accelerator="Ctrl+Shift+s"
+        )
         file.add_separator()
-        file.add_command(label="Exit", font="helvetica 12 bold")  # , command = lambda: self.destroy1)
+        file.add_command(label="Exit", font="helvetica 12 bold", accelerator="Ctrl+w")
         self.file_menubar.place(relx=0.00, rely=0, relwidth=0.1, relheight=0.03)
 
         # Adding View Menu and commands

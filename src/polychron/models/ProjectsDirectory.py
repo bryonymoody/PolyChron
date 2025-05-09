@@ -131,7 +131,7 @@ class ProjectsDirectory:
                 name="demo",
                 path=self.path / "demo",
                 models={
-                    "demo": Model(name="one", path=self.path / "demo" / "demo"),
+                    "demo": Model(name="demo", path=self.path / "demo" / "demo"),
                 },
             ),
         }
