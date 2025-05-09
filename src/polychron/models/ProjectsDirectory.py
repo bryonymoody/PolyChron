@@ -62,7 +62,6 @@ class ProjectsDirectory:
     def create_model(self, project_name: str, model_name: str) -> None:
         """Create a new model in the named project (which may also be new).
 
-        @todo - this does not actually create anything on disk
         @todo input validation here on both parameters
         """
         if project_name not in self.projects:
@@ -73,6 +72,8 @@ class ProjectsDirectory:
             raise Exception(f"{model_name} already present in {project_name}")
         else:
             project.models[model_name] = Model(name=model_name, path=project.path / model_name)
+            # Create directories for the model. Ideally this would only be done on first save, but the first temp file creation woudl require it.
+            project.models[model_name].create_dirs()
 
     def create_model_from_self(self) -> None:
         # @todo - validation and errors, or remove this method and just incorparte into create_model with optional params.
@@ -111,22 +112,6 @@ class ProjectsDirectory:
         """
 
         projects = {
-            "Foo": Project(
-                name="Foo",
-                path=self.path / "Foo",
-                models={
-                    "one": Model(name="one", path=self.path / "Foo" / "one"),
-                    "two": Model(name="two", path=self.path / "Foo" / "two"),
-                },
-            ),
-            "Bar": Project(
-                name="Bar",
-                path=self.path / "Bar",
-                models={
-                    "one": Model(name="one", path=self.path / "Bar" / "one"),
-                    "two": Model(name="two", path=self.path / "Bar" / "two"),
-                },
-            ),
             "demo": Project(
                 name="demo",
                 path=self.path / "demo",
@@ -139,6 +124,8 @@ class ProjectsDirectory:
         # Manually "load" some model data for the demo model, pre serialisation / de-serialisation
         # @todo - this is temporary.
         demo_model = projects["demo"].models["demo"]
+        # Ensure directories exist
+        demo_model.create_dirs()
 
         # Strat file from csv
         demo_model.set_strat_df(
