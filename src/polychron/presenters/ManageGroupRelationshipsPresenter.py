@@ -1,6 +1,4 @@
 import copy
-import pathlib
-import tempfile
 from typing import Any, Optional
 
 import networkx as nx
@@ -207,10 +205,8 @@ class ManageGroupRelationshipsPresenter(BasePopupPresenter):
         Formerly popupWindow3.full_chronograph_func
         @todo - how much of this could become a Model method?"""
 
-        workdir = (
-            pathlib.Path(tempfile.gettempdir()) / "polychron" / "temp"
-        )  # @todo actually do this in the model folder?
-        workdir.mkdir(parents=True, exist_ok=True)
+        workdir = self.model.get_working_directory()
+        workdir.mkdir(parents=True, exist_ok=True)  # @todo - shouldnt be neccessary
 
         self.prev_phase = ["start"]
         self.post_phase = []

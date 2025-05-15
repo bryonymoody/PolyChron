@@ -8,42 +8,6 @@ import pandas as pd
 from tkinter.filedialog import askopenfile
 import pickle
 
-class popupWindow8(object):
-    # Not sure how this is differnet than Model.save in general. 
-    # Triggered during cleanup. 
-    def save_state_1(self, j):
-        global mcmc_check, load_check, FILE_INPUT
-        
-        vars_list_1 = dir(self)
-        var_list = [var for var in vars_list_1 if (('__' and 'grid' and 'get' and 'tkinter' and 'children') not in var) and (var[0] != '_')]          
-        data = {}
-        check_list = ["tkinter", "method", "__main__", 'PIL']
-        for i in var_list:
-            v = getattr(self, i)
-            if not any(x in str(type(v)) for x in check_list):
-               data[i] = v
-        data['all_vars'] = list(data.keys())
-        data['load_check'] = load_check
-        data['mcmc_check'] = mcmc_check
-        data["file_input"] = FILE_INPUT
-        path = self.path + "/" +  str(j) + "/python_only/save.pickle"
-        try:
-            with open(path, "wb") as f:
-                 pickle.dump(data, f)
-            tk.messagebox.showinfo('Success', 'Your model has been saved')
-        except Exception:
-            tk.messagebox.showerror('Error', 'File not saved')             
-    def load_cal_data(self, j):
-        global mcmc_check, load_check, FILE_INPUT
-        with open(self.path + "/" + str(j) + '/python_only/save.pickle', "rb") as f:
-            data = pickle.load(f)
-            vars_list = data['all_vars']
-            for i in vars_list:
-                setattr(self, i, data[i])
-            FILE_INPUT = data['file_input']
-            load_check = data['load_check']
-            mcmc_check = data['mcmc_check']
-
 # @todo - not implemented yet, no tkinter code so didn't fit the pattern of other popup classes
 # When runnign this, cli output coutns from 0 to 100 mutliple times, with the occasional "File not saved" due to pickle erroring.
 class popupWindow9(object):
@@ -201,49 +165,6 @@ class popupWindow9(object):
               for b in edge_remove:
                     self.master.chrono_dag.remove_edge(b[0], b[1])
 
-
-      def make_directories(self, i):   
-            # Model.create_dirs does most of this now. 
-            dirs4 = os.path.join(i, "python_only")
-            return dirs4
-    
-      def save_state_1(self, master, j):
-         global mcmc_check, load_check, FILE_INPUT
-        
-         vars_list_1 = dir(self.master)
-         var_list = [var for var in vars_list_1 if (('__' and 'grid' and 'get' and 'tkinter' and 'children') not in var) and (var[0] != '_')]          
-         data = {}
-         check_list = ["tkinter", "method", "__main__", 'PIL']
-         for i in var_list:
-             v = getattr(master, i)
-             if not any(x in str(type(v)) for x in check_list):
-                data[i] = v
-         data['all_vars'] = list(data.keys())
-         data['load_check'] = load_check
-         data['mcmc_check'] = mcmc_check
-         data["file_input"] = FILE_INPUT
-         path = j + "/save.pickle"
-         if mcmc_check == 'mcmc_loaded': 
-                results = data["all_results_dict"]
-                df = pd.DataFrame()
-                for i in results.keys():
-                    df[i] = results[i][10000:]  
-                results_path = os.getcwd() + "/mcmc_results/full_results_df"    
-                df.to_csv(results_path)
-                phasefile = data['phasefile']
-                context_no = data['CONTEXT_NO']
-                key_ref = [list(phasefile["Group"])[list(phasefile["context"]).index(i)] for i in context_no]
-                df1 = pd.DataFrame(key_ref)   
-                df1.to_csv('mcmc_results/key_ref.csv') 
-                df2 = pd.DataFrame(context_no)
-                df2.to_csv('mcmc_results/context_no.csv') 
-
-         try:
-             with open(path, "wb") as f:
-                  pickle.dump(data, f)
-         except Exception:
-             tk.messagebox.showerror('Error', 'File not saved')        
-             
       def load_cal_data(self, j):
          global mcmc_check, load_check, FILE_INPUT
          with open(self.path + "/" + str(j) + '/python_only/save.pickle', "rb") as f:
@@ -442,49 +363,6 @@ class popupWindow10(object):
               for b in edge_remove:
                     self.master.chrono_graph.remove_edge(b[0], b[1])
 
-
-      def make_directories(self, i):   
-            # Model.create_dirs does most of this now. 
-            dirs4 = os.path.join(i, "python_only")
-            return dirs4
-    
-      def save_state_1(self, master, j):
-         global mcmc_check, load_check, FILE_INPUT
-        
-         vars_list_1 = dir(self.master)
-         var_list = [var for var in vars_list_1 if (('__' and 'grid' and 'get' and 'tkinter' and 'children') not in var) and (var[0] != '_')]          
-         data = {}
-         check_list = ["tkinter", "method", "__main__", 'PIL']
-         for i in var_list:
-             v = getattr(master, i)
-             if not any(x in str(type(v)) for x in check_list):
-                data[i] = v
-         data['all_vars'] = list(data.keys())
-         data['load_check'] = load_check
-         data['mcmc_check'] = mcmc_check
-         data["file_input"] = FILE_INPUT
-         path = os.getcwd() + "/python_only/save.pickle"
-         if mcmc_check == 'mcmc_loaded': 
-                results = data["all_results_dict"]
-                df = pd.DataFrame()
-                for i in results.keys():
-                    df[i] = results[i][10000:]  
-                results_path = os.getcwd() + "/mcmc_results/full_results_df"    
-                df.to_csv(results_path)
-                phasefile = data['phasefile']
-                context_no = data['CONTEXT_NO']
-                key_ref = [list(phasefile["Group"])[list(phasefile["context"]).index(i)] for i in context_no]
-                df1 = pd.DataFrame(key_ref)   
-                df1.to_csv('mcmc_results/key_ref.csv') 
-                df2 = pd.DataFrame(context_no)
-                df2.to_csv('mcmc_results/context_no.csv') 
-
-         try:
-             with open(path, "wb") as f:
-                  pickle.dump(data, f)
-         except Exception:
-             tk.messagebox.showerror('Error', 'File not saved')        
-             
       def load_cal_data(self, j):
          global mcmc_check, load_check, FILE_INPUT
          with open(self.path + "/" + str(j) + '/python_only/save.pickle', "rb") as f:
@@ -497,53 +375,6 @@ class popupWindow10(object):
              mcmc_check = data['mcmc_check']
 
 class StartPage(tk.Frame):
-
-    def save_state_1(self):
-        global mcmc_check, load_check, FILE_INPUT
-        #converting metadata treeview to dataframe
-        row_list = []
-        columns = ('context', 'Reason for deleting')
-        for child in self.tree2.get_children():
-            row_list.append((self.tree2.item(child)['text'],self.tree2.item(child)['values']))
-        self.treeview_df = pd.DataFrame(row_list, columns=columns)
-        vars_list_1 = dir(self)
-        var_list = [var for var in vars_list_1 if (('__' and 'grid' and 'get' and 'tkinter' and 'children') not in var) and (var[0] != '_')]          
-        data = {}
-        # Type names to not pickle when saving state. polychron is excluded to avoid classes which inherit from tk, this may be a bit too strong.
-        check_list = ["tkinter", "method", "__main__", 'PIL', "polychron"]
-        
-
-        for i in var_list:
-            v = getattr(self, i)
-            if not any(x in str(type(v)) for x in check_list):
-               data[i] = v
-        data['all_vars'] = list(data.keys())
-        data['load_check'] = load_check
-        data['mcmc_check'] = mcmc_check
-        data["file_input"] = FILE_INPUT
-        if mcmc_check == 'mcmc_loaded': 
-            results = data["all_results_dict"]
-            df = pd.DataFrame()
-            for i in results.keys():
-                df[i] = results[i][10000:]  
-            results_path = os.getcwd() + "/mcmc_results/full_results_df"    
-            df.to_csv(results_path)
-            phasefile = data['phasefile']
-            context_no = data['CONTEXT_NO']
-            key_ref = [list(phasefile["Group"])[list(phasefile["context"]).index(i)] for i in context_no]
-            df1 = pd.DataFrame(key_ref)   
-            df1.to_csv('mcmc_results/key_ref.csv') 
-            df2 = pd.DataFrame(context_no)
-            df2.to_csv('mcmc_results/context_no.csv') 
-        path = os.getcwd() + "/python_only/save.pickle"
-        path2 = os.getcwd() + "/stratigraphic_graph/deleted_contexts_meta"
-        self.treeview_df.to_csv(path2)
-        try:
-            with open(path, "wb") as f:
-                 pickle.dump(data, f)
-        except Exception as e:
-                  print("error saving state:", str(e))
-
                 
     def restore_state(self):
         global mcmc_check, load_check, FILE_INPUT

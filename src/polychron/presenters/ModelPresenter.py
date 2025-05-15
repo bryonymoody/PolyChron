@@ -1,5 +1,3 @@
-import pathlib
-import tempfile
 import tkinter as tk
 import tkinter.messagebox
 from tkinter.filedialog import askopenfile
@@ -986,7 +984,13 @@ class ModelPresenter(BaseFramePresenter):
 
         Formerly StartPage.save_state_1"""
         if model := self.model.get_current_model():
-            model.save()
+            try:
+                model.save()
+            except Exception as e:
+                tk.messagebox.showerror("Error", f"File not saved: {e}")
+            else:
+                # State saving success if no exceptions occurred
+                tk.messagebox.showinfo("Success", "Your model has been saved")
         else:
             pass  # @todo handle gracefully, but this should never occur.
 
@@ -1195,9 +1199,8 @@ class ModelPresenter(BaseFramePresenter):
         if model_model is None:
             return node_inside
 
-        workdir = (
-            pathlib.Path(tempfile.gettempdir()) / "polychron" / "temp"
-        )  # @todo actually do this in the model folder?
+        workdir = model_model.get_working_directory()
+        workdir.mkdir(parents=True, exist_ok=True)  # @todo - shouldnt be neccessary
 
         if model_model.phase_true == 1:
             (graph,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")

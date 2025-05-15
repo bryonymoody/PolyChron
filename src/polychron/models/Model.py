@@ -2,8 +2,8 @@ import csv
 import json
 import os
 import pathlib
+import shutil
 import sys
-import tempfile
 from dataclasses import dataclass, field
 from importlib.metadata import version
 from typing import Any, Dict, List, Literal, Optional, Tuple
@@ -323,6 +323,51 @@ class Model:
     @todo - rename, rehome, typehint, docstring
     """
 
+    def get_working_directory(self) -> pathlib.Path:
+        """Get the working directory to be used for dynamically created files
+
+        This allows the "saved" version of the model to differe from the version currently being worked on. I.e. the rendered chronological graph used in the UI as changes are made can be different to the version from when save the model was last saved.
+
+        @todo - use this.
+        """
+        return self.path / "temp"
+
+    def get_chronological_graph_directory(self) -> pathlib.Path:
+        """Get the path to the chronological_graph directory for this model
+
+        Returns:
+            The path to the `chronological_graph` directory for this model
+
+        """
+        return self.path / "chronological_graph"
+
+    def get_stratigraphic_graph_directory(self) -> pathlib.Path:
+        """Get the path to the stratigraphic_graph directory for this model
+
+        Returns:
+            The path to the `stratigraphic_graph` directory for this model
+
+        """
+        return self.path / "stratigraphic_graph"
+
+    def get_mcmc_results_directory(self) -> pathlib.Path:
+        """Get the path to the mcmc_results directory for this model
+
+        Returns:
+            The path to the `mcmc_results` directory for this model
+
+        """
+        return self.path / "mcmc_results"
+
+    def get_python_only_directory(self) -> pathlib.Path:
+        """Get the path to the python_only directory for this model
+
+        Returns:
+            The path to the `python_only` directory for this model
+
+        """
+        return self.path / "python_only"
+
     def to_json(self, pretty: bool = False):
         """Serialise this object to JSON
 
@@ -330,46 +375,127 @@ class Model:
         @todo - how to handle dataframes, Image.Image, files on disk, relative vs abs paths in the case a directory has been copied.
         """
         data = self.__dict__.copy()
-        subset_keys = ["name", "path", ""]
+        subset_keys = ["name", "path", "strat_df", "strat_graph"]
         data = {k: v for k, v in data.items() if k in subset_keys}
 
-        for k in data:
-            print(k, type(data[k]))
         # Remove anything we don't want to save to disk @todo
         # del data["key"]
-        # Convert types which cannot nateively be serialised to json to other representations
-        data["path"] = str(data["path"])
+
+        # Convert types which cannot nateively be serialised to json to other representations @Todo single pass?
+        for k in data:
+            if isinstance(data[k], tuple([str, int, float])):
+                pass
+            elif isinstance(data[k], pathlib.Path):
+                data[k] = str(data[k])
+            elif isinstance(data[k], pd.DataFrame):
+                # For dataframes, export to json so pandas handles the type conversion, before returning to a python object.
+                data[k] = json.loads(data[k].to_json())
+            elif isinstance(data[k], nx.DiGraph):
+                print(
+                    "@todo - decide how to encode networkx graphs as json. Maybe save to .dot instead and load from disk?"
+                )
+                data[k] = "@todo"
+            else:
+                data[k] = str[data[k]]
+
         indent = 2 if pretty else None
         return json.dumps({"polychron_version": version("polychron"), "model": data}, indent=indent)
 
-    def save(self):
-        """Save the current state of this model to disk at self.path"""
+    def save(self) -> None:
+        """Save the current state of this model to disk at self.path
+
+        Raises:
+            Exception: raised when any error occured during saving, with a message to present to the user. @todo specialise the exception type(s)
+
+        @todo - need to ensure that on save, all temp files in the project directory are correct for the saved model & not overwrite the "saved" versions if mutating in gui without saving? On load, images should be regenerated to ensure they match the saved state of the serialised data?"""
         print(f"@todo - Model.save({self.path})")
 
+        # Ensure directories requried exist
         if self.create_dirs():
-            json_s = self.to_json(pretty=True)
-            print(json_s)
-            json_path = self.path / "Model.json"  # @todo decide on this.
-            with open(json_path, "w") as f:
-                f.write(json_s)
+            try:
+                # create the represenation of the model to be saved to disk
+                json_s = self.to_json(pretty=True)
+                print(json_s)
 
-        print(
-            "@todo temp - immediately load from disk for testing purposes without breaking demo loading workflow yet."
-        )
+                # Ensure the "saved" versions of files are up to date.
+                # @todo - also ensure the rendered version on disk is current
+                # Esnure chronological graph output files are saved
+                for filename in ["fi_new_chrono.png", "fi_new_chrono.svg", "fi_new_chrono", "testdag_chrono.png"]:
+                    src = self.get_working_directory() / filename
+                    dst = self.get_chronological_graph_directory() / filename
+                    if src.is_file():
+                        shutil.copy(src, dst)
 
-        new_model = Model.from_disk(self.path / "Model.json")
-        print(new_model)
+                # Ensure stratigraphic graph files are saved
+                for filename in ["fi_new.png", "fi_new.svg", "fi_new", "testdag.png"]:
+                    src = self.get_working_directory() / filename
+                    dst = self.get_stratigraphic_graph_directory() / filename
+                    if src.is_file():
+                        shutil.copy(src, dst)
+
+                # Save the delte contexts metadata (Formerly StartPage.tree2, in save_state_1)
+                deleted_contexts_cols = ("context", "Reason for deleting")
+                # @todo - handle newlines?
+                deleted_contexts_rows = [[x[0], x[1]] for x in self.delnodes]
+                deleted_contexts_df = pd.DataFrame(deleted_contexts_rows, columns=deleted_contexts_cols)
+                deleted_contexts_meta_path = (
+                    self.get_stratigraphic_graph_directory() / "deleted_contexts_meta"
+                )  # @todo .csv
+                deleted_contexts_df.to_csv(deleted_contexts_meta_path)  # @todo - for all to_csv, don't save the index
+
+                # Ensure mcmc results are saved
+                # for filename in []:
+                #     src = self.get_working_directory() / filename
+                #     dst = self.get_mcmc_results_directory() / filename
+                #     if src.is_file():
+                #         shutil.copy(src, dst)
+
+                # if the mcmc has been ran, store some files to disk. Formerly part of StartPage.save_state_1
+                if self.mcmc_check:
+                    df = pd.DataFrame()
+                    for i in self.all_results_dict.keys():
+                        df[i] = self.all_results_dict[i][10000:]
+                    full_results_df_path = self.get_mcmc_results_directory() / "full_results_df"  # @todo .csv?
+                    df.to_csv(full_results_df_path)
+
+                    key_ref = [
+                        list(self.phase_df["Group"])[list(self.phase_df["context"]).index(i)] for i in self.CONTEXT_NO
+                    ]
+                    df1 = pd.DataFrame(key_ref)
+                    df1.to_csv(self.get_mcmc_results_directory() / "key_ref.csv")
+                    df2 = pd.DataFrame(self.CONTEXT_NO)
+                    df2.to_csv(self.get_mcmc_results_directory() / "context_no.csv")
+
+                # Ensure any copyable python_only files are saved
+                # for filename in []:
+                #     src = self.get_working_directory() / filename
+                #     dst = self.get_python_only_directory() / filename
+                #     if src.is_file():
+                #         shutil.copy(src, dst)
+
+                # Save the json representation of this object to disk
+                json_path = self.get_python_only_directory() / "polychron_model.json"
+
+                with open(json_path, "w") as f:
+                    f.write(json_s)
+
+            except Exception as e:
+                raise Exception(f"@todo - an exeption occurred during saving:\n {e}")
+        else:
+            raise Exception("@todo - could not create model directories")
 
     @classmethod
-    def from_disk(cls, path: pathlib.Path) -> "Model":
+    def load_from_disk(cls, path: pathlib.Path) -> "Model":
         """Get an instance of the model from serialised json on disk.
 
         @todo how to handle version compatible saving/loading?
         @todo rename method / wrap in a from_path() method which expects a json file + other sturctures?"""
 
+        # Ensure required files/folders are present
         if not path.is_file():
             raise Exception("@todo file does not exist")
 
+        # Attempt to open the Model json file, building an instance of Model
         with open(path, "r") as f:
             data = json.load(f)
 
@@ -391,7 +517,17 @@ class Model:
             # Convert back to specific types
             model_data["path"] = pathlib.Path(model_data["path"])
 
-            return cls(**model_data)
+            # Create an instance of the Model
+            model: Model = cls(**model_data)
+
+            # Perform any post-loading steps
+            pass  # @todo
+
+            # Return the Model
+            return model
+
+        # If this point is reached, an error occurred and should be propagated @todo
+        return None
 
     def create_dirs(self) -> bool:
         """Create the expected directories for this model, including wokring directories.
@@ -406,9 +542,14 @@ class Model:
             self.path.mkdir(parents=True, exist_ok=True)
             # Create each expected child directory. @todo make this class members instead so they can be accessed directly?
             # @todo - these directories do not get consistently used by 0.1.
-            expected_child_dirs = ["stratigraphic_graph", "chronological_graph", "python_only", "mcmc_results"]
-            for child_dir in expected_child_dirs:
-                path = self.path / child_dir
+            expected_model_dirs = [
+                self.get_stratigraphic_graph_directory(),
+                self.get_chronological_graph_directory(),
+                self.get_mcmc_results_directory(),
+                self.get_python_only_directory(),
+                self.get_working_directory(),
+            ]
+            for path in expected_model_dirs:
                 path.mkdir(parents=True, exist_ok=True)
 
             # Change the working dir to the model directory. @todo decide if this is desirbale or not.
@@ -550,7 +691,8 @@ class Model:
         @todo - better filenames + subdirectory.
         """
 
-        workdir = self.path  # @todo - make this render into a subfolder? 0.1 does not.
+        workdir = self.get_working_directory()
+        workdir.mkdir(parents=True, exist_ok=True)  # @todo shouldn't be neccesary?
         self.strat_graph.graph["graph"] = {"splines": "ortho"}
         write_dot(self.strat_graph, workdir / "fi_new")
         render("dot", "png", workdir / "fi_new")
@@ -568,7 +710,8 @@ class Model:
 
         @todo - de-duplicate with the residual or intrusive verisons. Both might not striclty be required.
         @todo - better filenames + subdirectory."""
-        workdir = self.path  # @todo - make this render into a subfolder? 0.1 does not.
+        workdir = self.get_working_directory()
+        workdir.mkdir(parents=True, exist_ok=True)  # @todo shouldn't be neccesary?
 
         write_dot(self.strat_graph, workdir / "fi_new.txt")
         my_file = open(workdir / "fi_new.txt")
@@ -595,7 +738,9 @@ class Model:
         @todo - better filenames + subdirectory.
         """
 
-        workdir = self.path / "resid_or_intru"  # @todo - make this render into a subfolder? 0.1 does not.
+        workdir = (
+            self.get_working_directory() / "resid_or_intru"
+        )  # @todo - make this render into a subfolder? 0.1 does not.
         workdir.mkdir(exist_ok=True)
 
         self.resid_or_intru_strat_graph.graph["graph"] = {"splines": "ortho"}
@@ -615,7 +760,9 @@ class Model:
 
         @todo - de-duplicate with the residual or intrusive verisons. Both might not striclty be required.
         @todo - better filenames + subdirectory."""
-        workdir = self.path / "resid_or_intru"  # @todo - make this render into a subfolder? 0.1 does not.
+        workdir = (
+            self.get_working_directory() / "resid_or_intru"
+        )  # @todo - make this render into a subfolder? 0.1 does not.
         workdir.mkdir(exist_ok=True)
 
         write_dot(self.resid_or_intru_strat_graph, workdir / "fi_new.txt")
@@ -641,10 +788,8 @@ class Model:
 
         @todo - better temporary file names / paths?
         @todo - working dir / set paths explicitly"""
-        workdir = (
-            pathlib.Path(tempfile.gettempdir()) / "polychron" / "temp"
-        )  # @todo actually do this in the model folder?
-        workdir.mkdir(parents=True, exist_ok=True)
+        workdir = self.get_working_directory()
+        workdir.mkdir(parents=True, exist_ok=True)  # @todo - shouldnt be neccessary
         fi_new_chrono = workdir / "fi_new_chrono"  # @todo make this a model member?
         if self.load_check and fi_new_chrono.is_file():
             render("dot", "png", fi_new_chrono)
@@ -667,10 +812,8 @@ class Model:
 
         @todo - instead of re-opening from disk, maybe keep a separate in-memory copy.
         @todo - actual path"""
-        workdir = (
-            pathlib.Path(tempfile.gettempdir()) / "polychron" / "temp"
-        )  # @todo actually do this in the model folder?
-        workdir.mkdir(parents=True, exist_ok=True)
+        workdir = self.get_working_directory()
+        workdir.mkdir(parents=True, exist_ok=True)  # @todo - shouldnt be neccessary
         png_path = workdir / "testdag.png"
         if png_path.is_file():
             self.strat_image = Image.open(png_path)
@@ -684,10 +827,8 @@ class Model:
 
         @todo - instead of re-opening from disk, maybe keep a separate in-memory copy.
         @todo - actual path"""
-        workdir = (
-            pathlib.Path(tempfile.gettempdir()) / "polychron" / "temp"
-        )  # @todo actually do this in the model folder?
-        workdir.mkdir(parents=True, exist_ok=True)
+        workdir = self.get_working_directory()
+        workdir.mkdir(parents=True, exist_ok=True)  # @todo - shouldnt be neccessary
         png_path = workdir / "testdag_chrono.png"
         if png_path.is_file():
             self.chrono_image = Image.open(png_path)
@@ -773,11 +914,9 @@ class Model:
             topo_sort,
             self.CONT_TYPE,
         ]
-        workdir = (
-            pathlib.Path(tempfile.gettempdir()) / "polychron" / "temp"
-        )  # @todo actually do this in the model folder?
-        workdir.mkdir(parents=True, exist_ok=True)
-        f = open(workdir / "input_file", "w")
+        workdir = self.get_working_directory()
+        workdir.mkdir(parents=True, exist_ok=True)  # @todo - shouldnt be neccessary
+        f = open(workdir / "input_file", "w")  # @todo .csv
         writer = csv.writer(f)
         #  for i in input_1:
         writer.writerow(input_1)
