@@ -35,7 +35,7 @@ dependencies = [
     "networkx>=2; python_version < '3.10'",
     "packaging",
     "pandas<2",
-    "pydot",
+    "pydot<4", # pydot 4 includes an api break which requires network 3.5 to support.
     "pyyaml",
     "ttkthemes",
 ]
