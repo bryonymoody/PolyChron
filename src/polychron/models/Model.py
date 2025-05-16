@@ -6,7 +6,7 @@ import shutil
 import sys
 from dataclasses import dataclass, field
 from importlib.metadata import version
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Tuple, get_type_hints
 
 import networkx as nx
 import pandas as pd
@@ -399,12 +399,11 @@ class Model:
                     data[k] = str(v)
                 elif isinstance(v, pd.DataFrame):
                     # For dataframes, export to json so pandas handles the type conversion, before returning to a python object.
-                    data[k] = json.loads(v.to_json())
+                    data[k] = json.loads(v.to_json(orient="columns"))
                 elif isinstance(v, nx.DiGraph):
                     # Encode graphs as json via networkx node_link_data, which can be de-serialised via node_link_graph. This should be safe for round-trips, other than node names being converted to strings (which they are anyway)
-                    data[k] = nx.node_link_data(
-                        v, edges="edges"
-                    )  # explicitly set edges value to future behaviour for networkx
+                    # explicitly set edges value to future behaviour for networkx
+                    data[k] = nx.node_link_data(v, edges="edges")
                 else:
                     data[k] = str(v)
 
@@ -502,15 +501,23 @@ class Model:
     def load_from_disk(cls, path: pathlib.Path) -> "Model":
         """Get an instance of the model from serialised json on disk.
 
+        Parameters:
+            path: Path to a model directory (not the json file)
+
         @todo how to handle version compatible saving/loading?
         @todo rename method / wrap in a from_path() method which expects a json file + other sturctures?"""
 
         # Ensure required files/folders are present
-        if not path.is_file():
-            raise Exception("@todo file does not exist")
+        if not path.is_dir():
+            raise Exception(f"Error loading from Model from path '{path}' it is not a directory")
+
+        # Ensure the json file exists
+        model_json_path = path / "python_only" / "polychron_model.json"  # @todo - reduce string literals?
+        if not model_json_path.is_file:
+            raise Exception(f"Error loading Model from json file '{model_json_path}' it is not a file")
 
         # Attempt to open the Model json file, building an instance of Model
-        with open(path, "r") as f:
+        with open(model_json_path, "r") as f:
             data = json.load(f)
 
             # Raise an excpetion if required keys are missing
@@ -520,19 +527,62 @@ class Model:
             if "model" not in data:
                 raise Exception("@todo - bad json, missing model")
 
-            polychron_version = data["polychron_version"]
-            print(f"model saved with {polychron_version}")
-            if polychron_version == "0.2.0":
-                # @todo version specific stuff if required.
-                pass
-
             model_data = data["model"]
 
-            # Convert back to specific types
-            model_data["path"] = pathlib.Path(model_data["path"])
+            polychron_version = data["polychron_version"]
+            if polychron_version == "0.2.0":
+                pass
+
+            # Convert certain values back based on the hint for the data type.
+            # @todo - find a more robust way to compare type hints to literal types? in the case of unions etc?
+            cls_type_hints = get_type_hints(cls)
+            for k in model_data:
+                if k in cls_type_hints:
+                    type_hint = cls_type_hints[k]
+
+                    # If the values is None, do nothing. @todo - should this only be possible for Optionals?
+                    if model_data[k] is None:
+                        pass
+                    elif type_hint in [pathlib.Path, Optional[pathlib.Path]]:
+                        model_data[k] = pathlib.Path(model_data[k])
+                    elif type_hint in [pd.DataFrame, Optional[pd.DataFrame]]:
+                        # DataFrames are encoded as json, parsed back into a dictionary before being encoded as json again. At this point, the first json decode has occurred so we should have a dictionary of dictionaries (one per column) which can be reconverted.
+                        # However, this may have lost typing information for the columns, but they were probably all strings anyway? @todo check this.
+                        if isinstance(model_data[k], dict):
+                            model_data[k] = pd.DataFrame.from_dict(model_data[k], orient="columns")
+                    elif type_hint in [nx.DiGraph, Optional[nx.DiGraph]]:
+                        # Convert the node_link_data encoded networkx digraph via node_link_graph
+                        # explicitly set edges value to future behaviour for networkx
+                        model_data[k] = nx.node_link_graph(model_data[k], edges="edges")
+
+                    elif type_hint in [Optional[List[Tuple[str, str]]]]:
+                        # phase_rels needs to be returned to a tuple. @todo need to do this less specifically?
+                        model_data[k] = [tuple(sub) for sub in model_data[k]]
+
+                # @todo -  trycast.isassignable? maybe to check for the correct type?
+                # if the type hint is not subscripted, do a direct comparions
+                # print(f"> {type_hint}")
+                # if get_origin(type_hint) is None:
+                #     print(f"unsubscripted ({type_hint}) is instance {model_data[k]}? {isinstance(model_data[k], type_hint)}")
+                # else:
+                #     # For each substitution
+                #     for x in get_args(type_hint):
+                #         if get_origin(x) is None:
+                #             print(f"subscripted ({x}) is instance  {model_data[k]}? {isinstance(model_data[k], x)}")
+                #         else:
+                #             "recursion needed @todo"
+
+                # if type(model_data[k]) != type_hint:
+                #     print(f"{k}: {type(model_data[k])} != {type_hint}, {isinstance(model_data[k], type_hint)}")
+
+            # for k, v in model_data.items():
+            #     print(k, type(v))
 
             # Create an instance of the Model
             model: Model = cls(**model_data)
+
+            # Handle non-json loading of files (copy over temp?)
+            pass  # @todo
 
             # Perform any post-loading steps
             pass  # @todo

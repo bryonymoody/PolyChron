@@ -53,11 +53,21 @@ class ProjectsDirectory:
     """
 
     def load(self) -> None:
-        """Load the projects for the current path
+        """Load the projects for the current path"""
+        # self.projects = self.get_demo_projects()
 
-        @todo - real implementation which loads from disk
-        """
-        self.projects = self.get_demo_projects()
+        self.projects = {}
+        # Iterate the current project directory if it exists, each child directory is a project.
+        if self.path.is_dir():
+            # @todo sorting?
+            for item in self.path.iterdir():
+                if item.is_dir():
+                    # Construct a project instance
+                    p = Project(item.name, item, {})
+                    # Load models within the project
+                    p.load()
+                    # Store in this instance's dict of projects
+                    self.projects[p.name] = p
 
     def create_model(self, project_name: str, model_name: str) -> None:
         """Create a new model in the named project (which may also be new).

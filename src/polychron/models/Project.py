@@ -34,3 +34,24 @@ class Project:
             # @todo - better error handling. Should be due to permsissions, invalid filepaths or disk issues only
             print(e, file=sys.stderr)
             return False
+
+    def load(self) -> None:
+        """Load this project from disk, i.e. populate the models dictionary
+
+        @todo - decide if this should lazy load models or not. I.e. just check for the presence of the directory and expected file(s), and have a separtate way to load a model from its path later (i.e. when the user presses load, not when they open polychron). This should reduce memory consumption.
+
+        @todo - decide if this should return success or raise/not raise / return the number of models?
+        """
+
+        if self.path.is_dir:
+            # @todo sorting?
+            for item in self.path.iterdir():
+                if item.is_dir():
+                    try:
+                        # Try and load the model from disk
+                        model = Model.load_from_disk(item)
+                        # If loading succeded (no exceptions thrown) store the model
+                        self.models[model.name] = model
+                    except Exception as e:
+                        # @todo - correclty handle any exceptions attempting to load models
+                        print(f"loading exception @Todo {e}")

@@ -174,6 +174,15 @@ class ModelPresenter(BaseFramePresenter):
             self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
             self.view.bind_littlecanvas_callback("<Button-3>", self.pre_click)
 
+        # Render the chrono if possible
+        if model_model.chrono_dag is not None:
+            model_model.render_chrono_graph()
+            if model_model.chrono_image is not None:
+                # Update the view
+                self.view.update_littlecanvas2(model_model.chrono_image)
+                self.view.bind_littlecanvas2_callback("<Configure>", self.on_resize_2)
+                self.view.show_image2()
+
         # Make sure that the check marks are up to date
         if model_model.strat_df is not None:
             self.strat_check = True
