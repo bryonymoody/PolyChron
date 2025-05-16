@@ -170,38 +170,6 @@ class ResidualOrIntrusiveView(BasePopupView):
         self.graphcanvas.scale("all", 0, 0, scale2, scale2)  # rescale all canvas objects
         self.show_image2()
 
-    def autozoom(self, event: Any) -> None:
-        """Zoom with mouse wheel
-
-        Formerly StartPage.autozoom
-
-        @toldo - this is unsused. Delete?
-
-        @todo rename?"""
-        x_zoom = self.graphcanvas.canvasx(event.x)
-        y_zoom = self.graphcanvas.canvasy(event.y)
-        bbox = self.graphcanvas.bbox(self.container)  # get image area
-        if bbox[0] < x_zoom < bbox[2] and bbox[1] < y_zoom < bbox[3]:
-            pass  # Ok! Inside the image
-        else:
-            return  # zoom only inside image area
-        scale2 = 1.0
-        # Respond to Linux (event.num) or Windows (event.delta) wheel event
-        if event.num == 5 or event.delta == -120:  # scroll down
-            i = min(self.width2, self.height2)
-            if int(i * self.imscale2) < 30:
-                return  # image is less than 30 pixels
-            self.imscale2 /= self.delta2
-            scale2 /= self.delta2
-        if event.num == 4 or event.delta == 120:  # scroll up
-            i = min(self.graphcanvas.winfo_width(), self.graphcanvas.winfo_height())
-            if i < self.imscale2:
-                return  # 1 pixel is bigger than the visible area
-            self.imscale2 *= self.delta2
-            scale2 *= self.delta2
-        self.graphcanvas.scale("all", 0, 0, scale2, scale2)  # rescale all canvas objects
-        self.show_image2()
-
     def update_littlecanvas2_image_only(self, image: Image.Image) -> None:
         """Update the image within the littlecanvas2, during resizing.
 
