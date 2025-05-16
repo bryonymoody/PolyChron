@@ -218,11 +218,10 @@ class Model:
     @todo - make this a Dict[str, Enum] or Dict[str, Optional[Literal[]]]? 
     """
 
-    phase_true: int = 0
+    phase_true: bool = False
     """If stratigraphic diagrams should be rendered in phases or not
     
-    @todo - make a bool, rename
-    @todo - should this belong to the .model.Model?
+    @todo - rename
     @todo - initalse these variables with values from the model on load?
     """
 
@@ -664,7 +663,7 @@ class Model:
         @todo - don't return?
         @todo - de-duplicate"""
         # Call the appropraite render_strat method, depending if the model is set up to render in phases or not.
-        if self.phase_true == 1:
+        if self.phase_true:
             self.__render_strat_graph_phase()
         else:
             self.__render_strat_graph()
@@ -677,7 +676,7 @@ class Model:
         @todo - don't return?
         @todo - de-duplicate"""
         # Call the appropraite render_strat method, depending if the model is set up to render in phases or not.
-        if self.phase_true == 1:
+        if self.phase_true:
             self.__render_resid_or_intru_strat_graph_phase()
         else:
             self.__render_resid_or_intru_strat_graph()

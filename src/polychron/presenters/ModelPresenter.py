@@ -565,7 +565,7 @@ class ModelPresenter(BaseFramePresenter):
         model_model: Optional[Model] = self.model.get_current_model()
         if model_model is not None:
             # Store a flag marking this as being enabled. Should this be model data? @todo
-            model_model.phase_true = 1
+            model_model.phase_true = True
 
             if model_model.strat_graph is not None:
                 model_model.render_strat_graph()
@@ -1202,7 +1202,7 @@ class ModelPresenter(BaseFramePresenter):
         workdir = model_model.get_working_directory()
         workdir.mkdir(parents=True, exist_ok=True)  # @todo - shouldnt be neccessary
 
-        if model_model.phase_true == 1:
+        if model_model.phase_true:
             (graph,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")
             node_df_con = node_coords_fromjson(graph)
         else:
