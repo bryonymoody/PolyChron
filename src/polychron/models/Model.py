@@ -72,7 +72,7 @@ class Model:
 
     @todo - refactor this to be it's own model class which performs validation etc?"""
 
-    context_no_unordered: Optional[List[Any]] = field(default=None)
+    context_no_unordered: Optional[List[str]] = field(default=None)
     """A list of stratigraphic graph nodes, initially populated within open_scientific_dating_file before being used elsewhere.
 
     @todo - correct annotation
@@ -322,6 +322,16 @@ class Model:
     @todo - rename, rehome, typehint, docstring
     """
 
+    node_df: Optional[Tuple[pd.DataFrame, List[float]]] = field(default=None)
+    """A tuple contianing a dataframe of node coordinates within the most recently rendered svg graph, and a list of scaled float values.
+
+    Set and used for node right-click detection
+    
+    Values are returend from node_coords_fromjson
+
+    Previously this was the global variable node_df
+    """
+
     def get_working_directory(self) -> pathlib.Path:
         """Get the working directory to be used for dynamically created files
 
@@ -373,29 +383,34 @@ class Model:
         @todo decide which bits to exclude form saving/loading, and generate on reconstruction instead.
         @todo - how to handle dataframes, Image.Image, files on disk, relative vs abs paths in the case a directory has been copied.
         """
-        data = self.__dict__.copy()
-        subset_keys = ["name", "path", "strat_df", "strat_graph"]
-        data = {k: v for k, v in data.items() if k in subset_keys}
+        # Create a dictionary contianing a subset of this instance's member variables, converted to formats which can be json serialised.
+        data = {}
+        exclude_keys = ["strat_image", "chrono_image", "resid_or_intru_strat_image", "node_df"]
+        for k, v in self.__dict__.items():
+            if k not in exclude_keys:
+                if v is None:
+                    # @todo - decide what to do for None values, include or not.
+                    data[k] = v
+                    # pass
+                elif isinstance(v, tuple([str, int, float, list, dict, tuple])):
+                    # @todo - may need to recurse into lists, dicts and tuples to make sure their members are all json serialiseable
+                    data[k] = v
+                elif isinstance(v, pathlib.Path):
+                    data[k] = str(v)
+                elif isinstance(v, pd.DataFrame):
+                    # For dataframes, export to json so pandas handles the type conversion, before returning to a python object.
+                    data[k] = json.loads(v.to_json())
+                elif isinstance(v, nx.DiGraph):
+                    # Encode graphs as json via networkx node_link_data, which can be de-serialised via node_link_graph. This should be safe for round-trips, other than node names being converted to strings (which they are anyway)
+                    data[k] = nx.node_link_data(
+                        v, edges="edges"
+                    )  # explicitly set edges value to future behaviour for networkx
+                else:
+                    data[k] = str(v)
 
-        # Remove anything we don't want to save to disk @todo
-        # del data["key"]
-
-        # Convert types which cannot nateively be serialised to json to other representations @Todo single pass?
-        for k in data:
-            if isinstance(data[k], tuple([str, int, float])):
-                pass
-            elif isinstance(data[k], pathlib.Path):
-                data[k] = str(data[k])
-            elif isinstance(data[k], pd.DataFrame):
-                # For dataframes, export to json so pandas handles the type conversion, before returning to a python object.
-                data[k] = json.loads(data[k].to_json())
-            elif isinstance(data[k], nx.DiGraph):
-                print(
-                    "@todo - decide how to encode networkx graphs as json. Maybe save to .dot instead and load from disk?"
-                )
-                data[k] = "@todo"
-            else:
-                data[k] = str[data[k]]
+        print(data)
+        for k, v in data.items():
+            print(f"{k}: {type(v)}")
 
         indent = 2 if pretty else None
         return json.dumps({"polychron_version": version("polychron"), "model": data}, indent=indent)
