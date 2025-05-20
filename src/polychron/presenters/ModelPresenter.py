@@ -750,26 +750,36 @@ class ModelPresenter(BaseFramePresenter):
                 self.refresh_4_new_model()  # @todo self.controller, proj_dir, load=False)
             # self.littlecanvas2.delete("all") # @todo
             model_model.load_check = False
-        # Open a popup to provide a reason for deleting the edge
-        # @todo - use the same labelling as provided in edge_render?
-        reason = self.edge_del_popup(self.edge_nodes[0], self.edge_nodes[1])
 
-        # Try and remove the edge one way, if it fails try the other. Could be simpler @todo
-        # @todo refactor this into a method on the models.Model
-        try:
-            model_model.strat_graph.remove_edge(self.edge_nodes[0], self.edge_nodes[1])
-            model_model.record_deleted_edge(self.edge_nodes[0], self.edge_nodes[1], reason)
-            self.view.append_deleted_edge(edge_label(self.edge_nodes[0], self.edge_nodes[1]), reason)
-        except (KeyError, nx.exception.NetworkXError):
-            try:
-                model_model.strat_graph.remove_edge(self.edge_nodes[1], self.edge_nodes[0])
-                model_model.record_deleted_edge(self.edge_nodes[1], self.edge_nodes[0], reason)
-                self.view.append_deleted_edge(edge_label(self.edge_nodes[1], self.edge_nodes[0]), reason)
-            except (KeyError, nx.exception.NetworkXError):
+        # Find the correct direction of the selected edge to delete, or error if it does not exist. Use a copy so menu deletion can be matinained
+        edge_src = self.edge_nodes[0]
+        edge_dst = self.edge_nodes[1]
+        # Check in the first direction
+        if not model_model.strat_graph.has_edge(edge_src, edge_dst):
+            # If the reverse exists, update the src/dst pair
+            if model_model.strat_graph.has_edge(edge_dst, edge_src):
+                edge_src, edge_dst = edge_dst, edge_src  # swap the variables via a tuple swap
+            else:
+                # If the edge does not exist in either direction, report the error and return.
                 tk.messagebox.showinfo(
                     "Error", f"An edge doesnt exist between '{self.edge_nodes[0]}' and '{self.edge_nodes[1]}' nodes"
                 )
+                # Remove the deleted releationshipo with X entry from the right click menu and reset the edges which have been selected so far
+                self.view.remove_testmenu_entry("Delete stratigraphic relationship with " + str(self.edge_nodes[0]))
+                self.edge_nodes = []
+                return
 
+        # If the edge does exist, open a popup to provide a reason for deleting the edge
+        reason = self.edge_del_popup(edge_src, edge_dst)
+
+        # Remove the edge, updating the model and the view.
+        # This no longer needs to be attempted in either direction, or in a try catch really.
+        # @todo refactor this into a method on the models.Model
+        model_model.strat_graph.remove_edge(edge_src, edge_dst)
+        model_model.record_deleted_edge(edge_src, edge_dst, reason)
+        self.view.append_deleted_edge(edge_label(edge_src, edge_dst), reason)
+
+        # Remove the deleted releationshipo with X entry from the right click menu and reset the edges which have been selected so far
         self.view.remove_testmenu_entry("Delete stratigraphic relationship with " + str(self.edge_nodes[0]))
         self.edge_nodes = []
 
