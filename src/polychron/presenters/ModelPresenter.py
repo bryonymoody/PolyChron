@@ -17,7 +17,7 @@ from ..presenters.MCMCProgressPresenter import MCMCProgressPresenter
 from ..presenters.RemoveContextPresenter import RemoveContextPresenter
 from ..presenters.RemoveStratigraphicRelationshipPresenter import RemoveStratigraphicRelationshipPresenter
 from ..presenters.ResidualOrIntrusivePresenter import ResidualOrIntrusivePresenter
-from ..util import imagefunc, node_coords_fromjson, node_del_fixed
+from ..util import edge_label, imagefunc, node_coords_fromjson, node_del_fixed
 from ..views.AddContextView import AddContextView
 from ..views.CalibrateModelSelectView import CalibrateModelSelectView
 from ..views.DatafilePreviewView import DatafilePreviewView
@@ -193,6 +193,16 @@ class ModelPresenter(BaseFramePresenter):
         if model_model.phase_rel_df is not None:
             self.phase_rel_check = True
         self.check_list_gen()
+
+        # If there are any deleted nodes, update the table of deleted nodes
+        if model_model.delnodes is not None and len(model_model.delnodes):
+            self.view.set_deleted_nodes(model_model.delnodes)
+
+        # If there are any delted edges, update the table of deleted edges
+        if model_model.deledges is not None and len(model_model.deledges):
+            self.view.set_deleted_edges(
+                [tuple([edge_label(ctx_a, ctx_b), meta]) for ctx_a, ctx_b, meta in model_model.deledges]
+            )
 
     def popup_calibrate_model(self) -> None:
         """Callback function for when Tools -> Calibrate model is selected
@@ -378,6 +388,7 @@ class ModelPresenter(BaseFramePresenter):
             model_model.render_strat_graph()
 
             # Clear the list of deleted nodes. @todo method / part of setting the stratr graph?
+            # @todo - also clear deledges?
             model_model.delnodes = []
 
             # Update the view and any keybindings
@@ -718,21 +729,6 @@ class ModelPresenter(BaseFramePresenter):
             self.node, shape="box", fontsize="30.0", fontname="helvetica", penwidth="1.0"
         )  # @todo - abstract this into the model class
 
-    def edge_render(self) -> str:
-        """renders string for deleted edges
-
-        @todo - move this elsewhere / just parametrise it?. Partially refacotred to return rather than set self.temp
-        @todo - this does not appear to work as I would have expected. Query intended behaviour. Could likely be much simpler."""
-        if len(self.edge_nodes) != 2:
-            return  # @todo better error checking
-        edges_del = self.edge_nodes
-        ednodes = str(edges_del[0]) + " above " + str(edges_del[1])
-        temp = []
-        temp = str(temp).replace("[", "")
-        temp = str(temp).replace("]", "")
-        temp = temp + str(ednodes.replace("'", ""))
-        return temp
-
     def testmenu_delete_strat_with(self) -> None:
         """Callback function from the testmenu for deleting stratigrahic relationship edges
 
@@ -763,14 +759,16 @@ class ModelPresenter(BaseFramePresenter):
         try:
             model_model.strat_graph.remove_edge(self.edge_nodes[0], self.edge_nodes[1])
             model_model.record_deleted_edge(self.edge_nodes[0], self.edge_nodes[1], reason)
-            self.view.append_deleted_edge(self.edge_render(), reason)
+            self.view.append_deleted_edge(edge_label(self.edge_nodes[0], self.edge_nodes[1]), reason)
         except (KeyError, nx.exception.NetworkXError):
             try:
                 model_model.strat_graph.remove_edge(self.edge_nodes[1], self.edge_nodes[0])
-                model_model.record_deleted_edge(self.edge_nodes[0], self.edge_nodes[1], reason)
-                self.view.append_deleted_edge(self.edge_render(), reason)
+                model_model.record_deleted_edge(self.edge_nodes[1], self.edge_nodes[0], reason)
+                self.view.append_deleted_edge(edge_label(self.edge_nodes[1], self.edge_nodes[0]), reason)
             except (KeyError, nx.exception.NetworkXError):
-                tk.messagebox.showinfo("Error", "An edge doesnt exist between those nodes")
+                tk.messagebox.showinfo(
+                    "Error", f"An edge doesnt exist between '{self.edge_nodes[0]}' and '{self.edge_nodes[1]}' nodes"
+                )
 
         self.view.remove_testmenu_entry("Delete stratigraphic relationship with " + str(self.edge_nodes[0]))
         self.edge_nodes = []

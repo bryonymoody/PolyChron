@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
 from PIL import Image, ImageTk
@@ -670,12 +670,28 @@ class ModelView(BaseFrameView):
         self.littlecanvas2.scale("all", 0, 0, scale2, scale2)  # rescale all canvas objects
         self.show_image2()
 
+    def set_deleted_nodes(self, delted_nodes: List[Tuple[str, str]]) -> None:
+        """Set the contentx of teh deleted nodes table"""
+        # Clear the tree view
+        self.tree2.delete(*self.tree2.get_children())
+        # For each provided tuple, insert the values
+        for node, meta in delted_nodes:
+            self.tree2.insert("", "end", text=node, values=[meta])
+
     def append_deleted_node(self, node: str, meta: str) -> None:
         """Append the node and meta data to the deleted nodes treeview
 
         @todo - make this take an object instead of 2 strs?
-        @todo - replace with a method which just updates the treeview from a list of objects?"""
+        """
         self.tree2.insert("", "end", text=node, values=[meta])
+
+    def set_deleted_edges(self, deleted_edges: List[Tuple[str, str]]) -> None:
+        """Set the contentx of the deleted edges table, provided a list of edge labels and values"""
+        # Clear the tree view
+        self.tree3.delete(*self.tree3.get_children())
+        # For each provided tuple, insert the values
+        for edge_label, meta in deleted_edges:
+            self.tree3.insert("", "end", text=edge_label, values=[meta])
 
     def append_deleted_edge(self, edge_label: str, meta: str) -> None:
         """Append the edge and meta data to the deleted edges treeview
@@ -683,7 +699,6 @@ class ModelView(BaseFrameView):
         Includes part of StartPage.edgeRender
 
         @todo - make this 3 cols not 2?
-        @todo - replace with a method which just updates the treeview from a list of objects?
         """
         self.tree3.insert("", "end", text=edge_label, values=[meta])
 

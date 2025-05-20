@@ -561,3 +561,21 @@ def chrono_edge_remov(file_graph: nx.DiGraph) -> Tuple[nx.DiGraph, List[List[Any
     # xs, ys gives any edges removed becuase phase boundaries need to go in
     # list of phases
     return graph_data, [xs, ys], phase_list
+
+
+def edge_label(src: str, dst: str) -> str:
+    """Renders a string for the edge from src to dst.
+
+    Used for deleted edges
+
+    Previously part of Start_page.edge_render
+
+    Parameters:
+        src (str): The context label for the start of the directed edge
+        dst (str): The context label for the destination of the directed edge
+
+    @todo rename, rehome?, refactor?"""
+    assert src is not None
+    assert dst is not None
+
+    return f"{src} above {dst}"

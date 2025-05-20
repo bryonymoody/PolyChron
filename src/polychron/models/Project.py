@@ -43,6 +43,7 @@ class Project:
         @todo - decide if this should return success or raise/not raise / return the number of models?
         """
         import time
+
         if self.path.is_dir:
             # @todo sorting?
             for item in self.path.iterdir():
@@ -54,7 +55,7 @@ class Project:
                         # If loading succeded (no exceptions thrown) store the model
                         self.models[model.name] = model
                         end = time.monotonic()
-                        print(f"Elapsed loading model {item}: {end - start : .6f}s")
+                        print(f"Elapsed loading model {item}: {end - start: .6f}s")
                     except Exception as e:
                         # @todo - correclty handle any exceptions attempting to load models
                         print(f"loading exception @Todo {e}")
