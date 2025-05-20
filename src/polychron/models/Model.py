@@ -382,10 +382,26 @@ class Model:
 
         @todo decide which bits to exclude form saving/loading, and generate on reconstruction instead.
         @todo - how to handle dataframes, Image.Image, files on disk, relative vs abs paths in the case a directory has been copied.
+        @todo - split out calibration results to their own file(s). These are large (i.e. ACCEPT, PHI_ACCEPT, ALL_SAMPS_CONT, ALL_SAMPS_PHI, results_dict, all_results_dict are relatively large, so reducing the number of times each float is converted to string would save time on saving )
         """
         # Create a dictionary contianing a subset of this instance's member variables, converted to formats which can be json serialised.
         data = {}
-        exclude_keys = ["strat_image", "chrono_image", "resid_or_intru_strat_image", "node_df"]
+        exclude_keys = [
+            "path",  # Don't include the path, so models can be trivially copied on disk
+            "strat_image",  # don't include image handles
+            "chrono_image",  # don't include image handles
+            "resid_or_intru_strat_image",  # don't include image handles
+            "node_df",  # don't include the the locations of images from svgs?
+            # Calibration data being encoded as json takes a reasonable chunk of time (and accounts for ~80MB when encoded as json). Write to disk once at calibration time and then copy when saving maybe?. Also downside of df > json > obj > json. 
+            # "ACCEPT",
+            # "ACCEPT_PHI",
+            # "A",
+            # "P",
+            # "ALL_SAMPS_CONT",
+            # "ALL_SAMPS_PHI",
+            # "resultsdict",
+            # "all_results_dict",
+        ]
         for k, v in self.__dict__.items():
             if k not in exclude_keys:
                 if v is None:
@@ -399,6 +415,7 @@ class Model:
                     data[k] = str(v)
                 elif isinstance(v, pd.DataFrame):
                     # For dataframes, export to json so pandas handles the type conversion, before returning to a python object.
+                    # @todo - this is a lot of float > str and str > float conversion for calibration data which is not free.
                     data[k] = json.loads(v.to_json(orient="columns"))
                 elif isinstance(v, nx.DiGraph):
                     # Encode graphs as json via networkx node_link_data, which can be de-serialised via node_link_graph. This should be safe for round-trips, other than node names being converted to strings (which they are anyway)
@@ -406,10 +423,6 @@ class Model:
                     data[k] = nx.node_link_data(v, edges="edges")
                 else:
                     data[k] = str(v)
-
-        print(data)
-        for k, v in data.items():
-            print(f"{k}: {type(v)}")
 
         indent = 2 if pretty else None
         return json.dumps({"polychron_version": version("polychron"), "model": data}, indent=indent)
@@ -422,13 +435,18 @@ class Model:
 
         @todo - need to ensure that on save, all temp files in the project directory are correct for the saved model & not overwrite the "saved" versions if mutating in gui without saving? On load, images should be regenerated to ensure they match the saved state of the serialised data?"""
         print(f"@todo - Model.save({self.path})")
+        import time
+
+        time_start = time.monotonic()
 
         # Ensure directories requried exist
         if self.create_dirs():
             try:
                 # create the represenation of the model to be saved to disk
                 json_s = self.to_json(pretty=True)
-                print(json_s)
+                print(f"json_s len: {len(json_s)}")
+
+                time_copy_start = time.monotonic()
 
                 # Ensure the "saved" versions of files are up to date.
                 # @todo - also ensure the rendered version on disk is current
@@ -489,13 +507,39 @@ class Model:
                 # Save the json representation of this object to disk
                 json_path = self.get_python_only_directory() / "polychron_model.json"
 
+                time_copy_end = time.monotonic()
+
                 with open(json_path, "w") as f:
                     f.write(json_s)
+
+                time_end = time.monotonic()
+                print(f"elapsed_save {time_end - time_start: .6f}s")
+                print(f"  elapsed_tojson {time_copy_start - time_start: .6f}s")
+                print(f"  elapsed_copy {time_copy_end - time_copy_start: .6f}s")
+                print(f"  elapsed_write {time_end - time_copy_end: .6f}s")
 
             except Exception as e:
                 raise Exception(f"@todo - an exeption occurred during saving:\n {e}")
         else:
             raise Exception("@todo - could not create model directories")
+
+    @classmethod
+    def check_save_state(cls, path: pathlib.Path) -> bool:
+        """For a given Model directory on disk, determine if it is a valid Model save
+
+        I.e. attempt to load from disk, but just state success rather than raising any exceptions.
+
+        @todo - maybe change this completely."""
+
+        try:
+            _ = cls.load_from_disk(path)
+            return True
+        except RuntimeWarning:
+            return False
+        except RuntimeError:
+            return False
+        except Exception:
+            return False
 
     @classmethod
     def load_from_disk(cls, path: pathlib.Path) -> "Model":
@@ -504,17 +548,22 @@ class Model:
         Parameters:
             path: Path to a model directory (not the json file)
 
+        Raises:
+            RuntimeWarning - when the model could not be loaded, but in a recoverable way. I.e. the directory exits but no files are contained (so allow the model to be "loaded") @todo - probably change this?
+            RuntiemError - when the model could not be loaded, but use of this model directory should be prevented?
+
         @todo how to handle version compatible saving/loading?
-        @todo rename method / wrap in a from_path() method which expects a json file + other sturctures?"""
+        @todo rename method / wrap in a from_path() method which expects a json file + other sturctures?
+        """
 
         # Ensure required files/folders are present
         if not path.is_dir():
-            raise Exception(f"Error loading from Model from path '{path}' it is not a directory")
+            raise RuntimeWarning(f"Error loading from Model from path '{path}' it is not a directory")
 
         # Ensure the json file exists
         model_json_path = path / "python_only" / "polychron_model.json"  # @todo - reduce string literals?
-        if not model_json_path.is_file:
-            raise Exception(f"Error loading Model from json file '{model_json_path}' it is not a file")
+        if not model_json_path.is_file():
+            raise RuntimeWarning(f"Error loading Model from json file '{model_json_path}' it is not a file")
 
         # Attempt to open the Model json file, building an instance of Model
         with open(model_json_path, "r") as f:
@@ -523,9 +572,9 @@ class Model:
             # Raise an excpetion if required keys are missing
             if "polychron_version" not in data:
                 # @todo - missing version might just mean we assume a current one?
-                raise Exception("@todo - bad json, missing version")
+                raise RuntimeError("@todo - bad json, missing version")
             if "model" not in data:
-                raise Exception("@todo - bad json, missing model")
+                raise RuntimeError("@todo - bad json, missing model")
 
             model_data = data["model"]
 
@@ -553,7 +602,7 @@ class Model:
                     elif type_hint in [nx.DiGraph, Optional[nx.DiGraph]]:
                         # Convert the node_link_data encoded networkx digraph via node_link_graph
                         # explicitly set edges value to future behaviour for networkx
-                        model_data[k] = nx.node_link_graph(model_data[k], edges="edges")
+                        model_data[k] = nx.node_link_graph(model_data[k], edges="edges", multigraph=False)
 
                     elif type_hint in [Optional[List[Tuple[str, str]]]]:
                         # phase_rels needs to be returned to a tuple. @todo need to do this less specifically?
@@ -579,13 +628,15 @@ class Model:
             #     print(k, type(v))
 
             # Create an instance of the Model
-            model: Model = cls(**model_data)
+            model: Model = cls(path=path, **model_data)
 
             # Handle non-json loading of files (copy over temp?)
             pass  # @todo
 
             # Perform any post-loading steps
-            pass  # @todo
+            model.path = path
+            # @todo - validate that the name of the model matches the path? Or don't store the name of the model, infer it from the path? (maybe always set it to the name of the model directory, so on disk it's ok until first re-saved)
+            # @todo - others
 
             # Return the Model
             return model

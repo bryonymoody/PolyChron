@@ -55,7 +55,7 @@ class ProjectsDirectory:
     def load(self) -> None:
         """Load the projects for the current path"""
         # self.projects = self.get_demo_projects()
-
+        # return
         self.projects = {}
         # Iterate the current project directory if it exists, each child directory is a project.
         if self.path.is_dir():
