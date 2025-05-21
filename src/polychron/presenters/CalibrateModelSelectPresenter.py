@@ -32,7 +32,9 @@ class CalibrateModelSelectPresenter(BasePopupPresenter):
         if self.model is not None:
             project = self.model.get_current_project()
             if project is not None:
-                model_list = [name for name, model in project.models.items() if model.load_check]
+                # Build a list of just models which are ready for simualtion.
+                # As this will load each model from disk within the project, it may take a while.
+                model_list = [name for name, model in project.models.items() if model is not None and model.load_check]
 
         self.view.update_model_list(model_list)
 
@@ -41,35 +43,35 @@ class CalibrateModelSelectPresenter(BasePopupPresenter):
 
         Formerly popupWindow8.cleanup
 
-        @todo progress bar for batch calibration?"""
+        @todo - progress bar for batch calibration?"""
 
         if self.model is not None:
             project = self.model.get_current_project()
             if project is not None:
                 selected_models = self.view.get_selected_models()
-                print(selected_models)
                 # @todo verify the selected models exist and are loadable.
                 # For each selected model, calibrate and save
                 for model_name in selected_models:
-                    if model_name in project.models:
-                        model = project.models[model_name]
-                        # @todo - why does this not have the < 50000 while loop?
-                        # @todo - as all of these get stored in the model, why not just make mcmc_func mutate itself?
+                    if project.has_model(model_name):
+                        model = project.get_model(model_name)
+                        if model is not None:
+                            # @todo - why does this not have the < 50000 while loop?
+                            # @todo - as all of these get stored in the model, why not just make mcmc_func mutate itself?
 
-                        (
-                            model.CONTEXT_NO,
-                            model.ACCEPT,
-                            model.PHI_ACCEPT,
-                            model.phi_ref,
-                            model.A,
-                            model.P,
-                            model.ALL_SAMPS_CONT,
-                            model.ALL_SAMPS_PHI,
-                            model.resultsdict,
-                            model.all_results_dict,
-                        ) = model.MCMC_func()
-                        model.mcmc_check = True
-                        model.save()
+                            (
+                                model.CONTEXT_NO,
+                                model.ACCEPT,
+                                model.PHI_ACCEPT,
+                                model.phi_ref,
+                                model.A,
+                                model.P,
+                                model.ALL_SAMPS_CONT,
+                                model.ALL_SAMPS_PHI,
+                                model.resultsdict,
+                                model.all_results_dict,
+                            ) = model.MCMC_func()
+                            model.mcmc_check = True
+                            model.save()
         # Close the popup
         self.close_view()
 

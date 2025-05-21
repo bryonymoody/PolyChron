@@ -28,7 +28,10 @@ class ModelSelectPresenter(BaseFramePresenter):
         self.update_view()
 
     def update_view(self) -> None:
-        """Update text & tables within the view to reflect the current state of the model"""
+        """Update text & tables within the view to reflect the current state of the model
+
+        @todo - sort the models list? Will also need to adjust getting the select model to refer to the sorted list.
+        """
         # Update the list of models to select from, if a project has been selected
         # @todo - move some of this logic into the Model class?
         if self.model.selected_project is not None and self.model.selected_project in self.model.projects:

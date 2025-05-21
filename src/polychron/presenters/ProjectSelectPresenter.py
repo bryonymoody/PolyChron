@@ -23,9 +23,11 @@ class ProjectSelectPresenter(BaseFramePresenter):
         self.update_view()
 
     def update_view(self) -> None:
-        """Update text & tables within the view to reflect the current state of the model"""
+        """Update text & tables within the view to reflect the current state of the model
+
+        @todo - sort the projects list?
+        """
         self.view.update_project_list(list(self.model.projects.keys()))
-        pass  # @todo
 
     def on_load_button(self) -> None:
         """When the load button is pressed, update the wider application model data structure and close the popup"""

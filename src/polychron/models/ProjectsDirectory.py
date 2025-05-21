@@ -59,34 +59,42 @@ class ProjectsDirectory:
         self.projects = {}
         # Iterate the current project directory if it exists, each child directory is a project.
         if self.path.is_dir():
-            # @todo sorting?
             for item in self.path.iterdir():
                 if item.is_dir():
                     # Construct a project instance
                     p = Project(item.name, item, {})
-                    # Load models within the project
-                    p.load()
+                    # Lazily Load models within the project
+                    p.lazy_load()
                     # Store in this instance's dict of projects
                     self.projects[p.name] = p
 
     def create_model(self, project_name: str, model_name: str) -> None:
-        """Create a new model in the named project (which may also be new).
+        """Create a new model in the named project (which may also be new) and create the required directories
+
+        Parameters:
+            project_name: Name of the project to create/use
+            model_name: Name of the model to create
+
+        Raises:
+            RuntimeError: if the model already exists, or a model name which cannot be converted to a directory name is provided
+            OSError: if an exception occurs during direcotry creation.
 
         @todo input validation here on both parameters
         """
+        # Get or create the project
         if project_name not in self.projects:
             self.projects[project_name] = Project(name=project_name, path=self.path / project_name)
         project = self.projects[project_name]
-        if model_name in project.models:
-            # @todo - better error handling here.
-            raise Exception(f"{model_name} already present in {project_name}")
-        else:
-            project.models[model_name] = Model(name=model_name, path=project.path / model_name)
-            # Create directories for the model. Ideally this would only be done on first save, but the first temp file creation woudl require it.
-            project.models[model_name].create_dirs()
+        # Attempt to create the model, which will throw exceptions if errors occur.
+        project.new_model(model_name)
 
     def create_model_from_self(self) -> None:
-        # @todo - validation and errors, or remove this method and just incorparte into create_model with optional params.
+        """Create a new model, based on the currently selected project if one exists, and update internal state used in the project selection / creation process
+
+        @todo - validation / errors
+        @todo - remove this method and just incorparte into create_model with optional params?
+        @todo - Migrate the selected/new_project members to it's own model class / part of the presenter's state?
+        """
         project_name = self.new_project or self.selected_project
         self.create_model(project_name, self.new_model)
         # Also make sure the new_x becomes selected_x for subsequent stesp. @todo refactor this out somewhere along the way. This is a bit grim really.
@@ -109,9 +117,10 @@ class ProjectsDirectory:
         if (
             self.selected_model is not None
             and (project := self.get_current_project()) is not None
-            and self.selected_model in project.models
+            and project.has_model(self.selected_model)
         ):
-            return project.models[self.selected_model]
+            m = project.get_model(self.selected_model)
+            return m
         else:
             return None
 
