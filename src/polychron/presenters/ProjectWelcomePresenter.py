@@ -1,12 +1,13 @@
-from typing import Any, Optional
+from typing import Optional
 
 from ..interfaces import Mediator
+from ..models.ProjectSelection import ProjectSelection
 from ..views.ProjectWelcomeView import ProjectWelcomeView
 from .BaseFramePresenter import BaseFramePresenter
 
 
 class ProjectWelcomePresenter(BaseFramePresenter):
-    def __init__(self, mediator: Mediator, view: ProjectWelcomeView, model: Optional[Any] = None) -> None:
+    def __init__(self, mediator: Mediator, view: ProjectWelcomeView, model: Optional[ProjectSelection] = None) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 
@@ -23,8 +24,8 @@ class ProjectWelcomePresenter(BaseFramePresenter):
 
     def on_load_button(self) -> None:
         """When the load button is pressed, update the SelectProject view and switch to it"""
-        # Update the ProjectList data objects and switch to the select view
-        self.model.load()  # @todo - could this go in an on_switched_to() for the dest presenter instead? Unsure how viable with tkinter
+        # Update the list of available projects from disk (in case any have been created since)
+        self.model.get_projects_directiory().lazy_load()  # @todo - could this go in an on_switched_to() for the dest presenter instead? Unsure how viable with tkinter
         self.mediator.switch_presenter("project_select")
 
     def on_create_button(self) -> None:

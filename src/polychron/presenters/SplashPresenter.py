@@ -1,6 +1,7 @@
-from typing import Any, Optional
+from typing import Optional
 
 from ..interfaces import Mediator
+from ..models.ProjectSelection import ProjectSelection
 from ..views.ProjectSelectProcessPopupView import ProjectSelectProcessPopupView
 from ..views.SplashView import SplashView
 from .BaseFramePresenter import BaseFramePresenter
@@ -8,7 +9,7 @@ from .ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresent
 
 
 class SplashPresenter(BaseFramePresenter):
-    def __init__(self, mediator: Mediator, view: SplashView, model: Optional[Any] = None) -> None:
+    def __init__(self, mediator: Mediator, view: SplashView, model: Optional[ProjectSelection] = None) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

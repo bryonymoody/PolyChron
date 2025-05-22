@@ -12,7 +12,7 @@ from ttkthemes import ThemedStyle, ThemedTk
 from .Config import Config
 from .interfaces import Mediator
 from .models.InterpolationData import InterpolationData
-from .models.ProjectsDirectory import ProjectsDirectory
+from .models.ProjectSelection import ProjectSelection
 from .presenters.BaseFramePresenter import BaseFramePresenter
 from .presenters.DatingResultsPresenter import DatingResultsPresenter
 from .presenters.ModelPresenter import ModelPresenter
@@ -75,9 +75,8 @@ class GUIApp(Mediator):
         self.container.grid_columnconfigure(0, weight=1)
 
         # Instantiate the "global" applcation data object
-        # @todo - may need to have a ProjectsDirectory object which does not actually parse the Project/Models, but instead just provides accessors.
-        # @todo rename.
-        self.projects_directory_obj: ProjectsDirectory = ProjectsDirectory(path=self.config.projects_directory)
+        # @todo - rename / add a nother layer of heirarchy
+        self.project_selector_obj: ProjectSelection = ProjectSelection(self.config.projects_directory)
 
         # @todo - move this to where it is needed, though checking on startup is nice.
         self.calibration: InterpolationData = InterpolationData()
@@ -87,11 +86,9 @@ class GUIApp(Mediator):
         self.current_presenter_key: Optional[str] = None
         # @todo - decide on and use the appropriate data object for the MVP model parameter for each display. May need to
         self.presenters: Dict[str, BaseFramePresenter] = {
-            "Splash": SplashPresenter(self, SplashView(self.container), self.projects_directory_obj),
-            "Model": ModelPresenter(self, ModelView(self.container), self.projects_directory_obj),
-            "DatingResults": DatingResultsPresenter(
-                self, DatingResultsView(self.container), self.projects_directory_obj
-            ),
+            "Splash": SplashPresenter(self, SplashView(self.container), self.project_selector_obj),
+            "Model": ModelPresenter(self, ModelView(self.container), self.project_selector_obj),
+            "DatingResults": DatingResultsPresenter(self, DatingResultsView(self.container), self.project_selector_obj),
         }
 
         # Place each main window within the container
@@ -118,7 +115,7 @@ class GUIApp(Mediator):
             return None
 
     def switch_presenter(self, key: Optional[str]) -> None:
-        if new_presenter := self.get_presenter(key):
+        if (new_presenter := self.get_presenter(key)) is not None:
             # Hide the current presenter if set
             if current_presenter := self.get_presenter(self.current_presenter_key):
                 current_presenter.view.grid_remove()
@@ -133,18 +130,8 @@ class GUIApp(Mediator):
             # Give it focus for any keybind events
             new_presenter.view.focus_set()
 
-            # @todo - move the title logic to the presenter and just call an appropraite method here
-            if (
-                key == "Model"
-                or key == "DatingResults"
-                and self.projects_directory_obj.selected_project is not None
-                and self.projects_directory_obj.selected_model is not None
-            ):
-                self.set_window_title(
-                    f"{self.projects_directory_obj.selected_project} - {self.projects_directory_obj.selected_model}"
-                )
-            else:
-                self.set_window_title()
+            # Update the window title to potentially include a suffix.
+            self.set_window_title(new_presenter.get_window_title_suffix())
         else:
             raise Exception("@todo better error missing frame")
 
@@ -172,11 +159,12 @@ class GUIApp(Mediator):
         if (
             self.current_presenter_key == "Model"
             or self.current_presenter_key == "DatingResults"
-            and self.projects_directory_obj.selected_project is not None
-            and self.projects_directory_obj.selected_model is not None
+            and self.project_selector_obj.get_current_project_name() is not None
+            and self.project_selector_obj.get_current_model_name() is not None
         ):
-            model = self.projects_directory_obj.get_current_model()
-            model.save()
+            model = self.project_selector_obj.get_current_model()
+            if model is not None:
+                model.save()
 
     def exit_application(self, event: Optional[Any] = None) -> None:
         """Callback function for graceful application exit via keybind or window manager close."""
@@ -214,44 +202,49 @@ class GUIApp(Mediator):
         self.switch_presenter("Splash")
         splash_presenter = self.get_presenter("Splash")
 
+        # @todo - extra cli option which resets the project dir to be the demo projects for now.
+
+        # Lazily load the projects directory, so (potential) existing models and projects are known.
+        self.project_selector_obj.get_projects_directiory().lazy_load()
+
         # @todo - this is a bit gross and needs improving.
         # Instantiate the child presenter and view, which otherwise would be done by SplashPresenter.on_select_project
         popup_presenter = ProjectSelectProcessPopupPresenter(
-            self, ProjectSelectProcessPopupView(splash_presenter.view), self.projects_directory_obj
+            self, ProjectSelectProcessPopupView(splash_presenter.view), self.project_selector_obj
         )
 
-        # If an initial project is provided, attempt to start with it
-        if project_name is not None:
-            # Load projects and models
-            self.projects_directory_obj.load()
-            # @todo - validate cli provided project / model names
-            # @todo - move this logic somewhere else & de-duplicate.
-            if project_name in self.projects_directory_obj.projects:
-                self.projects_directory_obj.selected_project = project_name
-                if model_name is not None:
-                    project = self.projects_directory_obj.projects[project_name]
-                    if model_name in project.models:
-                        self.projects_directory_obj.selected_model = model_name
-                        # Close the popup
-                        popup_presenter.close_window("load_model")
-                    else:
-                        self.projects_directory_obj.new_model = model_name
-                        # Create the new model and close
-                        self.projects_directory_obj.create_model_from_self()
-                        popup_presenter.close_window("new_model")
+        # Handle the --project and --model cli-provided arguments.
+        # @todo validate project_name and model_name are valid project/model (directory) names? I.e. not . or /
+        have_project_name = project_name is not None and len(project_name) > 0
+        have_model_name = model_name is not None and len(model_name) > 0
+
+        # If we have a project name
+        if have_project_name:
+            # update the project selection model with it.
+            self.project_selector_obj.set_next_project_name(project_name)
+
+            # If we do not have a model name
+            if not have_model_name:
+                # If the project does not exist, or contains 0 (potential) models
+                if (project := self.project_selector_obj.get_next_project()) is None or len(project.models) == 0:
+                    # switch to the new model popup
+                    popup_presenter.switch_presenter("model_create")
                 else:
-                    # Switch to the select model presenter, to allowe selection or input
+                    # Otherwise switch to the new model select popup
                     popup_presenter.switch_presenter("model_select")
             else:
-                self.projects_directory_obj.new_project = project_name
-                if model_name is not None:
-                    self.projects_directory_obj.new_model = model_name
-                    # Create the new model and close
-                    self.projects_directory_obj.create_model_from_self()
-                    popup_presenter.close_window("new_model")
-                else:
-                    # switch to the create model page
-                    popup_presenter.switch_presenter("model_create")
+                # If we also have a model name, store it in the poject selection model
+                self.project_selector_obj.set_next_model_name(model_name)
+
+                # Get the reason that the presenter is being closed.
+                reason = "load_model" if self.project_selector_obj.get_next_model() is not None else "new_model"
+
+                # Update the model to the "next" project & model.
+                # @todo - this may raise an error, but cli options may also be removed in the future
+                self.project_selector_obj.switch_to_next_project_model()
+
+                # Close the popup window with the appropraite reason (load or new model)
+                popup_presenter.close_window(reason)
 
         # If the window has not been closed, make it visible and on top
         # @todo - this is likely to need changing

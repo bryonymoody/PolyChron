@@ -1,13 +1,13 @@
 from sys import stderr
-from typing import Any, Optional
 
 from ..interfaces import Mediator
+from ..models.ProjectSelection import ProjectSelection
 from ..views.ProjectSelectView import ProjectSelectView
 from .BaseFramePresenter import BaseFramePresenter
 
 
 class ProjectSelectPresenter(BaseFramePresenter):
-    def __init__(self, mediator: Mediator, view: ProjectSelectView, model: Optional[Any] = None) -> None:
+    def __init__(self, mediator: Mediator, view: ProjectSelectView, model: ProjectSelection) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 
@@ -27,14 +27,15 @@ class ProjectSelectPresenter(BaseFramePresenter):
 
         @todo - sort the projects list?
         """
-        self.view.update_project_list(list(self.model.projects.keys()))
+        project_names = list(self.model.get_projects_directiory().projects.keys())
+        self.view.update_project_list(project_names)
 
     def on_load_button(self) -> None:
         """When the load button is pressed, update the wider application model data structure and close the popup"""
         selected_project = self.view.get_selected_project()
         if selected_project is not None:
             # Update the data model to include the selected project
-            self.model.selected_project = selected_project
+            self.model.set_next_project_name(selected_project)
             # Switch views
             self.mediator.switch_presenter("model_select")
         else:
@@ -42,9 +43,9 @@ class ProjectSelectPresenter(BaseFramePresenter):
 
     def on_back_button(self) -> None:
         """When the Back button is pressed, update the previous view and switch to it"""
-        self.model.selected_project = None
+        self.model.set_next_project_name(None)
         self.mediator.switch_presenter("project_welcome")
 
     def on_select(self, event=None) -> None:
         """When a list item is selected, do soemthing"""
-        pass  # @todo
+        pass  # @todo remove this method?

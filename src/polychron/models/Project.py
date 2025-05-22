@@ -49,6 +49,29 @@ class Project:
                 self.load_model_from_disk(name)
         return self.models.get(name, None)
 
+    def get_or_create_model(self, name: str) -> Model:
+        """Get or create a model within this Project.
+
+        Parameters:
+            name (str): The name of the model to be fetched or created
+
+        Returns:
+            The existing or new model with the specified model name
+
+        Raises:
+            @todo - document rasised exceptions
+
+        Todo:
+            @todo - Possible disk-race if files/directories are created in this model. Create model first, and if it rases the "this already exists" exception return the loaded one?
+        """
+        if self.has_model(name):
+            model = self.get_model(name)
+            if model is not None:
+                return model
+
+        # If no model was returned, create one and return it.
+        self.new_model(name)
+
     def new_model(self, name: str) -> None:
         """Create a new model within the project, with the provided name.
 

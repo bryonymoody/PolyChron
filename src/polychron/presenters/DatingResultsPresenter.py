@@ -9,14 +9,14 @@ from matplotlib.figure import Figure
 from ..automated_mcmc_ordering_coupling_copy import HPD_interval
 from ..interfaces import Mediator
 from ..models.Model import Model
-from ..models.ProjectsDirectory import ProjectsDirectory
+from ..models.ProjectSelection import ProjectSelection
 from ..util import node_coords_fromjson, phase_length_finder
 from ..views.DatingResultsView import DatingResultsView
 from .BaseFramePresenter import BaseFramePresenter
 
 
 class DatingResultsPresenter(BaseFramePresenter):
-    def __init__(self, mediator: Mediator, view: DatingResultsView, model: Optional[ProjectsDirectory] = None):
+    def __init__(self, mediator: Mediator, view: DatingResultsView, model: Optional[ProjectSelection] = None):
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 
@@ -75,6 +75,9 @@ class DatingResultsPresenter(BaseFramePresenter):
         # Ensure content is correct when switching tab, which prev was covered by tkraise in 0.1? @todo tidy this up / be consistent with use of update_view
         self.chronograph_render_post()
         pass  # @todo
+
+    def get_window_title_suffix(self) -> Optional[str]:
+        return f"{self.model.get_current_project_name()} - {self.model.get_current_model_name()}"
 
     def on_file_save(self) -> None:
         """Callback for the File > Save project progress menu command

@@ -1,6 +1,7 @@
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 from ..interfaces import Mediator
+from ..models.ProjectSelection import ProjectSelection
 from ..views.ModelCreateView import ModelCreateView
 from ..views.ModelSelectView import ModelSelectView
 from ..views.ProjectCreateView import ProjectCreateView
@@ -26,7 +27,9 @@ class ProjectSelectProcessPopupPresenter(BasePopupPresenter, Mediator):
     @todo - rename Mediator & Mediator protocols, something like MultiPresenterMediator?
     """
 
-    def __init__(self, mediator: Mediator, view: ProjectSelectProcessPopupView, model: Optional[Any] = None) -> None:
+    def __init__(
+        self, mediator: Mediator, view: ProjectSelectProcessPopupView, model: Optional[ProjectSelection] = None
+    ) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

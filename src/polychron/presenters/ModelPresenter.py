@@ -10,6 +10,7 @@ import pydot
 
 from ..interfaces import Mediator
 from ..models.Model import Model
+from ..models.ProjectSelection import ProjectSelection
 from ..presenters.AddContextPresenter import AddContextPresenter
 from ..presenters.CalibrateModelSelectPresenter import CalibrateModelSelectPresenter
 from ..presenters.DatafilePreviewPresenter import DatafilePreviewPresenter
@@ -44,7 +45,7 @@ class ModelPresenter(BaseFramePresenter):
     @todo - move imports which are only required in one function into the function to avoid polluting namespaces?
     """
 
-    def __init__(self, mediator: Mediator, view: ModelView, model: Optional[Any] = None) -> None:
+    def __init__(self, mediator: Mediator, view: ModelView, model: Optional[ProjectSelection] = None) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 
@@ -203,6 +204,9 @@ class ModelPresenter(BaseFramePresenter):
             self.view.set_deleted_edges(
                 [tuple([edge_label(ctx_a, ctx_b), meta]) for ctx_a, ctx_b, meta in model_model.deledges]
             )
+
+    def get_window_title_suffix(self) -> Optional[str]:
+        return f"{self.model.get_current_project_name()} - {self.model.get_current_model_name()}"
 
     def popup_calibrate_model(self) -> None:
         """Callback function for when Tools -> Calibrate model is selected
