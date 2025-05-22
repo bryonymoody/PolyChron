@@ -392,7 +392,7 @@ class Model:
             "chrono_image",  # don't include image handles
             "resid_or_intru_strat_image",  # don't include image handles
             "node_df",  # don't include the the locations of images from svgs?
-            # Calibration data being encoded as json takes a reasonable chunk of time (and accounts for ~80MB when encoded as json). Write to disk once at calibration time and then copy when saving maybe?. Also downside of df > json > obj > json.
+            # Calibration data being encoded as json takes a reasonable chunk of time (and accounts for ~80MB when encoded as json). Write to disk once at calibration time and then copy when saving maybe?. results_dict and all_results_dict account for most of the time. (~60%)
             # "ACCEPT",
             # "ACCEPT_PHI",
             # "A",
