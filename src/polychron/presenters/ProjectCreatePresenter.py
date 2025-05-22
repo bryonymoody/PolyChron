@@ -3,10 +3,10 @@ from sys import stderr
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
 from ..views.ProjectCreateView import ProjectCreateView
-from .BaseFramePresenter import BaseFramePresenter
+from .FramePresenter import FramePresenter
 
 
-class ProjectCreatePresenter(BaseFramePresenter[ProjectSelection]):
+class ProjectCreatePresenter(FramePresenter[ProjectSelection]):
     def __init__(self, mediator: Mediator, view: ProjectCreateView, model: ProjectSelection) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)

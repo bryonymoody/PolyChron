@@ -2,7 +2,7 @@ import tkinter as tk
 from typing import Any, Callable, Dict, Optional
 
 
-class BasePopupView(tk.Toplevel):
+class PopupView(tk.Toplevel):
     """Base class for Views exist within their own popup window
 
     @todo - base this on tkk.Toplevel for better theming, but needs changes to extending classes

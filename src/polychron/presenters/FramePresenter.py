@@ -2,34 +2,33 @@ from abc import ABC, abstractmethod
 from typing import Any, Generic, Optional, TypeVar
 
 from ..interfaces import Mediator
-from ..views.BaseFrameView import BaseFrameView
+from ..views.FrameView import FrameView
 
 # TypeVar allowing for the Type of the model to be overidden.
 T = TypeVar("T", bound=Any)
 
 
-class BaseFramePresenter(ABC, Generic[T]):
-    """Abstract Base class for Presenters for views which are in the main window, which act as the middle man between a veiw and the underlying data structures (model).
+class FramePresenter(ABC, Generic[T]):
+    """Abstract Base Class for Presenters for views which are in the main window, which act as the middle man between a veiw and the underlying data structures (model).
 
     @todo should / could this be combined with a simialr class for popup window presenters?
 
-    @todo rename, Base is superflous.
     @todo - use Generic and TypeVar for the tpye of the model (and of the view??). Can't use class Foo[T] as that requires 3.12+ Same in other ABCs.
     """
 
-    def __init__(self, mediator: Mediator, view: type[BaseFrameView], model: T) -> None:
+    def __init__(self, mediator: Mediator, view: type[FrameView], model: T) -> None:
         """Initialise the presenter
 
         Args:
             mediator (Mediator): an object which implements the Mediator protocol, i.e. the MainApp
-            view (type[BaseFrameView]): The frame view instance to be presented
+            view (type[FrameView]): The frame view instance to be presented
             model (T): The MVP model object which includes the data to be presented and methods to manipulate it
         """
 
         self.mediator: Mediator = mediator
         """Reference to the parent mediator class, to enable switching between presenters/views"""
 
-        self.view: type[BaseFrameView] = view
+        self.view: type[FrameView] = view
         """View managed by this presenter"""
 
         self.model: T = model

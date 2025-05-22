@@ -2,8 +2,8 @@ from typing import TYPE_CHECKING, Optional, Protocol, Union
 
 # Avoid circular dependencies but provide type hints
 if TYPE_CHECKING:
-    from .presenters.BaseFramePresenter import BaseFramePresenter
-    from .presenters.BasePopupPresenter import BasePopupPresenter
+    from .presenters.FramePresenter import FramePresenter
+    from .presenters.PopupPresenter import PopupPresenter
 
 
 class Mediator(Protocol):
@@ -23,7 +23,7 @@ class Mediator(Protocol):
         """Switch the active presenter & view by string key."""
         ...
 
-    def get_presenter(self, key: Optional[str]) -> Optional[Union["BaseFramePresenter", "BasePopupPresenter"]]:
+    def get_presenter(self, key: Optional[str]) -> Optional[Union["FramePresenter", "PopupPresenter"]]:
         """Get a presenter by it's Key, if it valid"""
         ...
 

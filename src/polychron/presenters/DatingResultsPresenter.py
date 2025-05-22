@@ -12,10 +12,10 @@ from ..models.Model import Model
 from ..models.ProjectSelection import ProjectSelection
 from ..util import node_coords_fromjson, phase_length_finder
 from ..views.DatingResultsView import DatingResultsView
-from .BaseFramePresenter import BaseFramePresenter
+from .FramePresenter import FramePresenter
 
 
-class DatingResultsPresenter(BaseFramePresenter[ProjectSelection]):
+class DatingResultsPresenter(FramePresenter[ProjectSelection]):
     def __init__(self, mediator: Mediator, view: DatingResultsView, model: ProjectSelection):
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)

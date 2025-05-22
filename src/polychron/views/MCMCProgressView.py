@@ -1,10 +1,10 @@
 import tkinter as tk
 from tkinter import ttk
 
-from .BasePopupView import BasePopupView
+from .PopupView import PopupView
 
 
-class MCMCProgressView(BasePopupView):
+class MCMCProgressView(PopupView):
     """View for displaying MCMC calibratrion progress
 
     Formely within `StartPage::load_mcmc`, triggered by tools > calibrate model

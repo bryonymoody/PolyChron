@@ -2,10 +2,10 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, List, Optional
 
-from .BaseFrameView import BaseFrameView
+from .FrameView import FrameView
 
 
-class ProjectSelectView(BaseFrameView):
+class ProjectSelectView(FrameView):
     """Passive view for project loading/selection
 
     @todo @enhancement - On return to this view, pre-populate the previously selected list entry."""

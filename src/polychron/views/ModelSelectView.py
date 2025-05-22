@@ -2,10 +2,10 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, List, Optional
 
-from .BaseFrameView import BaseFrameView
+from .FrameView import FrameView
 
 
-class ModelSelectView(BaseFrameView):
+class ModelSelectView(FrameView):
     """Passive view for Model loading/selection
 
     @todo @enhancement - Include the current project name in this view.

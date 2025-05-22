@@ -13,8 +13,8 @@ from .Config import Config
 from .interfaces import Mediator
 from .models.InterpolationData import InterpolationData
 from .models.ProjectSelection import ProjectSelection
-from .presenters.BaseFramePresenter import BaseFramePresenter
 from .presenters.DatingResultsPresenter import DatingResultsPresenter
+from .presenters.FramePresenter import FramePresenter
 from .presenters.ModelPresenter import ModelPresenter
 from .presenters.ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresenter
 from .presenters.SplashPresenter import SplashPresenter
@@ -85,7 +85,7 @@ class GUIApp(Mediator):
         # Construct the views and presenters for main window views (i.e. not-popups)
         self.current_presenter_key: Optional[str] = None
         # @todo - decide on and use the appropriate data object for the MVP model parameter for each display. May need to
-        self.presenters: Dict[str, BaseFramePresenter] = {
+        self.presenters: Dict[str, FramePresenter] = {
             "Splash": SplashPresenter(self, SplashView(self.container), self.project_selector_obj),
             "Model": ModelPresenter(self, ModelView(self.container), self.project_selector_obj),
             "DatingResults": DatingResultsPresenter(self, DatingResultsView(self.container), self.project_selector_obj),
@@ -108,7 +108,7 @@ class GUIApp(Mediator):
             title += f" | {suffix}"
         self.root.title(title)
 
-    def get_presenter(self, key: Optional[str]) -> Optional[BaseFramePresenter]:
+    def get_presenter(self, key: Optional[str]) -> Optional[FramePresenter]:
         if key is not None and key in self.presenters:
             return self.presenters[key]
         else:

@@ -5,10 +5,10 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import pandas as pd
 from PIL import Image, ImageTk
 
-from .BaseFrameView import BaseFrameView
+from .FrameView import FrameView
 
 
-class ModelView(BaseFrameView):
+class ModelView(FrameView):
     """Main view for displaying information about the model.
     I.e. the "Stratigraphy and supplementary data" tab
 

@@ -2,10 +2,10 @@ from typing import Dict, Optional
 
 from ..interfaces import Mediator
 from ..views.AddContextView import AddContextView
-from .BasePopupPresenter import BasePopupPresenter
+from .PopupPresenter import PopupPresenter
 
 
-class AddContextPresenter(BasePopupPresenter[Dict[str, Optional[str]]]):
+class AddContextPresenter(PopupPresenter[Dict[str, Optional[str]]]):
     """Presenter for adding an additional context to the current model
 
     Formerly `popupWindow`

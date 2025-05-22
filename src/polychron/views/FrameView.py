@@ -1,7 +1,7 @@
 import tkinter as tk
 
 
-class BaseFrameView(tk.Frame):
+class FrameView(tk.Frame):
     """Base class for Views which are frames rather than windows
 
     @todo - base this on tkk.Frame for better theming, but needs changes to extending classes

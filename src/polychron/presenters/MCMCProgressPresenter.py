@@ -6,7 +6,7 @@ from tkinter import ttk
 from ..interfaces import Mediator
 from ..models.Model import Model
 from ..views.MCMCProgressView import MCMCProgressView
-from .BasePopupPresenter import BasePopupPresenter
+from .PopupPresenter import PopupPresenter
 
 
 # @todo - refactor this, should be doable without a stdrediector
@@ -30,7 +30,7 @@ class StdoutRedirector(object):
         pass
 
 
-class MCMCProgressPresenter(BasePopupPresenter[Model]):
+class MCMCProgressPresenter(PopupPresenter[Model]):
     """Presenter for managing the MCMC progress bar popup view.
 
     When MCMC calibration has completed, and the popup closes, change to the DatingResults tab

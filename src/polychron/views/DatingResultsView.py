@@ -6,10 +6,10 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 from PIL import ImageTk
 
-from .BaseFrameView import BaseFrameView
+from .FrameView import FrameView
 
 
-class DatingResultsView(BaseFrameView):
+class DatingResultsView(FrameView):
     """View for displaying post-calibration "Dating Results" for a model.
 
     I.e. the "Dating Results" tab

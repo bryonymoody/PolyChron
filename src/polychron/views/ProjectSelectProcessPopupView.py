@@ -1,9 +1,9 @@
 import tkinter as tk
 
-from .BasePopupView import BasePopupView
+from .PopupView import PopupView
 
 
-class ProjectSelectProcessPopupView(BasePopupView):
+class ProjectSelectProcessPopupView(PopupView):
     """View for the project selection popup window, which contains the frames that the view(s) for each step are placed into and switched between."""
 
     def __init__(self, parent: tk.Frame) -> None:

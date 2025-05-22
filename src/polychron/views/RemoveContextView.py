@@ -1,10 +1,10 @@
 import tkinter as tk
 from typing import Any, Callable, Optional
 
-from .BasePopupView import BasePopupView
+from .PopupView import PopupView
 
 
-class RemoveContextView(BasePopupView):
+class RemoveContextView(PopupView):
     """View for removing contexts, providing a free-text reason
 
     Formerly `popupWindow5`

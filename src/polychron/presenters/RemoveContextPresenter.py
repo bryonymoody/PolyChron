@@ -2,10 +2,10 @@ from typing import Dict, Optional
 
 from ..interfaces import Mediator
 from ..views.RemoveContextView import RemoveContextView
-from .BasePopupPresenter import BasePopupPresenter
+from .PopupPresenter import PopupPresenter
 
 
-class RemoveContextPresenter(BasePopupPresenter[Dict[str, Optional[str]]]):
+class RemoveContextPresenter(PopupPresenter[Dict[str, Optional[str]]]):
     """Presenter for a popup window to input the reason for the removal of a node/context
 
     Formerly `popupWindow5`, called by StartPage.node_del_popup, triggered when "Delete context" is selected on a node

@@ -2,10 +2,10 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, Dict, List, Optional
 
-from .BasePopupView import BasePopupView
+from .PopupView import PopupView
 
 
-class ManageIntrusiveOrResidualContextsView(BasePopupView):
+class ManageIntrusiveOrResidualContextsView(PopupView):
     """View for managing intrusive and residual contexts
 
     Formerly `popupWindow4`. This is a popup window triggered after ResidualOrIntrusive input

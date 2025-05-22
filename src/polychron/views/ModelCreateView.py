@@ -1,10 +1,10 @@
 import tkinter as tk
 from typing import Any, Callable, Optional
 
-from .BaseFrameView import BaseFrameView
+from .FrameView import FrameView
 
 
-class ModelCreateView(BaseFrameView):
+class ModelCreateView(FrameView):
     """Passive view for model creation
 
     @todo @enhancement - Include the current project name in this view.

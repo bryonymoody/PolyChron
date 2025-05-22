@@ -8,16 +8,16 @@ from ..views.ProjectCreateView import ProjectCreateView
 from ..views.ProjectSelectProcessPopupView import ProjectSelectProcessPopupView
 from ..views.ProjectSelectView import ProjectSelectView
 from ..views.ProjectWelcomeView import ProjectWelcomeView
-from .BaseFramePresenter import BaseFramePresenter
-from .BasePopupPresenter import BasePopupPresenter
+from .FramePresenter import FramePresenter
 from .ModelCreatePresenter import ModelCreatePresenter
 from .ModelSelectPresenter import ModelSelectPresenter
+from .PopupPresenter import PopupPresenter
 from .ProjectCreatePresenter import ProjectCreatePresenter
 from .ProjectSelectPresenter import ProjectSelectPresenter
 from .ProjectWelcomePresenter import ProjectWelcomePresenter
 
 
-class ProjectSelectProcessPopupPresenter(BasePopupPresenter[ProjectSelection], Mediator):
+class ProjectSelectProcessPopupPresenter(PopupPresenter[ProjectSelection], Mediator):
     """Presenter for the project new or select process, which is a mult-frame presenter, much like the main window.
 
     @todo - this is a bit different from a regular PopupPresenter, as it contains multiple views & itself probable needs to be a Mediator. Some of this could be abstracted.
@@ -33,7 +33,7 @@ class ProjectSelectProcessPopupPresenter(BasePopupPresenter[ProjectSelection], M
 
         # Build a dictionary of child presenter-view pairings
         self.current_presenter_key = None
-        self.presenters: Dict[str, BaseFramePresenter] = {
+        self.presenters: Dict[str, FramePresenter] = {
             "project_welcome": ProjectWelcomePresenter(self, ProjectWelcomeView(self.view.container), self.model),
             "project_select": ProjectSelectPresenter(self, ProjectSelectView(self.view.container), self.model),
             "project_create": ProjectCreatePresenter(self, ProjectCreateView(self.view.container), self.model),
@@ -53,7 +53,7 @@ class ProjectSelectProcessPopupPresenter(BasePopupPresenter[ProjectSelection], M
     def update_view(self) -> None:
         pass  # @todo
 
-    def get_presenter(self, key: Optional[str]) -> Optional[BaseFramePresenter]:
+    def get_presenter(self, key: Optional[str]) -> Optional[FramePresenter]:
         if key is not None and key in self.presenters:
             return self.presenters[key]
         else:

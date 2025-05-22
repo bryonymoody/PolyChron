@@ -2,33 +2,31 @@ from abc import ABC, abstractmethod
 from typing import Any, Generic, Optional, TypeVar
 
 from ..interfaces import Mediator
-from ..views.BasePopupView import BasePopupView
+from ..views.PopupView import PopupView
 
 # TypeVar allowing for the Type of the model to be overidden.
 T = TypeVar("T", bound=Any)
 
 
-class BasePopupPresenter(ABC, Generic[T]):
-    """Abstract Base class for Presenters for views which are in the main window, which act as the middle man between a veiw and the underlying data structures (model).
+class PopupPresenter(ABC, Generic[T]):
+    """Abstract Base Class for Presenters for views which are in the main window, which act as the middle man between a veiw and the underlying data structures (model).
 
-    @todo common base class with BaseFramePresenter?
-
-    @todo rename, Base is superflous.
+    @todo common base class with FramePresenter?
     """
 
-    def __init__(self, mediator: Mediator, view: type[BasePopupView], model: T) -> None:
+    def __init__(self, mediator: Mediator, view: type[PopupView], model: T) -> None:
         """Initialise the presenter
 
         Args:
             mediator (Mediator): An object which implements the Mediator protocol
-            view (type[BasePopupView]): The popup view instance to be presented
+            view (type[PopupView]): The popup view instance to be presented
             model (T): The MVP model object which includes the data to be presented and methods to manipulate it
         """
 
         self.mediator: Mediator = mediator
         """Reference to the parent mediator class, to enable switching between presenters/views"""
 
-        self.view: type[BasePopupView] = view
+        self.view: type[PopupView] = view
         """View managed by this presenter"""
 
         self.model: T = model

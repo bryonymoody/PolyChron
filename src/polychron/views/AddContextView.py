@@ -2,10 +2,10 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, Optional
 
-from .BasePopupView import BasePopupView
+from .PopupView import PopupView
 
 
-class AddContextView(BasePopupView):
+class AddContextView(PopupView):
     """View for adding an additional context to the current model
 
     Takes a single context label as user input to add to the model

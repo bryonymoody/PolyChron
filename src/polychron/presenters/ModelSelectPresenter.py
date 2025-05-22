@@ -4,10 +4,10 @@ from tkinter import messagebox as messagebox
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
 from ..views.ModelSelectView import ModelSelectView
-from .BaseFramePresenter import BaseFramePresenter
+from .FramePresenter import FramePresenter
 
 
-class ModelSelectPresenter(BaseFramePresenter[ProjectSelection]):
+class ModelSelectPresenter(FramePresenter[ProjectSelection]):
     """Presenter for a frame allowing the user to select a model from a list of models within a project, or a button to create a new one.
 
     @todo - Sort the list of models?

@@ -6,10 +6,10 @@ from typing import Any, Callable, Optional
 
 from PIL import Image, ImageTk
 
-from .BaseFrameView import BaseFrameView
+from .FrameView import FrameView
 
 
-class SplashView(BaseFrameView):
+class SplashView(FrameView):
     """View for the splash screen main window view.
 
     This is displayed in the main window before a project is opened, and just allows users to re-open the new/load project popup in case they close it without loading anything.

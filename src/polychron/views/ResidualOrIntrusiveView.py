@@ -4,10 +4,10 @@ from typing import Any, Callable, List, Optional
 
 from PIL import Image, ImageTk
 
-from .BasePopupView import BasePopupView
+from .PopupView import PopupView
 
 
-class ResidualOrIntrusiveView(BasePopupView):
+class ResidualOrIntrusiveView(PopupView):
     """View for users to provide input on whether contexts are residual or intrusive during chronological graph rendering
 
     Formerly part of `PageTwo`

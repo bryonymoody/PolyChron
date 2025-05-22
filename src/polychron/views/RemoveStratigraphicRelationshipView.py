@@ -1,10 +1,10 @@
 import tkinter as tk
 from typing import Any, Callable, Optional
 
-from .BasePopupView import BasePopupView
+from .PopupView import PopupView
 
 
-class RemoveStratigraphicRelationshipView(BasePopupView):
+class RemoveStratigraphicRelationshipView(PopupView):
     """View for providing the reason wehn removing a specific stratigraphic relationship
 
     Formerly `popupWindow6`

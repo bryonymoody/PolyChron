@@ -1,11 +1,11 @@
 import tkinter as tk
 from typing import Any, Callable, Optional
 
-from .BaseFrameView import BaseFrameView
+from .FrameView import FrameView
 
 
 # @todo - base class for frames that aren't main window frames? Maybe it's the same thing?
-class ProjectCreateView(BaseFrameView):
+class ProjectCreateView(FrameView):
     """Passive view for project creation"""
 
     def __init__(self, parent: tk.Frame) -> None:

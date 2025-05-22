@@ -10,10 +10,10 @@ from ..presenters.ManageIntrusiveOrResidualContextsPresenter import ManageIntrus
 from ..util import node_coords_fromjson
 from ..views.ManageIntrusiveOrResidualContextsView import ManageIntrusiveOrResidualContextsView
 from ..views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
-from .BasePopupPresenter import BasePopupPresenter
+from .PopupPresenter import PopupPresenter
 
 
-class ResidualOrIntrusivePresenter(BasePopupPresenter[Model], Mediator):
+class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
     """Presenter for managing the MCMC progress bar popup view.
 
     When MCMC calibration has completed, and the popup closes, the mediator should change to the DatingResults tab

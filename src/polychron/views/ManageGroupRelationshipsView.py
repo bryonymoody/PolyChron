@@ -4,10 +4,10 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
 
-from .BasePopupView import BasePopupView
+from .PopupView import PopupView
 
 
-class ManageGroupRelationshipsView(BasePopupView):
+class ManageGroupRelationshipsView(PopupView):
     """View for managing group relationships
 
     Formerly part of `popupWindow3`, Part of the Rendering chronological graph process

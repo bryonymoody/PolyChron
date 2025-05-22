@@ -29,12 +29,12 @@ from ..views.ProjectSelectProcessPopupView import ProjectSelectProcessPopupView
 from ..views.RemoveContextView import RemoveContextView
 from ..views.RemoveStratigraphicRelationshipView import RemoveStratigraphicRelationshipView
 from ..views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
-from .BaseFramePresenter import BaseFramePresenter
+from .FramePresenter import FramePresenter
 from .ManageGroupRelationshipsPresenter import ManageGroupRelationshipsPresenter
 from .ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresenter
 
 
-class ModelPresenter(BaseFramePresenter[ProjectSelection]):
+class ModelPresenter(FramePresenter[ProjectSelection]):
     """Presenter for the main model tab
 
     @todo - re-order methods and properties to be logical (rather than in order of porting)

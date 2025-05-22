@@ -2,10 +2,10 @@ from typing import Any, Dict
 
 from ..interfaces import Mediator
 from ..views.DatafilePreviewView import DatafilePreviewView
-from .BasePopupPresenter import BasePopupPresenter
+from .PopupPresenter import PopupPresenter
 
 
-class DatafilePreviewPresenter(BasePopupPresenter[Dict[str, Any]]):
+class DatafilePreviewPresenter(PopupPresenter[Dict[str, Any]]):
     """Presenter for selecting which models to calibrate, when multiple models are to be calibrated at once.
 
     Formerly `popupWindow7`, used when opening a csv-like file

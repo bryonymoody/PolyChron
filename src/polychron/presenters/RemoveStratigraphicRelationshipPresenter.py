@@ -2,10 +2,10 @@ from typing import Dict, Optional
 
 from ..interfaces import Mediator
 from ..views.RemoveStratigraphicRelationshipView import RemoveStratigraphicRelationshipView
-from .BasePopupPresenter import BasePopupPresenter
+from .PopupPresenter import PopupPresenter
 
 
-class RemoveStratigraphicRelationshipPresenter(BasePopupPresenter[Dict[str, Optional[str]]]):
+class RemoveStratigraphicRelationshipPresenter(PopupPresenter[Dict[str, Optional[str]]]):
     """Presenter for a popup window to provide the reason for the removal of a single stratigraphic relationship
 
     Formerly `popupWindow6`, called by StartPage.edge_del_popup, triggered when "Delete stratigraphic relationship" is selected on an edge

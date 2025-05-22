@@ -1,10 +1,10 @@
 import tkinter as tk
 from typing import Any, Callable, List, Optional
 
-from .BasePopupView import BasePopupView
+from .PopupView import PopupView
 
 
-class CalibrateModelSelectView(BasePopupView):
+class CalibrateModelSelectView(PopupView):
     """View for selecting which models to calibrate, when multiple models are to be calibrated at once
 
     Formerly `popupWindow8`, used from menu option "Calibrate multiple projects from project"

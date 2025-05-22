@@ -4,10 +4,10 @@ from tkinter import messagebox as messagebox
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
 from ..views.ModelCreateView import ModelCreateView
-from .BaseFramePresenter import BaseFramePresenter
+from .FramePresenter import FramePresenter
 
 
-class ModelCreatePresenter(BaseFramePresenter[ProjectSelection]):
+class ModelCreatePresenter(FramePresenter[ProjectSelection]):
     def __init__(self, mediator: Mediator, view: ModelCreateView, model: ProjectSelection) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)

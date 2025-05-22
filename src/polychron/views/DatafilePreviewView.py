@@ -2,10 +2,10 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, Optional
 
-from .BasePopupView import BasePopupView
+from .PopupView import PopupView
 
 
-class DatafilePreviewView(BasePopupView):
+class DatafilePreviewView(PopupView):
     """View for previewing the data in a loaded dataframe (i.e. csv).
 
     Formerly `popupWindow7`, called by numerous `open_fileX` methods in StartPage

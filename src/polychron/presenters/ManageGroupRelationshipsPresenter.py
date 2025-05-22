@@ -10,10 +10,10 @@ from ..interfaces import Mediator
 from ..models.Model import Model
 from ..util import chrono_edge_add, chrono_edge_remov, node_del_fixed
 from ..views.ManageGroupRelationshipsView import ManageGroupRelationshipsView
-from .BasePopupPresenter import BasePopupPresenter
+from .PopupPresenter import PopupPresenter
 
 
-class ManageGroupRelationshipsPresenter(BasePopupPresenter[Model]):
+class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
     """Presenter for managing Residual vs Intrusive contexsts
 
     @todo - createa a popup for this and the confirmation version
