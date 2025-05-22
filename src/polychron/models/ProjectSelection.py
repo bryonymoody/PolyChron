@@ -42,7 +42,8 @@ class ProjectSelection:
             @todo - Either validate new project names when provide by a user, or if a new project name alrady exists, show the load model view next? 
         """
 
-    def get_projects_directiory(self) -> ProjectsDirectory:
+    @property
+    def projects_directiory(self) -> ProjectsDirectory:
         """Get (a ref to) the projects directory object
 
         No setter is provided.
@@ -204,7 +205,7 @@ class ProjectSelection:
 
         # Get the existing or new project.
         # Any raised exceptions will be allowed to propagate upwards for presentation to the user
-        project = self.get_projects_directiory().get_or_create_project(project_name)
+        project = self.projects_directiory.get_or_create_project(project_name)
 
         # Within that Project, get or create the model.
         # Any raised exceptions will be allowed to propagate upwards for presentation to the user

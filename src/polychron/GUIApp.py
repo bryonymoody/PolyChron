@@ -203,7 +203,7 @@ class GUIApp(Mediator):
         splash_presenter = self.get_presenter("Splash")
 
         # Lazily load the projects directory, so (potential) existing models and projects are known.
-        self.project_selector_obj.get_projects_directiory().lazy_load()
+        self.project_selector_obj.projects_directiory.lazy_load()
 
         # @todo - this is a bit gross and needs improving.
         # Instantiate the child presenter and view, which otherwise would be done by SplashPresenter.on_select_project

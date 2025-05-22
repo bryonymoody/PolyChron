@@ -27,7 +27,7 @@ class ProjectSelectPresenter(BaseFramePresenter):
 
         @todo - sort the projects list?
         """
-        project_names = list(self.model.get_projects_directiory().projects.keys())
+        project_names = list(self.model.projects_directiory.projects.keys())
         self.view.update_project_list(project_names)
 
     def on_load_button(self) -> None:
