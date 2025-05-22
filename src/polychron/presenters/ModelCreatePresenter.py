@@ -29,7 +29,7 @@ class ModelCreatePresenter(BaseFramePresenter):
         new_model_name: str = self.view.get_name()
         if len(new_model_name) > 0:
             # Set the next model name
-            self.model.set_next_model_name(new_model_name)
+            self.model.next_model_name = new_model_name
 
             # Try and create + switch to the next model
             try:
@@ -61,9 +61,9 @@ class ModelCreatePresenter(BaseFramePresenter):
 
         This behaves differntly than polychron 0.1, by returning to the previous view rather than always new project creation"""
         # Clear any value from the the models new_model property
-        self.model.set_next_model_name(None)
+        self.model.next_model_name = None
         # If we came from project_create, return to it. Otherwise return to model_select
-        if self.model.get_using_new_project_process():
+        if self.model.using_new_project_process:
             self.mediator.switch_presenter("project_create")
         else:
             # Otherwise go back to the model_select view

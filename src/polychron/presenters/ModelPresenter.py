@@ -160,7 +160,7 @@ class ModelPresenter(BaseFramePresenter):
         @todo Ensure that this method updates each UI element for the current model (if there is one). I.e. both graphs, + 3 tables + data loaded drop down + presenter properties like the selected node."""
         # Get the actual model
         # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             # @todo if there is no model, reset everything to empty
@@ -206,7 +206,7 @@ class ModelPresenter(BaseFramePresenter):
             )
 
     def get_window_title_suffix(self) -> Optional[str]:
-        return f"{self.model.get_current_project_name()} - {self.model.get_current_model_name()}"
+        return f"{self.model.current_project_name} - {self.model.current_model_name}"
 
     def popup_calibrate_model(self) -> None:
         """Callback function for when Tools -> Calibrate model is selected
@@ -216,7 +216,7 @@ class ModelPresenter(BaseFramePresenter):
         Formerly StartPage.load_mcmc
         """
         # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         if model_model is None:  # @todo - should never occur.
             return
         # Create the popup presenter and view
@@ -258,7 +258,7 @@ class ModelPresenter(BaseFramePresenter):
         @todo - migrate some of this code into the Model.
         """
         # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         if model_model is None:  # @todo - should never occur.
             return
 
@@ -294,7 +294,7 @@ class ModelPresenter(BaseFramePresenter):
         """
 
         # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         if model_model is None:  # @todo - should never occur.
             return
 
@@ -337,7 +337,7 @@ class ModelPresenter(BaseFramePresenter):
         if MsgBox == "yes":
             # Create and show the residual or intrusive presenter
             popup_presenter = ResidualOrIntrusivePresenter(
-                self.mediator, ResidualOrIntrusiveView(self.view), self.model.get_current_model()
+                self.mediator, ResidualOrIntrusiveView(self.view), self.model.current_model
             )
             popup_presenter.view.lift()  # @todo - not sure these are neccesary
             # Wait for the popup to be closed
@@ -345,7 +345,7 @@ class ModelPresenter(BaseFramePresenter):
         else:
             # If not, show the group relation ship management view/presenter, formerly popupWindow3
             popup_presenter = ManageGroupRelationshipsPresenter(
-                self.mediator, ManageGroupRelationshipsView(self.view), self.model.get_current_model()
+                self.mediator, ManageGroupRelationshipsView(self.view), self.model.current_model
             )
             popup_presenter.view.lift()  # @todo - not sure these are neccesary
             self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
@@ -376,7 +376,7 @@ class ModelPresenter(BaseFramePresenter):
         file = askopenfile(mode="r", filetypes=[("DOT Files", "*.dot"), ("Graphviz Files", "*.gv")])
         if file is not None:
             # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
-            model_model: Optional[Model] = self.model.get_current_model()
+            model_model: Optional[Model] = self.model.current_model
 
             # Store the path, marking that the most rencent input was a .dot/gv file
             model_model.set_strat_dot_file_input(file.name)
@@ -418,7 +418,7 @@ class ModelPresenter(BaseFramePresenter):
         if file is not None:
             try:
                 # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
-                model_model: Optional[Model] = self.model.get_current_model()
+                model_model: Optional[Model] = self.model.current_model
                 df = pd.read_csv(file, dtype=str)
                 # @todo - Validate the parsed df here, so the errors can be included in the file popup?
                 load_it = self.file_popup(df)
@@ -464,7 +464,7 @@ class ModelPresenter(BaseFramePresenter):
         if file is not None:
             try:
                 # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
-                model_model: Optional[Model] = self.model.get_current_model()
+                model_model: Optional[Model] = self.model.current_model
                 df = pd.read_csv(file)
                 df = df.applymap(str)
                 load_it = self.file_popup(df)
@@ -493,7 +493,7 @@ class ModelPresenter(BaseFramePresenter):
         if file is not None:
             try:
                 # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
-                model_model: Optional[Model] = self.model.get_current_model()
+                model_model: Optional[Model] = self.model.current_model
                 df = pd.read_csv(file)
                 df = df.applymap(str)
                 load_it = self.file_popup(df)
@@ -522,7 +522,7 @@ class ModelPresenter(BaseFramePresenter):
         if file is not None:
             try:
                 # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
-                model_model: Optional[Model] = self.model.get_current_model()
+                model_model: Optional[Model] = self.model.current_model
                 df = pd.read_csv(file)
                 # @todo - de-duplicate this into the model
                 phase_rels = [(str(df["above"][i]), str(df["below"][i])) for i in range(len(df))]
@@ -550,7 +550,7 @@ class ModelPresenter(BaseFramePresenter):
         if file is not None:
             try:
                 # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
-                model_model: Optional[Model] = self.model.get_current_model()
+                model_model: Optional[Model] = self.model.current_model
                 df = pd.read_csv(file)
                 df = df.applymap(str)
                 # Update the model & post process, updating the graph
@@ -586,7 +586,7 @@ class ModelPresenter(BaseFramePresenter):
         """
 
         # Render the strat graph in pahse mode, if there is one to render, updating the model and view
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         if model_model is not None:
             # Store a flag marking this as being enabled. Should this be model data? @todo
             model_model.phase_true = True
@@ -668,7 +668,7 @@ class ModelPresenter(BaseFramePresenter):
             self.testmenu_place_above_prep()
 
         # Get the Model object
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -687,7 +687,7 @@ class ModelPresenter(BaseFramePresenter):
     def testmenu_delete_context(self) -> None:
         """Callback function from the testmenu for deleting a single context"""
         # Get the Model object
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -710,7 +710,7 @@ class ModelPresenter(BaseFramePresenter):
     def testmenu_add_new_contexts(self) -> None:
         """Callback function from the testmenu for adding contexts"""
         # Get the Model object
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -739,7 +739,7 @@ class ModelPresenter(BaseFramePresenter):
         @todo - further refactoring?
         @note - order of popup and already loaded check has been changed to match"""
         # Get the Model object
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -790,7 +790,7 @@ class ModelPresenter(BaseFramePresenter):
     def testmenu_place_above(self) -> None:
         """Callback function from the testmenu for adding stratigrahic relationship"""
         # Get the Model object
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -812,7 +812,7 @@ class ModelPresenter(BaseFramePresenter):
     def testmenu_delete_stratigraphic_prep(self) -> None:
         """Callback function from the testmenu for deleting stratigraphic relationships, adding an option to the menu when a node was selected."""
         # Get the Model object
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -828,7 +828,7 @@ class ModelPresenter(BaseFramePresenter):
     def testmenu_equate_context_with(self) -> None:
         """Callback function from the testmenu to equate two contexts (when one has already been selected)"""
         # Get the Model object
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -860,7 +860,7 @@ class ModelPresenter(BaseFramePresenter):
     def testmenu_equate_context_prep(self) -> None:
         """Callback function from the testmenu which sets up menu to equate context for when user picks next node"""
         # Get the Model object
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -881,7 +881,7 @@ class ModelPresenter(BaseFramePresenter):
     def testmenu_get_supplementary_for_context(self) -> None:
         """Callback function from the testmenu to show supplementary data for the selected context/node"""
         # Get the Model object
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -909,7 +909,7 @@ class ModelPresenter(BaseFramePresenter):
     def testmenu_place_above_prep(self) -> None:
         """Callback function from the testmenu which sets up for placing one context above another"""
         # Get the Model object
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -954,7 +954,7 @@ class ModelPresenter(BaseFramePresenter):
         self.view.unbind_littlecanvas_callback("<Button-1>")
         self.view.bind_littlecanvas_callback("<Button-1>", self.on_left)
         # Show the right click menu
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         has_image = model_model.strat_image is not None
         x_scal, y_scal = self.view.show_testmenu(has_image)
         # If the model has a stratigraphic image presented, check if a node has been right clicked on and store in a member variable
@@ -1004,7 +1004,7 @@ class ModelPresenter(BaseFramePresenter):
         """Save the current state of the model in-place
 
         Formerly StartPage.save_state_1"""
-        if model := self.model.get_current_model():
+        if model := self.model.current_model:
             try:
                 model.save()
             except Exception as e:
@@ -1050,7 +1050,7 @@ class ModelPresenter(BaseFramePresenter):
         @todo rename
         @todo - don't re-open from disk, maintain an unzoomed copy in the model?
         """
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -1069,7 +1069,7 @@ class ModelPresenter(BaseFramePresenter):
         @todo rename
         @todo - don't re-open from disk, maintain an unzoomed copy in the model?
         """
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -1085,7 +1085,7 @@ class ModelPresenter(BaseFramePresenter):
         Formerly StartPage.move_from
         @todo - this is leaking tkinter into the presenter. Abstract this away a little?
         """
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -1098,7 +1098,7 @@ class ModelPresenter(BaseFramePresenter):
         Formerly StartPage.move_to
         @todo - this is leaking tkinter into the presenter. Abstract this away a little?
         """
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -1112,7 +1112,7 @@ class ModelPresenter(BaseFramePresenter):
         Formerly StartPage.move_from2
         @todo - this is leaking tkinter into the presenter. Abstract this away a little?
         """
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -1125,7 +1125,7 @@ class ModelPresenter(BaseFramePresenter):
         Formerly StartPage.move_to2
         @todo - this is leaking tkinter into the presenter. Abstract this away a little?
         """
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -1155,7 +1155,7 @@ class ModelPresenter(BaseFramePresenter):
         Formerly StartPage.addedge
         @todo partially refactor into a method on models.model
         @todo renaming etc"""
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -1179,7 +1179,7 @@ class ModelPresenter(BaseFramePresenter):
         @todo partially refactor into a method on models.model
         @todo - using np.append to extend a set?
         @todo renaming etc"""
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -1215,7 +1215,7 @@ class ModelPresenter(BaseFramePresenter):
 
         node_inside = "no node"  # @todo use None instead?
 
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return node_inside

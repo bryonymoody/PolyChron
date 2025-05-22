@@ -159,10 +159,10 @@ class GUIApp(Mediator):
         if (
             self.current_presenter_key == "Model"
             or self.current_presenter_key == "DatingResults"
-            and self.project_selector_obj.get_current_project_name() is not None
-            and self.project_selector_obj.get_current_model_name() is not None
+            and self.project_selector_obj.current_project_name is not None
+            and self.project_selector_obj.current_model_name is not None
         ):
-            model = self.project_selector_obj.get_current_model()
+            model = self.project_selector_obj.current_model
             if model is not None:
                 model.save()
 
@@ -221,12 +221,12 @@ class GUIApp(Mediator):
         # If we have a project name
         if have_project_name:
             # update the project selection model with it.
-            self.project_selector_obj.set_next_project_name(project_name)
+            self.project_selector_obj.next_project_name = project_name
 
             # If we do not have a model name
             if not have_model_name:
                 # If the project does not exist, or contains 0 (potential) models
-                if (project := self.project_selector_obj.get_next_project()) is None or len(project.models) == 0:
+                if (project := self.project_selector_obj.next_project) is None or len(project.models) == 0:
                     # switch to the new model popup
                     popup_presenter.switch_presenter("model_create")
                 else:
@@ -234,10 +234,10 @@ class GUIApp(Mediator):
                     popup_presenter.switch_presenter("model_select")
             else:
                 # If we also have a model name, store it in the poject selection model
-                self.project_selector_obj.set_next_model_name(model_name)
+                self.project_selector_obj.next_model_name = model_name
 
                 # Get the reason that the presenter is being closed.
-                reason = "load_model" if self.project_selector_obj.get_next_model() is not None else "new_model"
+                reason = "load_model" if self.project_selector_obj.next_model is not None else "new_model"
 
                 # Update the model to the "next" project & model.
                 # @todo - this may raise an error, but cli options may also be removed in the future

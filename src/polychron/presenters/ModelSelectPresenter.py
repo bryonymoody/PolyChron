@@ -35,8 +35,7 @@ class ModelSelectPresenter(BaseFramePresenter):
         @todo - sort the models list? Will also need to adjust getting the select model to refer to the sorted list.
         """
         # Update the list of models to select from, if a project has been selected
-        project = self.model.get_next_project()
-        model_names = list(project.models.keys()) if project is not None else []
+        model_names = list(self.model.next_project.models.keys()) if self.model.next_project is not None else []
         self.view.update_model_list(model_names)
 
     def on_load_button(self) -> None:
@@ -44,7 +43,7 @@ class ModelSelectPresenter(BaseFramePresenter):
         selected_model = self.view.get_selected_model()
         if selected_model is not None:
             # Update the data model to include the selected project
-            self.model.set_next_model_name(selected_model)
+            self.model.next_model_name = selected_model
             # Try to switch to the model (load it, and update state)
             try:
                 self.model.switch_to_next_project_model()
@@ -73,9 +72,9 @@ class ModelSelectPresenter(BaseFramePresenter):
         Unlike polychron 0.1 which returned to the project create or load screen, this returns to the project select screen
         """
         # Clear any selected model value, just in case
-        self.model.set_next_model_name(None)
+        self.model.next_model_name = None
         # A previous project should be known, so we can return to it. Fallback to the welcome view
-        if self.model.get_next_project() is not None:
+        if self.model.next_project is not None:
             self.mediator.switch_presenter("project_select")
         else:
             self.mediator.switch_presenter("project_welcome")  # @todo - should this be project_create?

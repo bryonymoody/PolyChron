@@ -30,7 +30,7 @@ class CalibrateModelSelectPresenter(BasePopupPresenter):
         # @todo make this part of a custom models class, or ProjectsDirectory
         model_list = []
         if self.model is not None:
-            project = self.model.get_current_project()
+            project = self.model.current_project
             if project is not None:
                 # Build a list of just models which are ready for simualtion.
                 # As this will load each model from disk within the project, it may take a while.
@@ -46,7 +46,7 @@ class CalibrateModelSelectPresenter(BasePopupPresenter):
         @todo - progress bar for batch calibration?"""
 
         if self.model is not None:
-            project = self.model.get_current_project()
+            project = self.model.current_project
             if project is not None:
                 selected_models = self.view.get_selected_models()
                 # @todo verify the selected models exist and are loadable.

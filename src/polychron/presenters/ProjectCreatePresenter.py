@@ -28,9 +28,9 @@ class ProjectCreatePresenter(BaseFramePresenter):
         new_project_name: str = self.view.get_name()
         if new_project_name is not None and len(new_project_name) > 0:
             # @todo - validate that the new project is not a taken name. If so error?polychron 0.1 does not perform this check.
-            self.model.set_next_project_name(new_project_name)
+            self.model.next_project_name = new_project_name
             # Mark the flag indicating we are using the project_create process
-            self.model.set_using_new_project_process(True)
+            self.model.using_new_project_process = True
             # Switch to the model creation view
             self.mediator.switch_presenter("model_create")
         else:
@@ -43,8 +43,8 @@ class ProjectCreatePresenter(BaseFramePresenter):
             @todo - The project_select view could have a "New Project" button, resplacing the welcome view? In which case this back button would need ammending
         """
         # Clear the new project name
-        self.model.set_next_project_name(None)
+        self.model.next_project_name = None
         # Clear the flag indicating we are using the project_create process
-        self.model.set_using_new_project_process(False)
+        self.model.using_new_project_process = False
         # Switch to the welcome presenter/view.
         self.mediator.switch_presenter("project_welcome")

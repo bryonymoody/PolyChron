@@ -77,14 +77,14 @@ class DatingResultsPresenter(BaseFramePresenter):
         pass  # @todo
 
     def get_window_title_suffix(self) -> Optional[str]:
-        return f"{self.model.get_current_project_name()} - {self.model.get_current_model_name()}"
+        return f"{self.model.current_project_name} - {self.model.current_model_name}"
 
     def on_file_save(self) -> None:
         """Callback for the File > Save project progress menu command
 
         Formerly a call to startpage::save_state_1
         """
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -135,7 +135,7 @@ class DatingResultsPresenter(BaseFramePresenter):
         self.view.unbind_littlecanvas2_callback("<Button-1>")
         self.view.bind_littlecanvas2_callback("<Button-1>", self.on_left)
         # Show the right click menu
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         has_image = model_model.chrono_image is not None
         # Show the test menu, returnign the coords it was place at?
         x_scal, y_scal = self.view.show_testmenu(has_image)
@@ -158,7 +158,7 @@ class DatingResultsPresenter(BaseFramePresenter):
         Formerly PageOne.move_from2
         @todo - this is leaking tkinter into the presenter. Abstract this away a little?
         """
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -171,7 +171,7 @@ class DatingResultsPresenter(BaseFramePresenter):
         Formerly PageOne.move_to2
         @todo - this is leaking tkinter into the presenter. Abstract this away a little?
         """
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -181,7 +181,7 @@ class DatingResultsPresenter(BaseFramePresenter):
 
     def chronograph_render_post(self) -> None:
         """Formerly PageOne.chronograph_render_post"""
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -212,7 +212,7 @@ class DatingResultsPresenter(BaseFramePresenter):
         """
         node_inside = "no node"  # @todo use None instead?
 
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return node_inside
@@ -256,7 +256,7 @@ class DatingResultsPresenter(BaseFramePresenter):
         @todo - more refacotring
         @todo - user input validation"""
 
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -297,7 +297,7 @@ class DatingResultsPresenter(BaseFramePresenter):
         @tood - make this match ModelPreesnter.on_testmenu a bit?
         """
 
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -334,7 +334,7 @@ class DatingResultsPresenter(BaseFramePresenter):
             self.results_list.append(self.node)
 
     def testmenu_get_time_elapsed_between(self) -> None:
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
@@ -391,7 +391,7 @@ class DatingResultsPresenter(BaseFramePresenter):
         """loads posterior density plots into the graph
 
         Formerly PageOne.mcmc_output"""
-        model_model: Optional[Model] = self.model.get_current_model()
+        model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return

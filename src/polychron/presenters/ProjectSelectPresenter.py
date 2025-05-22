@@ -35,7 +35,7 @@ class ProjectSelectPresenter(BaseFramePresenter):
         selected_project = self.view.get_selected_project()
         if selected_project is not None:
             # Update the data model to include the selected project
-            self.model.set_next_project_name(selected_project)
+            self.model.next_project_name = selected_project
             # Switch views
             self.mediator.switch_presenter("model_select")
         else:
@@ -43,7 +43,7 @@ class ProjectSelectPresenter(BaseFramePresenter):
 
     def on_back_button(self) -> None:
         """When the Back button is pressed, update the previous view and switch to it"""
-        self.model.set_next_project_name(None)
+        self.model.next_project_name = None
         self.mediator.switch_presenter("project_welcome")
 
     def on_select(self, event=None) -> None:

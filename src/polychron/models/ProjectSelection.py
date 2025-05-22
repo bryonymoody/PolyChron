@@ -52,44 +52,50 @@ class ProjectSelection:
         """
         return self.__projects_directory
 
-    def get_current_project_name(self) -> Optional[str]:
-        """Get the name of the currently selected project, which may be None"""
+    @property
+    def current_project_name(self) -> Optional[str]:
+        """The name of the currently selected project, which may be None"""
         return self.__selected_project
 
-    def get_current_model_name(self) -> Optional[str]:
-        """Get the name of the currently selected model, which may be None"""
+    @property
+    def current_model_name(self) -> Optional[str]:
+        """The name of the currently selected model, which may be None"""
         return self.__selected_model
 
-    def get_current_project(self) -> Optional[Project]:
+    @property
+    def current_project(self) -> Optional[Project]:
         """Get (a reference) to the currently selected Project object
 
         Todo:
             @todo - exceptions?"""
-        if self.get_current_project_name() is not None:
-            return self.__projects_directory.get_project(self.get_current_project_name())
+        if self.current_project_name is not None:
+            return self.__projects_directory.get_project(self.current_project_name)
         else:
             return None
 
-    def get_current_model(self) -> Optional[Model]:
+    @property
+    def current_model(self) -> Optional[Model]:
         """Get (a reference) to the currently selected model object
 
         Todo:
             @todo - exceptions? Project.get_model may load from disk, raising various exceptions"""
 
-        if (project := self.get_current_project()) is not None:
-            if self.get_current_model_name() is not None:
-                return project.get_model(self.get_current_model_name())
+        if (project := self.current_project) is not None:
+            if self.current_model_name is not None:
+                return project.get_model(self.current_model_name)
             else:
                 return None
 
-    def set_current_project_name(self, name: str) -> None:
+    @current_project_name.setter
+    def current_project_name(self, name: str) -> None:
         """Set the current project by name
 
         Todo:
             @todo - should this validate the project name here, raising if it doesn not exist yet?"""
         self.__selected_project = name
 
-    def set_current_model_name(self, name: str) -> None:
+    @current_model_name.setter
+    def current_model_name(self, name: str) -> None:
         """Set the current model by name
 
         Todo:
@@ -97,37 +103,42 @@ class ProjectSelection:
             @todo - should this validate the model name here, raising if it doesn not exist yet? (and if there is not project set)"""
         self.__selected_model = name
 
-    def get_next_project_name(self) -> Optional[str]:
+    @property
+    def next_project_name(self) -> Optional[str]:
         """Get the name of the next project to be selected/created, which may be None"""
         return self.__next_project
 
-    def get_next_model_name(self) -> Optional[str]:
+    @property
+    def next_model_name(self) -> Optional[str]:
         """Get the name of the next model to be selected/created, which may be None"""
         return self.__next_model
 
-    def get_next_project(self) -> Optional[Project]:
+    @property
+    def next_project(self) -> Optional[Project]:
         """Get (a reference) to the "next" Project object, if it already exists
 
         Todo:
             @todo - exceptions?"""
-        if self.get_next_project_name() is not None:
-            return self.__projects_directory.get_project(self.get_next_project_name())
+        if self.next_project_name is not None:
+            return self.__projects_directory.get_project(self.next_project_name)
         else:
             return None
 
-    def get_next_model(self) -> Optional[Model]:
+    @property
+    def next_model(self) -> Optional[Model]:
         """Get (a reference) to the "next" model object, if it already exists within the next project
 
         Todo:
             @todo - exceptions? Project.get_model may load from disk, raising various exceptions"""
 
-        if (project := self.get_next_project()) is not None:
-            if self.get_next_model_name() is not None:
-                return project.get_model(self.get_next_model_name())
+        if (project := self.next_project) is not None:
+            if self.next_model_name is not None:
+                return project.get_model(self.next_model_name)
             else:
                 return None
 
-    def set_next_project_name(self, name: Optional[str]) -> None:
+    @next_project_name.setter
+    def next_project_name(self, name: Optional[str]) -> None:
         """Set the current project by name
 
         This project may or may not exist yet.
@@ -140,7 +151,8 @@ class ProjectSelection:
         #
         self.__next_project_is_new = False
 
-    def set_next_model_name(self, name: Optional[str]) -> None:
+    @next_model_name.setter
+    def next_model_name(self, name: Optional[str]) -> None:
         """Set the current model by name
 
         This model may or may not exist yet
@@ -150,14 +162,16 @@ class ProjectSelection:
             @todo - should this raise if ther is no next project yet?"""
         self.__next_model = name
 
-    def get_using_new_project_process(self) -> bool:
+    @property
+    def using_new_project_process(self) -> bool:
         """Get if the next project was a user provided new name or not.
 
         This does not mean the next project name is not already in use, but this is required to provide the correct back functionality during the project/model loading/creation process without validating new project names when provided.
         """
         return self.__using_new_project_process
 
-    def set_using_new_project_process(self, value: bool) -> None:
+    @using_new_project_process.setter
+    def using_new_project_process(self, value: bool) -> None:
         """Set the flag indicating if the next project is new or not."""
         self.__using_new_project_process = value
 
@@ -171,8 +185,8 @@ class ProjectSelection:
             @todo - specialise exception types for better handling downstream
             @todo - should this raise if the current model has not been saved? Or should that be handled elsewhere (probably elsewhere)
         """
-        project_name = self.get_next_project_name()
-        model_name = self.get_next_model_name()
+        project_name = self.next_project_name
+        model_name = self.next_model_name
 
         # Ensure that the next project and next model names have been set.
         if project_name is None or project_name == "":
@@ -196,7 +210,7 @@ class ProjectSelection:
             raise e
 
         # Update internal state, setting the current and next project/model variables, if no exceptions occured so far
-        self.set_current_project_name(project_name)
-        self.set_current_model_name(model_name)
+        self.current_project_name = project_name
+        self.current_model_name = model_name
 
         # @todo - should this reset next_X?
