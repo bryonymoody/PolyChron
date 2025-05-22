@@ -980,6 +980,9 @@ class ModelPresenter(BaseFramePresenter):
         # Ensure it is visible and on top
         popup_presenter.view.lift()
 
+        # Wait for the popup to be closed
+        popup_presenter.view.wait_window()
+        # Update the view once the presenter is closed
         self.update_view()
 
     def load_existing_model(self) -> None:
@@ -987,17 +990,21 @@ class ModelPresenter(BaseFramePresenter):
 
         Formerly a call to load_Window(MAIN_FRAME, proj_dir)
 
-        @todo - the ProjectSelectProcessPopupPresenter having a separte model object here than the ModelView would be useful, to avoid the back button followed by closing the popup causing issues
+        @todo - the ProjectSelectProcessPopupPresenter having a separate model object here than the ModelView would be useful, to avoid the back button followed by closing the popup causing issues
         """
         # Instantiate the child presenter and view
         popup_presenter = ProjectSelectProcessPopupPresenter(
             self.mediator, ProjectSelectProcessPopupView(self.view), self.model
         )
-        # Switch to the model select page, app state should have the correct selected_project still
+        # Set the models' next project to the current project
+        self.model.next_project_name = self.model.current_project_name
+        # Switch to the model select page
         popup_presenter.switch_presenter("model_select")
         # Ensure it is visible and on top
         popup_presenter.view.lift()
-
+        # Wait for the popup to be closed
+        popup_presenter.view.wait_window()
+        # Update the view once the presenter is closed
         self.update_view()
 
     def save_as_current(self) -> None:

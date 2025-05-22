@@ -524,24 +524,6 @@ class Model:
             raise Exception("@todo - could not create model directories")
 
     @classmethod
-    def check_save_state(cls, path: pathlib.Path) -> bool:
-        """For a given Model directory on disk, determine if it is a valid Model save
-
-        I.e. attempt to load from disk, but just state success rather than raising any exceptions.
-
-        @todo - maybe change this completely."""
-
-        try:
-            _ = cls.load_from_disk(path)
-            return True
-        except RuntimeWarning:
-            return False
-        except RuntimeError:
-            return False
-        except Exception:
-            return False
-
-    @classmethod
     def load_from_disk(cls, path: pathlib.Path) -> "Model":
         """Get an instance of the model from serialised json on disk.
 
@@ -563,7 +545,10 @@ class Model:
         # Ensure the json file exists
         model_json_path = path / "python_only" / "polychron_model.json"  # @todo - reduce string literals?
         if not model_json_path.is_file():
-            raise RuntimeWarning(f"Error loading Model from json file '{model_json_path}' it is not a file")
+            # @todo - decide if this should be an exception or not.
+            # raise RuntimeWarning(f"Error loading Model from json file '{model_json_path}' it is not a file")
+            # Return a Model instance with just the path and name set, if no json do to load
+            return cls(name=path.name, path=path)
 
         # Attempt to open the Model json file, building an instance of Model
         with open(model_json_path, "r") as f:

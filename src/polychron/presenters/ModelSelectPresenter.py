@@ -46,7 +46,7 @@ class ModelSelectPresenter(BaseFramePresenter):
             self.model.next_model_name = selected_model
             # Try to switch to the model (load it, and update state)
             try:
-                self.model.switch_to_next_project_model()
+                self.model.switch_to_next_project_model(load_ok=True, create_ok=False)
             except RuntimeWarning as e:
                 # Runtime errors currently include existing directories (and missing values)
                 # @todo - abstract use of tk.messagebox into the presenter or view base classes

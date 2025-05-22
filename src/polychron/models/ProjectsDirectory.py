@@ -2,9 +2,6 @@ import pathlib
 from dataclasses import dataclass, field
 from typing import Optional
 
-import pandas as pd
-
-from ..models.Model import Model
 from ..models.Project import Project
 
 # @todo - when implementing loading of a projects directory, it may be better for projects to be a dict[str, List[str]], i.e. just the folders and no data loading, else there may be a lot of disk io all the time, when only a single model from a single project is actually used.
@@ -26,8 +23,6 @@ class ProjectsDirectory:
         Todo:
             @todo - this is destructive. I.e. if the ProjectWelcomePresenter is opened, after a model has been changed but not saved, this may overwrite changes back to the state on disk for a currently open project (which may be intended), or clear unsaved state for a "new" project/model
         """
-        # self.projects = self.get_demo_projects()
-        # return
         self.projects = {}
         # Iterate the current project directory if it exists, each child directory is a project.
         if self.path.is_dir():
@@ -76,88 +71,3 @@ class ProjectsDirectory:
         # If no project was returned, create one and return it.
         self.projects[project_name] = Project(name=project_name, path=self.path / project_name)
         return self.projects[project_name]
-
-    def get_demo_projects(self) -> dict[str, Project]:
-        """Build a dictionary of not-real projects for development / demo purposes
-
-        @todo delete this method
-        """
-
-        projects = {
-            "demo": Project(
-                name="demo",
-                path=self.path / "demo",
-                models={
-                    "demo": Model(name="demo", path=self.path / "demo" / "demo"),
-                },
-            ),
-        }
-
-        # Manually "load" some model data for the demo model, pre serialisation / de-serialisation
-        # @todo - this is temporary.
-        demo_model = projects["demo"].models["demo"]
-        # Ensure directories exist
-        demo_model.create_dirs()
-
-        # Strat file from csv
-        demo_model.set_strat_df(
-            pd.DataFrame(
-                [
-                    ["a", "b"],
-                    ["b", "c"],
-                    ["b", "d"],
-                    ["b", "e"],
-                    ["d", "f"],
-                    ["e", "h"],
-                ],
-                columns=["above", "below"],
-            )
-        )
-        demo_model.set_date_df(
-            pd.DataFrame(
-                [
-                    ["a", "3400", "80"],
-                    ["b", "3300", "75"],
-                    ["c", "3250", "80"],
-                    ["d", "3225", "75"],
-                    ["e", "3200", "80"],
-                    ["f", "3150", "75"],
-                    ["h", "3100", "65"],
-                ],
-                columns=["context", "date", "error"],
-            )
-        )
-        demo_model.set_phase_df(
-            pd.DataFrame(
-                [
-                    ["a", "2"],
-                    ["b", "2"],
-                    ["c", "1"],
-                    ["d", "1"],
-                    ["e", "1"],
-                    ["f", "1"],
-                    ["h", "1"],
-                ],
-                columns=["context", "Group"],
-            )
-        )
-        demo_model.set_phase_rel_df(
-            pd.DataFrame(
-                [
-                    ["2", "1"],
-                ],
-                columns=["above", "below"],
-            ),
-            phase_rels=[("2", "1")],  # @todo - make this actually dynamic
-        )
-        # demo_model.set_equal_rel_df(
-        #     pd.DataFrame(
-        #         [
-        #             ["c", "d"],
-        #         ],
-        #         columns=["left", "right"],
-        #     )
-        # )
-        # @todo - make everytyhign more type safe, so not everything needs to be read in from csv as strings?
-
-        return projects

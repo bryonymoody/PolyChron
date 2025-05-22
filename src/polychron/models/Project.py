@@ -70,9 +70,9 @@ class Project:
                 return model
 
         # If no model was returned, create one and return it.
-        self.new_model(name)
+        self.create_model(name)
 
-    def new_model(self, name: str) -> None:
+    def create_model(self, name: str) -> None:
         """Create a new model within the project, with the provided name.
 
         Raises:

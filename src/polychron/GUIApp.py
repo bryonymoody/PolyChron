@@ -202,8 +202,6 @@ class GUIApp(Mediator):
         self.switch_presenter("Splash")
         splash_presenter = self.get_presenter("Splash")
 
-        # @todo - extra cli option which resets the project dir to be the demo projects for now.
-
         # Lazily load the projects directory, so (potential) existing models and projects are known.
         self.project_selector_obj.get_projects_directiory().lazy_load()
 
@@ -241,7 +239,7 @@ class GUIApp(Mediator):
 
                 # Update the model to the "next" project & model.
                 # @todo - this may raise an error, but cli options may also be removed in the future
-                self.project_selector_obj.switch_to_next_project_model()
+                self.project_selector_obj.switch_to_next_project_model(load_ok=True, create_ok=True)
 
                 # Close the popup window with the appropraite reason (load or new model)
                 popup_presenter.close_window(reason)

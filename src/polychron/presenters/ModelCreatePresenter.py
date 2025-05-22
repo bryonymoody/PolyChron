@@ -36,7 +36,7 @@ class ModelCreatePresenter(BaseFramePresenter):
                 print(
                     "@todo switch_to_next here allows loading, not jsut creation. Should call create here, and then switch afterwards / a lighter weight switch?"
                 )
-                self.model.switch_to_next_project_model()
+                self.model.switch_to_next_project_model(load_ok=False, create_ok=True)
             except RuntimeError as e:
                 # Runtime errors currently include existing directories (and missing values)
                 # @todo - abstract use of tk.messagebox into the presenter or view base classes

@@ -175,8 +175,12 @@ class ProjectSelection:
         """Set the flag indicating if the next project is new or not."""
         self.__using_new_project_process = value
 
-    def switch_to_next_project_model(self) -> None:
-        """Switch to the next project & model, loading a project if it already exists, or creating it if not.
+    def switch_to_next_project_model(self, load_ok=True, create_ok=True) -> None:
+        """Switch to the next project & model, loading a project if it already exists, or creating it if not (unless load_only).
+
+        Parameters:
+            load_ok (bool): If loading existing models is allowed
+            create_ok (bool): If creating new models is allowed
 
         Raises:
             @todo - document exceptions, which are raised if loading or creation failed, or if "next" internal state has not yet been setup
@@ -185,6 +189,10 @@ class ProjectSelection:
             @todo - specialise exception types for better handling downstream
             @todo - should this raise if the current model has not been saved? Or should that be handled elsewhere (probably elsewhere)
         """
+        import inspect
+
+        # Atleast one of load_ok or create_ok must be truthy
+
         project_name = self.next_project_name
         model_name = self.next_model_name
 
@@ -200,17 +208,19 @@ class ProjectSelection:
 
         # Within that Project, get or create the model.
         # Any raised exceptions will be allowed to propagate upwards for presentation to the user
-        try:
+        # Depedning on function parameters, try to load or create the model
+        if load_ok and create_ok:
             project.get_or_create_model(model_name)
-        except Exception as e:
-            # @todo - intercept certain exceptions here.
-            print(
-                "@todo - intercept some exceptions here. I.e. if a model directory exists, but does nto contain the .json file."
-            )
-            raise e
+        elif load_ok and not create_ok:
+            project.get_model(model_name)
+        elif not load_ok and create_ok:
+            project.create_model(model_name)
+        else:
+            function_name = inspect.currentframe().f_code.co_name
+            raise ValueError(f"{function_name} requires at least one of 'load_ok' and 'create_ok' to be True")
 
         # Update internal state, setting the current and next project/model variables, if no exceptions occured so far
         self.current_project_name = project_name
         self.current_model_name = model_name
-
-        # @todo - should this reset next_X?
+        self.next_project_name = None
+        self.next_model_name = None
