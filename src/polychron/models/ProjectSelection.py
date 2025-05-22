@@ -18,10 +18,10 @@ class ProjectSelection:
 
         self.__projects_directory: ProjectsDirectory = ProjectsDirectory(projects_directory_path)
 
-        self.__selected_project: Optional[str] = None
+        self.__current_project: Optional[str] = None
         """The currently selected project within the project directory."""
 
-        self.__selected_model: Optional[str] = None
+        self.__current_model: Optional[str] = None
         """The currently selected model within the currently selected project for this projects directory.
         """
 
@@ -55,12 +55,12 @@ class ProjectSelection:
     @property
     def current_project_name(self) -> Optional[str]:
         """The name of the currently selected project, which may be None"""
-        return self.__selected_project
+        return self.__current_project
 
     @property
     def current_model_name(self) -> Optional[str]:
         """The name of the currently selected model, which may be None"""
-        return self.__selected_model
+        return self.__current_model
 
     @property
     def current_project(self) -> Optional[Project]:
@@ -92,7 +92,7 @@ class ProjectSelection:
 
         Todo:
             @todo - should this validate the project name here, raising if it doesn not exist yet?"""
-        self.__selected_project = name
+        self.__current_project = name
 
     @current_model_name.setter
     def current_model_name(self, name: str) -> None:
@@ -101,7 +101,7 @@ class ProjectSelection:
         Todo:
             @todo - should this raise if ther is no current project yet?
             @todo - should this validate the model name here, raising if it doesn not exist yet? (and if there is not project set)"""
-        self.__selected_model = name
+        self.__current_model = name
 
     @property
     def next_project_name(self) -> Optional[str]:
