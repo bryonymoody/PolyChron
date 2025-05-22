@@ -1,5 +1,4 @@
 from sys import stderr
-from typing import Optional
 
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
@@ -7,8 +6,8 @@ from ..views.ProjectCreateView import ProjectCreateView
 from .BaseFramePresenter import BaseFramePresenter
 
 
-class ProjectCreatePresenter(BaseFramePresenter):
-    def __init__(self, mediator: Mediator, view: ProjectCreateView, model: Optional[ProjectSelection] = None) -> None:
+class ProjectCreatePresenter(BaseFramePresenter[ProjectSelection]):
+    def __init__(self, mediator: Mediator, view: ProjectCreateView, model: ProjectSelection) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 
@@ -27,7 +26,7 @@ class ProjectCreatePresenter(BaseFramePresenter):
         """When the submit button is pressed, update the CreateModel view and switch to it"""
         new_project_name: str = self.view.get_name()
         if new_project_name is not None and len(new_project_name) > 0:
-            # @todo - validate that the new project is not a taken name. If so error?polychron 0.1 does not perform this check.
+            # @todo - validate that the new project is not a taken name. If so error? polychron 0.1 does not perform this check.
             self.model.next_project_name = new_project_name
             # Mark the flag indicating we are using the project_create process
             self.model.using_new_project_process = True

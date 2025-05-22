@@ -15,8 +15,8 @@ from ..views.DatingResultsView import DatingResultsView
 from .BaseFramePresenter import BaseFramePresenter
 
 
-class DatingResultsPresenter(BaseFramePresenter):
-    def __init__(self, mediator: Mediator, view: DatingResultsView, model: Optional[ProjectSelection] = None):
+class DatingResultsPresenter(BaseFramePresenter[ProjectSelection]):
+    def __init__(self, mediator: Mediator, view: DatingResultsView, model: ProjectSelection):
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

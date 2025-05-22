@@ -5,6 +5,7 @@ import networkx as nx
 from PIL import ImageTk
 
 from ..interfaces import Mediator
+from ..models.Model import Model
 from ..presenters.ManageIntrusiveOrResidualContextsPresenter import ManageIntrusiveOrResidualContextsPresenter
 from ..util import node_coords_fromjson
 from ..views.ManageIntrusiveOrResidualContextsView import ManageIntrusiveOrResidualContextsView
@@ -12,7 +13,7 @@ from ..views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
 from .BasePopupPresenter import BasePopupPresenter
 
 
-class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
+class ResidualOrIntrusivePresenter(BasePopupPresenter[Model], Mediator):
     """Presenter for managing the MCMC progress bar popup view.
 
     When MCMC calibration has completed, and the popup closes, the mediator should change to the DatingResults tab
@@ -22,7 +23,7 @@ class ResidualOrIntrusivePresenter(BasePopupPresenter, Mediator):
     @todo - this needs to be closable by child popups, may need Mediator changes (or just in mediater.close call the parents mediator close based on the reason?)
     """
 
-    def __init__(self, mediator: Mediator, view: ResidualOrIntrusiveView, model: Optional[Any] = None) -> None:
+    def __init__(self, mediator: Mediator, view: ResidualOrIntrusiveView, model: Model) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

@@ -1,11 +1,14 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Any, Generic, Optional, TypeVar
 
 from ..interfaces import Mediator
 from ..views.BasePopupView import BasePopupView
 
+# TypeVar allowing for the Type of the model to be overidden.
+T = TypeVar("T", bound=Any)
 
-class BasePopupPresenter(ABC):
+
+class BasePopupPresenter(ABC, Generic[T]):
     """Abstract Base class for Presenters for views which are in the main window, which act as the middle man between a veiw and the underlying data structures (model).
 
     @todo common base class with BaseFramePresenter?
@@ -13,13 +16,13 @@ class BasePopupPresenter(ABC):
     @todo rename, Base is superflous.
     """
 
-    def __init__(self, mediator: Mediator, view: type[BasePopupView], model: Optional[Any] = None) -> None:
+    def __init__(self, mediator: Mediator, view: type[BasePopupView], model: T) -> None:
         """Initialise the presenter
 
         Args:
-            mediator (Mediator): an object which implements the Mediator protocol, i.e. the MainApp
-            view (type[BasePopupView]): The view instance to be presented
-            model (Optional[Any]): Model objects which include data and buiseness logic
+            mediator (Mediator): An object which implements the Mediator protocol
+            view (type[BasePopupView]): The popup view instance to be presented
+            model (T): The MVP model object which includes the data to be presented and methods to manipulate it
         """
 
         self.mediator: Mediator = mediator
@@ -28,8 +31,8 @@ class BasePopupPresenter(ABC):
         self.view: type[BasePopupView] = view
         """View managed by this presenter"""
 
-        self.model: Optional[Any] = model
-        """Model objects which include data and buisness logic which are presented by this presenter/view"""
+        self.model: T = model
+        """The MVP model object which includes the data to be presented and methods to manipulate it"""
 
         # Bind keyboard shortcuts for the popup window
         # @todo - make this a method which can be overridden?

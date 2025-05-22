@@ -1,13 +1,11 @@
-from typing import Optional
-
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
 from ..views.ProjectWelcomeView import ProjectWelcomeView
 from .BaseFramePresenter import BaseFramePresenter
 
 
-class ProjectWelcomePresenter(BaseFramePresenter):
-    def __init__(self, mediator: Mediator, view: ProjectWelcomeView, model: Optional[ProjectSelection] = None) -> None:
+class ProjectWelcomePresenter(BaseFramePresenter[ProjectSelection]):
+    def __init__(self, mediator: Mediator, view: ProjectWelcomeView, model: ProjectSelection) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

@@ -7,18 +7,19 @@ import packaging.version
 from networkx.drawing.nx_pydot import write_dot
 
 from ..interfaces import Mediator
+from ..models.Model import Model
 from ..util import chrono_edge_add, chrono_edge_remov, node_del_fixed
 from ..views.ManageGroupRelationshipsView import ManageGroupRelationshipsView
 from .BasePopupPresenter import BasePopupPresenter
 
 
-class ManageGroupRelationshipsPresenter(BasePopupPresenter):
+class ManageGroupRelationshipsPresenter(BasePopupPresenter[Model]):
     """Presenter for managing Residual vs Intrusive contexsts
 
     @todo - createa a popup for this and the confirmation version
     """
 
-    def __init__(self, mediator: Mediator, view: ManageGroupRelationshipsView, model: Optional[Any] = None) -> None:
+    def __init__(self, mediator: Mediator, view: ManageGroupRelationshipsView, model: Model) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

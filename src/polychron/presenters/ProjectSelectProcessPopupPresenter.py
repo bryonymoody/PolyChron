@@ -17,7 +17,7 @@ from .ProjectSelectPresenter import ProjectSelectPresenter
 from .ProjectWelcomePresenter import ProjectWelcomePresenter
 
 
-class ProjectSelectProcessPopupPresenter(BasePopupPresenter, Mediator):
+class ProjectSelectProcessPopupPresenter(BasePopupPresenter[ProjectSelection], Mediator):
     """Presenter for the project new or select process, which is a mult-frame presenter, much like the main window.
 
     @todo - this is a bit different from a regular PopupPresenter, as it contains multiple views & itself probable needs to be a Mediator. Some of this could be abstracted.
@@ -27,9 +27,7 @@ class ProjectSelectProcessPopupPresenter(BasePopupPresenter, Mediator):
     @todo - rename Mediator & Mediator protocols, something like MultiPresenterMediator?
     """
 
-    def __init__(
-        self, mediator: Mediator, view: ProjectSelectProcessPopupView, model: Optional[ProjectSelection] = None
-    ) -> None:
+    def __init__(self, mediator: Mediator, view: ProjectSelectProcessPopupView, model: ProjectSelection) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

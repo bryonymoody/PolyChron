@@ -1,21 +1,18 @@
-from typing import Any, Optional
-
 from ..interfaces import Mediator
+from ..models.Model import Model
 from ..views.ManageGroupRelationshipsView import ManageGroupRelationshipsView
 from ..views.ManageIntrusiveOrResidualContextsView import ManageIntrusiveOrResidualContextsView
 from .BasePopupPresenter import BasePopupPresenter
 from .ManageGroupRelationshipsPresenter import ManageGroupRelationshipsPresenter
 
 
-class ManageIntrusiveOrResidualContextsPresenter(BasePopupPresenter):
+class ManageIntrusiveOrResidualContextsPresenter(BasePopupPresenter[Model]):
     """Presenter for managing the MCMC progress bar popup view.
 
     When MCMC calibration has completed, and the popup closes, the DatingResults tab should be loaded
     """
 
-    def __init__(
-        self, mediator: Mediator, view: ManageIntrusiveOrResidualContextsView, model: Optional[Any] = None
-    ) -> None:
+    def __init__(self, mediator: Mediator, view: ManageIntrusiveOrResidualContextsView, model: Model = None) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 
@@ -25,8 +22,7 @@ class ManageIntrusiveOrResidualContextsPresenter(BasePopupPresenter):
         self.view.bind_proceed_button(lambda: self.on_proceed())
 
         # Initialise the view's drop down elements
-        if self.model is not None:
-            self.view.create_dropdowns(self.model.resid_list, self.model.intru_list)
+        self.view.create_dropdowns(self.model.resid_list, self.model.intru_list)
 
         # Update the view
         self.update_view()

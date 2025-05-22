@@ -1,6 +1,5 @@
 from sys import stderr
 from tkinter import messagebox as messagebox
-from typing import Optional
 
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
@@ -8,13 +7,13 @@ from ..views.ModelSelectView import ModelSelectView
 from .BaseFramePresenter import BaseFramePresenter
 
 
-class ModelSelectPresenter(BaseFramePresenter):
+class ModelSelectPresenter(BaseFramePresenter[ProjectSelection]):
     """Presenter for a frame allowing the user to select a model from a list of models within a project, or a button to create a new one.
 
     @todo - Sort the list of models?
     """
 
-    def __init__(self, mediator: Mediator, view: ModelSelectView, model: Optional[ProjectSelection] = None) -> None:
+    def __init__(self, mediator: Mediator, view: ModelSelectView, model: ProjectSelection) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

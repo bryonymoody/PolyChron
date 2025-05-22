@@ -1,6 +1,5 @@
 from sys import stderr
 from tkinter import messagebox as messagebox
-from typing import Optional
 
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
@@ -8,8 +7,8 @@ from ..views.ModelCreateView import ModelCreateView
 from .BaseFramePresenter import BaseFramePresenter
 
 
-class ModelCreatePresenter(BaseFramePresenter):
-    def __init__(self, mediator: Mediator, view: ModelCreateView, model: Optional[ProjectSelection] = None) -> None:
+class ModelCreatePresenter(BaseFramePresenter[ProjectSelection]):
+    def __init__(self, mediator: Mediator, view: ModelCreateView, model: ProjectSelection) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

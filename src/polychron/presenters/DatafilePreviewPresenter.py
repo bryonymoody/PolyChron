@@ -1,17 +1,20 @@
-from typing import Any, Optional
+from typing import Any, Dict
 
 from ..interfaces import Mediator
 from ..views.DatafilePreviewView import DatafilePreviewView
 from .BasePopupPresenter import BasePopupPresenter
 
 
-class DatafilePreviewPresenter(BasePopupPresenter):
+class DatafilePreviewPresenter(BasePopupPresenter[Dict[str, Any]]):
     """Presenter for selecting which models to calibrate, when multiple models are to be calibrated at once.
 
     Formerly `popupWindow7`, used when opening a csv-like file
+
+    Todo:
+        @todo - Better model typehint / don't just use a Dict
     """
 
-    def __init__(self, mediator: Mediator, view: DatafilePreviewView, model: Optional[Any] = None) -> None:
+    def __init__(self, mediator: Mediator, view: DatafilePreviewView, model: Dict[str, Any]) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

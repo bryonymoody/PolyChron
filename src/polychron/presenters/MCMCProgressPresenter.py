@@ -2,7 +2,6 @@ import re
 import sys
 import tkinter as tk
 from tkinter import ttk
-from typing import Optional
 
 from ..interfaces import Mediator
 from ..models.Model import Model
@@ -31,7 +30,7 @@ class StdoutRedirector(object):
         pass
 
 
-class MCMCProgressPresenter(BasePopupPresenter):
+class MCMCProgressPresenter(BasePopupPresenter[Model]):
     """Presenter for managing the MCMC progress bar popup view.
 
     When MCMC calibration has completed, and the popup closes, change to the DatingResults tab
@@ -39,7 +38,7 @@ class MCMCProgressPresenter(BasePopupPresenter):
     @todo - when calibrated, this may do multiple passes, but the progress bad is only for the current pass
     """
 
-    def __init__(self, mediator: Mediator, view: MCMCProgressView, model: Optional[Model] = None) -> None:
+    def __init__(self, mediator: Mediator, view: MCMCProgressView, model: Model) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 
@@ -57,9 +56,6 @@ class MCMCProgressPresenter(BasePopupPresenter):
         @todo - move the actual calibration into the model
         @todo - finish the actual implemetnation
         """
-        # Do nothing if the model is not set
-        if self.model is None:
-            return
         # @todo - do nothing if the model is not ready for calibration
         # Set progress to none
         self.view.update_progress(0)

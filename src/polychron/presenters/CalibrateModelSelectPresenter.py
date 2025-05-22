@@ -1,11 +1,10 @@
-from typing import Any, Optional
-
 from ..interfaces import Mediator
+from ..models.ProjectSelection import ProjectSelection
 from ..views.CalibrateModelSelectView import CalibrateModelSelectView
 from .BasePopupPresenter import BasePopupPresenter
 
 
-class CalibrateModelSelectPresenter(BasePopupPresenter):
+class CalibrateModelSelectPresenter(BasePopupPresenter[ProjectSelection]):
     """Presenter for selecting which models to calibrate, when multiple models are to be calibrated at once.
 
     Formerly `popupWindow8`, used from "tool > Calibrate multiple projects from project"
@@ -14,7 +13,7 @@ class CalibrateModelSelectPresenter(BasePopupPresenter):
     @todo - update isntruction to clarify that only models which have load_it are available?
     """
 
-    def __init__(self, mediator: Mediator, view: CalibrateModelSelectView, model: Optional[Any] = None) -> None:
+    def __init__(self, mediator: Mediator, view: CalibrateModelSelectView, model: ProjectSelection) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

@@ -8,8 +8,8 @@ from .BaseFramePresenter import BaseFramePresenter
 from .ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresenter
 
 
-class SplashPresenter(BaseFramePresenter):
-    def __init__(self, mediator: Mediator, view: SplashView, model: Optional[ProjectSelection] = None) -> None:
+class SplashPresenter(BaseFramePresenter[ProjectSelection]):
+    def __init__(self, mediator: Mediator, view: SplashView, model: ProjectSelection) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

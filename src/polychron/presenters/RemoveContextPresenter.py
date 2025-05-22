@@ -1,17 +1,20 @@
-from typing import Any, Optional
+from typing import Dict, Optional
 
 from ..interfaces import Mediator
 from ..views.RemoveContextView import RemoveContextView
 from .BasePopupPresenter import BasePopupPresenter
 
 
-class RemoveContextPresenter(BasePopupPresenter):
+class RemoveContextPresenter(BasePopupPresenter[Dict[str, Optional[str]]]):
     """Presenter for a popup window to input the reason for the removal of a node/context
 
     Formerly `popupWindow5`, called by StartPage.node_del_popup, triggered when "Delete context" is selected on a node
+
+    Todo:
+        @todo - use a an actual Model class not just a Dict.
     """
 
-    def __init__(self, mediator: Mediator, view: RemoveContextView, model: Optional[Any] = None) -> None:
+    def __init__(self, mediator: Mediator, view: RemoveContextView, model: Dict[str, Optional[str]]) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

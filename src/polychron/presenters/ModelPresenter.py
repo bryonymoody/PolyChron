@@ -34,7 +34,7 @@ from .ManageGroupRelationshipsPresenter import ManageGroupRelationshipsPresenter
 from .ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresenter
 
 
-class ModelPresenter(BaseFramePresenter):
+class ModelPresenter(BaseFramePresenter[ProjectSelection]):
     """Presenter for the main model tab
 
     @todo - re-order methods and properties to be logical (rather than in order of porting)
@@ -45,7 +45,7 @@ class ModelPresenter(BaseFramePresenter):
     @todo - move imports which are only required in one function into the function to avoid polluting namespaces?
     """
 
-    def __init__(self, mediator: Mediator, view: ModelView, model: Optional[ProjectSelection] = None) -> None:
+    def __init__(self, mediator: Mediator, view: ModelView, model: ProjectSelection) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 
@@ -329,26 +329,27 @@ class ModelPresenter(BaseFramePresenter):
         @todo - should the import of tk be moved into a view  / wrap tk.messagebox?
         @todo - is this the most appropraite place for this method? (think so)
         """
-        MsgBox = tk.messagebox.askquestion(
-            "Residual and Intrusive Contexts",
-            "Do you suspect any of your samples are residual or intrusive?",
-            icon="warning",
-        )
-        if MsgBox == "yes":
-            # Create and show the residual or intrusive presenter
-            popup_presenter = ResidualOrIntrusivePresenter(
-                self.mediator, ResidualOrIntrusiveView(self.view), self.model.current_model
+        if self.model.current_model is not None:
+            MsgBox = tk.messagebox.askquestion(
+                "Residual and Intrusive Contexts",
+                "Do you suspect any of your samples are residual or intrusive?",
+                icon="warning",
             )
-            popup_presenter.view.lift()  # @todo - not sure these are neccesary
-            # Wait for the popup to be closed
-            self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
-        else:
-            # If not, show the group relation ship management view/presenter, formerly popupWindow3
-            popup_presenter = ManageGroupRelationshipsPresenter(
-                self.mediator, ManageGroupRelationshipsView(self.view), self.model.current_model
-            )
-            popup_presenter.view.lift()  # @todo - not sure these are neccesary
-            self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
+            if MsgBox == "yes":
+                # Create and show the residual or intrusive presenter
+                popup_presenter = ResidualOrIntrusivePresenter(
+                    self.mediator, ResidualOrIntrusiveView(self.view), self.model.current_model
+                )
+                popup_presenter.view.lift()  # @todo - not sure these are neccesary
+                # Wait for the popup to be closed
+                self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
+            else:
+                # If not, show the group relation ship management view/presenter, formerly popupWindow3
+                popup_presenter = ManageGroupRelationshipsPresenter(
+                    self.mediator, ManageGroupRelationshipsView(self.view), self.model.current_model
+                )
+                popup_presenter.view.lift()  # @todo - not sure these are neccesary
+                self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
 
     def file_popup(self, df: Any) -> str:
         """For a gien dataframe, preview the data to the user. Returns the users decision
