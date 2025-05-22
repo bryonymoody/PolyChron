@@ -600,10 +600,10 @@ class ModelView(FrameView):
 
         @todo - this and the other update method can probably be combined
         """
-        self.littlecanvas.img = ImageTk.PhotoImage(image)
+        self.littlecanvas2.img = ImageTk.PhotoImage(image)
         self.w_1 = event.width  # @todo - not used
         self.h_1 = event.height  # @todo - not used
-        self.littlecanvas.itemconfig(self.littlecanvas_img, image=self.littlecanvas.img)
+        self.littlecanvas2.itemconfig(self.littlecanvas2_img, image=self.littlecanvas2.img)
 
     def wheel(self, event: Any) -> None:
         """Zoom with mouse wheel for the stratigraphic image canvas
