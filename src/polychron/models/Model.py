@@ -1,4 +1,5 @@
 import csv
+import filecmp
 import json
 import os
 import pathlib
@@ -397,13 +398,17 @@ class Model:
                     src = self.get_working_directory() / filename
                     dst = self.get_chronological_graph_directory() / filename
                     if src.is_file():
-                        shutil.copy(src, dst)
+                        # only actually copy the file dst doesn't exist,
+                        if not dst.is_file() or not filecmp.cmp(src, dst, shallow=True):
+                            print("cpy", src)
+                            shutil.copy(src, dst)
 
                 # Ensure stratigraphic graph files are saved
                 for filename in ["fi_new.png", "fi_new.svg", "fi_new", "testdag.png"]:
                     src = self.get_working_directory() / filename
                     dst = self.get_stratigraphic_graph_directory() / filename
-                    if src.is_file():
+                    if not dst.is_file() or not filecmp.cmp(src, dst, shallow=True):
+                        print("cpy", src)
                         shutil.copy(src, dst)
 
                 # Save the delete contexts metadata (Formerly StartPage.tree2, in save_state_1)
@@ -420,7 +425,7 @@ class Model:
                 # for filename in []:
                 #     src = self.get_working_directory() / filename
                 #     dst = self.get_mcmc_results_directory() / filename
-                #     if src.is_file():
+                #     if not dst.is_file() or not filecmp.cmp(src, dst, shallow=True):
                 #         shutil.copy(src, dst)
 
                 # if the mcmc has been ran, store some files to disk. Formerly part of StartPage.save_state_1
@@ -444,7 +449,7 @@ class Model:
                 for filename in ["polychron_mcmc_data.json"]:
                     src = self.get_working_directory() / filename
                     dst = self.get_python_only_directory() / filename
-                    if src.is_file():
+                    if not dst.is_file() or not filecmp.cmp(src, dst, shallow=True):
                         shutil.copy(src, dst)
 
                 # Save the json representation of this object to disk
