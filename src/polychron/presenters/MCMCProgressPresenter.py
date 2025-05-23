@@ -85,8 +85,8 @@ class MCMCProgressPresenter(PopupPresenter[Model]):
 
         # Update the model state to show it as having been calibrated
         self.model.mcmc_check = True
-        # Save the mcmc data as json (@todo fold this into a method which sets mcmc_check?
-        self.model.mcmc_data.save(self.model.get_working_directory() / "polychron_mcmc_data.json")
+        # Save the mcmc data to disk (@todo fold this into a method which sets mcmc_check?
+        self.model.mcmc_data.save(self.model.get_working_directory(), self.model.phase_df)
 
     def update_view(self) -> None:
         pass

@@ -72,9 +72,8 @@ class CalibrateModelSelectPresenter(PopupPresenter[ProjectSelection]):
                             ) = model.MCMC_func()
                             # Update the model state to show it as having been calibrated
                             model.mcmc_check = True
-                            model.mcmc_data.save()
-                            # Save the mcmc data as json (@todo fold this into a method which sets mcmc_check?
-                            model.mcmc_data.save(model.get_working_directory() / "polychron_mcmc_data.json")
+                            # Save the mcmc data to disk (@todo fold this into a method which sets mcmc_check?
+                            model.mcmc_data.save(model.get_working_directory(), model.phase_df)
                             model.save()
         # Close the popup
         self.close_view()

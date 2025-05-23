@@ -25,7 +25,11 @@ class InterpolationData:
     @todo - make this load post construction automatically?"""
 
     def load(self) -> None:
-        """Load the dataframe from the specified path"""
+        """Load the dataframe from the specified path
+
+        Todo:
+            Consider using engine="c" or engine="pyarrow" for faster csv reading (for all calls to read_csv)
+        """
         self.__dataframe = pd.read_csv(self.path)
 
     def get_dataframe(self) -> pd.DataFrame:

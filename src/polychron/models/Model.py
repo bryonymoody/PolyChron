@@ -287,9 +287,9 @@ class Model:
 
         This allows the "saved" version of the model to differe from the version currently being worked on. I.e. the rendered chronological graph used in the UI as changes are made can be different to the version from when save the model was last saved.
 
-        @todo - use this.
+        @todo - consider the file size implications of this (i.e. we have everything twice).
         """
-        return self.path / "temp"
+        return self.path / "workdir"
 
     def get_chronological_graph_directory(self) -> pathlib.Path:
         """Get the path to the chronological_graph directory for this model
@@ -374,10 +374,12 @@ class Model:
         Raises:
             Exception: raised when any error occured during saving, with a message to present to the user. @todo specialise the exception type(s)
 
-        @todo - need to ensure that on save, all temp files in the project directory are correct for the saved model & not overwrite the "saved" versions if mutating in gui without saving? On load, images should be regenerated to ensure they match the saved state of the serialised data?
-        @todo - delete out of date files on save. I.e. MCMC should be deleted if the model has been mutated?
+        Todo:
+            @todo - need to ensure that on save, all temp files in the project directory are correct for the saved model & not overwrite the "saved" versions if mutating in gui without saving? On load, images should be regenerated to ensure they match the saved state of the serialised data?
+            @todo - delete out of date files on save. I.e. MCMC should be deleted if the model has been mutated?
+            @todo - de-duplicate saving things to disk. I.e. full_results_df is included int he MCMCData json file as well as it's own file (but may not be the same data?)
+            @todo - stripout save timing
         """
-        print(f"@todo - Model.save({self.path})")
         import time
 
         time_start = time.monotonic()
@@ -391,6 +393,9 @@ class Model:
 
                 time_copy_start = time.monotonic()
 
+                # Save the delete contexts metadata to the working directory (superfluos)
+                self.save_deleted_contexts()
+
                 # Ensure the "saved" versions of files are up to date.
                 # @todo - also ensure the rendered version on disk is current
                 # Esnure chronological graph output files are saved
@@ -400,50 +405,21 @@ class Model:
                     if src.is_file():
                         # only actually copy the file dst doesn't exist,
                         if not dst.is_file() or not filecmp.cmp(src, dst, shallow=True):
-                            print("cpy", src)
                             shutil.copy(src, dst)
 
                 # Ensure stratigraphic graph files are saved
-                for filename in ["fi_new.png", "fi_new.svg", "fi_new", "testdag.png"]:
+                for filename in ["fi_new.png", "fi_new.svg", "fi_new", "testdag.png", "deleted_contexts_meta"]:
                     src = self.get_working_directory() / filename
                     dst = self.get_stratigraphic_graph_directory() / filename
                     if not dst.is_file() or not filecmp.cmp(src, dst, shallow=True):
-                        print("cpy", src)
                         shutil.copy(src, dst)
 
-                # Save the delete contexts metadata (Formerly StartPage.tree2, in save_state_1)
-                deleted_contexts_cols = ("context", "Reason for deleting")
-                # @todo - handle newlines?
-                deleted_contexts_rows = [[x[0], x[1]] for x in self.delnodes]
-                deleted_contexts_df = pd.DataFrame(deleted_contexts_rows, columns=deleted_contexts_cols)
-                deleted_contexts_meta_path = (
-                    self.get_stratigraphic_graph_directory() / "deleted_contexts_meta"
-                )  # @todo .csv
-                deleted_contexts_df.to_csv(deleted_contexts_meta_path)  # @todo - for all to_csv, don't save the index
-
                 # Ensure mcmc results are saved
-                # for filename in []:
-                #     src = self.get_working_directory() / filename
-                #     dst = self.get_mcmc_results_directory() / filename
-                #     if not dst.is_file() or not filecmp.cmp(src, dst, shallow=True):
-                #         shutil.copy(src, dst)
-
-                # if the mcmc has been ran, store some files to disk. Formerly part of StartPage.save_state_1
-                if self.mcmc_check and self.mcmc_data is not None:
-                    df = pd.DataFrame()
-                    for i in self.mcmc_data.all_results_dict.keys():
-                        df[i] = self.mcmc_data.all_results_dict[i][10000:]
-                    full_results_df_path = self.get_mcmc_results_directory() / "full_results_df"  # @todo .csv?
-                    df.to_csv(full_results_df_path)
-
-                    key_ref = [
-                        list(self.phase_df["Group"])[list(self.phase_df["context"]).index(i)]
-                        for i in self.mcmc_data.CONTEXT_NO
-                    ]
-                    df1 = pd.DataFrame(key_ref)
-                    df1.to_csv(self.get_mcmc_results_directory() / "key_ref.csv")
-                    df2 = pd.DataFrame(self.mcmc_data.CONTEXT_NO)
-                    df2.to_csv(self.get_mcmc_results_directory() / "context_no.csv")
+                for filename in ["full_results_df", "key_ref.csv", "context_no.csv"]:
+                    src = self.get_working_directory() / filename
+                    dst = self.get_mcmc_results_directory() / filename
+                    if not dst.is_file() or not filecmp.cmp(src, dst, shallow=True):
+                        shutil.copy(src, dst)
 
                 # Ensure any copyable python_only files are saved
                 for filename in ["polychron_mcmc_data.json"]:
@@ -482,8 +458,9 @@ class Model:
             RuntimeWarning - when the model could not be loaded, but in a recoverable way. I.e. the directory exits but no files are contained (so allow the model to be "loaded") @todo - probably change this?
             RuntiemError - when the model could not be loaded, but use of this model directory should be prevented?
 
-        @todo how to handle version compatible saving/loading?
-        @todo rename method / wrap in a from_path() method which expects a json file + other sturctures?
+        Todo:
+            - @todo how to handle version compatible saving/loading?
+            - @todo async loading of mcmc data?
         """
 
         # Ensure required files/folders are present
@@ -633,6 +610,23 @@ class Model:
             print(e, file=sys.stderr)
             return False
         return True
+
+    def save_deleted_contexts(self) -> None:
+        """Save the delete contexts metadata to disk
+
+        Formerly StartPage.tree2, in save_state_1
+
+        Todo:
+            @todo - .csv extension on the file
+            @todo - for all to_csv, use index=False
+            @todo - handle newlines in the CSV export correctly.
+        """
+
+        cols = ("context", "Reason for deleting")
+        rows = [[x[0], x[1]] for x in self.delnodes]
+        df = pd.DataFrame(rows, columns=cols)
+        path = self.get_working_directory() / "deleted_contexts_meta"
+        df.to_csv(path)
 
     def set_strat_dot_file_input(self, file_input: str | pathlib.Path) -> None:
         """provdided a .dot/.gv file path, set the model input."""

@@ -4,6 +4,8 @@ from dataclasses import dataclass, field
 from importlib.metadata import version
 from typing import Any, Dict, List, Optional, Tuple, get_type_hints
 
+import pandas as pd
+
 
 @dataclass
 class MCMCData:
@@ -76,6 +78,38 @@ class MCMCData:
     @todo - rename, rehome, typehint, docstring
     """
 
+    def save_results_dataframes(self, path: pathlib.Path, phase_df: pd.DataFrame) -> None:
+        """Save some MCMC data to disk, separately from the serialised version of this class
+
+        Parameters:
+            path (pathlib.Path): The path to the directory in which files should be created
+            phase_df (pd.DataFrame): A pandas dataframe continign the phase/context group information.
+
+        Raises:
+            Exception: Exceptions may be reaised if erorrs occur during saving @todo (permisisons etc)
+
+        Todo:
+            @todo - File extension(s)
+            @todo - don't also include the same data in serialised version of this class?
+            @todo - make the file names saved queryable so Model.save can discover them
+            @todo - csv column names?
+
+        Formerly part of StartPage.save_state_1
+        """
+
+        df = pd.DataFrame()
+        for i in self.all_results_dict.keys():
+            df[i] = self.all_results_dict[i][10000:]
+        full_results_df_path = path / "full_results_df"
+        df.to_csv(full_results_df_path)
+
+        key_ref = [list(phase_df["Group"])[list(phase_df["context"]).index(i)] for i in self.CONTEXT_NO]
+        df1 = pd.DataFrame(key_ref)
+        df1.to_csv(path / "key_ref.csv")
+
+        df2 = pd.DataFrame(self.CONTEXT_NO)
+        df2.to_csv(path / "context_no.csv")
+
     def to_json(self, pretty: bool = False):
         """Serialise this object to JSON
 
@@ -105,14 +139,18 @@ class MCMCData:
         indent = 2 if pretty else None
         return json.dumps({"polychron_version": version("polychron"), "mcmc_data": data}, indent=indent)
 
-    def save(self, path: pathlib.Path) -> None:
+    def save(self, path: pathlib.Path, phase_df: pd.DataFrame) -> None:
         """Save tthe current state of this file to the specified path
 
         Parameters:
-            path (pathlib.Path ): The path at which the file will be saved
+            path (pathlib.Path ): The directory in which the files will be saved.
+            phase_df (pd.DataFrame): A pandas dataframe continign the phase/context group information
 
         Raises:
             Exception: @todo - docuemnt the specific exceptions which may be raised
+
+        Todo:
+            @todo Would be nicer if phase_df didn't need to be pased in here?
         """
         import time
 
@@ -120,21 +158,25 @@ class MCMCData:
         print(f"mcmc save {path}")
 
         # Ensure that the parent directory exists
-        if path.parent.is_dir():
+        if path.is_dir():
             try:
+                json_path = path / "polychron_mcmc_data.json"
                 # Get the json representation of the object
                 json_s = self.to_json(pretty=True)
                 print(f"MCMC json_s len: {len(json_s)}")
 
-                with open(path, "w") as f:
+                with open(json_path, "w") as f:
                     f.write(json_s)
+
+                # Also save the individual MCMC ouput files into the working directory
+                self.save_results_dataframes(path, phase_df)
 
                 time_end = time.monotonic()
                 print(f"MCMC Saving time: {time_end - time_start}")
             except Exception as e:
                 raise Exception(f"@todo - an exeption occurred during MCMC saving:\n {e}")
         else:
-            raise Exception(f"@todo - {path.parent} does not exist")
+            raise Exception(f"@todo - {path} does not exist")
 
     @classmethod
     def load_from_disk(cls, json_path: pathlib.Path) -> "MCMCData":
