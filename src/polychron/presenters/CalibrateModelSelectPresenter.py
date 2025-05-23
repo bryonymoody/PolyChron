@@ -56,20 +56,25 @@ class CalibrateModelSelectPresenter(PopupPresenter[ProjectSelection]):
                         if model is not None:
                             # @todo - why does this not have the < 50000 while loop?
                             # @todo - as all of these get stored in the model, why not just make mcmc_func mutate itself?
-
+                            # @todo - should this be resetting the mcmc_data?
+                            # @todo if/when should mcmc_check and mcmc_data be reset more broadly? I.e. when the contexts are changed should it be cleared?
                             (
                                 model.CONTEXT_NO,
-                                model.ACCEPT,
-                                model.PHI_ACCEPT,
+                                model.mcmc_data.ACCEPT,
+                                model.mcmc_data.PHI_ACCEPT,
                                 model.phi_ref,
-                                model.A,
-                                model.P,
-                                model.ALL_SAMPS_CONT,
-                                model.ALL_SAMPS_PHI,
-                                model.resultsdict,
-                                model.all_results_dict,
+                                model.mcmc_data.A,
+                                model.mcmc_data.P,
+                                model.mcmc_data.ALL_SAMPS_CONT,
+                                model.mcmc_data.ALL_SAMPS_PHI,
+                                model.mcmc_data.resultsdict,
+                                model.mcmc_data.all_results_dict,
                             ) = model.MCMC_func()
+                            # Update the model state to show it as having been calibrated
                             model.mcmc_check = True
+                            model.mcmc_data.save()
+                            # Save the mcmc data as json (@todo fold this into a method which sets mcmc_check?
+                            model.mcmc_data.save(model.get_working_directory() / "polychron_mcmc_data.json")
                             model.save()
         # Close the popup
         self.close_view()

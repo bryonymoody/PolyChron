@@ -16,6 +16,7 @@ from networkx.drawing.nx_pydot import write_dot
 from PIL import Image
 
 from ..automated_mcmc_ordering_coupling_copy import run_MCMC
+from ..models.MCMCData import MCMCData
 from ..util import node_coords_fromjson, phase_info_func, phase_labels, rank_func, trim
 from .InterpolationData import InterpolationData
 
@@ -27,6 +28,7 @@ class Model:
     @todo - refactor some parts out into other clasess (which this has an isntance of)
     @todo - add setters/getters to avoid direct access of values which are not intended to be directly mutable.
     @todo - Multiple instances of the same model will both create files on disk, overwriting one another. Add locking to prevent this?
+    @todo - stop this being a dataclass? it's got complex enough that it's own ctor might be required(for **kwargs to allow robust partial deserialisetion)
     """
 
     name: str
@@ -263,63 +265,10 @@ class Model:
     @todo rename?
     """
 
-    CONTEXT_NO: List[Any] = field(default_factory=list)
-    """List of contexts? passed in to and returned by run_MCMC, 
-    @todo document it's contents
-    @todo typehint
-    @todo try and improve when it is set / read?"""
-
-    ACCEPT: List[List[Any]] = field(default_factory=lambda: [[]])
-    """An optional value returned from MCMC_func.
-    A list of lists, where the minimum inner list length is used to dermine if more rounds of MCMC are required?
+    mcmc_data: MCMCData = field(default_factory=MCMCData)
+    """MCMC data for this model. Includes values used as inputs and outputs for the MCMC data pase
     
-    Formerly StartPage.ACCEPT
-    @todo - rename, rehome, typehint, docstring, maybe don't even store?
-    """
-
-    PHI_ACCEPT: Optional[Any] = field(default=None)
-    """An optional value returned from MCMC_func. Appears unused.
-    
-    Formerly StartPage.PHI_ACCEPT
-    @todo - rename, rehome, typehint, docstring, maybe don't even store?
-    """
-
-    A: int = field(default=0)
-    """An integer set as a result from MCMC_func. Never actually read so doesn't need storing?
-
-    Formerly StartPage.A
-    @todo - rename, rehome, maybe don't even store?"""
-
-    P: int = field(default=0)
-    """An integer set as a result from MCMC_func. Never actually read so doesn't need storing?
-
-    Formerly StartPage.P
-    @todo - rename, rehome, maybe don't even store?"""
-
-    ALL_SAMPS_CONT: Optional[Any] = field(default=None)
-    """An optional value, initailised to None which is a MCMC_func ouptut, that is not used anywhere?
-
-    Formerly StartPage.ALL_SAMPS_CONT
-    @todo - rename, rehome, typehint, maybe don't even store?"""
-
-    ALL_SAMPS_PHI: Optional[Any] = field(default=None)
-    """An optional value, initailised to None which is a MCMC_func ouptut, that is not used anywhere?
-
-    Formerly StartPage.ALL_SAMPS_PHI
-    @todo - rename, rehome, typehint, maybe don't even store?"""
-
-    resultsdict: Dict[Any, Any] = field(default_factory=dict)
-    """A dictionary of results? returned by MCMC_func, which is used for plotting the mcmc results.
-    
-    Formerly StartPage.resultsdict
-    @todo - rename, rehome, typehint, docstring
-    """
-
-    all_results_dict: Dict[Any, Any] = field(default_factory=dict)
-    """A dictionary of all_results? returned by MCMC_func, which is used to find the phase lenghts during node finding on the results page.
-    
-    Formerly StartPage.all_results_dict
-    @todo - rename, rehome, typehint, docstring
+    if mcmc_check is true, it is implied that this has been saved to disk
     """
 
     node_df: Optional[Tuple[pd.DataFrame, List[float]]] = field(default=None)
@@ -382,7 +331,6 @@ class Model:
 
         @todo decide which bits to exclude form saving/loading, and generate on reconstruction instead.
         @todo - how to handle dataframes, Image.Image, files on disk, relative vs abs paths in the case a directory has been copied.
-        @todo - split out calibration results to their own file(s). These are large (i.e. ACCEPT, PHI_ACCEPT, ALL_SAMPS_CONT, ALL_SAMPS_PHI, results_dict, all_results_dict are relatively large, so reducing the number of times each float is converted to string would save time on saving )
         """
         # Create a dictionary contianing a subset of this instance's member variables, converted to formats which can be json serialised.
         data = {}
@@ -392,15 +340,7 @@ class Model:
             "chrono_image",  # don't include image handles
             "resid_or_intru_strat_image",  # don't include image handles
             "node_df",  # don't include the the locations of images from svgs?
-            # Calibration data being encoded as json takes a reasonable chunk of time (and accounts for ~80MB when encoded as json). Write to disk once at calibration time and then copy when saving maybe?. results_dict and all_results_dict account for most of the time. (~60%)
-            # "ACCEPT",
-            # "ACCEPT_PHI",
-            # "A",
-            # "P",
-            # "ALL_SAMPS_CONT",
-            # "ALL_SAMPS_PHI",
-            # "resultsdict",
-            # "all_results_dict",
+            "mcmc_data",  # don't include the mcmc_data object, which has been saved elsewhere. @todo include a relative path in it's place?
         ]
         for k, v in self.__dict__.items():
             if k not in exclude_keys:
@@ -433,7 +373,9 @@ class Model:
         Raises:
             Exception: raised when any error occured during saving, with a message to present to the user. @todo specialise the exception type(s)
 
-        @todo - need to ensure that on save, all temp files in the project directory are correct for the saved model & not overwrite the "saved" versions if mutating in gui without saving? On load, images should be regenerated to ensure they match the saved state of the serialised data?"""
+        @todo - need to ensure that on save, all temp files in the project directory are correct for the saved model & not overwrite the "saved" versions if mutating in gui without saving? On load, images should be regenerated to ensure they match the saved state of the serialised data?
+        @todo - delete out of date files on save. I.e. MCMC should be deleted if the model has been mutated?
+        """
         print(f"@todo - Model.save({self.path})")
         import time
 
@@ -464,7 +406,7 @@ class Model:
                     if src.is_file():
                         shutil.copy(src, dst)
 
-                # Save the delte contexts metadata (Formerly StartPage.tree2, in save_state_1)
+                # Save the delete contexts metadata (Formerly StartPage.tree2, in save_state_1)
                 deleted_contexts_cols = ("context", "Reason for deleting")
                 # @todo - handle newlines?
                 deleted_contexts_rows = [[x[0], x[1]] for x in self.delnodes]
@@ -482,27 +424,28 @@ class Model:
                 #         shutil.copy(src, dst)
 
                 # if the mcmc has been ran, store some files to disk. Formerly part of StartPage.save_state_1
-                if self.mcmc_check:
+                if self.mcmc_check and self.mcmc_data is not None:
                     df = pd.DataFrame()
-                    for i in self.all_results_dict.keys():
-                        df[i] = self.all_results_dict[i][10000:]
+                    for i in self.mcmc_data.all_results_dict.keys():
+                        df[i] = self.mcmc_data.all_results_dict[i][10000:]
                     full_results_df_path = self.get_mcmc_results_directory() / "full_results_df"  # @todo .csv?
                     df.to_csv(full_results_df_path)
 
                     key_ref = [
-                        list(self.phase_df["Group"])[list(self.phase_df["context"]).index(i)] for i in self.CONTEXT_NO
+                        list(self.phase_df["Group"])[list(self.phase_df["context"]).index(i)]
+                        for i in self.mcmc_data.CONTEXT_NO
                     ]
                     df1 = pd.DataFrame(key_ref)
                     df1.to_csv(self.get_mcmc_results_directory() / "key_ref.csv")
-                    df2 = pd.DataFrame(self.CONTEXT_NO)
+                    df2 = pd.DataFrame(self.mcmc_data.CONTEXT_NO)
                     df2.to_csv(self.get_mcmc_results_directory() / "context_no.csv")
 
                 # Ensure any copyable python_only files are saved
-                # for filename in []:
-                #     src = self.get_working_directory() / filename
-                #     dst = self.get_python_only_directory() / filename
-                #     if src.is_file():
-                #         shutil.copy(src, dst)
+                for filename in ["polychron_mcmc_data.json"]:
+                    src = self.get_working_directory() / filename
+                    dst = self.get_python_only_directory() / filename
+                    if src.is_file():
+                        shutil.copy(src, dst)
 
                 # Save the json representation of this object to disk
                 json_path = self.get_python_only_directory() / "polychron_model.json"
@@ -570,6 +513,8 @@ class Model:
             # Convert certain values back based on the hint for the data type.
             # @todo - find a more robust way to compare type hints to literal types? in the case of unions etc?
             cls_type_hints = get_type_hints(cls)
+            # Also build a list of keys to remove
+            unexpected_keys = []
             for k in model_data:
                 if k in cls_type_hints:
                     type_hint = cls_type_hints[k]
@@ -592,6 +537,11 @@ class Model:
                     elif type_hint in [Optional[List[Tuple[str, str]]]]:
                         # phase_rels needs to be returned to a tuple. @todo need to do this less specifically?
                         model_data[k] = [tuple(sub) for sub in model_data[k]]
+                else:
+                    # If the key is not in the typehints, it will cause the ctor to trigger a rutnime assertion, so remove it.
+                    # @todo - make this visible in the UI?
+                    print(f"Warning: unexected Model member '{k}' during deserialisation")
+                    unexpected_keys.append(k)
 
                 # @todo -  trycast.isassignable? maybe to check for the correct type?
                 # if the type hint is not subscripted, do a direct comparions
@@ -612,14 +562,32 @@ class Model:
             # for k, v in model_data.items():
             #     print(k, type(v))
 
+            # Remove any unexpected keys
+            for k in unexpected_keys:
+                del model_data[k]
+
+            # Overwrite certain elements, i.e the path (in case the model fiels have been copied), but the path was included in the save file
+            model_data["path"] = path
+
+            # Ensure that some elements are not stored, if they are explictly handled otherwise
+            if "mcmc_data" in model_data:
+                del model_data["mcmc_data"]
+
             # Create an instance of the Model
-            model: Model = cls(path=path, **model_data)
+            model: Model = cls(**model_data)
+
+            # If mcmc has been ran for this model, and the expected mcmc data file exists, load it.
+            if model.mcmc_check:
+                mcmc_data_path = model.get_python_only_directory() / "polychron_mcmc_data.json"
+                if mcmc_data_path.is_file():
+                    model.mcmc_data = MCMCData.load_from_disk(mcmc_data_path)
+                else:
+                    print(f"Failed to load MCMCData {mcmc_data_path} @todo - exception?.")
 
             # Handle non-json loading of files (copy over temp?)
             pass  # @todo
 
-            # Perform any post-loading steps
-            model.path = path
+            # Perform any post-loading steps            model.path = path
             # @todo - validate that the name of the model matches the path? Or don't store the name of the model, infer it from the path? (maybe always set it to the name of the model directory, so on disk it's ok until first re-saved)
             # @todo - others
 
