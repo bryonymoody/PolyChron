@@ -402,30 +402,32 @@ class Model:
                 for filename in ["fi_new_chrono.png", "fi_new_chrono.svg", "fi_new_chrono", "testdag_chrono.png"]:
                     src = self.get_working_directory() / filename
                     dst = self.get_chronological_graph_directory() / filename
-                    if src.is_file():
-                        # only actually copy the file dst doesn't exist,
-                        if not dst.is_file() or not filecmp.cmp(src, dst, shallow=True):
-                            shutil.copy(src, dst)
+                    # Only copy the file, if the src exists and is not the same as the dst file
+                    if src.is_file() and (not dst.is_file() or not filecmp.cmp(src, dst, shallow=True)):
+                        shutil.copy(src, dst)
 
                 # Ensure stratigraphic graph files are saved
                 for filename in ["fi_new.png", "fi_new.svg", "fi_new", "testdag.png", "deleted_contexts_meta"]:
                     src = self.get_working_directory() / filename
                     dst = self.get_stratigraphic_graph_directory() / filename
-                    if not dst.is_file() or not filecmp.cmp(src, dst, shallow=True):
+                    # Only copy the file, if the src exists and is not the same as the dst file
+                    if src.is_file() and (not dst.is_file() or not filecmp.cmp(src, dst, shallow=True)):
                         shutil.copy(src, dst)
 
                 # Ensure mcmc results are saved
                 for filename in ["full_results_df", "key_ref.csv", "context_no.csv"]:
                     src = self.get_working_directory() / filename
                     dst = self.get_mcmc_results_directory() / filename
-                    if not dst.is_file() or not filecmp.cmp(src, dst, shallow=True):
+                    # Only copy the file, if the src exists and is not the same as the dst file
+                    if src.is_file() and (not dst.is_file() or not filecmp.cmp(src, dst, shallow=True)):
                         shutil.copy(src, dst)
 
                 # Ensure any copyable python_only files are saved
                 for filename in ["polychron_mcmc_data.json"]:
                     src = self.get_working_directory() / filename
                     dst = self.get_python_only_directory() / filename
-                    if not dst.is_file() or not filecmp.cmp(src, dst, shallow=True):
+                    # Only copy the file, if the src exists and is not the same as the dst file
+                    if src.is_file() and (not dst.is_file() or not filecmp.cmp(src, dst, shallow=True)):
                         shutil.copy(src, dst)
 
                 # Save the json representation of this object to disk
