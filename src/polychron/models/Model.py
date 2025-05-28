@@ -404,7 +404,7 @@ class Model:
                     dst = self.get_chronological_graph_directory() / filename
                     # Only copy the file, if the src exists and is not the same as the dst file
                     if src.is_file() and (not dst.is_file() or not filecmp.cmp(src, dst, shallow=True)):
-                        shutil.copy(src, dst)
+                        shutil.copy2(src, dst)
 
                 # Ensure stratigraphic graph files are saved
                 for filename in ["fi_new.png", "fi_new.svg", "fi_new", "testdag.png", "deleted_contexts_meta"]:
@@ -412,7 +412,7 @@ class Model:
                     dst = self.get_stratigraphic_graph_directory() / filename
                     # Only copy the file, if the src exists and is not the same as the dst file
                     if src.is_file() and (not dst.is_file() or not filecmp.cmp(src, dst, shallow=True)):
-                        shutil.copy(src, dst)
+                        shutil.copy2(src, dst)
 
                 # Ensure mcmc results are saved
                 for filename in ["full_results_df", "key_ref.csv", "context_no.csv"]:
@@ -420,7 +420,7 @@ class Model:
                     dst = self.get_mcmc_results_directory() / filename
                     # Only copy the file, if the src exists and is not the same as the dst file
                     if src.is_file() and (not dst.is_file() or not filecmp.cmp(src, dst, shallow=True)):
-                        shutil.copy(src, dst)
+                        shutil.copy2(src, dst)
 
                 # Ensure any copyable python_only files are saved
                 for filename in ["polychron_mcmc_data.json"]:
@@ -428,7 +428,7 @@ class Model:
                     dst = self.get_python_only_directory() / filename
                     # Only copy the file, if the src exists and is not the same as the dst file
                     if src.is_file() and (not dst.is_file() or not filecmp.cmp(src, dst, shallow=True)):
-                        shutil.copy(src, dst)
+                        shutil.copy2(src, dst)
 
                 # Save the json representation of this object to disk
                 json_path = self.get_python_only_directory() / "polychron_model.json"

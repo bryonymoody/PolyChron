@@ -1,4 +1,6 @@
+import copy
 import pathlib
+import shutil
 import sys
 from dataclasses import dataclass, field
 from typing import Optional
@@ -49,11 +51,12 @@ class Project:
                 self.load_model_from_disk(name)
         return self.models.get(name, None)
 
-    def get_or_create_model(self, name: str) -> Model:
-        """Get or create a model within this Project.
+    def get_or_create_model(self, name: str, other: Optional[Model]) -> Model:
+        """Get or create a model within this Project, copying a reference model if provided
 
         Parameters:
             name (str): The name of the model to be fetched or created
+            other (Optional[Model]): An optional model to copy from
 
         Returns:
             The existing or new model with the specified model name
@@ -70,10 +73,17 @@ class Project:
                 return model
 
         # If no model was returned, create one and return it.
-        self.create_model(name)
+        return self.create_model(name, other)
 
-    def create_model(self, name: str) -> None:
-        """Create a new model within the project, with the provided name.
+    def create_model(self, name: str, other: Optional[Model]) -> Model:
+        """Create a new model within the project with the provided name , copying a reference model if provided
+
+        Parameters:
+            name (str): The name of the model to be created
+            other (Optional[Model]): An optional model to copy from
+
+        Returns:
+            The new Model
 
         Raises:
             RuntimeError: if the model already exists or an invalid name is provided.
@@ -84,12 +94,17 @@ class Project:
 
         # Attempt to load the model with the provided name.
         existing_model = self.get_model(name)
-        # If the model does not exist,
+        # Raise an error if the model arlready exists
         if existing_model is not None:
             raise RuntimeError(f"A model named '{name}' already exists at '{existing_model.path}'")
 
-        # If the model does not already exist within this project, create a new model and create it's directories
-        new_model = Model(name=name, path=self.path / name)
+        # If we are not copying an existing model, create a new one
+        if other is None:
+            new_model = Model(name=name, path=self.path / name)
+        else:
+            new_model = copy.deepcopy(other)
+            new_model.name = name
+            new_model.path = self.path / name
 
         # Detect some invalid path errors, by checking that the model name matches the model path (i.e. name="/" or ".")
         if new_model.name != new_model.path.name:
@@ -104,8 +119,11 @@ class Project:
         except Exception as e:
             raise e
         else:
-            # If no exceptions were raised, store the model
+            # If no exceptions were raised potentially copy working files, store the new model and return it
+            if other is not None and other.get_working_directory().is_dir():
+                shutil.copytree(other.get_working_directory(), new_model.get_working_directory(), dirs_exist_ok=True)
             self.models[name] = new_model
+            return self.models[name]
 
     def lazy_load_model_from_disk(self) -> None:
         if self.path.is_dir():

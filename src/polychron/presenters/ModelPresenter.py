@@ -112,7 +112,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 "Load context equalities file (.csv)": lambda: self.open_context_equalities_file(),
                 "Load new project": lambda: self.load_project(),
                 "Load existing model": lambda: self.load_existing_model(),
-                "Save changes as current model": lambda: self.save_as_current(),
+                "Save changes as current model": lambda: self.save_model(),
                 "Save changes as new model": lambda: self.save_as_new_model(),
                 "Exit": lambda: self.close_application(),
             }
@@ -269,12 +269,13 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             return
         if model_model.load_check:
             # @todo - abstract this tk call somewhere?
+            # @todo - this message does not match behaviour.
             answer = tk.messagebox.askquestion(
                 "Warning!",
                 "Chronological DAG already loaded, are you sure you want to write over it? You can copy this model in the file menu if you want to consider multiple models",
             )
             if answer == "yes":
-                self.refresh_4_new_model()  # @todo self.controller, proj_dir, load=False)
+                self.save_as_new_model()
                 model_model.load_check = False
                 self.view.clear_littlecanvas2()
                 model_model.chrono_dag = self.chronograph_render()
@@ -701,7 +702,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                     "Chronological DAG already loaded, do you want to save this as a new model first? \n\n Click Yes to save as new model and No to overwrite existing model",
                 )
                 if answer == "yes":
-                    self.refresh_4_new_model()  # @todo  self.controller, proj_dir, load=False)
+                    self.save_as_new_model()
                 # self.littlecanvas2.delete("all") # @todo
             model_model.strat_graph = node_del_fixed(model_model.strat_graph, self.node)
             nodedel_reason = self.node_del_popup(self.node)
@@ -721,7 +722,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 "Chronological DAG already loaded, do you want to save this as a new model first? \n Click YES to save as new model and NO to overwrite existing model",
             )
             if answer == "yes":
-                self.refresh_4_new_model()  # @todo self.controller, proj_dir, load=False)
+                self.save_as_new_model()
             # self.littlecanvas2.delete("all") # @todo
             model_model.load_check = "not_loaded"
 
@@ -752,7 +753,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 "Chronological DAG already loaded, do you want to save this as a new model first? \n Click YES to save as new model and NO to overwrite existing model",
             )
             if answer == "yes":
-                self.refresh_4_new_model()  # @todo self.controller, proj_dir, load=False)
+                self.save_as_new_model()
             # self.littlecanvas2.delete("all") # @todo
             model_model.load_check = False
 
@@ -921,13 +922,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         self.edge_nodes = np.append(self.edge_nodes, self.node)
         self.view.append_testmenu_entry("Place " + str(self.edge_nodes[0]) + " Above")
 
-    def refresh_4_new_model(self) -> None:
-        """@todo"""
-        print("@todo implement refresh_4_new_model")
-        # extra_top = load_Window.new_model(load_Window(MAIN_FRAME), proj_dir, load)
-        # self.wait_window(extra_top)
-        # # self.save_state_1()
-
     def pre_click(self, *args) -> None:
         """makes test menu appear and removes any previous test menu
 
@@ -1008,7 +1002,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         # Update the view once the presenter is closed
         self.update_view()
 
-    def save_as_current(self) -> None:
+    def save_model(self) -> None:
         """Save the current state of the model in-place
 
         Formerly StartPage.save_state_1"""
@@ -1024,31 +1018,57 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             pass  # @todo handle gracefully, but this should never occur.
 
     def save_as_new_model(self) -> None:
-        """Save the current state of the model, as a new model (with a new name) initially in the same project (although possible to put in a new project)
+        """Save the current state of the model, as a new model (with a new name) initially in the same project (although possible to put in a new project).
+        Switches to the "new" model for any future changes.
 
-        @todo - in PolyChron 0.1, save as new model maintains current state in a new project, but does not save the state to disk until save_as_current is called. On load however, this fails to load anything. Query with Bryony the intended behaviour.
-        Error: dot: can't open fi_new_chrono
+        Formerly StartPage.refresh_4_new_model
 
-        @todo - in PolyChron 0.1, if the new model name is already taken, the popup is presented but the window closes anyway rather than allowing a new name to be made.
+        Todo:
+            @todo - in PolyChron 0.1, save as new model maintains current state in a new project, but does not save the state to disk until save_model is called. On load however, this fails to load anything. Query with Bryony the intended behaviour.
+            Error: dot: can't open fi_new_chrono
 
-        @todo - in PolyChron 0.1, it's possible to press Back, enter a new project name, and then a new model name. This just creates a blank model in the new project. Decide how this should behave / if the back button should even be there.
+            @todo - in PolyChron 0.1, if the new model name is already taken, the popup is presented but the window closes anyway rather than allowing a new name to be made.
 
-        Formerly StartPage.refresh_4_new_model"""
-        # Open the project saving dialogue, starting with the new_model view in this current project
-        # On close of the popup via the save button, save the model.
+            @todo - in PolyChron 0.1, it's possible to press Back, enter a new project name, and then a new model name. This just creates a blank model in the new project. Decide how this should behave / if the back button should even be there.
+
+            # @todo - conditionally handle how the popup window was closed, i.e was save pressed or not?.
+        """
+
+        # Store the old project and model names, to check if the model was changed or not.
+        old_project_name = self.model.current_project_name
+        old_model_name = self.model.current_model_name
 
         # Instantiate the child presenter and view
         popup_presenter = ProjectSelectProcessPopupPresenter(
             self.mediator, ProjectSelectProcessPopupView(self.view), self.model
         )
-        # Switch to the model select page, app state should have the correct selected_project still
+
+        # Specify the initial project to the current one
+        self.model.next_project_name = old_project_name
+        # Specify this should be a copy not a fresh model
+        self.model.using_save_as = True
+
+        # Switch to the model select page
         popup_presenter.switch_presenter("model_create")
         # Ensure it is visible and on top
         popup_presenter.view.lift()
 
-        print("@todo - save_as_new_model partially implemented")
-        # @todo - Ensure that data is copied, not replaced.
-        # model.save()
+        # Wait for the popup window to be closed before saving the new model
+        self.view.wait_window(popup_presenter.view)  # @todo - abstract this away.
+        # @todo - block input while the child popup is open?
+
+        # Get the new model
+        model_model: Optional[Model] = self.model.current_model
+        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
+        if model_model is None:
+            return
+
+        # If the current project or model name have changed, save the model
+        if self.model.current_project_name != old_project_name or self.model.current_model_name is not old_model_name:
+            # Save the new model
+            model_model.save()
+            # Update this view
+            self.update_view()
 
     def on_resize(self, event: Any) -> None:
         """resizes image on canvas
