@@ -14,6 +14,9 @@ class Config:
     projects_directory: pathlib.Path = pathlib.Path.home() / "Documents" / "polychron" / "projects"
     """Value on disk for the users projects directory, which defaults to the value provided by get_default_projects_directory"""
 
+    verbose: bool = False
+    """If verbose output is enabled or not"""
+
     geometry: str = "1920x1080"
     """The initial window geometry"""
 
