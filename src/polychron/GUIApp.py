@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional
 
 from ttkthemes import ThemedStyle, ThemedTk
 
-from .Config import Config
+from .Config import Config, get_config
 from .interfaces import Mediator
 from .models.InterpolationData import InterpolationData
 from .models.ProjectSelection import ProjectSelection
@@ -38,7 +38,7 @@ class GUIApp(Mediator):
 
     def __init__(self) -> None:
         # Initialse the application config object
-        self.config: Config = Config.from_default_filepath()
+        self.config: Config = get_config()
 
         # Construct the root tkinter window, as a themed TK app
         self.root: ThemedTk = ThemedTk(theme="arc")

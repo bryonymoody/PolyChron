@@ -87,3 +87,24 @@ class Config:
         except Exception:
             pass
         return c
+
+
+# Module-scoped variable to hold a single instance of a configuration object, which can be accessed (and initialied) by calls to get_config
+__config_instance: Config = None
+
+
+def get_config() -> Config:
+    """Get the single 'global' Configuraiton object instance.
+
+    On first call, the instance will be initialised to a value from disk, based on the platform-specific default location.
+
+    Returns:
+        The single application wide Configuraiton object.
+
+    Note:
+        This is not thread-safe.
+    """
+    global __config_instance
+    if __config_instance is None:
+        __config_instance = Config.from_default_filepath()
+    return __config_instance
