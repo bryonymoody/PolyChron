@@ -53,21 +53,20 @@ class ModelView(FrameView):
         )
         self.dr_tab_button.place(relx=0.55, rely=0.0, relwidth=0.15, relheight=0.03)
 
-        # Adding File Menu, contents are added later.
+        # Add the file menu button
         self.file_menubar = ttk.Menubutton(self, text="File", state=tk.DISABLED)
-        self.file_menubar["menu"] = tk.Menu(self.file_menubar, tearoff=0, bg="white", font=("helvetica 12 bold"))
+        self.file_menubar["menu"] = tk.Menu(self.file_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
+        self.file_menubar.place(relx=0.0, rely=0, relwidth=0.1, relheight=0.03)
 
-        self.file_menubar.place(relx=0.00, rely=0, relwidth=0.1, relheight=0.03)
-
-        # Adding View Menu, contents are added later.
+        # Adding View menu button
         self.view_menubar = ttk.Menubutton(self, text="View", state=tk.DISABLED)
-        self.view_menubar["menu"] = tk.Menu(self.view_menubar, tearoff=0, bg="white", font=("helvetica", 11))
+        self.view_menubar["menu"] = tk.Menu(self.view_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
         self.view_menubar.place(relx=0.07, rely=0, relwidth=0.1, relheight=0.03)
 
-        # Adding the Tool Menu, contents are added later.
+        # Adding Tools menu button
         self.tool_menubar = ttk.Menubutton(self, text="Tools", state=tk.DISABLED)
-        self.tool_menubar["menu"] = tk.Menu(self.tool_menubar, tearoff=0, bg="white", font=("helvetica", 11))
-        self.tool_menubar.place(relx=0.14, rely=0, relwidth=0.1, relheight=0.03)
+        self.tool_menubar["menu"] = tk.Menu(self.tool_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
+        self.tool_menubar.place(relx=0.15, rely=0, relwidth=0.1, relheight=0.03)
 
         self.behindcanvas = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg="#33658a")
         self.behindcanvas.place(relx=0.003, rely=0.038, relwidth=0.37, relheight=0.96)
