@@ -7,6 +7,7 @@ site_description: PolyChron Documentation
 
 extra_css:
   - assets/css/polychron.css
+  - assets/css/mkdocstrings.css
 
 theme:
   name: "material"
@@ -46,21 +47,37 @@ nav:
   - About: index.md
   - User Guide:
     - userguide/index.md
-  - API:
-    - api/index.md
-    - api/automated_mcmc_ordering_coupling_copy.md
-    - api/gui.md
+  - Developer Reference: reference/
 
 extra:
   social:
     - icon: fontawesome/brands/github 
       link: https://github.com/bryonymoody
 
-plugins: 
-- mkdocstrings
+plugins:
+- section-index
+- literate-nav:
+    nav_file: SUMMARY.md
+- gen-files:
+    scripts:
+      - docs/generate_dynamic_pages.py
+- mkdocstrings:
+    handlers:
+      python:
+        paths: [src]
+        options:
+          docstring_style: google
+          show_source: false
+          show_root_heading: false
+          show_root_full_path: false
+          show_signature_annotations: true
+          separate_signature: true
+          members_order: source
 
 markdown_extensions:
   - admonition
+  - callouts
+  - github-callouts
   - pymdownx.details
   - pymdownx.tasklist
   - pymdownx.superfences:
@@ -69,3 +86,7 @@ markdown_extensions:
         - name: mermaid
           class: mermaid
           format: !!python/name:pymdownx.superfences.fence_code_format
+
+watch:
+- docs
+- src/

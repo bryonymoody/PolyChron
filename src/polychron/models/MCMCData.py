@@ -196,7 +196,7 @@ class MCMCData:
         """Get an instance of the MCMCData from serialised json on disk.
 
         Parameters:
-            path: Path to json file to load it from
+            json_path: Path to json file to load it from
 
         Raises:
             Exception: @todo - docuemnt the specific exceptions which may be raised

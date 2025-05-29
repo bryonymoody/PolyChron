@@ -454,8 +454,8 @@ class Model:
             path: Path to a model directory (not the json file)
 
         Raises:
-            RuntimeWarning - when the model could not be loaded, but in a recoverable way. I.e. the directory exits but no files are contained (so allow the model to be "loaded") @todo - probably change this?
-            RuntiemError - when the model could not be loaded, but use of this model directory should be prevented?
+            RuntimeWarning: when the model could not be loaded, but in a recoverable way. I.e. the directory exits but no files are contained (so allow the model to be "loaded") @todo - probably change this?
+            RuntimeError: when the model could not be loaded, but use of this model directory should be prevented?
 
         Todo:
             - @todo how to handle version compatible saving/loading?

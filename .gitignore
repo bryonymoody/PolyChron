@@ -171,3 +171,7 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# mkdocs dynamic files (nav, reference) which should not exist on disk anyway.
+docs/reference/SUMMARY.md
+docs/reference/**.md

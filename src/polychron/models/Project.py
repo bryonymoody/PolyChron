@@ -61,10 +61,8 @@ class Project:
         Returns:
             The existing or new model with the specified model name
 
-        Raises:
-            @todo - document rasised exceptions
-
         Todo:
+            @todo - document rasised exceptions
             @todo - Possible disk-race if files/directories are created in this model. Create model first, and if it rases the "this already exists" exception return the loaded one?
         """
         if self.has_model(name):
@@ -90,7 +88,7 @@ class Project:
             OSError: if the model directories could not be created, e.g. due to permissions or avialable space.
 
         @todo - make checking for an existing model lighter weight than a full load?
-        @todo - explicitly limit the usable model name characters to reduce the risk of os exceptions (i.e. [a-zA-Z0-9\-_]+)?) This would prevent some valid names."""
+        @todo - explicitly limit the usable model name characters to reduce the risk of os exceptions (i.e. [a-zA-Z0-9\\-_]+)?) This would prevent some valid names."""
 
         # Attempt to load the model with the provided name.
         existing_model = self.get_model(name)

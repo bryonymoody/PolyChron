@@ -1,3 +1,4 @@
+import os
 import pathlib
 from typing import Optional
 
@@ -14,7 +15,10 @@ class ProjectSelection:
     """
 
     def __init__(self, projects_directory_path: pathlib.Path):
-        """Initailse an instance of the ProjectSelection class, using a projects direcotry from a specified path."""
+        """Initailse an instance of the ProjectSelection class, using a projects directory from a specified path."""
+
+        # Expand ~ and any env vars in the provided path, in case they are in the config provided path
+        projects_directory_path = pathlib.Path(os.path.expandvars(projects_directory_path.expanduser()))
 
         self.__projects_directory: ProjectsDirectory = ProjectsDirectory(projects_directory_path)
 
@@ -196,10 +200,8 @@ class ProjectSelection:
             load_ok (bool): If loading existing models is allowed
             create_ok (bool): If creating new models is allowed
 
-        Raises:
-            @todo - document exceptions, which are raised if loading or creation failed, or if "next" internal state has not yet been setup
-
         Todo:
+            @todo - document exceptions, which are raised if loading or creation failed, or if "next" internal state has not yet been setup
             @todo - specialise exception types for better handling downstream
             @todo - should this raise if the current model has not been saved? Or should that be handled elsewhere (probably elsewhere)
         """

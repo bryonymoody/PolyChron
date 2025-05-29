@@ -59,7 +59,7 @@ class ProjectsDirectory:
         Returns:
             The existing or new project with the specified project name
 
-        Raises:
+        Todo:
             @todo - document rasised exceptions
         """
         if self.has_project(project_name):

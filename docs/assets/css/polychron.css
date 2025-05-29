@@ -17,3 +17,10 @@
     --md-primary-fg-color: var(--polychron-orange);
     --md-accent-fg-color: var(--polychron-blue);
 }
+
+
+/* Increase the font size of admonitions */
+.md-typeset .admonition,
+.md-typeset details {
+  font-size: 1em;
+}

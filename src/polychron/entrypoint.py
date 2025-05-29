@@ -6,7 +6,7 @@
 import argparse
 from importlib.metadata import version
 
-from .Config import get_config
+from .Config import Config, get_config
 
 
 def parse_cli(argv=None) -> argparse.Namespace:
@@ -54,6 +54,7 @@ def main() -> None:
     if args.verbose:
         config = get_config()
         config.verbose = True
+        print(f"Config path: {Config._get_config_filepath()}")
 
     # If version requested on the command line, provide it
     if args.version:

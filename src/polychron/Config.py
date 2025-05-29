@@ -9,7 +9,10 @@ import yaml
 
 @dataclasses.dataclass
 class Config:
-    """A dataclass representing user configuration"""
+    """A dataclass representing user configuration
+    
+    Todo:
+        @todo - handle relative user provided paths (and home/env vars here?) via @property and @projects_directory.setter? although ideally a save would not include the expansion"""
 
     projects_directory: pathlib.Path = pathlib.Path.home() / "Documents" / "polychron" / "projects"
     """Value on disk for the users projects directory, which defaults to the value provided by get_default_projects_directory"""
@@ -23,7 +26,6 @@ class Config:
     def load(self, path: pathlib.Path) -> None:
         """Load values from the specified path on disk"""
         if path.is_file():
-            print(f"Loading Config: {path}")
             try:
                 with open(path, "r") as f:
                     data = yaml.safe_load(f)
@@ -31,7 +33,6 @@ class Config:
                         for field in dataclasses.fields(self):
                             if field.name in data:
                                 setattr(self, field.name, field.type(data[field.name]))
-
             except (yaml.YAMLError, FileNotFoundError, TypeError) as e:
                 print(f"Error loading configuration: {e}", file=sys.stderr)
 
