@@ -57,10 +57,11 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
         self.view.bind_clear_list_button(lambda: self.on_button_clear_list_button())
 
         # Bind menu callbacks
-        self.view.bind_file_menu_callbacks(
-            {
-                "Save project progress": lambda: self.on_file_save(),
-            }
+        self.view.build_file_menu(
+            [
+                None,
+                ("Save project progress", lambda: self.on_file_save()),
+            ]
         )
 
         # Bind the callback for activiting the rightclick / testmenu2

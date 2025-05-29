@@ -2,7 +2,7 @@ import importlib.resources
 import io
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable, Optional
+from typing import Any, Callable, List, Optional, Tuple
 
 from PIL import Image, ImageTk
 
@@ -15,6 +15,9 @@ class SplashView(FrameView):
     This is displayed in the main window before a project is opened, and just allows users to re-open the new/load project popup in case they close it without loading anything.
 
     This is implemented as a passive view, i.e. UI elements have no callbacks at constrution, and they must be explcitly bound afterwards
+
+    Todo:
+        Implement a new base class (which extends FrameView) with common elements for other frame views which belong to the GUIApp (ModelView and DatingResultsView) which contains common elements such as the file bars and methods to populate them to reduce duplication
     """
 
     def __init__(self, parent: tk.Frame) -> None:
@@ -28,21 +31,19 @@ class SplashView(FrameView):
         self.canvas = tk.Canvas(self, bd=0, highlightthickness=0, bg="white")
         self.canvas.place(relx=0, rely=0.03, relwidth=1, relheight=0.97)
 
-        # Adding File Menu and commands
-        # @todo - (partially) abstract this away to avoid duplication
-        self.file_menubar = ttk.Menubutton(self, text="File")
-        file = tk.Menu(self.file_menubar, tearoff=0, bg="white", font=("helvetica 12 bold"))
-        self.file_menubar["menu"] = file
-        file.add_separator()
-        file.add_command(label="Select Project", font="helvetica 12 bold")
-        self.file_menubar.place(relx=0.00, rely=0, relwidth=0.1, relheight=0.03)
+        # Add the file menu button
+        self.file_menubar = ttk.Menubutton(self, text="File", state=tk.DISABLED)
+        self.file_menubar["menu"] = tk.Menu(self.file_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
+        self.file_menubar.place(relx=0.0, rely=0, relwidth=0.1, relheight=0.03)
 
-        # Add an empty (and disabled) view menubar for consistency with other tabs
+        # Adding View menu button
         self.view_menubar = ttk.Menubutton(self, text="View", state=tk.DISABLED)
+        self.view_menubar["menu"] = tk.Menu(self.view_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
         self.view_menubar.place(relx=0.07, rely=0, relwidth=0.1, relheight=0.03)
 
-        # Add an empty (and disabled) tools menubar for consistency with other tabs
+        # Adding Tools menu button
         self.tool_menubar = ttk.Menubutton(self, text="Tools", state=tk.DISABLED)
+        self.tool_menubar["menu"] = tk.Menu(self.tool_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
         self.tool_menubar.place(relx=0.15, rely=0, relwidth=0.1, relheight=0.03)
 
         # Load the image from the package resources, and add it to the current frame
@@ -73,11 +74,29 @@ class SplashView(FrameView):
         canvas_center_y = (0.97 * self.parent.winfo_height()) / 2
         self.canvas.coords(self.canvas_img_id, canvas_center_x, canvas_center_y)
 
-    def bind_menu_callbacks(self, callback: Callable[[], Optional[Any]]) -> None:
-        """Bind the callback for when the back_button is pressed
+    def build_file_menu(self, items: List[Optional[Tuple[str, Callable[[], Optional[Any]]]]]) -> None:
+        """Builds the 'file' menu element with labels and callback functions.
 
-        @todo - standardise this with how other menu callbacks are set in ModelView/DatingResultsVeiw. Probably a Dict[str, Callable] usign the menu label? Or just have a member dict of function pointers and directly bind to that for each command on creation.
+        Parameters:
+            items: A List of menu entries to add, which may be None to identify a separator, or a tuple containing a label anf callback fucntion.
+
+        Todo:
+            Not sure Optional[Any] is required in this type hint?
         """
-        if callback is not None:
-            file_menu = self.nametowidget(self.file_menubar.cget("menu"))
-            file_menu.entryconfig("Select Project", command=callback)
+        # Get a handle to the Menu belonging to the MenuButton
+        menubar: ttk.Menubutton = self.file_menubar
+        menu: tk.Menu = self.nametowidget(menubar.cget("menu"))
+        # Clear existing items
+        menu.delete(0, "end")
+        # Iterate the items to add to the menu
+        for item in items:
+            if item is not None:
+                # If the item is not None, it should be a Tuple contianing a string label and a callback function
+                label, callback = item
+                menu.add_command(font="helvetica 12 bold", label=label, command=callback)
+            else:
+                # Add a separator if the item is None
+                menu.add_separator()
+        # Mark the menubutton as not disabled
+        if len(items) > 0:
+            menubar.configure(state=tk.NORMAL)

@@ -101,35 +101,37 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         view.bind_sasd_tab_button(lambda: self.mediator.switch_presenter("Model"))
         view.bind_dr_tab_button(lambda: self.mediator.switch_presenter("DatingResults"))
 
-        # Bind menu callbacks
-        self.view.bind_file_menu_callbacks(
-            {
-                "Load stratigraphic diagram file (.dot)": lambda: self.open_strat_dot_file(),
-                "Load stratigraphic relationship file (.csv)": lambda: self.open_strat_csv_file(),
-                "Load scientific dating file (.csv)": lambda: self.open_scientific_dating_file(),
-                "Load context grouping file (.csv)": lambda: self.open_context_grouping_file(),
-                "Load group relationship file (.csv)": lambda: self.open_group_relationship_file(),
-                "Load context equalities file (.csv)": lambda: self.open_context_equalities_file(),
-                "Load new project": lambda: self.load_project(),
-                "Load existing model": lambda: self.load_existing_model(),
-                "Save changes as current model": lambda: self.save_model(),
-                "Save changes as new model": lambda: self.save_as_new_model(),
-                "Exit": lambda: self.close_application(),
-            }
+        # Build file/view/tool menus with callbacks
+        self.view.build_file_menu(
+            [
+                None,
+                ("Load stratigraphic diagram file (.dot)", lambda: self.open_strat_dot_file()),
+                ("Load stratigraphic relationship1 file (.csv)", lambda: self.open_strat_csv_file()),
+                ("Load scientific dating file (.csv)", lambda: self.open_scientific_dating_file()),
+                ("Load context grouping file (.csv)", lambda: self.open_context_grouping_file()),
+                ("Load group relationship file (.csv)", lambda: self.open_group_relationship_file()),
+                ("Load context equalities file (.csv)", lambda: self.open_context_equalities_file()),
+                ("Load new project", lambda: self.load_project()),
+                ("Load existing model", lambda: self.load_existing_model()),
+                ("Save changes as current model", lambda: self.save_model()),
+                ("Save changes as new model", lambda: self.save_as_new_model()),
+                None,
+                ("Exit", lambda: self.close_application()),
+            ]
         )
-        self.view.bind_view_menu_callbacks(
-            {
-                "Display Stratigraphic diagram in phases": lambda: self.phasing(),
-            }
+        self.view.build_view_menu(
+            [
+                ("Display Stratigraphic diagram in phases", lambda: self.phasing()),
+            ]
         )
-        self.view.bind_tool_menu_callbacks(
-            {
-                "Render chronological graph": lambda: self.chronograph_render_wrap(),
-                "Calibrate model": lambda: self.popup_calibrate_model(),
-                "Calibrate multiple projects from project": lambda: self.popup_calibrate_multiple(),
-                # "Calibrate node delete variations (alpha)": lambda: self.calibrate_node_delete_variations(), # see https://github.com/bryonymoody/PolyChron/issues/71
-                # "Calibrate important variations (alpha)": lambda: self.calibrate_important_variations(), # see https://github.com/bryonymoody/PolyChron/issues/72
-            }
+        self.view.build_tool_menu(
+            [
+                ("Render chronological graph", lambda: self.chronograph_render_wrap()),
+                ("Calibrate model", lambda: self.popup_calibrate_model()),
+                ("Calibrate multiple projects from project", lambda: self.popup_calibrate_multiple()),
+                # ("Calibrate node delete variations (alpha)",  lambda: self.calibrate_node_delete_variations()), # see https://github.com/bryonymoody/PolyChron/issues/71
+                # ("Calibrate important variations (alpha)",  lambda: self.calibrate_important_variations()), # see https://github.com/bryonymoody/PolyChron/issues/72
+            ]
         )
 
         # Bind button clicks

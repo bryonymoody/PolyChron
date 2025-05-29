@@ -9,13 +9,24 @@ from .ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresent
 
 
 class SplashPresenter(FramePresenter[ProjectSelection]):
+    """Presenter for the Splash Frame, shown in the main view before a project has been loaded.
+
+    This exists soley to allow users who close the initial project selection page to re-open it.
+    """
+
     def __init__(self, mediator: Mediator, view: SplashView, model: ProjectSelection) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 
         self.child_presenter: Optional[ProjectSelectProcessPopupPresenter] = None
 
-        self.view.bind_menu_callbacks(lambda: self.on_select_project())
+        # Build file/view/tool menus with callbacks
+        self.view.build_file_menu(
+            [
+                None,
+                ("Select Project", lambda: self.on_select_project()),
+            ]
+        )
 
     def update_view(self) -> None:
         # Does not display anything, i.e model is always None

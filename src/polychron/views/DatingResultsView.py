@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, List, Optional, Tuple
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
@@ -76,23 +76,17 @@ class DatingResultsView(FrameView):
         )
         self.dr_tab_button.place(relx=0.55, rely=0.0, relwidth=0.15, relheight=0.03)
 
-        # Add the file menu button and it's options
-        self.file_menubar = ttk.Menubutton(
-            self,
-            text="File",
-        )
-        self.file_menu = tk.Menu(self.file_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
-        self.file_menubar["menu"] = self.file_menu
-        self.file_menu.add_separator()
-        self.file_menu.add_command(label="Save project progress", font=("helvetica 11 bold"))
+        # Add the file menu button
+        self.file_menubar = ttk.Menubutton(self, text="File", state=tk.DISABLED)
+        self.file_menubar["menu"] = tk.Menu(self.file_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
         self.file_menubar.place(relx=0.0, rely=0, relwidth=0.1, relheight=0.03)
-        self.view_menubar = ttk.Menubutton(self, text="View", state=tk.DISABLED)
 
-        # Adding View menu with (no) sub options
+        # Adding View menu button
+        self.view_menubar = ttk.Menubutton(self, text="View", state=tk.DISABLED)
         self.view_menubar["menu"] = tk.Menu(self.view_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
         self.view_menubar.place(relx=0.07, rely=0, relwidth=0.1, relheight=0.03)
 
-        # Adding Tools menu with (no) suboptions
+        # Adding Tools menu button
         self.tool_menubar = ttk.Menubutton(self, text="Tools", state=tk.DISABLED)
         self.tool_menubar["menu"] = tk.Menu(self.tool_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
         self.tool_menubar.place(relx=0.15, rely=0, relwidth=0.1, relheight=0.03)
@@ -284,41 +278,86 @@ class DatingResultsView(FrameView):
         self.littlecanvas2.bind("<Button-1>", callback_move_from)
         self.littlecanvas2.bind("<B1-Motion>", callback_move_to)
 
-    def bind_file_menu_callbacks(self, callbacks: Dict[str, Callable[[], Optional[Any]]]) -> None:
-        """Binds callback methods to file menu elements by label
+    def build_file_menu(self, items: List[Optional[Tuple[str, Callable[[], Optional[Any]]]]]) -> None:
+        """Builds the 'file' menu element with labels and callback functions.
 
-        @todo - standardise this with how other menu callbacks are set in ModelView/DatingResultsVeiw. Probably a Dict[str, Callable] usign the menu label? Or just have a member dict of function pointers and directly bind to that for each command on creation.
-        Would be nicer to not have to re-use the full label?
+        Parameters:
+            items: A List of menu entries to add, which may be None to identify a separator, or a tuple containing a label anf callback fucntion.
+
+        Todo:
+            Not sure Optional[Any] is required in this type hint?
         """
-        file_menu = self.nametowidget(self.file_menubar.cget("menu"))
-        for entry_label, callback in callbacks.items():
-            if callback is not None:
-                # @todo - handle missing labels gracefully
-                file_menu.entryconfig(entry_label, command=callback)
+        # Get a handle to the Menu belonging to the MenuButton
+        menubar: ttk.Menubutton = self.file_menubar
+        menu: tk.Menu = self.nametowidget(menubar.cget("menu"))
+        # Clear existing items
+        menu.delete(0, "end")
+        # Iterate the items to add to the menu
+        for item in items:
+            if item is not None:
+                # If the item is not None, it should be a Tuple contianing a string label and a callback function
+                label, callback = item
+                menu.add_command(font="helvetica 12 bold", label=label, command=callback)
+            else:
+                # Add a separator if the item is None
+                menu.add_separator()
+        # Mark the menubutton as not disabled
+        if len(items) > 0:
+            menubar.configure(state=tk.NORMAL)
 
-    def bind_view_menu_callbacks(self, callbacks: Dict[str, Callable[[], Optional[Any]]]) -> None:
-        """Binds callback methods to view menu elements by label
+    def build_view_menu(self, items: List[Optional[Tuple[str, Callable[[], Optional[Any]]]]]) -> None:
+        """Builds the 'view' menu element with labels and callback functions.
 
-        @todo - standardise this with how other menu callbacks are set in ModelView/DatingResultsVeiw. Probably a Dict[str, Callable] usign the menu label? Or just have a member dict of function pointers and directly bind to that for each command on creation.
-        Would be nicer to not have to re-use the full label?
+        Parameters:
+            items: A List of menu entries to add, which may be None to identify a separator, or a tuple containing a label anf callback fucntion.
+
+        Todo:
+            Not sure Optional[Any] is required in this type hint?
         """
-        view_menu = self.nametowidget(self.view_menubar.cget("menu"))
-        for entry_label, callback in callbacks.items():
-            if callback is not None:
-                # @todo - handle missing labels gracefully
-                view_menu.entryconfig(entry_label, command=callback)
+        # Get a handle to the Menu belonging to the MenuButton
+        menubar: ttk.Menubutton = self.view_menubar
+        menu: tk.Menu = self.nametowidget(menubar.cget("menu"))
+        # Clear existing items
+        menu.delete(0, "end")
+        # Iterate the items to add to the menu
+        for item in items:
+            if item is not None:
+                # If the item is not None, it should be a Tuple contianing a string label and a callback function
+                label, callback = item
+                menu.add_command(font="helvetica 12 bold", label=label, command=callback)
+            else:
+                # Add a separator if the item is None
+                menu.add_separator()
+        # Mark the menubutton as not disabled
+        if len(items) > 0:
+            menubar.configure(state=tk.NORMAL)
 
-    def bind_tool_menu_callbacks(self, callbacks: Dict[str, Callable[[], Optional[Any]]]) -> None:
-        """Binds callback methods to tool menu elements by label
+    def build_tool_menu(self, items: List[Optional[Tuple[str, Callable[[], Optional[Any]]]]]) -> None:
+        """Builds the 'tools' menu element with labels and callback functions.
 
-        @todo - standardise this with how other menu callbacks are set in ModelView/DatingResultsVeiw. Probably a Dict[str, Callable] usign the menu label? Or just have a member dict of function pointers and directly bind to that for each command on creation.
-        Would be nicer to not have to re-use the full label?
+        Parameters:
+            items: A List of menu entries to add, which may be None to identify a separator, or a tuple containing a label anf callback fucntion.
+
+        Todo:
+            Not sure Optional[Any] is required in this type hint?
         """
-        tool_menu = self.nametowidget(self.tool_menubar.cget("menu"))
-        for entry_label, callback in callbacks.items():
-            if callback is not None:
-                # @todo - handle missing labels gracefully
-                tool_menu.entryconfig(entry_label, command=callback)
+        # Get a handle to the Menu belonging to the MenuButton
+        menubar: ttk.Menubutton = self.tool_menubar
+        menu: tk.Menu = self.nametowidget(menubar.cget("menu"))
+        # Clear existing items
+        menu.delete(0, "end")
+        # Iterate the items to add to the menu
+        for item in items:
+            if item is not None:
+                # If the item is not None, it should be a Tuple contianing a string label and a callback function
+                label, callback = item
+                menu.add_command(font="helvetica 12 bold", label=label, command=callback)
+            else:
+                # Add a separator if the item is None
+                menu.add_separator()
+        # Mark the menubutton as not disabled
+        if len(items) > 0:
+            menubar.configure(state=tk.NORMAL)
 
     def update_littlecanvas2(self, image):
         """Update the image within the littlecanvas2 element - i.e. the chronological graph.
