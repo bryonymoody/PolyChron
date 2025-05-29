@@ -93,12 +93,12 @@ class ModelView(FrameView):
         tool_menu.add_command(
             label="Calibrate multiple projects from project", font="helvetica 12 bold"
         )  #  command=lambda: popupWindow8(self, proj_dir))
-        tool_menu.add_command(
-            label="Calibrate node delete variations (alpha)", font="helvetica 12 bold"
-        )  #  command=lambda: popupWindow9(self, proj_dir))
-        tool_menu.add_command(
-            label="Calibrate important variations (alpha)", font="helvetica 12 bold"
-        )  #  command=lambda: popupWindow10(self, proj_dir))
+        # tool_menu.add_command(
+        #     label="Calibrate node delete variations (alpha)", font="helvetica 12 bold"
+        # )  #  command=lambda: popupWindow9(self, proj_dir))
+        # tool_menu.add_command(
+        #     label="Calibrate important variations (alpha)", font="helvetica 12 bold"
+        # )  #  command=lambda: popupWindow10(self, proj_dir))
         # tool_menu.add_separator()
         self.tool_menubar.place(relx=0.14, rely=0, relwidth=0.1, relheight=0.03)
 

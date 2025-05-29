@@ -127,8 +127,8 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 "Render chronological graph": lambda: self.chronograph_render_wrap(),
                 "Calibrate model": lambda: self.popup_calibrate_model(),
                 "Calibrate multiple projects from project": lambda: self.popup_calibrate_multiple(),
-                "Calibrate node delete variations (alpha)": lambda: self.calibrate_node_delete_variations(),
-                "Calibrate important variations (alpha)": lambda: self.calibrate_important_variations(),
+                # "Calibrate node delete variations (alpha)": lambda: self.calibrate_node_delete_variations(), # see https://github.com/bryonymoody/PolyChron/issues/71
+                # "Calibrate important variations (alpha)": lambda: self.calibrate_important_variations(), # see https://github.com/bryonymoody/PolyChron/issues/72
             }
         )
 
@@ -600,24 +600,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 # self.bind("<Configure>", self.resize) @todo
                 self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
                 self.view.bind_littlecanvas_callback("<Button-3>", self.pre_click)
-
-    def calibrate_node_delete_variations(self) -> None:
-        """Callback function when Tools > Calibrate node delete variations (alpha)
-
-        Formerly popupWindow9
-
-        @todo - popupWindow9 doesn't / didn't have any of it's own tkinter code, so not yet implemented
-        """
-        print("@todo - implement calibrate_node_delete_variations/popupWindow9")
-
-    def calibrate_important_variations(self) -> None:
-        """Callback function when Tools > Calibrate node delete variations (alpha)
-
-        Formerly popupWindow10
-
-        @todo - popupWindow10 doesn't / didn't have any of it's own tkinter code, so not yet implemented
-        """
-        print("@todo - implement calibrate_important_variations/popupWindow10")
 
     def on_data_button(self) -> None:
         """Callback for when the "Data Loaded" button is pressed, which toggles the visibility of which required input files have been parsed or not
