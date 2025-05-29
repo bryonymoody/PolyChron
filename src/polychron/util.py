@@ -1,6 +1,7 @@
 import ast
 import re
-from typing import Any, Dict, List, Set, Tuple
+import time
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import networkx as nx
 import numpy as np
@@ -579,3 +580,63 @@ def edge_label(src: str, dst: str) -> str:
     assert dst is not None
 
     return f"{src} above {dst}"
+
+
+class MonotonicTimer:
+    """A monotonic timer, for capturing execution time for sections of code"""
+
+    __start: Optional[int] = None
+    __stop: Optional[int] = None
+
+    def start(self) -> "MonotonicTimer":
+        """Record the start of the timed period
+
+        Returns:
+            returns itself, so that .start can be chained on the ctor.
+        """
+        self.__start = time.monotonic_ns()
+        self.__stop = None
+        return self
+
+    def stop(self) -> "MonotonicTimer":
+        """Record the end of the timed period
+
+        Returns:
+            returns itself, so that .elapsed/elapsed_ns can be chained on calls to stop.
+
+        Raises:
+            RuntimeError: stop must be called after start"""
+        if self.__start is None:
+            raise RuntimeError("MonotonicTimer.start must be called before MonotonicTimer.stop")
+        self.__stop = time.monotonic_ns()
+        return self
+
+    def elapsed_ns(self) -> int:
+        """Get the elapsed time in nanoseconds
+
+        Timing precision is platform specific, see the time.monotonic_ns docs
+
+        Returns:
+            Elapsed time between the most recent calls to start and stop in nanoseconds
+
+        Raises:
+            RunmtimeError: start() and stop() must have been called before elapsed_ns"""
+        if self.__start is None:
+            raise RuntimeError("MonotonicTimer.start must be called before MonotonicTimer.elapsed_ns")
+        if self.__stop is None:
+            raise RuntimeError("MonotonicTimer.stop must be called before MonotonicTimer.elapsed_ns")
+
+        return self.__stop - self.__start
+
+    def elapsed(self) -> float:
+        """Get the elapsed time in seconds.
+
+        Timing precision is platform specific, see the time.monotonic_ns docs
+
+        Returns:
+            Elapsed time between the most recent calls to start and stop in fractional seconds
+
+        Raises:
+            RunmtimeError: start() and stop() must have been called before elapsed_ns
+        """
+        return self.elapsed_ns() / 1e9

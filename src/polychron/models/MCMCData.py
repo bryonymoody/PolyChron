@@ -6,6 +6,9 @@ from typing import Any, Dict, List, Optional, Tuple, get_type_hints
 
 import pandas as pd
 
+from ..Config import get_config
+from ..util import MonotonicTimer
+
 
 @dataclass
 class MCMCData:
@@ -152,27 +155,37 @@ class MCMCData:
         Todo:
             @todo Would be nicer if phase_df didn't need to be pased in here?
         """
-        import time
-
-        time_start = time.monotonic()
-        print(f"mcmc save {path}")
 
         # Ensure that the parent directory exists
         if path.is_dir():
             try:
-                json_path = path / "polychron_mcmc_data.json"
-                # Get the json representation of the object
-                json_s = self.to_json(pretty=True)
-                print(f"MCMC json_s len: {len(json_s)}")
+                timer_save = MonotonicTimer().start()
 
+                # Get the json representation of the object
+                timer_to_json = MonotonicTimer().start()
+                json_s = self.to_json(pretty=True)
+                timer_to_json.stop()
+
+                timer_json_write = MonotonicTimer().start()
+                json_path = path / "polychron_mcmc_data.json"
                 with open(json_path, "w") as f:
                     f.write(json_s)
+                timer_json_write.stop()
 
+                timer_files = MonotonicTimer().start()
                 # Also save the individual MCMC ouput files into the working directory
                 self.save_results_dataframes(path, phase_df)
+                timer_files.stop()
 
-                time_end = time.monotonic()
-                print(f"MCMC Saving time: {time_end - time_start}")
+                # Stop the timer and report timing if verbose
+                timer_save.stop()
+                if get_config().verbose:
+                    print("Timing - MCMCData.save:")
+                    print(f"  total:      {timer_save.elapsed(): .6f}s")
+                    print(f"  to_json:    {timer_to_json.elapsed(): .6f}s")
+                    print(f"  json_write: {timer_json_write.elapsed(): .6f}s")
+                    print(f"  files:      {timer_files.elapsed(): .6f}s")
+
             except Exception as e:
                 raise Exception(f"@todo - an exeption occurred during MCMC saving:\n {e}")
         else:

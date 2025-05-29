@@ -139,17 +139,13 @@ class Project:
 
         @todo - return value or exception of model does not exist?
         """
-        import time
-
         try:
-            start = time.monotonic()
             # Try and load the model from disk
             model_path = self.path / name
             model = Model.load_from_disk(model_path)
             # If loading succeded (no exceptions thrown) store the model
             self.models[model.name] = model
-            end = time.monotonic()
-            print(f"Elapsed loading model {name}: {end - start: .6f}s")
+
         except Exception as e:
             # @todo - correclty handle any exceptions attempting to load models
             print(f"loading exception @Todo {e}")

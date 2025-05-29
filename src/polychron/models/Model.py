@@ -17,8 +17,9 @@ from networkx.drawing.nx_pydot import write_dot
 from PIL import Image
 
 from ..automated_mcmc_ordering_coupling_copy import run_MCMC
+from ..Config import get_config
 from ..models.MCMCData import MCMCData
-from ..util import node_coords_fromjson, phase_info_func, phase_labels, rank_func, trim
+from ..util import MonotonicTimer, node_coords_fromjson, phase_info_func, phase_labels, rank_func, trim
 from .InterpolationData import InterpolationData
 
 
@@ -378,71 +379,67 @@ class Model:
             @todo - need to ensure that on save, all temp files in the project directory are correct for the saved model & not overwrite the "saved" versions if mutating in gui without saving? On load, images should be regenerated to ensure they match the saved state of the serialised data?
             @todo - delete out of date files on save. I.e. MCMC should be deleted if the model has been mutated?
             @todo - de-duplicate saving things to disk. I.e. full_results_df is included int he MCMCData json file as well as it's own file (but may not be the same data?)
-            @todo - stripout save timing
         """
-        import time
-
-        time_start = time.monotonic()
 
         # Ensure directories requried exist
         if self.create_dirs():
             try:
-                # create the represenation of the model to be saved to disk
+                timer_save = MonotonicTimer().start()
+
+                # create the represenation of the Model to be saved to disk
+                timer_to_json = MonotonicTimer().start()
                 json_s = self.to_json(pretty=True)
-                print(f"json_s len: {len(json_s)}")
+                timer_to_json.stop()
 
-                time_copy_start = time.monotonic()
+                # Save the json representation of this object to disk
+                timer_json_write = MonotonicTimer().start()
+                json_path = self.get_python_only_directory() / "polychron_model.json"
+                with open(json_path, "w") as f:
+                    f.write(json_s)
+                timer_json_write.stop()
 
+                # Create / Copy other files to the correct location
+                timer_files = MonotonicTimer().start()
                 # Save the delete contexts metadata to the working directory (superfluos)
                 self.save_deleted_contexts()
 
                 # Ensure the "saved" versions of files are up to date.
-                # @todo - also ensure the rendered version on disk is current
-                # Esnure chronological graph output files are saved
-                for filename in ["fi_new_chrono.png", "fi_new_chrono.svg", "fi_new_chrono", "testdag_chrono.png"]:
-                    src = self.get_working_directory() / filename
-                    dst = self.get_chronological_graph_directory() / filename
-                    # Only copy the file, if the src exists and is not the same as the dst file
-                    if src.is_file() and (not dst.is_file() or not filecmp.cmp(src, dst, shallow=True)):
-                        shutil.copy2(src, dst)
+                # Prepare a dictionary of per-output location files to copy form the wokring dir.
+                files_to_copy = {
+                    self.get_chronological_graph_directory(): [
+                        "fi_new_chrono.png",
+                        "fi_new_chrono.svg",
+                        "fi_new_chrono",
+                        "testdag_chrono.png",
+                    ],
+                    self.get_stratigraphic_graph_directory(): [
+                        "fi_new.png",
+                        "fi_new.svg",
+                        "fi_new",
+                        "testdag.png",
+                        "deleted_contexts_meta",
+                    ],
+                    self.get_mcmc_results_directory(): ["full_results_df", "key_ref.csv", "context_no.csv"],
+                    self.get_python_only_directory(): ["polychron_mcmc_data.json"],
+                }
+                # Iterate the per output directory files, copying files if they exist and copying is required
+                for dst_dir, filenames in files_to_copy.items():
+                    for filename in filenames:
+                        src = self.get_working_directory() / filename
+                        dst = dst_dir / filename
+                        # Only copy the file, if the src exists and is not the same as the dst file
+                        if src.is_file() and (not dst.is_file() or not filecmp.cmp(src, dst, shallow=True)):
+                            shutil.copy2(src, dst)
+                timer_files.stop()
 
-                # Ensure stratigraphic graph files are saved
-                for filename in ["fi_new.png", "fi_new.svg", "fi_new", "testdag.png", "deleted_contexts_meta"]:
-                    src = self.get_working_directory() / filename
-                    dst = self.get_stratigraphic_graph_directory() / filename
-                    # Only copy the file, if the src exists and is not the same as the dst file
-                    if src.is_file() and (not dst.is_file() or not filecmp.cmp(src, dst, shallow=True)):
-                        shutil.copy2(src, dst)
-
-                # Ensure mcmc results are saved
-                for filename in ["full_results_df", "key_ref.csv", "context_no.csv"]:
-                    src = self.get_working_directory() / filename
-                    dst = self.get_mcmc_results_directory() / filename
-                    # Only copy the file, if the src exists and is not the same as the dst file
-                    if src.is_file() and (not dst.is_file() or not filecmp.cmp(src, dst, shallow=True)):
-                        shutil.copy2(src, dst)
-
-                # Ensure any copyable python_only files are saved
-                for filename in ["polychron_mcmc_data.json"]:
-                    src = self.get_working_directory() / filename
-                    dst = self.get_python_only_directory() / filename
-                    # Only copy the file, if the src exists and is not the same as the dst file
-                    if src.is_file() and (not dst.is_file() or not filecmp.cmp(src, dst, shallow=True)):
-                        shutil.copy2(src, dst)
-
-                # Save the json representation of this object to disk
-                json_path = self.get_python_only_directory() / "polychron_model.json"
-
-                time_copy_end = time.monotonic()
-
-                with open(json_path, "w") as f:
-                    f.write(json_s)
-
-                time_end = time.monotonic()
-                print(f"elapsed_save {time_end - time_start: .6f}s")
-                print(f"  elapsed_tojson {time_copy_start - time_start: .6f}s")
-                print(f"  elapsed_copy {time_copy_end - time_copy_start: .6f}s")
-                print(f"  elapsed_write {time_end - time_copy_end: .6f}s")
+                # Stop the timer and report timing if verbose
+                timer_save.stop()
+                if get_config().verbose:
+                    print("Timing - Model.save:")
+                    print(f"  total:      {timer_save.elapsed(): .6f}s")
+                    print(f"  to_json:    {timer_to_json.elapsed(): .6f}s")
+                    print(f"  json_write: {timer_json_write.elapsed(): .6f}s")
+                    print(f"  files:      {timer_files.elapsed(): .6f}s")
 
             except Exception as e:
                 raise Exception(f"@todo - an exeption occurred during saving:\n {e}")
@@ -477,9 +474,15 @@ class Model:
             # Return a Model instance with just the path and name set, if no json do to load
             return cls(name=path.name, path=path)
 
+        timer_load = MonotonicTimer().start()
+
         # Attempt to open the Model json file, building an instance of Model
         with open(model_json_path, "r") as f:
+            timer_load_json = MonotonicTimer().start()
             data = json.load(f)
+            timer_load_json.stop()
+
+            timer_process = MonotonicTimer().start()
 
             # Raise an excpetion if required keys are missing
             if "polychron_version" not in data:
@@ -560,13 +563,18 @@ class Model:
             # Create an instance of the Model
             model: Model = cls(**model_data)
 
+            timer_process.stop()
+
             # If mcmc has been ran for this model, and the expected mcmc data file exists, load it.
+            timer_mcmc = None
             if model.mcmc_check:
+                timer_mcmc = MonotonicTimer().start()
                 mcmc_data_path = model.get_python_only_directory() / "polychron_mcmc_data.json"
                 if mcmc_data_path.is_file():
                     model.mcmc_data = MCMCData.load_from_disk(mcmc_data_path)
                 else:
                     print(f"Failed to load MCMCData {mcmc_data_path} @todo - exception?.")
+                timer_mcmc.stop()
 
             # Handle non-json loading of files (copy over temp?)
             pass  # @todo
@@ -574,6 +582,16 @@ class Model:
             # Perform any post-loading steps            model.path = path
             # @todo - validate that the name of the model matches the path? Or don't store the name of the model, infer it from the path? (maybe always set it to the name of the model directory, so on disk it's ok until first re-saved)
             # @todo - others
+
+            # Stop the timer and report timing if verbose
+            timer_load.stop()
+            if get_config().verbose:
+                print("Timing - Model.load_from_disk:")
+                print(f"  total:      {timer_load.elapsed(): .6f}s")
+                print(f"  load_json:  {timer_load_json.elapsed(): .6f}s")
+                print(f"  process:    {timer_process.elapsed(): .6f}s")
+                if timer_mcmc is not None:
+                    print(f"  timer_mcmc: {timer_mcmc.elapsed(): .6f}s")
 
             # Return the Model
             return model
