@@ -56,7 +56,7 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
         self.view.bind_hpd_button(lambda: self.on_button_hpd_button())
         self.view.bind_clear_list_button(lambda: self.on_button_clear_list_button())
 
-        # Bind menu callbacks
+        # Build file/view/tool menus with callbacks
         self.view.build_file_menu(
             [
                 None,
