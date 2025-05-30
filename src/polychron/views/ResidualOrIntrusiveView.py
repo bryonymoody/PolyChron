@@ -84,19 +84,19 @@ class ResidualOrIntrusiveView(PopupView):
 
         self.show_image2()
 
-    def set_resid_label_text(self, resid_list: List[str]) -> None:
+    def set_resid_label_text(self, residual_contexts: List[str]) -> None:
         """Update the intrusive list
 
         @todo - check this behaves as intended, it might make a copy?
         """
-        self.resid_label["text"] = str(resid_list).replace("'", "")[1:-1]
+        self.resid_label["text"] = str(residual_contexts).replace("'", "")[1:-1]
 
-    def set_intru_label_text(self, intru_list: List[str]) -> None:
+    def set_intru_label_text(self, intrusive_contexts: List[str]) -> None:
         """Update the intrusive list
 
         @todo - check this behaves as intended, it might make a copy?
         """
-        self.intru_label["text"] = str(intru_list).replace("'", "")[1:-1]
+        self.intru_label["text"] = str(intrusive_contexts).replace("'", "")[1:-1]
 
     def bind_proceed_button(self, callback: Callable[[], Optional[Any]]) -> None:
         """Bind the callback for when the proceed_button is pressed"""

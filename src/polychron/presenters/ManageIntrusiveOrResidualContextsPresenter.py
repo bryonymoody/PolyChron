@@ -22,7 +22,7 @@ class ManageIntrusiveOrResidualContextsPresenter(PopupPresenter[Model]):
         self.view.bind_proceed_button(lambda: self.on_proceed())
 
         # Initialise the view's drop down elements
-        self.view.create_dropdowns(self.model.resid_list, self.model.intru_list)
+        self.view.create_dropdowns(self.model.residual_contexts, self.model.intrusive_contexts)
 
         # Update the view
         self.update_view()
@@ -32,7 +32,7 @@ class ManageIntrusiveOrResidualContextsPresenter(PopupPresenter[Model]):
 
     def on_back(self) -> None:
         """Callback for when the back button is pressed, which closes the popup (and previous popup origianlly)"""
-        # @todo decide / check if this should actualyl close the parent window or not
+        # @todo decide / check if this should actually close the parent window or not
         self.close_view()
 
     def on_proceed(self) -> None:
@@ -42,8 +42,8 @@ class ManageIntrusiveOrResidualContextsPresenter(PopupPresenter[Model]):
         """
 
         # Update the model with the selected values for the intrusive and residual drop downs.
-        self.model.resid_dropdowns = self.view.get_resid_dropdown_selections()
-        self.model.intru_dropdowns = self.view.get_intru_dropdown_selections()
+        self.model.residual_context_types = self.view.get_resid_dropdown_selections()
+        self.model.intrusive_context_types = self.view.get_intru_dropdown_selections()
 
         # Create the group relationship manager
         # @todo - abstract this somewhere else? as this will be duplicated in modelPresenter.resid_check

@@ -234,36 +234,38 @@ class Model:
         @todo - move this a model class for the residual or intrusive page.
     """
 
-    intru_list: List[str] = field(default_factory=list)
+    intrusive_contexts: List[str] = field(default_factory=list)
     """List of intrusive contexts/nodes.
 
-    Formerly PageTwo.intru_list
+    Formerly `PageTwo.intru_list`
 
-    @todo - move this a model class for the residual or intrusive page.
+    Todo:
+        @todo - move this a model class for the residual or intrusive page. It is not used outside of the residual process.
     """
 
-    resid_list: List[str] = field(default_factory=list)
+    residual_contexts: List[str] = field(default_factory=list)
     """List of residual contexts/nodes.
 
-    Formerly PageTwo.resid_list
+    Formerly `PageTwo.resid_list`
 
-    @todo - move this a model class for the residual or intrusive page.
+    Todo:
+        @todo - move this a model class for the residual or intrusive page. It is not used outside of the residual process.
     """
 
-    intru_dropdowns: Dict[str, str] = field(default_factory=dict)
+    intrusive_context_types: Dict[str, str] = field(default_factory=dict)
     """Dict of selected drop down choice for intrusive context/nodes.
 
-    @todo - move this a model class for the residual or intrusive page?
-    @todo - rename?
-    @todo - make this a Dict[str, Enum] or Dict[str, Optional[Literal[]]]? 
+    Todo:
+        @todo - move this a model class for the residual or intrusive page. It is not used outside of the residual process.
+        @todo - make this a Dict[str, Enum] or Dict[str, Optional[Literal[]]]? 
     """
 
-    resid_dropdowns: Dict[str, str] = field(default_factory=dict)
+    residual_context_types: Dict[str, str] = field(default_factory=dict)
     """Dict of selected drop down choice for intrusive context/nodes.
 
-    @todo - move this a model class for the residual or intrusive page?
-    @todo - rename?
-    @todo - make this a Dict[str, Enum] or Dict[str, Optional[Literal[]]]? 
+    Todo:
+        @todo - move this a model class for the residual or intrusive page. It is not used outside of the residual process.
+        @todo - make this a Dict[str, Enum] or Dict[str, Optional[Literal[]]]? 
     """
 
     grouped_rendering: bool = False

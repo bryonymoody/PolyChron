@@ -79,8 +79,8 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
             self.view.set_residual_mode_button_background("light gray")
             self.view.set_intrusive_mode_button_background("light gray")
 
-        self.view.set_intru_label_text(self.model.intru_list)
-        self.view.set_resid_label_text(self.model.resid_list)
+        self.view.set_intru_label_text(self.model.intrusive_contexts)
+        self.view.set_resid_label_text(self.model.residual_contexts)
 
     def set_mode(self, mode: Literal["resid", "intru"]) -> None:
         """Set the current mode, and update the view accordingly.
@@ -172,30 +172,30 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
         node = self.nodecheck(x_scal, y_scal)
         outline = nx.get_node_attributes(self.model.resid_or_intru_dag, "color")
         # changes colour of the node outline to represent: intrustive (green), residual (orange) or none (black)
-        if (node in self.model.resid_list) and (self.mode != "intru"):
-            self.model.resid_list.remove(node)
+        if (node in self.model.residual_contexts) and (self.mode != "intru"):
+            self.model.residual_contexts.remove(node)
             outline[node] = "black"
-        elif (node in self.model.resid_list) and (self.mode == "intru"):
-            self.model.resid_list.remove(node)
+        elif (node in self.model.residual_contexts) and (self.mode == "intru"):
+            self.model.residual_contexts.remove(node)
             outline[node] = "green"
-            self.model.intru_list.append(node)
-        elif (node in self.model.intru_list) and (self.mode != "resid"):
-            self.model.intru_list.remove(node)
+            self.model.intrusive_contexts.append(node)
+        elif (node in self.model.intrusive_contexts) and (self.mode != "resid"):
+            self.model.intrusive_contexts.remove(node)
             outline[node] = "black"
-        elif (node in self.model.intru_list) and (self.mode == "resid"):
-            self.model.intru_list.remove(node)
-            self.model.resid_list.append(node)
+        elif (node in self.model.intrusive_contexts) and (self.mode == "resid"):
+            self.model.intrusive_contexts.remove(node)
+            self.model.residual_contexts.append(node)
             outline[node] = "orange"
-        elif (self.mode == "resid") and (node not in self.model.resid_list):
-            self.model.resid_list.append(node)
+        elif (self.mode == "resid") and (node not in self.model.residual_contexts):
+            self.model.residual_contexts.append(node)
             outline[node] = "orange"
-        elif self.mode == "intru" and (node not in self.model.intru_list):
-            self.model.intru_list.append(node)
+        elif self.mode == "intru" and (node not in self.model.intrusive_contexts):
+            self.model.intrusive_contexts.append(node)
             outline[node] = "green"
 
         # Update the list of intrusive and residual contexts in-place.
-        self.view.set_intru_label_text(self.model.intru_list)
-        self.view.set_resid_label_text(self.model.resid_list)
+        self.view.set_intru_label_text(self.model.intrusive_contexts)
+        self.view.set_resid_label_text(self.model.residual_contexts)
 
         # updates the node outline colour
         nx.set_node_attributes(self.model.resid_or_intru_dag, outline, "color")

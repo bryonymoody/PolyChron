@@ -55,7 +55,7 @@ class ManageIntrusiveOrResidualContextsView(PopupView):
         if callback is not None:
             self.proceed_button.config(command=callback)
 
-    def create_dropdowns(self, resid_list: List[str], intru_list: List[str]) -> None:
+    def create_dropdowns(self, residual_contexts: List[str], intrusive_contexts: List[str]) -> None:
         """Sets up drop down menus for defining what to do with residual or intrusive contexts
 
         Formerly popupWindow4.test
@@ -69,7 +69,7 @@ class ManageIntrusiveOrResidualContextsView(PopupView):
         self.__intru_dropdowns = {}
 
         # Create a label and combobox for each residual node provided
-        for idx, node in enumerate(resid_list):
+        for idx, node in enumerate(residual_contexts):
             # Add a label
             self.__resid_dropdown_labels[node] = ttk.Label(self, text=str(node))
             self.__resid_dropdown_labels[node].grid(column=0, row=idx, padx=30, pady=25)
@@ -80,7 +80,7 @@ class ManageIntrusiveOrResidualContextsView(PopupView):
             self.__resid_dropdowns[node].grid(column=1, row=idx)
 
         # Create a label and combobox for each intrusive node provided
-        for idx, node in enumerate(intru_list):
+        for idx, node in enumerate(intrusive_contexts):
             self.__intru_dropdown_labels[node] = ttk.Label(self, text=str(node))
             self.__intru_dropdown_labels[node].grid(column=21, row=idx, padx=30, pady=25)
             # Adding combobox drop down list

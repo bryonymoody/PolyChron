@@ -76,20 +76,20 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
         self.context_types = ["normal" for _ in self.context_no_unordered]
 
         # checks if contexts are residual or intrusive and if we want to keep them or exclude from modelling
-        for i in self.model.resid_list:
-            if self.model.resid_dropdowns[i] == "Treat as TPQ":
+        for i in self.model.residual_contexts:
+            if self.model.residual_context_types[i] == "Treat as TPQ":
                 self.context_types[np.where(np.array(self.context_no_unordered) == i)[0][0]] = "residual"
-            elif self.model.resid_dropdowns[i] == "Exclude from modelling":
+            elif self.model.residual_context_types[i] == "Exclude from modelling":
                 self.graphcopy = node_del_fixed(self.graphcopy, i)
                 self.context_types.pop(np.where(np.array(self.context_no_unordered) == i)[0][0])
                 self.context_no_unordered.remove(
                     i
-                )  # self.model.resid_list[i]) # @todo - this was incorrect. i is not an index? Should this be an enumerate?
+                )  # self.model.residual_contexts[i]) # @todo - this was incorrect. i is not an index? Should this be an enumerate?
 
-        for j in self.model.intru_list:
-            if self.model.intru_dropdowns[j] == "Treat as TAQ":
+        for j in self.model.intrusive_contexts:
+            if self.model.intrusive_context_types[j] == "Treat as TAQ":
                 self.context_types[np.where(np.array(self.context_no_unordered) == j)[0][0]] = "intrusive"
-            elif self.model.intru_dropdowns[j] == "Exclude from modelling":
+            elif self.model.intrusive_context_types[j] == "Exclude from modelling":
                 self.graphcopy = node_del_fixed(self.graphcopy, j)
                 self.context_types.pop(np.where(np.array(self.context_no_unordered) == j)[0][0])
                 self.context_no_unordered.remove(j)
