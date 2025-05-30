@@ -327,14 +327,18 @@ class Model:
     if mcmc_check is true, it is implied that this has been saved to disk
     """
 
-    node_df: Optional[Tuple[pd.DataFrame, List[float]]] = field(default=None)
-    """A tuple contianing a dataframe of node coordinates within the most recently rendered svg graph, and a list of scaled float values.
+    node_coords_and_scale: Optional[Tuple[pd.DataFrame, List[float]]] = field(default=None)
+    """A tuple containing a dataframe of node coordinates within the most recently rendered svg graph, and a list of 2 floating point numbers which are from svg scale properties.
 
     Set and used for node right-click detection
     
-    Values are returend from node_coords_fromjson
+    Values are returned from `node_coords_fromjson`, or in some cases set to just be the dataframe.
 
-    Previously this was the global variable node_df
+    Formerly `global node_df`
+
+    Todo:
+        - @todo The Model instance of this does not appear to be used, (which might be a bug refactoring from the global), which might account for graphviz issues?
+        - @todo `nodecheck` included `node_df = node_df_con[0]` which would store just the df in the global, but imgrender and imgrender_phase would store the tuple. This will need making consistent
     """
 
     def get_working_directory(self) -> pathlib.Path:
@@ -395,7 +399,7 @@ class Model:
             "stratigraphic_image",  # don't include image handles
             "chronological_image",  # don't include image handles
             "resid_or_intru_strat_image",  # don't include image handles
-            "node_df",  # don't include the the locations of images from svgs?
+            "node_coords_and_scale",  # don't include the the locations of images from svgs?
             "mcmc_data",  # don't include the mcmc_data object, which has been saved elsewhere. @todo include a relative path in it's place?
         ]
         for k, v in self.__dict__.items():
@@ -829,7 +833,7 @@ class Model:
         inp_final = trim(inp)
         inp_final.save(workdir / "testdag.png")
         self.stratigraphic_image = Image.open(workdir / "testdag.png")
-        self.node_df = node_coords_fromjson(self.stratigraphic_dag)
+        self.node_coords_and_scale = node_coords_fromjson(self.stratigraphic_dag)
 
     def __render_strat_graph_phase(self) -> None:
         """Render the stratigraphic graph, with phasing mutating the Model state
@@ -855,7 +859,7 @@ class Model:
         # Call the real .tkraise
         inp.save(workdir / "testdag.png")
         self.stratigraphic_image = Image.open(workdir / "testdag.png")
-        self.node_df = node_coords_fromjson(self.stratigraphic_dag)
+        self.node_coords_and_scale = node_coords_fromjson(self.stratigraphic_dag)
 
     def __render_resid_or_intru_strat_graph(self) -> None:
         """Render the stratigraphic graph mutating the Model state
@@ -879,7 +883,7 @@ class Model:
         inp_final = trim(inp)
         inp_final.save(workdir / "testdag.png")
         self.resid_or_intru_strat_image = Image.open(workdir / "testdag.png")
-        self.node_df = node_coords_fromjson(self.resid_or_intru_strat_graph)
+        self.node_coords_and_scale = node_coords_fromjson(self.resid_or_intru_strat_graph)
 
     def __render_resid_or_intru_strat_graph_phase(self) -> None:
         """Render the stratigraphic graph, with phasing mutating the Model state
@@ -907,7 +911,7 @@ class Model:
         # Call the real .tkraise
         inp.save(workdir / "testdag.png")
         self.resid_or_intru_strat_image = Image.open(workdir / "testdag.png")
-        self.node_df = node_coords_fromjson(self.resid_or_intru_strat_graph)
+        self.node_coords_and_scale = node_coords_fromjson(self.resid_or_intru_strat_graph)
 
     def render_chrono_graph(self) -> None:
         """Render the chronological graph as a PNG and an SVG, mutating the Model state

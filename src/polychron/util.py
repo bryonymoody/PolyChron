@@ -75,7 +75,10 @@ def rank_func(tes, file_content):
 def node_coords_fromjson(graph):
     """Gets coordinates of each node
 
-    @todo - rename this method? it's actually from svg?"""
+    Todo:
+        @todo - rename this method? it's actually from svg?
+        @todo - typehint
+        @todo - the svg generated via nx_pydot here, may differ from the rendered graphviz graph (if/when graphviz is behaving nondeterministally on re-renders of the same graph)?. So only do this once and store it, making this a Model method instead(or only use this through a Model method)"""
     if "pydot" in str(type(graph)):
         graphs = graph
     else:

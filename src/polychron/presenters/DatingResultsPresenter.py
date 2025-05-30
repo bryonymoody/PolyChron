@@ -212,12 +212,16 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
         super().tkraise(aboveThis)
 
     def nodecheck(self, x_current: int, y_current: int) -> str:
-        """returns the node that corresponds to the mouse cooridinates
+        """Returns the node that corresponds to the mouse coordinates
 
-        Formerly PageOne.nodecheck
-        @todo - refactor. This is directly accessing view data (imscale2)
+        Formerly `PageOne.nodecheck`
+
+        Todo:
+            - @todo refactor. This is directly accessing view data (imscale2)
+            - @todo - use None for node_inside rather than "no node"
+            - @todo - use a stored version of the node coordinates, rather than re-generating the svg in node_coords_fromjson (i.e. don't keep re-invoking graphviz)
         """
-        node_inside = "no node"  # @todo use None instead?
+        node_inside = "no node"
 
         model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
