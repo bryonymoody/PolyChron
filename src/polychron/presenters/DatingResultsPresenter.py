@@ -286,7 +286,9 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
                 for i, j in enumerate(list(set(self.results_list))):
                     node = str(j)
                     # @todo - putt this in model?
-                    interval = list(HPD_interval(np.array(model_model.mcmc_data.resultsdict[j][1000:]), lim=lim))
+                    interval = list(
+                        HPD_interval(np.array(model_model.mcmc_data.accept_group_limits[j][1000:]), lim=lim)
+                    )
                     # define headings
                     hpd_str = ""
                     refs = [k for k in range(len(interval)) if k % 2]
@@ -340,7 +342,7 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
 
     def testmenu_add_to_results_list(self) -> None:
         self.view.clear_littlecanvas3(id=True)
-        # ref = np.where(np.array(model_model.mcmc_data.CONTEXT_NO) == self.node)[0][0]
+        # ref = np.where(np.array(model_model.mcmc_data.contexts) == self.node)[0][0]
         if self.node != "no node":
             self.results_list.append(self.node)
 
@@ -359,7 +361,7 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
         self.fig = Figure()
         # self.fig.rc('font', **font)
         LENGTHS = phase_length_finder(
-            self.phase_len_nodes[0], self.phase_len_nodes[1], model_model.mcmc_data.all_results_dict
+            self.phase_len_nodes[0], self.phase_len_nodes[1], model_model.mcmc_data.all_group_limits
         )
         plot1 = self.fig.add_subplot(111)
         plot1.hist(LENGTHS, bins="auto", color="#0504aa", rwidth=1, density=True)
@@ -426,7 +428,7 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
                 plot_index = int(str(n) + str(1) + str(i + 1))
                 plot1 = fig.add_subplot(plot_index)
                 plot1.hist(
-                    model_model.mcmc_data.resultsdict[j],
+                    model_model.mcmc_data.accept_group_limits[j],
                     bins="auto",
                     color="#0504aa",
                     alpha=0.7,
@@ -440,8 +442,8 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
                 nodes = list(nx.topological_sort(model_model.chronological_dag))
                 uplim = nodes[0]
                 lowlim = nodes[-1]
-                min_plot = min(model_model.mcmc_data.resultsdict[uplim])
-                max_plot = max(model_model.mcmc_data.resultsdict[lowlim])
+                min_plot = min(model_model.mcmc_data.accept_group_limits[uplim])
+                max_plot = max(model_model.mcmc_data.accept_group_limits[lowlim])
                 plot1.set_xlim(min_plot, max_plot)
                 # @todo - this assumes regular context labels do not include the leters a or b. Is this true? Updated to  a_/b_ for now.
                 # @todo - abstract this to a function which can be unit tested in isolation of matplotlib.

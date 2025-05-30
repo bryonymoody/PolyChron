@@ -227,15 +227,15 @@ def all_node_info(node_list: List[Any], x_image: List[str], node_info: List[Any]
     return node_info
 
 
-def phase_length_finder(con_1: Any, con_2: Any, resultsdict: Dict[Any, Any]) -> List[Any]:
+def phase_length_finder(con_1: Any, con_2: Any, accept_group_limits: Dict[Any, Any]) -> List[Any]:
     """finding the phase length between any two contexts or phase boundaries
 
     @todo - full docstrings and typehints
     @todo - find a better home
     """
     phase_lengths = []
-    x_3 = resultsdict[con_1]
-    x_4 = resultsdict[con_2]
+    x_3 = accept_group_limits[con_1]
+    x_4 = accept_group_limits[con_2]
     for i in range(len(x_3)):
         phase_lengths.append(np.abs(x_3[i] - x_4[i]))
     un_phase_lens = []

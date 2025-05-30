@@ -59,16 +59,16 @@ class CalibrateModelSelectPresenter(PopupPresenter[ProjectSelection]):
                             # @todo - should this be resetting the mcmc_data?
                             # @todo if/when should mcmc_check and mcmc_data be reset more broadly? I.e. when the contexts are changed should it be cleared?
                             (
-                                model.CONTEXT_NO,
-                                model.mcmc_data.ACCEPT,
-                                model.mcmc_data.PHI_ACCEPT,
+                                model.mcmc_data.contexts,
+                                model.mcmc_data.accept_samples_context,
+                                model.mcmc_data.accept_samples_phi,
                                 model.phi_ref,
-                                model.mcmc_data.A,
-                                model.mcmc_data.P,
-                                model.mcmc_data.ALL_SAMPS_CONT,
-                                model.mcmc_data.ALL_SAMPS_PHI,
-                                model.mcmc_data.resultsdict,
-                                model.mcmc_data.all_results_dict,
+                                model.mcmc_data.a,
+                                model.mcmc_data.p,
+                                model.mcmc_data.all_samples_context,
+                                model.mcmc_data.all_samples_phi,
+                                model.mcmc_data.accept_group_limits,
+                                model.mcmc_data.all_group_limits,
                             ) = model.MCMC_func()
                             # Update the model state to show it as having been calibrated
                             model.mcmc_check = True

@@ -1084,7 +1084,7 @@ class Model:
         calibration.load()
 
         # @todo run_mcmc takes args, and also returns them, even when pass by ref?
-        CONTEXT_NO, ACCEPT, PHI_ACCEPT, phi_ref, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = run_MCMC(
+        context_no, accept, phi_accept, phi_ref, A, P, all_samples_context, all_samples_phi = run_MCMC(
             calibration.get_dataframe(),
             strat_vec,
             rcd_est,
@@ -1097,21 +1097,21 @@ class Model:
             topo_sort,
             self.context_types,
         )
-        _, resultsdict, all_results_dict = phase_labels(phi_ref, self.post_group, PHI_ACCEPT, ALL_SAMPS_PHI)
-        for i, j in enumerate(CONTEXT_NO):
-            resultsdict[j] = ACCEPT[i]
-        for k, l in enumerate(CONTEXT_NO):
-            all_results_dict[l] = ALL_SAMPS_CONT[k]
+        _, accept_group_limits, all_group_limits = phase_labels(phi_ref, self.post_group, phi_accept, all_samples_phi)
+        for i, j in enumerate(context_no):
+            accept_group_limits[j] = accept[i]
+        for k, l in enumerate(context_no):
+            all_group_limits[l] = all_samples_context[k]
 
         return (
-            CONTEXT_NO,
-            ACCEPT,
-            PHI_ACCEPT,
+            context_no,
+            accept,
+            phi_accept,
             phi_ref,
             A,
             P,
-            ALL_SAMPS_CONT,
-            ALL_SAMPS_PHI,
-            resultsdict,
-            all_results_dict,
+            all_samples_context,
+            all_samples_phi,
+            accept_group_limits,
+            all_group_limits,
         )

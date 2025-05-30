@@ -64,20 +64,20 @@ class MCMCProgressPresenter(PopupPresenter[Model]):
         old_stdout = sys.stdout
         sys.stdout = StdoutRedirector(self.view.output_label, self.view.progress_bar)
         # Run the MCMC calibration
-        self.model.mcmc_data.ACCEPT = [[]]  # @Todo - reset teh full mcmc data instance?
-        while min([len(i) for i in self.model.mcmc_data.ACCEPT]) < 50000:
+        self.model.mcmc_data.accept_samples_context = [[]]  # @Todo - reset the full mcmc data instance?
+        while min([len(i) for i in self.model.mcmc_data.accept_samples_context]) < 50000:
             # @todo - as all of these get stored in the model, why not just make mcmc_func mutate itself?
             (
-                self.model.mcmc_data.CONTEXT_NO,
-                self.model.mcmc_data.ACCEPT,
-                self.model.mcmc_data.PHI_ACCEPT,
+                self.model.mcmc_data.contexts,
+                self.model.mcmc_data.accept_samples_context,
+                self.model.mcmc_data.accept_samples_phi,
                 self.model.phi_ref,
-                self.model.mcmc_data.A,
-                self.model.mcmc_data.P,
-                self.model.mcmc_data.ALL_SAMPS_CONT,
-                self.model.mcmc_data.ALL_SAMPS_PHI,
-                self.model.mcmc_data.resultsdict,
-                self.model.mcmc_data.all_results_dict,
+                self.model.mcmc_data.a,
+                self.model.mcmc_data.p,
+                self.model.mcmc_data.all_samples_context,
+                self.model.mcmc_data.all_samples_phi,
+                self.model.mcmc_data.accept_group_limits,
+                self.model.mcmc_data.all_group_limits,
             ) = self.model.MCMC_func()
 
         # Restore the original stdout

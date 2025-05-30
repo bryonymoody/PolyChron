@@ -17,70 +17,87 @@ class MCMCData:
     This enables lighter-weight "save" behaviour
 
     Todo:
-        @todo - Rename variables to follow some convention. This will impact saving/loading so should be done sooner rather than later
         @todo - Better docstrings.
         @todo - more precise type-hints
     """
 
-    CONTEXT_NO: List[Any] = field(default_factory=list)
-    """List of contexts? passed in to and returned by run_MCMC. 
-
-    In topological order
-    @todo document it's contents
-    @todo typehint
-    @todo try and improve when it is set / read?"""
-
-    ACCEPT: List[List[Any]] = field(default_factory=lambda: [[]])
-    """An optional value returned from MCMC_func.
-    A list of lists, where the minimum inner list length is used to dermine if more rounds of MCMC are required?
-    
-    Formerly StartPage.ACCEPT
-    @todo - rename, rehome, typehint, docstring, maybe don't even store?
+    contexts: List[str] = field(default_factory=list)
+    """List of contexts passed in to and returned by run_MCMC, stored in topological order
     """
 
-    PHI_ACCEPT: Optional[Any] = field(default=None)
-    """An optional value returned from MCMC_func. Appears unused.
-    
-    Formerly StartPage.PHI_ACCEPT
-    @todo - rename, rehome, typehint, docstring, maybe don't even store?
+    accept_samples_context: List[List[float]] = field(default_factory=lambda: [[]])
+    """A list of accepted samples from the MCMC process. 
+
+    The number of accepted samples is important.
+        
+    Formerly `StartPage.ACCEPT`
     """
 
-    A: int = field(default=0)
-    """An integer set as a result from MCMC_func. Never actually read so doesn't need storing?
+    accept_samples_phi: Optional[Any] = field(default=None)
+    """Accepted group boundaries from MCMC simulation?
 
-    Formerly StartPage.A
-    @todo - rename, rehome, maybe don't even store?"""
-
-    P: int = field(default=0)
-    """An integer set as a result from MCMC_func. Never actually read so doesn't need storing?
-
-    Formerly StartPage.P
-    @todo - rename, rehome, maybe don't even store?"""
-
-    ALL_SAMPS_CONT: Optional[Any] = field(default=None)
-    """An optional value, initailised to None which is a MCMC_func ouptut, that is not used anywhere?
-
-    Formerly StartPage.ALL_SAMPS_CONT
-    @todo - rename, rehome, typehint, maybe don't even store?"""
-
-    ALL_SAMPS_PHI: Optional[Any] = field(default=None)
-    """An optional value, initailised to None which is a MCMC_func ouptut, that is not used anywhere?
-
-    Formerly StartPage.ALL_SAMPS_PHI
-    @todo - rename, rehome, typehint, maybe don't even store?"""
-
-    resultsdict: Dict[Any, Any] = field(default_factory=dict)
-    """A dictionary of results? returned by MCMC_func, which is used for plotting the mcmc results.
     
-    Formerly StartPage.resultsdict
-    @todo - rename, rehome, typehint, docstring
+    Formerly `StartPage.PHI_ACCEPT`
+
+    Todo:
+        - @todo - actually rename this?
+        - @todo - better docstring
+        - @todo - Only set, never read so could be omitted? & not saved?
     """
 
-    all_results_dict: Dict[Any, Any] = field(default_factory=dict)
-    """A dictionary of all_results? returned by MCMC_func, which is used to find the phase lenghts during node finding on the results page.
+    a: int = field(default=0)
+    """A limit for the calbp range considered during MCMC to reduce the range?
+
+    Formerly `StartPage.A`
     
-    Formerly StartPage.all_results_dict
-    @todo - rename, rehome, typehint, docstring
+    Todo:
+        - @todo - this is only set, never read, so no need to store this?
+    """
+
+    p: int = field(default=0)
+    """The other limit for the calbp range considered during MCMC to reduce the range?
+
+    Formerly `StartPage.P`
+    
+    Todo:
+        - @todo - this is only set, never read, so no need to store this?"""
+
+    all_samples_context: Optional[List[List[float]]] = field(default=None)
+    """A list of lists containing all samples for contexts from MCMC, including rejected samples. 
+
+    I.e. accept_samples_context is a subset of this.
+
+    Formerly `StartPage.ALL_SAMPS_CONT`
+    """
+
+    all_samples_phi: Optional[List[List[float]]] = field(default=None)
+    """A list of lists, containing all samples for group boundaries from MCMC, including rejected samples.
+
+    I.e. accept_samples_phi is a subset of this.
+
+    Formerly `StartPage.ALL_SAMPS_PHI`
+    """
+
+    accept_group_limits: Dict[str, List[float]] = field(default_factory=dict)
+    """A dictionary of group limits from accepted phi samples. Produced in `phase_labels`. 
+
+    Formerly `StartPage.resultsdict`
+
+    Todo:
+        - @todo better docstring
+        - @todo better name? 
+        - @todo - not sure this name is ideal, includes more than just phase boundaries?
+    """
+
+    all_group_limits: Dict[Any, Any] = field(default_factory=dict)
+    """A dictionary of all_results? returned by MCMC_func, which is used to find the phase lengths during node finding on the results page.
+    
+    Formerly `StartPage.all_group_limits`
+
+    Todo:
+        - @todo better docstring
+        - @todo better name? 
+        - @todo - not sure this name is ideal, includes more than just phase boundaries?
     """
 
     def save_results_dataframes(self, path: pathlib.Path, group_df: pd.DataFrame) -> None:
@@ -105,17 +122,17 @@ class MCMCData:
         """
 
         df = pd.DataFrame()
-        for i in self.all_results_dict.keys():
-            df[i] = self.all_results_dict[i][10000:]
+        for i in self.all_group_limits.keys():
+            df[i] = self.all_group_limits[i][10000:]
         full_results_df_path = path / "full_results_df"
         df.to_csv(full_results_df_path)
 
         # List containing the the group for each context, in order of topologically sorted contexts.
-        key_ref = [list(group_df["Group"])[list(group_df["context"]).index(i)] for i in self.CONTEXT_NO]
+        key_ref = [list(group_df["Group"])[list(group_df["context"]).index(i)] for i in self.contexts]
         df1 = pd.DataFrame(key_ref)
         df1.to_csv(path / "key_ref.csv")
 
-        df2 = pd.DataFrame(self.CONTEXT_NO)
+        df2 = pd.DataFrame(self.contexts)
         df2.to_csv(path / "context_no.csv")
 
     def to_json(self, pretty: bool = False):
