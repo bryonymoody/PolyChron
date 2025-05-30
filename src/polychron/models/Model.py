@@ -347,9 +347,11 @@ class Model:
     def get_working_directory(self) -> pathlib.Path:
         """Get the working directory to be used for dynamically created files
 
-        This allows the "saved" version of the model to differe from the version currently being worked on. I.e. the rendered chronological graph used in the UI as changes are made can be different to the version from when save the model was last saved.
+        This allows the "saved" version of the model to different from the version currently being worked on. I.e. the rendered chronological graph used in the UI as changes are made can be different to the version from when save the model was last saved.
 
-        @todo - consider the file size implications of this (i.e. we have everything twice).
+        Todo:
+            - @todo - consider the file size implications of this (i.e. we have everything twice).
+            - @todo Make this @property? (I.e. read only member variable)
         """
         return self.path / "workdir"
 
@@ -359,6 +361,8 @@ class Model:
         Returns:
             The path to the `chronological_graph` directory for this model
 
+        Todo:
+            - @todo Make this @property? (I.e. read only member variable)
         """
         return self.path / "chronological_graph"
 
@@ -368,6 +372,8 @@ class Model:
         Returns:
             The path to the `stratigraphic_graph` directory for this model
 
+        Todo:
+            - @todo Make this @property? (I.e. read only member variable)
         """
         return self.path / "stratigraphic_graph"
 
@@ -377,6 +383,8 @@ class Model:
         Returns:
             The path to the `mcmc_results` directory for this model
 
+        Todo:
+            - @todo Make this @property? (I.e. read only member variable)
         """
         return self.path / "mcmc_results"
 
@@ -386,6 +394,8 @@ class Model:
         Returns:
             The path to the `python_only` directory for this model
 
+        Todo:
+            - @todo Make this @property? (I.e. read only member variable)
         """
         return self.path / "python_only"
 
@@ -403,10 +413,10 @@ class Model:
             "chronological_image",  # don't include image handles
             "resid_or_intru_dag",  # no need to save the residual or intrusive dag, it's ephemeral
             "resid_or_intru_image",  # don't include image handles
-            "intrusive_contexts", # not needed, ephemeral
-            "intrusive_context_types", # not needed, ephemeral
-            "residual_contexts", # not needed, ephemeral
-            "residual_context_types", # not needed, ephemeral
+            "intrusive_contexts",  # not needed, ephemeral
+            "intrusive_context_types",  # not needed, ephemeral
+            "residual_contexts",  # not needed, ephemeral
+            "residual_context_types",  # not needed, ephemeral
             "node_coords_and_scale",  # don't include the the locations of images from svgs?
             "mcmc_data",  # don't include the mcmc_data object, which has been saved elsewhere. @todo include a relative path in it's place?
         ]
@@ -1022,7 +1032,7 @@ class Model:
         topo_sort = [x for x in topo if (x not in self.removed_nodes_tracker) and (x in context_no)]
         topo_sort.reverse()
         context_no = topo_sort
-        # Get a list contaiing the group per context (in reverse topological order)
+        # Get a list containing the group per context (in reverse topological order)
         key_ref = [list(self.group_df["Group"])[list(self.group_df["context"]).index(i)] for i in context_no]
         self.context_types = [self.context_types[list(self.context_no_unordered).index(i)] for i in topo_sort]
         strat_vec = []
@@ -1047,6 +1057,7 @@ class Model:
             int(list(self.radiocarbon_df["error"])[list(self.radiocarbon_df["context"]).index(i)]) for i in context_no
         ]
         # Write calibration inputs to disk in csv. @todo make optional?
+        # @todo - topo_sort and context_no are the same here? No need for both as inputs.
         input_1 = [
             strat_vec,
             rcd_est,
