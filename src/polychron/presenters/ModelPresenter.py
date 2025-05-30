@@ -581,22 +581,22 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         self.mediator.close_window("exit")
 
     def phasing(self) -> None:
-        """Callback function for View > Display Stratigraphic diagram in phases
+        """Callback function for View > Display Stratigraphic diagram in phases (groups)
 
         Runs image render function with phases on seperate levels
 
-        Formerly StartPage.phasing
+        Formerly `StartPage.phasing`
 
-        @todo - Make this toggle on and off, rather than just on.
-
-        @todo - need a test case which actually renders differntly when in phasing mode.
+        Todo:
+            @todo - Make this toggle on and off, rather than just on.
+            @todo - need a test case which actually renders differntly when in phasing mode (a not fully conencted graph, with contexts in differnte groups)
         """
 
         # Render the strat graph in pahse mode, if there is one to render, updating the model and view
         model_model: Optional[Model] = self.model.current_model
         if model_model is not None:
             # Store a flag marking this as being enabled. Should this be model data? @todo
-            model_model.phase_true = True
+            model_model.grouped_rendering = True
 
             if model_model.stratigraphic_dag is not None:
                 model_model.render_strat_graph()
@@ -1238,7 +1238,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         workdir = model_model.get_working_directory()
         workdir.mkdir(parents=True, exist_ok=True)  # @todo - shouldnt be neccessary
 
-        if model_model.phase_true:
+        if model_model.grouped_rendering:
             (graph,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")
             node_df_con = node_coords_fromjson(graph)
         else:

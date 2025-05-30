@@ -211,13 +211,14 @@ class Model:
     """
 
     resid_or_intru_strat_graph: Optional[nx.DiGraph] = field(default=None)
-    """Copy of strat_graph for the residual or intrusive window
+    """Copy of straigraphic_graph for the residual or intrusive window
 
     This is mutated to show which nodes have been marked as residual or intrusive.
 
-    Formerly PageTwo.graphcopy
+    Formerly `PageTwo.graphcopy`
 
-    @todo - move this a model class for the residual or intrusive page.
+    Todo:
+        @todo - move this a model class for the residual or intrusive page.
     """
 
     resid_or_intru_strat_image: Optional[Image.Image] = field(default=None)
@@ -225,9 +226,10 @@ class Model:
 
     A handle to this needs to be maintained to avoid garbage collection
 
-    Formerly PageTwo.image
+    Formerly `PageTwo.image`
 
-    @todo - move this a model class for the residual or intrusive page.
+    Todo:
+        @todo - move this a model class for the residual or intrusive page.
     """
 
     intru_list: List[str] = field(default_factory=list)
@@ -262,11 +264,10 @@ class Model:
     @todo - make this a Dict[str, Enum] or Dict[str, Optional[Literal[]]]? 
     """
 
-    phase_true: bool = False
-    """If stratigraphic diagrams should be rendered in phases or not
-    
-    @todo - rename
-    @todo - initalse these variables with values from the model on load?
+    grouped_rendering: bool = False
+    """Flag indicating that the graphs should be rendered in grouped rendering mode
+
+    Previously `global phase_true`
     """
 
     CONT_TYPE: List[Literal["normal", "residual", "intrusive"]] = field(default_factory=list)
@@ -778,7 +779,7 @@ class Model:
         Todo:
             @todo - de-duplicate"""
         # Call the appropraite render_strat method, depending if the model is set up to render in phases or not.
-        if self.phase_true:
+        if self.grouped_rendering:
             self.__render_strat_graph_phase()
         else:
             self.__render_strat_graph()
@@ -791,7 +792,7 @@ class Model:
         @todo - don't return?
         @todo - de-duplicate"""
         # Call the appropraite render_strat method, depending if the model is set up to render in phases or not.
-        if self.phase_true:
+        if self.grouped_rendering:
             self.__render_resid_or_intru_strat_graph_phase()
         else:
             self.__render_resid_or_intru_strat_graph()
