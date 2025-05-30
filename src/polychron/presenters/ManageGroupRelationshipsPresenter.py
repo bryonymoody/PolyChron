@@ -40,7 +40,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
         self.graphcopy = copy.deepcopy(self.model.stratigraphic_dag)
         """A copt of the model's stratigraphic graph for mutation in this process. @todo make it another Model member?"""
 
-        # @todo - these should belong to a separate model object, that gets copied into the Model at the end? 
+        # @todo - these should belong to a separate model object, that gets copied into the Model at the end?
         # @todo - need to think about cases where go back should restore the state of Model in general?
         # self.context_types = None
         self.prev_group = []
