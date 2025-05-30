@@ -303,11 +303,14 @@ class Model:
     """
 
     phi_ref: List[str] = field(default_factory=list)
-    """Ordered list of context labels.
+    """Ordered list of groups, from oldest to youngest.
+        
+    Formerly `StartPage.phi_ref`
+        
+    Todo:
+        - @todo . Decide what to rename this to (ASAP)
     
-    @todo - ask bryony for a better description
-    
-    Formerly StartPage.PHI_REF"""
+    """
 
     removed_nodes_tracker: List[str] = field(default_factory=list)
     """List of nodes (contexts) for which there was insufficient node or group information, and so been removed during group relationship management. 
@@ -1061,7 +1064,7 @@ class Model:
         calibration.load()
 
         # @todo run_mcmc takes args, and also returns them, even when pass by ref?
-        CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = run_MCMC(
+        CONTEXT_NO, ACCEPT, PHI_ACCEPT, phi_ref, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI = run_MCMC(
             calibration.get_dataframe(),
             strat_vec,
             rcd_est,
@@ -1074,7 +1077,7 @@ class Model:
             topo_sort,
             self.context_types,
         )
-        _, resultsdict, all_results_dict = phase_labels(PHI_REF, self.post_group, PHI_ACCEPT, ALL_SAMPS_PHI)
+        _, resultsdict, all_results_dict = phase_labels(phi_ref, self.post_group, PHI_ACCEPT, ALL_SAMPS_PHI)
         for i, j in enumerate(CONTEXT_NO):
             resultsdict[j] = ACCEPT[i]
         for k, l in enumerate(CONTEXT_NO):
@@ -1084,7 +1087,7 @@ class Model:
             CONTEXT_NO,
             ACCEPT,
             PHI_ACCEPT,
-            PHI_REF,
+            phi_ref,
             A,
             P,
             ALL_SAMPS_CONT,

@@ -40,8 +40,8 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
         self.graphcopy = copy.deepcopy(self.model.stratigraphic_dag)
         """A copt of the model's stratigraphic graph for mutation in this process. @todo make it another Model member?"""
 
-        # @todo - these probably all belong in Model? or at least a copy needs to go into the Model eventually.
-        # @todo - need to thinkabotu cases where go back should restore the state of Model in general?
+        # @todo - these should belong to a separate model object, that gets copied into the Model at the end? 
+        # @todo - need to think about cases where go back should restore the state of Model in general?
         # self.context_types = None
         self.prev_group = []
         self.post_group = []
@@ -213,7 +213,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
 
         self.prev_group = ["start"]
         self.post_group = []
-        phase_list = self.step_1[2]
+        group_list = self.step_1[2]
         if len(self.step_1[0][1][3]) != 0:
             self.graphcopy, self.phi_ref, self.null_phases = chrono_edge_add(
                 self.graphcopy,
@@ -233,7 +233,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
         else:
             self.phi_ref = list(self.step_1[0][1][2])
         self.post_group.append("end")
-        del_groups = [i for i in self.phi_ref if i not in phase_list]
+        del_groups = [i for i in self.phi_ref if i not in group_list]
         ref_list = []
         for i in del_groups:
             ref = np.where(np.array(self.phi_ref) == i)[0][0]
