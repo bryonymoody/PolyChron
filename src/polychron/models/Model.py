@@ -403,6 +403,10 @@ class Model:
             "chronological_image",  # don't include image handles
             "resid_or_intru_dag",  # no need to save the residual or intrusive dag, it's ephemeral
             "resid_or_intru_image",  # don't include image handles
+            "intrusive_contexts", # not needed, ephemeral
+            "intrusive_context_types", # not needed, ephemeral
+            "residual_contexts", # not needed, ephemeral
+            "residual_context_types", # not needed, ephemeral
             "node_coords_and_scale",  # don't include the the locations of images from svgs?
             "mcmc_data",  # don't include the mcmc_data object, which has been saved elsewhere. @todo include a relative path in it's place?
         ]
