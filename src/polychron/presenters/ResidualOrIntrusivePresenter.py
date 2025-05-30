@@ -46,9 +46,9 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
         # Bind canvas/graph interaction. @todo lambdas?
         self.view.bind_graphcanvas_events(self.on_wheel2, self.resid_node_click, self.move_from2, self.move_to2)
 
-        # @todo - this could belong to a presenter sspecific model?
+        # @todo - this could belong to a presenter specific model?
         # @todo load_graph should only be called once, though this block could/should be abstracted a little.
-        if self.model.strat_graph is not None:
+        if self.model.stratigraphic_dag is not None:
             self.load_graph()  # this mutates the model
             # @todo - abstract some of this into a view method.
             self.view.imscale2 = min(921 / self.view.image2.size[0], 702 / self.view.image2.size[1])
@@ -257,7 +257,7 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
         @todo - this doesn't need to return and set the model property directly really."""
         # loads start page so we get get variables from that class
         # startpage = self.controller.get_page('StartPage')
-        self.model.resid_or_intru_strat_graph = copy.deepcopy(self.model.strat_graph)
+        self.model.resid_or_intru_strat_graph = copy.deepcopy(self.model.stratigraphic_dag)
         datadict = nx.get_node_attributes(self.model.resid_or_intru_strat_graph, "Determination")
         nodes = self.model.resid_or_intru_strat_graph.nodes()
         node_del_tracker = []

@@ -37,7 +37,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
         self.post_dict = {}
         self.menudict = {}  # aka phasedict?
 
-        self.graphcopy = copy.deepcopy(self.model.strat_graph)
+        self.graphcopy = copy.deepcopy(self.model.stratigraphic_dag)
         """A copt of the model's stratigraphic graph for mutation in this process. @todo make it another Model member?"""
 
         # @todo - these probably all bellong in Model? or atleast a copy needs to go into the Model eventually.
@@ -69,7 +69,9 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
             self.graphcopy = node_del_fixed(self.graphcopy, j)
 
         # sets up a context list
-        self.context_no_unordered = [x for x in list(self.model.strat_graph.nodes()) if x not in self.node_del_tracker]
+        self.context_no_unordered = [
+            x for x in list(self.model.stratigraphic_dag.nodes()) if x not in self.node_del_tracker
+        ]
         # set up context types
         self.CONT_TYPE = ["normal" for _ in self.context_no_unordered]
 

@@ -10,7 +10,7 @@ import yaml
 @dataclasses.dataclass
 class Config:
     """A dataclass representing user configuration
-    
+
     Todo:
         @todo - handle relative user provided paths (and home/env vars here?) via @property and @projects_directory.setter? although ideally a save would not include the expansion"""
 

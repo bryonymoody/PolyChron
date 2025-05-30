@@ -169,10 +169,10 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             return
 
         # Render the image if possible
-        if model_model.strat_df is not None:
+        if model_model.stratigraphic_df is not None:
             model_model.render_strat_graph()
             # Update the view
-            self.view.update_littlecanvas(model_model.strat_image)
+            self.view.update_littlecanvas(model_model.stratigraphic_image)
             # self.bind("<Configure>", self.resize) @todo
             self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
             self.view.bind_littlecanvas_callback("<Button-3>", self.pre_click)
@@ -187,7 +187,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 self.view.show_image2()
 
         # Make sure that the check marks are up to date
-        if model_model.strat_df is not None:
+        if model_model.stratigraphic_df is not None:
             self.strat_check = True
         if model_model.date_df is not None:
             self.date_check = True
@@ -383,14 +383,14 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             model_model: Optional[Model] = self.model.current_model
 
             # Store the path, marking that the most rencent input was a .dot/gv file
-            model_model.set_strat_dot_file_input(file.name)
+            model_model.set_stratigraphic_graphviz_file(file.name)
 
             # @todo polychron 0.1 does not mark the strat as loaded in this case
             # self.strat_check = True
             # Update the check list
             # self.check_list_gen()
 
-            model_model.strat_graph = nx.DiGraph(imagefunc(file.name), graph_attr={"splines": "ortho"})
+            model_model.stratigraphic_dag = nx.DiGraph(imagefunc(file.name), graph_attr={"splines": "ortho"})
 
             # Render the image in phases or not
             model_model.render_strat_graph()
@@ -400,7 +400,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             model_model.delnodes = []
 
             # Update the view and any keybindings
-            self.view.update_littlecanvas(model_model.strat_image)
+            self.view.update_littlecanvas(model_model.stratigraphic_image)
             # self.bind("<Configure>", self.resize) @todo
             self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
             self.view.bind_littlecanvas_callback("<Button-3>", self.pre_click)
@@ -428,7 +428,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 load_it = self.file_popup(df)
                 if load_it == "load":
                     # update the model with the dataframe, perofrming post processing, producing the graph
-                    model_model.set_strat_df(df)
+                    model_model.set_stratigraphic_df(df)
                     tk.messagebox.showinfo("Success", "Stratigraphic data loaded")
                     # Mark the strat file as loaded @todo this can just be implicit from the model's state
                     self.strat_check = True
@@ -442,7 +442,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                     model_model.delnodes = []
 
                     # Update the view and any keybindings
-                    self.view.update_littlecanvas(model_model.strat_image)
+                    self.view.update_littlecanvas(model_model.stratigraphic_image)
                     # self.bind("<Configure>", self.resize) @todo
                     self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
                     self.view.bind_littlecanvas_callback("<Button-3>", self.pre_click)
@@ -564,7 +564,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 # Render the image in phases or not
                 model_model.render_strat_graph()
                 # Update the view, showing the new image
-                self.view.update_littlecanvas(model_model.strat_image)
+                self.view.update_littlecanvas(model_model.stratigraphic_image)
                 # self.bind("<Configure>", self.resize) @todo
                 self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
                 self.view.bind_littlecanvas_callback("<Button-3>", self.pre_click)
@@ -595,10 +595,10 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             # Store a flag marking this as being enabled. Should this be model data? @todo
             model_model.phase_true = True
 
-            if model_model.strat_graph is not None:
+            if model_model.stratigraphic_dag is not None:
                 model_model.render_strat_graph()
                 # Update the rendered image in the canvas
-                self.view.update_littlecanvas(model_model.strat_image)
+                self.view.update_littlecanvas(model_model.stratigraphic_image)
                 # self.bind("<Configure>", self.resize) @todo
                 self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
                 self.view.bind_littlecanvas_callback("<Button-3>", self.pre_click)
@@ -661,7 +661,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         # Update the image in the canvas
         model_model.render_strat_graph()
         # Should be covered by update_littlecanvas
-        self.view.update_littlecanvas(model_model.strat_image)
+        self.view.update_littlecanvas(model_model.stratigraphic_image)
         self.view.show_image()
         # Reset the variable used by the test action. This doesn't appear to actually set the title of the sub-menu
         self.view.set_testmenu_selection("Node Action")
@@ -688,7 +688,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 if answer == "yes":
                     self.save_as_new_model()
                 # self.littlecanvas2.delete("all") # @todo
-            model_model.strat_graph = node_del_fixed(model_model.strat_graph, self.node)
+            model_model.stratigraphic_dag = node_del_fixed(model_model.stratigraphic_dag, self.node)
             nodedel_reason = self.node_del_popup(self.node)
             model_model.record_deleted_node(self.node, nodedel_reason)
             self.view.append_deleted_node(self.node, nodedel_reason)
@@ -715,7 +715,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         popup_presenter.view.lift()
         self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
         self.node = popup_data["value"]
-        model_model.strat_graph.add_node(
+        model_model.stratigraphic_dag.add_node(
             self.node, shape="box", fontsize="30.0", fontname="helvetica", penwidth="1.0"
         )  # @todo - abstract this into the model class
 
@@ -745,9 +745,9 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         edge_src = self.edge_nodes[0]
         edge_dst = self.edge_nodes[1]
         # Check in the first direction
-        if not model_model.strat_graph.has_edge(edge_src, edge_dst):
+        if not model_model.stratigraphic_dag.has_edge(edge_src, edge_dst):
             # If the reverse exists, update the src/dst pair
-            if model_model.strat_graph.has_edge(edge_dst, edge_src):
+            if model_model.stratigraphic_dag.has_edge(edge_dst, edge_src):
                 edge_src, edge_dst = edge_dst, edge_src  # swap the variables via a tuple swap
             else:
                 # If the edge does not exist in either direction, report the error and return.
@@ -765,7 +765,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         # Remove the edge, updating the model and the view.
         # This no longer needs to be attempted in either direction, or in a try catch really.
         # @todo refactor this into a method on the models.Model
-        model_model.strat_graph.remove_edge(edge_src, edge_dst)
+        model_model.stratigraphic_dag.remove_edge(edge_src, edge_dst)
         model_model.record_deleted_edge(edge_src, edge_dst, reason)
         self.view.append_deleted_edge(edge_label(edge_src, edge_dst), reason)
 
@@ -826,7 +826,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             )
             print(f"@todo - answer ({answer}) not used in this case.")  # @todo
         self.comb_nodes = np.append(self.comb_nodes, self.node)
-        strat_graph_temp = nx.contracted_nodes(model_model.strat_graph, self.comb_nodes[0], self.comb_nodes[1])
+        strat_graph_temp = nx.contracted_nodes(model_model.stratigraphic_dag, self.comb_nodes[0], self.comb_nodes[1])
         x_nod = list(strat_graph_temp)
         newnode = str(self.comb_nodes[0]) + " = " + str(self.comb_nodes[1])
         y_nod = [newnode if i == self.comb_nodes[0] else i for i in x_nod]
@@ -836,7 +836,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             self.graph_check = nx.transitive_reduction(
                 strat_graph_temp
             )  # @todo - this assigns but never uses it. double check
-            model_model.strat_graph = strat_graph_temp
+            model_model.stratigraphic_dag = strat_graph_temp
         except Exception as e:
             if e.__class__.__name__ == "NetworkXError":  # @todo improve
                 tk.messagebox.showinfo("Error!", "This creates a cycle so you cannot equate these contexts")
@@ -878,7 +878,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
 
         stratinfo = self.stratfunc(self.node)
         metadict2 = {}
-        metadict = model_model.strat_graph.nodes()[str(self.node)]
+        metadict = model_model.stratigraphic_dag.nodes()[str(self.node)]
         metadict2["Contexts above"] = [stratinfo[0]]
         metadict2["Contexts below"] = [stratinfo[1]]
         meta1 = pd.DataFrame.from_dict(metadict, orient="index")
@@ -934,10 +934,10 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         self.view.bind_littlecanvas_callback("<Button-1>", self.on_left)
         # Show the right click menu
         model_model: Optional[Model] = self.model.current_model
-        has_image = model_model.strat_image is not None
+        has_image = model_model.stratigraphic_image is not None
         x_scal, y_scal = self.view.show_testmenu(has_image)
         # If the model has a stratigraphic image presented, check if a node has been right clicked on and store in a member variable
-        if model_model.strat_image is not None and x_scal is not None and y_scal is not None:
+        if model_model.stratigraphic_image is not None and x_scal is not None and y_scal is not None:
             self.node = self.nodecheck(x_scal, y_scal)
 
     def check_list_gen(self) -> None:
@@ -1070,8 +1070,8 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         # Re-open the image inside the Model
         model_model.reopen_strat_image()
         # Update the image in the view
-        if model_model.strat_image is not None:
-            self.view.update_littlecanvas_image_only(model_model.strat_image, event)
+        if model_model.stratigraphic_image is not None:
+            self.view.update_littlecanvas_image_only(model_model.stratigraphic_image, event)
 
     def on_resize_2(self, event: Any) -> None:
         """resizes image on canvas2
@@ -1101,7 +1101,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
-        if model_model.strat_image is not None:
+        if model_model.stratigraphic_image is not None:
             self.view.littlecanvas.scan_mark(event.x, event.y)  # @todo tkinter in presenter
 
     def move_to(self, event: Any) -> None:
@@ -1114,7 +1114,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
-        if model_model.strat_image is not None:
+        if model_model.stratigraphic_image is not None:
             self.view.littlecanvas.scan_dragto(event.x, event.y, gain=1)  # @todo tkinter in presenter
             self.view.show_image()
 
@@ -1173,16 +1173,16 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             return
         x_1 = edgevec[0]
         x_2 = edgevec[1]
-        model_model.strat_graph.add_edge(x_1, x_2, arrowhead="none")
-        strat_graph_check = nx.transitive_reduction(model_model.strat_graph)
-        if model_model.strat_graph.edges() != strat_graph_check.edges():
-            model_model.strat_graph.remove_edge(x_1, x_2)
+        model_model.stratigraphic_dag.add_edge(x_1, x_2, arrowhead="none")
+        strat_graph_check = nx.transitive_reduction(model_model.stratigraphic_dag)
+        if model_model.stratigraphic_dag.edges() != strat_graph_check.edges():
+            model_model.stratigraphic_dag.remove_edge(x_1, x_2)
             tk.messagebox.showerror(
                 "Redundant relationship",
                 "That stratigraphic relationship is already implied by other relationships in the graph",
             )
         model_model.render_strat_graph()
-        self.view.update_littlecanvas(model_model.strat_image)
+        self.view.update_littlecanvas(model_model.stratigraphic_image)
 
     def stratfunc(self, node: str) -> None:
         """obtains strat relationships for node
@@ -1195,7 +1195,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
-        rellist = list(nx.line_graph(model_model.strat_graph))
+        rellist = list(nx.line_graph(model_model.stratigraphic_dag))
         above = ()
         below = ()
         for i in enumerate(rellist):
@@ -1239,12 +1239,12 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             (graph,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")
             node_df_con = node_coords_fromjson(graph)
         else:
-            node_df_con = node_coords_fromjson(model_model.strat_graph)
+            node_df_con = node_coords_fromjson(model_model.stratigraphic_dag)
         node_df = node_df_con[0]
 
         xmax, ymax = node_df_con[1]
         # forms a dataframe from the dicitonary of coords
-        x, y = model_model.strat_image.size
+        x, y = model_model.stratigraphic_image.size
         cavx = x * self.view.imscale
         cany = y * self.view.imscale
         xscale = (x_current) * (xmax) / cavx

@@ -31,7 +31,7 @@ class GUIApp(Mediator):
 
     This is the only class/file which should import tkinter / ThemedTK other than View classes (unless needed for typehinting?)
 
-    Todo: 
+    Todo:
         - @todo ensure file opening starts in the correct location thoughtout?
         - @todo ensure all tk.messagebox calls withint the app have the appropriate parent set (or replace with in-window messages)
     """

@@ -42,29 +42,28 @@ class Model:
     @todo - this and name are not both required, could have parent_path and an dynamic path? (i.e. avoid duplication during construction). Or even require path to be proivided for save() and load()
     """
 
-    strat_dot_file_input: Optional[pathlib.Path] = field(default=None)
+    stratigraphic_graphviz_file: Optional[pathlib.Path] = field(default=None)
     """Stratigraphic path for .dot/.gv input
     
     Formerly StartPage.FILE_INPUT
-    
-    @todo rename"""
 
-    strat_df: Optional[pd.DataFrame] = field(default=None)
+    @todo - special case saving logic? Need to check usage.
+    """
+
+    stratigraphic_df: Optional[pd.DataFrame] = field(default=None)
     """The stratigraphic file from CSV, if loaded.
 
     Formerly StartPage.stratfile
     
     @todo - refactor this to be it's own model class which performs validation etc?"""
 
-    strat_graph: Optional[nx.DiGraph] = field(default=None)
-    """Stratigraphic Graph as a networkx digraph, after loading from csv / .dot and post processed.
-
-    Mutate when other files are loaded.
+    stratigraphic_dag: Optional[nx.DiGraph] = field(default=None)
+    """Stratigraphic Directed Acyclic Graph, initially produced from the stratigraphic dataframe or graphviz file before being mutated.
     
-    @todo @enhancement - When a new strat_df is loaded, clear other members, or re-apply the smae changes to strat_graph?
+    @todo @enhancement - When a new stratigraphic_df is loaded, clear other members, or re-apply the same changes to this?
     """
 
-    strat_image: Optional[Image.Image] = field(default=None)
+    stratigraphic_image: Optional[Image.Image] = field(default=None)
     """Rendered version of the stratigraphic graph as an image, for whicle a handle must be kept for persistence.
 
     @todo Could belong to the presenter instead"""
@@ -72,7 +71,7 @@ class Model:
     date_df: Optional[pd.DataFrame] = field(default=None)
     """Dataframe containing scientific dating information loaded from disk
     
-    Fromerly StartPage.datefile
+    Formerly StartPage.datefile
 
     @todo - refactor this to be it's own model class which performs validation etc?"""
 
@@ -648,19 +647,19 @@ class Model:
         path = self.get_working_directory() / "deleted_contexts_meta"
         df.to_csv(path)
 
-    def set_strat_dot_file_input(self, file_input: str | pathlib.Path) -> None:
+    def set_stratigraphic_graphviz_file(self, file_input: str | pathlib.Path) -> None:
         """provdided a .dot/.gv file path, set the model input."""
-        self.strat_dot_file_input = pathlib.Path(file_input)
+        self.stratigraphic_graphviz_file = pathlib.Path(file_input)
 
-    def set_strat_df(self, df: pd.DataFrame) -> None:
+    def set_stratigraphic_df(self, df: pd.DataFrame) -> None:
         """Provided a dataframe for stratigraphic relationships, set the values locally and post-process it to produce the stratgiraphic graph
 
         @todo return value"""
 
-        self.strat_df = df.copy()
+        self.stratigraphic_df = df.copy()
         G = nx.DiGraph(graph_attr={"splines": "ortho"})
-        set1 = set(self.strat_df.iloc[:, 0])
-        set2 = set(self.strat_df.iloc[:, 1])
+        set1 = set(self.stratigraphic_df.iloc[:, 0])
+        set2 = set(self.stratigraphic_df.iloc[:, 1])
         set2.update(set1)
         node_set = {x for x in set2 if x == x}
         for i in set(node_set):
@@ -668,12 +667,12 @@ class Model:
             G.nodes()[i].update({"Determination": [None, None]})
             G.nodes()[i].update({"Group": None})
         edges = []
-        for i in range(len(self.strat_df)):
-            a = tuple(self.strat_df.iloc[i, :])
+        for i in range(len(self.stratigraphic_df)):
+            a = tuple(self.stratigraphic_df.iloc[i, :])
             if not pd.isna(a[1]):
                 edges.append(a)
         G.add_edges_from(edges, arrowhead="none")
-        self.strat_graph = G
+        self.stratigraphic_dag = G
 
     def set_date_df(self, df: pd.DataFrame) -> None:
         """Provided a dataframe for date information, set the values locally and perform follow up actions
@@ -684,13 +683,13 @@ class Model:
         # Post process
         self.date_df = self.date_df.applymap(str)
         # @todo - better handling of loading strat graph after date.
-        if self.strat_graph:
+        if self.stratigraphic_dag:
             for i, j in enumerate(self.date_df["context"]):
-                self.strat_graph.nodes()[str(j)].update(
+                self.stratigraphic_dag.nodes()[str(j)].update(
                     {"Determination": [self.date_df["date"][i], self.date_df["error"][i]]}
                 )
         # @todo - consider a better way to manage this.
-        self.context_no_unordered = list(self.strat_graph.nodes())
+        self.context_no_unordered = list(self.stratigraphic_dag.nodes())
 
     def set_phase_df(self, df: pd.DataFrame) -> None:
         """Provided a dataframe for phase / context grouping information, set the values locally and perform post processing
@@ -704,9 +703,9 @@ class Model:
         self.phase_df = df.copy()
         # Post processing of the dataframe
         # @todo - better handling of loading strat graph after date.
-        if self.strat_graph:
+        if self.stratigraphic_dag:
             for i, j in enumerate(self.phase_df["context"]):
-                self.strat_graph.nodes()[str(j)].update({"Group": self.phase_df["Group"][i]})
+                self.stratigraphic_dag.nodes()[str(j)].update({"Group": self.phase_df["Group"][i]})
 
     def set_phase_rel_df(self, df: pd.DataFrame, phase_rels: List[Tuple[str, str]]) -> None:
         """Provided a dataframe for phase / group relationships information, set the values locally and post-process
@@ -738,12 +737,12 @@ class Model:
         context_1 = list(self.equal_rel_df.iloc[:, 0])
         context_2 = list(self.equal_rel_df.iloc[:, 1])
         for k, j in enumerate(context_1):
-            self.strat_graph = nx.contracted_nodes(self.strat_graph, j, context_2[k])
-            x_nod = list(self.strat_graph)
+            self.stratigraphic_dag = nx.contracted_nodes(self.stratigraphic_dag, j, context_2[k])
+            x_nod = list(self.stratigraphic_dag)
             newnode = str(j) + " = " + str(context_2[k])
             y_nod = [newnode if i == j else i for i in x_nod]
             mapping = dict(zip(x_nod, y_nod))
-            self.strat_graph = nx.relabel_nodes(self.strat_graph, mapping)
+            self.stratigraphic_dag = nx.relabel_nodes(self.stratigraphic_dag, mapping)
 
     def render_strat_graph(self) -> None:
         """Render the sratigraphic graph as a png and svg, with or without phasing depending on model state. Also updates the locatison of each node via the svg
@@ -780,15 +779,15 @@ class Model:
 
         workdir = self.get_working_directory()
         workdir.mkdir(parents=True, exist_ok=True)  # @todo shouldn't be neccesary?
-        self.strat_graph.graph["graph"] = {"splines": "ortho"}
-        write_dot(self.strat_graph, workdir / "fi_new")
+        self.stratigraphic_dag.graph["graph"] = {"splines": "ortho"}
+        write_dot(self.stratigraphic_dag, workdir / "fi_new")
         render("dot", "png", workdir / "fi_new")
         render("dot", "svg", workdir / "fi_new")
         inp = Image.open(workdir / "fi_new.png")
         inp_final = trim(inp)
         inp_final.save(workdir / "testdag.png")
-        self.strat_image = Image.open(workdir / "testdag.png")
-        self.node_df = node_coords_fromjson(self.strat_graph)
+        self.stratigraphic_image = Image.open(workdir / "testdag.png")
+        self.node_df = node_coords_fromjson(self.stratigraphic_dag)
 
     def __render_strat_graph_phase(self) -> None:
         """Render the stratigraphic graph, with phasing mutating the Model state
@@ -800,21 +799,21 @@ class Model:
         workdir = self.get_working_directory()
         workdir.mkdir(parents=True, exist_ok=True)  # @todo shouldn't be neccesary?
 
-        write_dot(self.strat_graph, workdir / "fi_new.txt")
+        write_dot(self.stratigraphic_dag, workdir / "fi_new.txt")
         my_file = open(workdir / "fi_new.txt")
         file_content = my_file.read()
-        new_string = rank_func(phase_info_func(self.strat_graph)[0], file_content)
+        new_string = rank_func(phase_info_func(self.stratigraphic_dag)[0], file_content)
         textfile = open(workdir / "fi_new.txt", "w")
         textfile.write(new_string)
         textfile.close()
-        (self.strat_graph,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")
-        self.strat_graph.write_png(workdir / "test.png")
+        (self.stratigraphic_dag,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")
+        self.stratigraphic_dag.write_png(workdir / "test.png")
         inp = Image.open(workdir / "test.png")
         inp = trim(inp)
         # Call the real .tkraise
         inp.save(workdir / "testdag.png")
-        self.strat_image = Image.open(workdir / "testdag.png")
-        self.node_df = node_coords_fromjson(self.strat_graph)
+        self.stratigraphic_image = Image.open(workdir / "testdag.png")
+        self.node_df = node_coords_fromjson(self.stratigraphic_dag)
 
     def __render_resid_or_intru_strat_graph(self) -> None:
         """Render the stratigraphic graph mutating the Model state
@@ -903,7 +902,7 @@ class Model:
         workdir.mkdir(parents=True, exist_ok=True)  # @todo - shouldnt be neccessary
         png_path = workdir / "testdag.png"
         if png_path.is_file():
-            self.strat_image = Image.open(png_path)
+            self.stratigraphic_image = Image.open(png_path)
 
     def reopen_chrono_image(self) -> None:
         """Re-open the chrono image from disk
@@ -976,15 +975,15 @@ class Model:
         for i, j in enumerate(context_no):
             if self.CONT_TYPE[i] == "residual":
                 low = []
-                up = list(self.strat_graph.predecessors(j))
+                up = list(self.stratigraphic_dag.predecessors(j))
             elif self.CONT_TYPE[i] == "intrusive":
-                low = list(self.strat_graph.successors(j))
+                low = list(self.stratigraphic_dag.successors(j))
                 up = []
             else:
-                up = [k for k in self.strat_graph.predecessors(j) if k not in resids]
-                low = [k for k in self.strat_graph.successors(j) if k not in intrus]
+                up = [k for k in self.stratigraphic_dag.predecessors(j) if k not in resids]
+                low = [k for k in self.stratigraphic_dag.successors(j) if k not in intrus]
             strat_vec.append([up, low])
-        # strat_vec = [[list(self.strat_graph.predecessors(i)), list(self.strat_graph.successors(i))] for i in context_no]
+        # strat_vec = [[list(self.stratigraphic_dag.predecessors(i)), list(self.stratigraphic_dag.successors(i))] for i in context_no]
         rcd_est = [int(list(self.date_df["date"])[list(self.date_df["context"]).index(i)]) for i in context_no]
         rcd_err = [int(list(self.date_df["error"])[list(self.date_df["context"]).index(i)]) for i in context_no]
         # self.prev_phase, self.post_phase = self.prev_phase, self.post_phase  # @todo - redundent statement
