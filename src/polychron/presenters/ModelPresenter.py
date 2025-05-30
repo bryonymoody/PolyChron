@@ -1071,7 +1071,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             return
 
         # Re-open the image inside the Model
-        model_model.reopen_strat_image()
+        model_model.reopen_stratigraphic_image()
         # Update the image in the view
         if model_model.stratigraphic_image is not None:
             self.view.update_littlecanvas_image_only(model_model.stratigraphic_image, event)

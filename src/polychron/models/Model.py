@@ -910,7 +910,7 @@ class Model:
         else:
             self.chronological_image = None
 
-    def reopen_strat_image(self) -> None:
+    def reopen_stratigraphic_image(self) -> None:
         """Re-open the stratigraphic image from disk
 
         Used when the window is reiszed as the in memory copy may have been resized
