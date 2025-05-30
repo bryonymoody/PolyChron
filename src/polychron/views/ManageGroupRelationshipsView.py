@@ -514,14 +514,20 @@ class ManageGroupRelationshipsView(PopupView):
         """Update the canvas to ensure coordinates are correct?"""
         self.canvas.update()
 
-    def update_tree_2col(self, phase_rels: Optional[List[Tuple[str, str]]]) -> None:
+    def update_tree_2col(self, group_relationships: Optional[List[Tuple[str, str]]]) -> None:
         """Update the table of group relationships to the value(s) provided by the user
 
         This is the 2 column version, for the first step in the residual checking process.
 
-        @todo - older, younger might fit better with the x axis?"""
+        Parameters:
+            group_relationships: A list of tuples containing relationships between groups, (above, below)
+
+        Todo:
+            @todo - older, younger might fit better with the x axis?
+            @todo - rename
+        """
         # Prep a local dataframe for presentation
-        df = pd.DataFrame(phase_rels, columns=["Younger group", "Older group"])
+        df = pd.DataFrame(group_relationships, columns=["Younger group", "Older group"])
         cols = list(df.columns)
 
         # Destroy the old table

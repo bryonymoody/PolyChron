@@ -81,15 +81,17 @@ class MCMCData:
     @todo - rename, rehome, typehint, docstring
     """
 
-    def save_results_dataframes(self, path: pathlib.Path, phase_df: pd.DataFrame) -> None:
+    def save_results_dataframes(self, path: pathlib.Path, group_df: pd.DataFrame) -> None:
         """Save some MCMC data to disk, separately from the serialised version of this class
+
+        Formerly part of StartPage.save_state_1
 
         Parameters:
             path (pathlib.Path): The path to the directory in which files should be created
-            phase_df (pd.DataFrame): A pandas dataframe continign the phase/context group information.
+            group_df (pd.DataFrame): A pandas dataframe containing context group information.
 
         Raises:
-            Exception: Exceptions may be reaised if erorrs occur during saving @todo (permisisons etc)
+            Exception: Exceptions may be raised if errors occur during saving @todo (permissions etc)
 
         Todo:
             @todo - File extension(s)
@@ -97,7 +99,6 @@ class MCMCData:
             @todo - make the file names saved queryable so Model.save can discover them
             @todo - csv column names?
 
-        Formerly part of StartPage.save_state_1
         """
 
         df = pd.DataFrame()
@@ -106,7 +107,7 @@ class MCMCData:
         full_results_df_path = path / "full_results_df"
         df.to_csv(full_results_df_path)
 
-        key_ref = [list(phase_df["Group"])[list(phase_df["context"]).index(i)] for i in self.CONTEXT_NO]
+        key_ref = [list(group_df["Group"])[list(group_df["context"]).index(i)] for i in self.CONTEXT_NO]
         df1 = pd.DataFrame(key_ref)
         df1.to_csv(path / "key_ref.csv")
 
@@ -142,18 +143,18 @@ class MCMCData:
         indent = 2 if pretty else None
         return json.dumps({"polychron_version": version("polychron"), "mcmc_data": data}, indent=indent)
 
-    def save(self, path: pathlib.Path, phase_df: pd.DataFrame) -> None:
-        """Save tthe current state of this file to the specified path
+    def save(self, path: pathlib.Path, group_df: pd.DataFrame) -> None:
+        """Save the current state of this file to the specified path
 
         Parameters:
             path (pathlib.Path ): The directory in which the files will be saved.
-            phase_df (pd.DataFrame): A pandas dataframe continign the phase/context group information
+            group_df (pd.DataFrame): A pandas dataframe containing context group information
 
         Raises:
-            Exception: @todo - docuemnt the specific exceptions which may be raised
+            Exception: @todo - document the specific exceptions which may be raised
 
         Todo:
-            @todo Would be nicer if phase_df didn't need to be pased in here?
+            @todo Would be nicer if group_df didn't need to be passed in here?
         """
 
         # Ensure that the parent directory exists
@@ -174,7 +175,7 @@ class MCMCData:
 
                 timer_files = MonotonicTimer().start()
                 # Also save the individual MCMC ouput files into the working directory
-                self.save_results_dataframes(path, phase_df)
+                self.save_results_dataframes(path, group_df)
                 timer_files.stop()
 
                 # Stop the timer and report timing if verbose
@@ -219,31 +220,31 @@ class MCMCData:
             mcmc_data = data["mcmc_data"]
 
             # Any polychron-version specific handling of data
-            # polychron_version = data["polychron_version"]
-            # if polychron_version == "0.2.0":
-            #     pass
+            polychron_version = data["polychron_version"]
+            if polychron_version == "0.2.0":
+                pass
 
             # Convert certain values back based on the hint for the data type.
             # @todo - improve this for some types?
+            # @todo - discard keys we don't want to load before trying to convert them?
             cls_type_hints = get_type_hints(cls)
             # Also build a list of keys to remove
             unexpected_keys = []
             for k in mcmc_data:
                 if k in cls_type_hints:
                     type_hint = cls_type_hints[k]
-
                     # If the values is None, do nothing. @todo - should this only be possible for Optionals?
                     if mcmc_data[k] is None:
                         pass
                     elif type_hint in [pathlib.Path, Optional[pathlib.Path]]:
                         mcmc_data[k] = pathlib.Path(mcmc_data[k])
                     elif type_hint in [Optional[List[Tuple[str, str]]]]:
-                        # phase_rels needs to be returned to a tuple. @todo need to do this less specifically?
+                        # tuples are stored as lists in json, so must convert from a list of lists to a list of tuples
                         mcmc_data[k] = [tuple(sub) for sub in mcmc_data[k]]
                 else:
-                    # If the key is not in the typehints, it will cause the ctor to trigger a rutnime assertion, so remove it.
+                    # If the key is not in the typehints, it will cause the ctor to trigger a runtime assertion, so remove it.
                     # @todo - make this visible in the UI?
-                    print(f"Warning: unexected MCMCData member '{k}' during deserialisation")
+                    print(f"Warning: unexpected MCMCData member '{k}' during deserialisation")
                     unexpected_keys.append(k)
 
             # Remove any unexpected keys

@@ -347,8 +347,11 @@ def phase_labels(phi_ref, POST_PHASE, phi_accept, all_samps_phi) -> Tuple[List[s
 def del_empty_phases(phi_ref: List[Any], del_phase: Set[Any], phasedict: Dict[str, Any]) -> List[List[Any]]:
     """checks for any phase rels that need changing due to missing dates
 
-    @todo - full docstrings and typehints
-    @todo - find a better home"""
+    Todo:
+        - @todo - full docstrings and typehints
+        - @todo - find a better home
+        - phase -> group
+    """
     del_phase = [i for i in phi_ref if i in del_phase]
     del_phase_dict_1 = {}
     for j in del_phase:
@@ -378,17 +381,17 @@ def del_empty_phases(phi_ref: List[Any], del_phase: Set[Any], phasedict: Dict[st
             if rels[1] == k:
                 if rels[0] in del_phase:
                     del_phase_dict_1[k]["upper"] = del_phase_dict_1[rels[0]]["upper"]
-    new_phase_rels = [
+    new_group_rels = [
         [del_phase_dict_1[l]["upper"], del_phase_dict_1[l]["lower"]]
         for l in del_phase_dict_1.keys()
         if del_phase_dict_1[l]["upper"] != "end"
         if del_phase_dict_1[l]["lower"] != "start"
     ]
-    return new_phase_rels
+    return new_group_rels
 
 
-def phase_rels_delete_empty(
-    file_graph: nx.DiGraph, new_phase_rels, p_list, phasedict, phase_nodes, graph_data
+def group_rels_delete_empty(
+    file_graph: nx.DiGraph, new_group_rels, p_list, phasedict, phase_nodes, graph_data
 ) -> Tuple[nx.DiGraph, List[str], Dict[str, str]]:
     """adds edges between phases that had gaps due to no contexts being left in them
 
@@ -399,7 +402,7 @@ def phase_rels_delete_empty(
     # adds edges between phases that had gaps due to no contexts being left in them
     label_dict = {}
     null_phases = []  # keep track of phases we need to delete
-    [file_graph.add_edge("a_" + str(i[0]), "b_" + str(i[1]), arrowhead="none") for i in new_phase_rels]
+    [file_graph.add_edge("a_" + str(i[0]), "b_" + str(i[1]), arrowhead="none") for i in new_group_rels]
     for p in p_list:
         relation = phasedict[p]
         if relation == "gap":
@@ -482,17 +485,17 @@ def chrono_edge_add(
             if len(list(a - b)) != 0:
                 rem = list(a - b)[0]
                 file_graph.remove_edge(rem[0], rem[1])
-        new_phase_rels = del_empty_phases(phi_ref, del_phase, phasedict)
+        new_group_rels = del_empty_phases(phi_ref, del_phase, phasedict)
         # changes diplay labels to alpha ans betas
-        file_graph, null_phases, label_dict = phase_rels_delete_empty(
-            file_graph, new_phase_rels, p_list, phasedict, phase_nodes, graph_data
+        file_graph, null_phases, label_dict = group_rels_delete_empty(
+            file_graph, new_group_rels, p_list, phasedict, phase_nodes, graph_data
         )
 
         phi_ref = [i for i in phi_ref if i in set(graph_data[1][2])]
         phase_nodes.append("b_" + str(p_list[len(p_list) - 1][0]))
 
     # replace phase rels with gap for phases adjoined due to missing phases
-    for i in new_phase_rels:
+    for i in new_group_rels:
         post_dict[i[1]] = "gap"
         prev_dict[i[0]] = "gap"
     nx.set_node_attributes(file_graph, label_dict, "label")

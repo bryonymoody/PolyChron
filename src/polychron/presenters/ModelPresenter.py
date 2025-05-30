@@ -187,13 +187,14 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 self.view.show_image2()
 
         # Make sure that the check marks are up to date
+        # @todo - replace teh _check variables with properties that just do these checks instead?
         if model_model.stratigraphic_df is not None:
             self.strat_check = True
         if model_model.radiocarbon_df is not None:
             self.date_check = True
-        if model_model.phase_df is not None:
+        if model_model.group_df is not None:
             self.phase_check = True
-        if model_model.phase_rel_df is not None:
+        if model_model.group_relationship_df is not None:
             self.phase_rel_check = True
         self.check_list_gen()
 
@@ -265,7 +266,11 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             return
 
         # @todo - move this condition into a model function.
-        if model_model.phase_rels is None or model_model.phase_df is None or model_model.radiocarbon_df is None:
+        if (
+            model_model.group_relationships is None
+            or model_model.group_df is None
+            or model_model.radiocarbon_df is None
+        ):
             # @todo - abstract this into a view
             tk.messagebox.showinfo("Error", "You haven't loaded in all the data required for a chronological graph")
             return
@@ -500,7 +505,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 df = df.applymap(str)
                 load_it = self.file_popup(df)
                 if load_it == "load":
-                    model_model.set_phase_df(df)
+                    model_model.set_group_df(df)
                     self.phase_check = True
                     self.check_list_gen()
                     tk.messagebox.showinfo("Success", "Grouping data loaded")
@@ -527,10 +532,10 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 model_model: Optional[Model] = self.model.current_model
                 df = pd.read_csv(file)
                 # @todo - de-duplicate this into the model
-                phase_rels = [(str(df["above"][i]), str(df["below"][i])) for i in range(len(df))]
+                group_rels = [(str(df["above"][i]), str(df["below"][i])) for i in range(len(df))]
                 # @todo - this is not an actual input file preview like the others, but a preview of the reshaped data. i.e. titles don't match.
-                load_it = self.file_popup(pd.DataFrame(phase_rels, columns=["Younger group", "Older group"]))
-                model_model.set_phase_rel_df(df, phase_rels)
+                load_it = self.file_popup(pd.DataFrame(group_rels, columns=["Younger group", "Older group"]))
+                model_model.set_group_relationship_df(df, group_rels)
                 if load_it:
                     pass  # @todo - 0.1 doesn't check the result / handle the paths differently.
                 self.phase_rel_check = True

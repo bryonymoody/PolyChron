@@ -97,36 +97,49 @@ class Model:
         - @todo - make this only settable by method?
     """
 
-    phase_df: Optional[pd.DataFrame] = field(default=None)
-    """Dataframe containing phase / context grouping information loaded from disk
+    group_df: Optional[pd.DataFrame] = field(default=None)
+    """Dataframe of context grouping information loaded from disk. 
+
+    Expected columns ["context", "Group"]
     
-    Fromerly StartPage.phasefile
+    Formerly `StartPage.phasefile`
 
-    @todo - refactor this to be it's own model class which performs validation etc?"""
-
-    phase_rel_df: Optional[pd.DataFrame] = field(default=None)
-    """Dataframe containing phase / group relationships information loaded from disk
-    
-    Fromerly  just phase_rel_df in StartPage.open_file5
-    
-    @todo - refactor this to be it's own model class which performs validation etc?"""
-
-    phase_rels: Optional[List[Tuple[str, str]]] = field(default=None)
-    """A list of tuples of group/phase labels, (above, below) for the relative relationships between two groups/phases
-
-    @todo - better name? make this private/protected?
-    @todo - does this belong to a separate class which represents a stratigraphic graph instead?
-    @todo - make this only settable by method?
+    Todo:
+        - @todo - refactor this to be it's own model class which performs validation etc?
+        - @todo - "Group" > "group" in csv and df?. validate?    
     """
 
-    equal_rel_df: Optional[pd.DataFrame] = field(default=None)
+    group_relationship_df: Optional[pd.DataFrame] = field(default=None)
+    """Dataframe containing group relationship information loaded from disk
+    
+    Expected columns ["above", "below"], although order of columns is used not the column names
+
+    Formerly `phase_rel_df` in `StartPage.open_file5`
+    
+    Todo:
+        - @todo - expected column names /  use column names. 
+        - @todo - refactor this to be it's own model class which performs validation etc?
+    """
+
+    group_relationships: Optional[List[Tuple[str, str]]] = field(default=None)
+    """A list of the relative relationships between groups, stored as Tuples of (above, below))
+
+    Formerly `StartPage.phase_rels`
+
+    Todo:
+        @todo - does this belong to a separate class which represents a stratigraphic graph instead?
+        @todo - make this only settable by method?
+    """
+
+    context_equality_df: Optional[pd.DataFrame] = field(default=None)
     """Dataframe containing context equality relationship information loaded from disk
     
-    Fromerly  just phase_rel_df in StartPage.open_file5
+    Formerly `equal_rel_df` in `StartPage.open_file6`
 
-    @todo - define and validate the column names?
-    
-    @todo - refactor this to be it's own model class which performs validation etc?"""
+    Todo: 
+        - @todo - define and validate the column names?
+        - @todo - refactor this to be it's own model class which performs validation etc?
+    """
 
     load_check: bool = False
     """If the chronological graph has been rendered for the current state of the model
@@ -511,6 +524,7 @@ class Model:
 
             # Convert certain values back based on the hint for the data type.
             # @todo - find a more robust way to compare type hints to literal types? in the case of unions etc?
+            # @todo - discard keys we don't want to load before trying to convert them?
             cls_type_hints = get_type_hints(cls)
             # Also build a list of keys to remove
             unexpected_keys = []
@@ -532,34 +546,14 @@ class Model:
                         # Convert the node_link_data encoded networkx digraph via node_link_graph
                         # explicitly set edges value to future behaviour for networkx
                         model_data[k] = nx.node_link_graph(model_data[k], edges="edges", multigraph=False)
-
                     elif type_hint in [Optional[List[Tuple[str, str]]]]:
-                        # phase_rels needs to be returned to a tuple. @todo need to do this less specifically?
+                        # tuples are stored as lists in json, so must convert from a list of lists to a list of tuples
                         model_data[k] = [tuple(sub) for sub in model_data[k]]
                 else:
-                    # If the key is not in the typehints, it will cause the ctor to trigger a rutnime assertion, so remove it.
+                    # If the key is not in the typehints, it will cause the ctor to trigger a runtime assertion, so remove it.
                     # @todo - make this visible in the UI?
-                    print(f"Warning: unexected Model member '{k}' during deserialisation")
+                    print(f"Warning: unexpected Model member '{k}' during deserialisation", file=sys.stderr)
                     unexpected_keys.append(k)
-
-                # @todo -  trycast.isassignable? maybe to check for the correct type?
-                # if the type hint is not subscripted, do a direct comparions
-                # print(f"> {type_hint}")
-                # if get_origin(type_hint) is None:
-                #     print(f"unsubscripted ({type_hint}) is instance {model_data[k]}? {isinstance(model_data[k], type_hint)}")
-                # else:
-                #     # For each substitution
-                #     for x in get_args(type_hint):
-                #         if get_origin(x) is None:
-                #             print(f"subscripted ({x}) is instance  {model_data[k]}? {isinstance(model_data[k], x)}")
-                #         else:
-                #             "recursion needed @todo"
-
-                # if type(model_data[k]) != type_hint:
-                #     print(f"{k}: {type(model_data[k])} != {type_hint}, {isinstance(model_data[k], type_hint)}")
-
-            # for k, v in model_data.items():
-            #     print(k, type(v))
 
             # Remove any unexpected keys
             for k in unexpected_keys:
@@ -590,10 +584,6 @@ class Model:
 
             # Handle non-json loading of files (copy over temp?)
             pass  # @todo
-
-            # Perform any post-loading steps            model.path = path
-            # @todo - validate that the name of the model matches the path? Or don't store the name of the model, infer it from the path? (maybe always set it to the name of the model directory, so on disk it's ok until first re-saved)
-            # @todo - others
 
             # Stop the timer and report timing if verbose
             timer_load.stop()
@@ -709,51 +699,56 @@ class Model:
         # @todo - consider a better way to manage this.
         self.context_no_unordered = list(self.stratigraphic_dag.nodes())
 
-    def set_phase_df(self, df: pd.DataFrame) -> None:
-        """Provided a dataframe for phase / context grouping information, set the values locally and perform post processing
+    def set_group_df(self, df: pd.DataFrame) -> None:
+        """Provided a dataframe for context grouping information, set the values locally and perform post processing
 
-        Formerly phasefile
-
-        @todo validation
-
-        @todo return value"""
+        Todo:
+            - @todo validate columns and values
+            - @todo indicate success via a return value?
+        """
         # Store a copy of the dataframe
-        self.phase_df = df.copy()
+        self.group_df = df.copy()
         # Post processing of the dataframe
         # @todo - better handling of loading strat graph after date.
         if self.stratigraphic_dag:
-            for i, j in enumerate(self.phase_df["context"]):
-                self.stratigraphic_dag.nodes()[str(j)].update({"Group": self.phase_df["Group"][i]})
+            for i, j in enumerate(self.group_df["context"]):
+                self.stratigraphic_dag.nodes()[str(j)].update({"Group": self.group_df["Group"][i]})
 
-    def set_phase_rel_df(self, df: pd.DataFrame, phase_rels: List[Tuple[str, str]]) -> None:
-        """Provided a dataframe for phase / group relationships information, set the values locally and post-process
+    def set_group_relationship_df(self, df: pd.DataFrame, group_relationships: List[Tuple[str, str]]) -> None:
+        """Provided a dataframe for group relationships information, set the values locally and post-process
 
-        @todo - make this consistent with other setters.
-
-        @todo validate the incoming df here (and/or elsewhere)
-
-        @todo return value"""
+        Todo:
+            - @todo - make this consistent with other setters.
+            - @todo validate the incoming df here (and/or elsewhere) and provide a return valu
+        """
         # Store a copy of the dataframe
-        self.phase_rel_df = df.copy()
+        self.group_relationship_df = df.copy()
         # Store a copy of the list of tuples extracted from the dataframe
-        self.phase_rels = phase_rels.copy()
+        self.group_relationships = group_relationships.copy()
         # Post processing of the dataframe
+        # @todo
 
-    def set_equal_rel_df(self, df: pd.DataFrame) -> None:
-        """Provided a dataframe for context equality relationship information, set the values locally and post-process
+    def set_context_equality_df(self, df: pd.DataFrame) -> None:
+        """Provided a dataframe for context equality information, set the values locally and post-process
 
-        @todo - make this consistent with other setters.
+        Columns names are not currently expected/used, but there must be atleast 2 columns.
 
-        @todo validate the incoming df here (and/or elsewhere). I.e. c,d; d,c is a runtime error, or loading a context equalities file that has alrady been applied is an error
+        Parameters:
+            df (pd.DataFrame): A dataframe containinig context equality data.
 
-        @todo return value"""
+        Todo:
+            - @todo - make this consistent with other setters.
+            - @todo validate the incoming df here (and/or elsewhere). I.e. c,d; d,c is a runtime error, or loading a context equalities file that has alrady been applied is an error
+            - @todo - sort each equality so that duplicates can be removed? (c,d; d,c)
+            - @todo - handle multiple equalities (c,d;d,e)?
+        """
         # Store a copy of the dataframe
-        self.equal_rel_df = df.copy()
+        self.context_equality_df = df.copy()
 
         # Post processing of the dataframe
-        self.equal_rel_df = self.equal_rel_df.applymap(str)
-        context_1 = list(self.equal_rel_df.iloc[:, 0])
-        context_2 = list(self.equal_rel_df.iloc[:, 1])
+        self.context_equality_df = self.context_equality_df.applymap(str)
+        context_1 = list(self.context_equality_df.iloc[:, 0])
+        context_2 = list(self.context_equality_df.iloc[:, 1])
         for k, j in enumerate(context_1):
             self.stratigraphic_dag = nx.contracted_nodes(self.stratigraphic_dag, j, context_2[k])
             x_nod = list(self.stratigraphic_dag)
@@ -765,8 +760,8 @@ class Model:
     def render_strat_graph(self) -> None:
         """Render the sratigraphic graph as a png and svg, with or without phasing depending on model state. Also updates the locatison of each node via the svg
 
-        @todo - don't return?
-        @todo - de-duplicate"""
+        Todo:
+            @todo - de-duplicate"""
         # Call the appropraite render_strat method, depending if the model is set up to render in phases or not.
         if self.phase_true:
             self.__render_strat_graph_phase()
@@ -984,7 +979,7 @@ class Model:
         topo_sort = [x for x in topo if (x not in self.node_del_tracker) and (x in context_no)]
         topo_sort.reverse()
         context_no = topo_sort
-        self.key_ref = [list(self.phase_df["Group"])[list(self.phase_df["context"]).index(i)] for i in context_no]
+        self.key_ref = [list(self.group_df["Group"])[list(self.group_df["context"]).index(i)] for i in context_no]
         self.CONT_TYPE = [self.CONT_TYPE[list(self.context_no_unordered).index(i)] for i in topo_sort]
         strat_vec = []
         resids = [j for i, j in enumerate(context_no) if self.CONT_TYPE[i] == "residual"]

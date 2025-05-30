@@ -26,7 +26,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
         # Create a box per phase in the model, based on the models phase releationships
         # @todo - move some of this into Model or similar.
         phases = []
-        for i in self.model.phase_rels:
+        for i in self.model.group_relationships:
             phases.append(i[0])
             phases.append(i[1])
         phase_labels = list(set(phases))
@@ -97,7 +97,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
 
         # Update the table
         # @todo - superfluous if update_view is called here.
-        self.view.update_tree_2col(self.model.phase_rels)
+        self.view.update_tree_2col(self.model.group_relationships)
 
         # Bind buttons
         self.view.bind_confirm_button(lambda: self.on_confirm())
@@ -146,7 +146,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
 
         Formerly popupWindow3.back_func"""
         self.view.on_back()
-        self.view.update_tree_2col(self.model.phase_rels)
+        self.view.update_tree_2col(self.model.group_relationships)
 
     def get_coords(self) -> None:
         """Triggered when confirming the provided layout of phase relationships.
@@ -220,7 +220,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
                 self.step_1[0],
                 self.step_1[1],
                 self.menudict,
-                self.model.phase_rels,
+                self.model.group_relationships,
                 self.post_dict,
                 self.prev_dict,
             )

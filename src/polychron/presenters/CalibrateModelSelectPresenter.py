@@ -73,7 +73,7 @@ class CalibrateModelSelectPresenter(PopupPresenter[ProjectSelection]):
                             # Update the model state to show it as having been calibrated
                             model.mcmc_check = True
                             # Save the mcmc data to disk (@todo fold this into a method which sets mcmc_check?
-                            model.mcmc_data.save(model.get_working_directory(), model.phase_df)
+                            model.mcmc_data.save(model.get_working_directory(), model.group_df)
                             model.save()
         # Close the popup
         self.close_view()
