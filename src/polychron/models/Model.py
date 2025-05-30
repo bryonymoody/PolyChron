@@ -68,8 +68,8 @@ class Model:
 
     @todo Could belong to the presenter instead"""
 
-    date_df: Optional[pd.DataFrame] = field(default=None)
-    """Dataframe containing scientific dating information loaded from disk
+    radiocarbon_df: Optional[pd.DataFrame] = field(default=None)
+    """Dataframe containing radiocarbon dating information, loaded from disk
     
     Formerly StartPage.datefile
 
@@ -674,19 +674,24 @@ class Model:
         G.add_edges_from(edges, arrowhead="none")
         self.stratigraphic_dag = G
 
-    def set_date_df(self, df: pd.DataFrame) -> None:
-        """Provided a dataframe for date information, set the values locally and perform follow up actions
+    def set_radiocarbon_df(self, df: pd.DataFrame) -> None:
+        """Prodivided a datframe containing radiocarbon dating infromation for contexts, store a copy of the dataframe and mutate the stratigraphic dag
 
-        @todo return value"""
+        Parameters:
+            df (pd.Dataframe): dataframe containing radiocarbon dating information. Expected columns ["context", "date", "error"]
+
+        Todo:
+            Indicate success via a return value?
+        """
         # Store a copy of the dataframe
-        self.date_df = df.copy()
+        self.radiocarbon_df = df.copy()
         # Post process
-        self.date_df = self.date_df.applymap(str)
+        self.radiocarbon_df = self.radiocarbon_df.applymap(str)
         # @todo - better handling of loading strat graph after date.
         if self.stratigraphic_dag:
-            for i, j in enumerate(self.date_df["context"]):
+            for i, j in enumerate(self.radiocarbon_df["context"]):
                 self.stratigraphic_dag.nodes()[str(j)].update(
-                    {"Determination": [self.date_df["date"][i], self.date_df["error"][i]]}
+                    {"Determination": [self.radiocarbon_df["date"][i], self.radiocarbon_df["error"][i]]}
                 )
         # @todo - consider a better way to manage this.
         self.context_no_unordered = list(self.stratigraphic_dag.nodes())
@@ -984,8 +989,12 @@ class Model:
                 low = [k for k in self.stratigraphic_dag.successors(j) if k not in intrus]
             strat_vec.append([up, low])
         # strat_vec = [[list(self.stratigraphic_dag.predecessors(i)), list(self.stratigraphic_dag.successors(i))] for i in context_no]
-        rcd_est = [int(list(self.date_df["date"])[list(self.date_df["context"]).index(i)]) for i in context_no]
-        rcd_err = [int(list(self.date_df["error"])[list(self.date_df["context"]).index(i)]) for i in context_no]
+        rcd_est = [
+            int(list(self.radiocarbon_df["date"])[list(self.radiocarbon_df["context"]).index(i)]) for i in context_no
+        ]
+        rcd_err = [
+            int(list(self.radiocarbon_df["error"])[list(self.radiocarbon_df["context"]).index(i)]) for i in context_no
+        ]
         # self.prev_phase, self.post_phase = self.prev_phase, self.post_phase  # @todo - redundent statement
         # Write calibration inputs to disk in csv. @todo make optional?
         input_1 = [

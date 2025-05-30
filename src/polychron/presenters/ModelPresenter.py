@@ -189,7 +189,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         # Make sure that the check marks are up to date
         if model_model.stratigraphic_df is not None:
             self.strat_check = True
-        if model_model.date_df is not None:
+        if model_model.radiocarbon_df is not None:
             self.date_check = True
         if model_model.phase_df is not None:
             self.phase_check = True
@@ -265,7 +265,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             return
 
         # @todo - move this condition into a model function.
-        if model_model.phase_rels is None or model_model.phase_df is None or model_model.date_df is None:
+        if model_model.phase_rels is None or model_model.phase_df is None or model_model.radiocarbon_df is None:
             # @todo - abstract this into a view
             tk.messagebox.showinfo("Error", "You haven't loaded in all the data required for a chronological graph")
             return
@@ -457,11 +457,9 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
 
         Formerly StartPage.open_file3
 
-        @todo - abstract askfileopen somewhere else to limit importing tkinter?
-
-        @todo - finish implementing this with the actual model
-
-        @todo - Column and value validation (within the data model, with exceptions handeled here?)
+        Todo:
+            - @todo abstract askfileopen somewhere else to limit importing tkinter?
+            - @todo Column and value validation (within the data model, with exceptions handeled here?)
         """
         file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
 
@@ -473,7 +471,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 df = df.applymap(str)
                 load_it = self.file_popup(df)
                 if load_it == "load":
-                    model_model.set_date_df(df)
+                    model_model.set_radiocarbon_df(df)
                     self.date_check = True
                     self.check_list_gen()
                     tk.messagebox.showinfo("Success", "Scientific dating data loaded")
