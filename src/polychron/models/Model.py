@@ -186,20 +186,28 @@ class Model:
         - @todo - if the state has been mutated since the last render, should this be different?
     """
 
-    delnodes: List[Tuple[str, str]] = field(default_factory=list)
-    """List of deleted nodes and the reason they were deleted
+    deleted_nodes: List[Tuple[str, str]] = field(default_factory=list)
+    """List of deleted nodes and the reason they were deleted.
+
+    This may include the same node multiple times (as nodes can be deleted, then added again)
     
-    Formerly StartPage.delnodes and StartPage.delnodes_meta
-    @todo - make a list of a dataclass instead? Not using a dict so the same node can be deleted, added, then deleted again
+    Formerly `StartPage.delnodes` and `StartPage.delnodes_meta`
+
+    Todo:
+        @todo - make a list of a dataclass instead? Not using a dict so the same node can be deleted, added, then deleted again
     """
 
-    deledges: List[Tuple[str, str, str]] = field(default_factory=list)
+    deleted_edges: List[Tuple[str, str, str]] = field(default_factory=list)
     """List of deleted edges and the reason they were deleted
 
-    Each entry is the a node, b node and reason.
+    Each entry is the (a_node, b_node, reason).
+
+    This may include the same edges multiple times (as edges can be deleted, then added again)
     
-    Formerly StartPage.edges_del and StartPage.deledges_meta
-    @todo - make a list of a dataclass instead? Not using a dict so the same node can be deleted, added, then deleted again
+    Formerly `StartPage.edges_del` and `StartPage.deledges_meta`
+
+    Todo:
+        - @todo - make a list of a dataclass instead? Not using a dict so the same node can be deleted, added, then deleted again
     """
 
     resid_or_intru_strat_graph: Optional[nx.DiGraph] = field(default=None)
@@ -652,7 +660,7 @@ class Model:
         """
 
         cols = ("context", "Reason for deleting")
-        rows = [[x[0], x[1]] for x in self.delnodes]
+        rows = [[x[0], x[1]] for x in self.deleted_nodes]
         df = pd.DataFrame(rows, columns=cols)
         path = self.get_working_directory() / "deleted_contexts_meta"
         df.to_csv(path)
@@ -947,9 +955,9 @@ class Model:
             reason: the reason the node was deleted, if provided.
 
         Todo:
-            @todo Make this the only way to mutate delnodes?
+            @todo Make this the only way to mutate deleted_nodes?
         """
-        self.delnodes.append((context, reason))
+        self.deleted_nodes.append((context, reason))
 
     def record_deleted_edge(self, context_a: str, context_b: str, reason: Optional[str] = None) -> None:
         """Method to add an edge to the list of deleted edges
@@ -960,10 +968,10 @@ class Model:
             reason: the reason the node was deleted, if provided.
 
         Todo:
-            @todo Make this the only way to mutate deledges?
-            @todo include the ccall to remove_edge here (or anotehr func which does both)
+            @todo Make this the only way to mutate deleted_edges?
+            @todo include the call to remove_edge here (or another func which does both)
         """
-        self.deledges.append((context_a, context_b, reason))
+        self.deleted_edges.append((context_a, context_b, reason))
 
     def MCMC_func(self) -> Tuple[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]:
         """run the mcmc calibration on the current model, returning output values without (significantly) mutating state

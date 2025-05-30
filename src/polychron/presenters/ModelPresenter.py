@@ -199,13 +199,13 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         self.check_list_gen()
 
         # If there are any deleted nodes, update the table of deleted nodes
-        if model_model.delnodes is not None and len(model_model.delnodes):
-            self.view.set_deleted_nodes(model_model.delnodes)
+        if model_model.deleted_nodes is not None and len(model_model.deleted_nodes):
+            self.view.set_deleted_nodes(model_model.deleted_nodes)
 
-        # If there are any delted edges, update the table of deleted edges
-        if model_model.deledges is not None and len(model_model.deledges):
+        # If there are any deleted edges, update the table of deleted edges
+        if model_model.deleted_edges is not None and len(model_model.deleted_edges):
             self.view.set_deleted_edges(
-                [tuple([edge_label(ctx_a, ctx_b), meta]) for ctx_a, ctx_b, meta in model_model.deledges]
+                [tuple([edge_label(ctx_a, ctx_b), meta]) for ctx_a, ctx_b, meta in model_model.deleted_edges]
             )
 
     def get_window_title_suffix(self) -> Optional[str]:
@@ -400,9 +400,9 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             # Render the image in phases or not
             model_model.render_strat_graph()
 
-            # Clear the list of deleted nodes. @todo method / part of setting the stratr graph?
-            # @todo - also clear deledges?
-            model_model.delnodes = []
+            # Clear the list of deleted nodes. @todo method / part of setting the stratigraphic graph?
+            # @todo - also clear deleted_edges?
+            model_model.deleted_nodes = []
 
             # Update the view and any keybindings
             self.view.update_littlecanvas(model_model.stratigraphic_image)
@@ -444,7 +444,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                     model_model.render_strat_graph()
 
                     # Clear the list of deleted nodes. @todo method / part of setting the stratr graph?
-                    model_model.delnodes = []
+                    model_model.deleted_nodes = []
 
                     # Update the view and any keybindings
                     self.view.update_littlecanvas(model_model.stratigraphic_image)
