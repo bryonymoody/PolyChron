@@ -270,24 +270,37 @@ class Model:
     Previously `global phase_true`
     """
 
-    CONT_TYPE: List[Literal["normal", "residual", "intrusive"]] = field(default_factory=list)
-    """Context types, in the same order as context_no_unordered.
+    context_types: List[Literal["normal", "residual", "intrusive"]] = field(default_factory=list)
+    """The type of each context, in the same order as as context_no_unordered.
     
-    Used for calibration / MCMC"""
+    Used for calibration (MCMC)
+    
+    Formerly `StartPage.CONT_TYPE`
+    """
 
-    prev_phase: List[str] = field(default_factory=list)
+    prev_group: List[str] = field(default_factory=list)
     """List of previous phases, with "start" as the 0th value.
     
-    Initialised in ManageGroupRelationshipsPresenter.full_chronograph_func
+    Initialised in `ManageGroupRelationshipsPresenter.full_chronograph_func`
 
-    @todo determine order?"""
+    Formerly `StartPage.prev_phase` and `popupWindow3.prev_phase`
 
-    post_phase: List[str] = field(default_factory=list)
+    Todo:
+        - @todo determine order?
+        - @todo move to popupWindow3 data object? (but will also need a copy here anyway)
+    """
+
+    post_group: List[str] = field(default_factory=list)
     """List of post phases, with "end" as the final value.
     
-    Initialised in ManageGroupRelationshipsPresenter.full_chronograph_func
+    Initialised in `ManageGroupRelationshipsPresenter.full_chronograph_func`
 
-    @todo determine order?"""
+    Formerly `StartPage.post_phase` and `popupWindow3.post_phase`
+
+    Todo:
+        - @todo determine order?
+        - @todo move to popupWindow3 data object? (but will also need a copy here anyway)
+    """
 
     phi_ref: List[str] = field(default_factory=list)
     """Ordered list of context labels.
@@ -981,9 +994,11 @@ class Model:
 
         Returns a tuple of calibration results @todo move into a dataclass of it's own?
 
-        Formerly StartPage.MCMC_func
-        @todo type hints
-        @todo decide if this should mutate state or not (key_ref and CONT_TYPE). it does orinally, but might be better not to as mcmc func needs to be executed multiple times."""
+        Formerly `StartPage.MCMC_func`
+
+        Todo:
+            - @todo type hints
+            - @todo decide if this should mutate state or not (`key_ref` and `context_types`). it does orinally, but might be better not to as mcmc func needs to be executed multiple times?"""
 
         # @todo - validate that the model is in a state which can be MCMC'd
         if self.stratigraphic_dag is None or self.chronological_dag is None:
@@ -996,15 +1011,15 @@ class Model:
         topo_sort.reverse()
         context_no = topo_sort
         self.key_ref = [list(self.group_df["Group"])[list(self.group_df["context"]).index(i)] for i in context_no]
-        self.CONT_TYPE = [self.CONT_TYPE[list(self.context_no_unordered).index(i)] for i in topo_sort]
+        self.context_types = [self.context_types[list(self.context_no_unordered).index(i)] for i in topo_sort]
         strat_vec = []
-        resids = [j for i, j in enumerate(context_no) if self.CONT_TYPE[i] == "residual"]
-        intrus = [j for i, j in enumerate(context_no) if self.CONT_TYPE[i] == "intrusive"]
+        resids = [j for i, j in enumerate(context_no) if self.context_types[i] == "residual"]
+        intrus = [j for i, j in enumerate(context_no) if self.context_types[i] == "intrusive"]
         for i, j in enumerate(context_no):
-            if self.CONT_TYPE[i] == "residual":
+            if self.context_types[i] == "residual":
                 low = []
                 up = list(self.stratigraphic_dag.predecessors(j))
-            elif self.CONT_TYPE[i] == "intrusive":
+            elif self.context_types[i] == "intrusive":
                 low = list(self.stratigraphic_dag.successors(j))
                 up = []
             else:
@@ -1026,10 +1041,10 @@ class Model:
             self.key_ref,
             context_no,
             self.phi_ref,
-            self.prev_phase,
-            self.post_phase,
+            self.prev_group,
+            self.post_group,
             topo_sort,
-            self.CONT_TYPE,
+            self.context_types,
         ]
         workdir = self.get_working_directory()
         workdir.mkdir(parents=True, exist_ok=True)
@@ -1053,12 +1068,12 @@ class Model:
             self.key_ref,
             context_no,
             self.phi_ref,
-            self.prev_phase,
-            self.post_phase,
+            self.prev_group,
+            self.post_group,
             topo_sort,
-            self.CONT_TYPE,
+            self.context_types,
         )
-        _, resultsdict, all_results_dict = phase_labels(PHI_REF, self.post_phase, PHI_ACCEPT, ALL_SAMPS_PHI)
+        _, resultsdict, all_results_dict = phase_labels(PHI_REF, self.post_group, PHI_ACCEPT, ALL_SAMPS_PHI)
         for i, j in enumerate(CONTEXT_NO):
             resultsdict[j] = ACCEPT[i]
         for k, l in enumerate(CONTEXT_NO):

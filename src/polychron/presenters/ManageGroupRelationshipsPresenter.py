@@ -40,11 +40,11 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
         self.graphcopy = copy.deepcopy(self.model.stratigraphic_dag)
         """A copt of the model's stratigraphic graph for mutation in this process. @todo make it another Model member?"""
 
-        # @todo - these probably all bellong in Model? or atleast a copy needs to go into the Model eventually.
+        # @todo - these probably all belong in Model? or at least a copy needs to go into the Model eventually.
         # @todo - need to thinkabotu cases where go back should restore the state of Model in general?
-        # self.CONT_TYPE = None
-        self.prev_phase = []
-        self.post_phase = []
+        # self.context_types = None
+        self.prev_group = []
+        self.post_group = []
         self.phi_ref = []
         self.context_no_unordered = []
 
@@ -73,25 +73,25 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
             x for x in list(self.model.stratigraphic_dag.nodes()) if x not in self.node_del_tracker
         ]
         # set up context types
-        self.CONT_TYPE = ["normal" for _ in self.context_no_unordered]
+        self.context_types = ["normal" for _ in self.context_no_unordered]
 
         # checks if contexts are residual or intrusive and if we want to keep them or exclude from modelling
         for i in self.model.resid_list:
             if self.model.resid_dropdowns[i] == "Treat as TPQ":
-                self.CONT_TYPE[np.where(np.array(self.context_no_unordered) == i)[0][0]] = "residual"
+                self.context_types[np.where(np.array(self.context_no_unordered) == i)[0][0]] = "residual"
             elif self.model.resid_dropdowns[i] == "Exclude from modelling":
                 self.graphcopy = node_del_fixed(self.graphcopy, i)
-                self.CONT_TYPE.pop(np.where(np.array(self.context_no_unordered) == i)[0][0])
+                self.context_types.pop(np.where(np.array(self.context_no_unordered) == i)[0][0])
                 self.context_no_unordered.remove(
                     i
                 )  # self.model.resid_list[i]) # @todo - this was incorrect. i is not an index? Should this be an enumerate?
 
         for j in self.model.intru_list:
             if self.model.intru_dropdowns[j] == "Treat as TAQ":
-                self.CONT_TYPE[np.where(np.array(self.context_no_unordered) == j)[0][0]] = "intrusive"
+                self.context_types[np.where(np.array(self.context_no_unordered) == j)[0][0]] = "intrusive"
             elif self.model.intru_dropdowns[j] == "Exclude from modelling":
                 self.graphcopy = node_del_fixed(self.graphcopy, j)
-                self.CONT_TYPE.pop(np.where(np.array(self.context_no_unordered) == j)[0][0])
+                self.context_types.pop(np.where(np.array(self.context_no_unordered) == j)[0][0])
                 self.context_no_unordered.remove(j)
         self.step_1 = chrono_edge_remov(self.graphcopy)
 
@@ -211,8 +211,8 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
         workdir = self.model.get_working_directory()
         workdir.mkdir(parents=True, exist_ok=True)  # @todo - shouldnt be neccessary
 
-        self.prev_phase = ["start"]
-        self.post_phase = []
+        self.prev_group = ["start"]
+        self.post_group = []
         phase_list = self.step_1[2]
         if len(self.step_1[0][1][3]) != 0:
             self.graphcopy, self.phi_ref, self.null_phases = chrono_edge_add(
@@ -224,18 +224,18 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
                 self.post_dict,
                 self.prev_dict,
             )
-            self.post_phase.append(self.post_dict[self.phi_ref[0]])
-            # adds the phase relationships to prev_phase and post_phase
+            self.post_group.append(self.post_dict[self.phi_ref[0]])
+            # adds the phase relationships to prev_group and post_group
             for i in range(1, len(self.phi_ref) - 1):
-                self.prev_phase.append(self.prev_dict[self.phi_ref[i]])
-                self.post_phase.append(self.post_dict[self.phi_ref[i]])
-            self.prev_phase.append(self.prev_dict[self.phi_ref[len(self.phi_ref) - 1]])
+                self.prev_group.append(self.prev_dict[self.phi_ref[i]])
+                self.post_group.append(self.post_dict[self.phi_ref[i]])
+            self.prev_group.append(self.prev_dict[self.phi_ref[len(self.phi_ref) - 1]])
         else:
             self.phi_ref = list(self.step_1[0][1][2])
-        self.post_phase.append("end")
-        del_phases = [i for i in self.phi_ref if i not in phase_list]
+        self.post_group.append("end")
+        del_groups = [i for i in self.phi_ref if i not in phase_list]
         ref_list = []
-        for i in del_phases:
+        for i in del_groups:
             ref = np.where(np.array(self.phi_ref) == i)[0][0]
             ref_list.append(ref)
         # deletes missing context references from phi_ref
@@ -243,8 +243,8 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
             del self.phi_ref[index]
         # change to new phase rels
         for i in ref_list:
-            self.prev_phase[i] = "gap"
-            self.post_phase[i] = "gap"
+            self.prev_group[i] = "gap"
+            self.post_group[i] = "gap"
         self.graphcopy.graph["graph"] = {"splines": "ortho"}
         atribs = nx.get_node_attributes(self.graphcopy, "Group")
         nodes = self.graphcopy.nodes()
@@ -259,7 +259,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
             all_paths = []
             all_paths.extend(nx.all_simple_paths(self.graphcopy, source=root, target=leaf))
 
-            if self.CONT_TYPE[i] == "residual":
+            if self.context_types[i] == "residual":
                 for f in all_paths:
                     if j in f:
                         ind = np.where(np.array(f) == str(j))[0][0]
@@ -267,7 +267,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
                 for k in self.graphcopy.edges():
                     if k[0] == j:
                         edge_remove.append((k[0], k[1]))
-            elif self.CONT_TYPE[i] == "intrusive":
+            elif self.context_types[i] == "intrusive":
                 for f in all_paths:
                     if j in f:
                         ind = np.where(np.array(f) == str(j))[0][0]
@@ -291,9 +291,9 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
 
         # write output variables into the Model once it is confirmed.
         # @todo - might be better for this presenter to own a deep copy, which on confirmation is updated? Thoguht that won't be useful for any on-disk files?
-        self.model.CONT_TYPE = self.CONT_TYPE
-        self.model.prev_phase = self.prev_phase
-        self.model.post_phase = self.post_phase
+        self.model.context_types = self.context_types
+        self.model.prev_group = self.prev_group
+        self.model.post_group = self.post_group
         self.model.phi_ref = self.phi_ref
         self.model.context_no_unordered = self.context_no_unordered
         self.model.chronological_dag = (
