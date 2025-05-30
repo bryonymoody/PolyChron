@@ -47,7 +47,8 @@ class Model:
     
     Formerly StartPage.FILE_INPUT
 
-    @todo - special case saving logic? Need to check usage.
+    Todo:
+        - @todo - special case saving logic? Need to check usage.
     """
 
     stratigraphic_df: Optional[pd.DataFrame] = field(default=None)
@@ -55,25 +56,33 @@ class Model:
 
     Formerly StartPage.stratfile
     
-    @todo - refactor this to be it's own model class which performs validation etc?"""
+    Todo: 
+        - @todo - refactor this to be it's own model class which performs validation etc?"""
 
     stratigraphic_dag: Optional[nx.DiGraph] = field(default=None)
     """Stratigraphic Directed Acyclic Graph, initially produced from the stratigraphic dataframe or graphviz file before being mutated.
     
-    @todo @enhancement - When a new stratigraphic_df is loaded, clear other members, or re-apply the same changes to this?
+    Formerly StartPage.graph
+
+    Todo:
+        - @todo @enhancement - When a new stratigraphic_df is loaded, clear other members, or re-apply the same changes to this?
     """
 
     stratigraphic_image: Optional[Image.Image] = field(default=None)
     """Rendered version of the stratigraphic graph as an image, for whicle a handle must be kept for persistence.
 
-    @todo Could belong to the presenter instead"""
+    Todo:
+        - @todo Could belong to the presenter instead
+    """
 
     radiocarbon_df: Optional[pd.DataFrame] = field(default=None)
     """Dataframe containing radiocarbon dating information, loaded from disk
     
     Formerly StartPage.datefile
 
-    @todo - refactor this to be it's own model class which performs validation etc?"""
+    Todo: 
+        - @todo - refactor this to be it's own model class which performs validation etc?
+    """
 
     context_no_unordered: Optional[List[str]] = field(default=None)
     """A list of stratigraphic graph nodes, initially populated within open_scientific_dating_file before being used elsewhere.
