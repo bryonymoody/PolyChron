@@ -144,39 +144,46 @@ class Model:
     load_check: bool = False
     """If the chronological graph has been rendered for the current state of the model
     
-    Formerly a global load_check, where "loaded" is now True and "not_loaded" is False.
+    Formerly `global load_check`, where "loaded" is now True and "not_loaded" is False.
 
-    @todo - make this a private / protected
-    @todo - rename
-    @todo - double check all occurences have been met
+    Todo:
+        - @todo - make this a private / protected
+        - @todo - rename, make dynamic?
+        - @todo - double check all occurrences have been met
     """
 
-    chrono_dag: Optional[nx.DiGraph] = field(default=None)
-    """Chronological directed graph, produced by rendereing the chronological graph
+    chronological_dag: Optional[nx.DiGraph] = field(default=None)
+    """Chronological directed graph, produced by rendering the chronological graph
     
-    @todo - move function which generates this into this class (or an object for the chronograph with it's other bits)
-    @todo - rename?
-    @todo - setter&getter with protected member?
+    Formerly `StartPage.chrono_dag`
+
+    Todo:
+        - @todo - move function which generates this into this class (or an object for the chronograph with it's other bits)
+        - @todo - setter&getter with protected member?
     """
 
-    chrono_image: Optional[Image.Image] = field(default=None)
-    """Rendered version of the Chronological graph as an image, for whicle a handle must be kept for persistence and to avoid regenerating when not required.
+    chronological_image: Optional[Image.Image] = field(default=None)
+    """Rendered version of the Chronological graph as an image, for which a handle must be kept for persistence and to avoid regenerating when not required.
 
     When load_check is True, this image is valid for the current state of the Model.
 
-    @todo - migrate generation of this into a class method, and only provide a public getter.
+    Formerly `StartPage.image2`
 
-    Formerly StartPage.image2
+
+    Todo: 
+        - @todo - migrate generation of this into a class method, and only provide a public getter.
+        - @todo - let this be owned by the presenter instead?
     """
 
     mcmc_check: bool = False
     """If the model has been calibrated
     
-    Formerly a global mcmc_check, where "mcmc_loaded" is now True and "mcmc_notloaded" is False.
+    Formerly `global mcmc_check`, where "mcmc_loaded" is now True and "mcmc_notloaded" is False.
 
-    @todo - make this a private / protected
-    @todo - rename
-    @todo - double check all occurences have been met
+    Todo:
+        - @todo - make this a private / protected / a property?
+        - @todo - rename
+        - @todo - if the state has been mutated since the last render, should this be different?
     """
 
     delnodes: List[Tuple[str, str]] = field(default_factory=list)
@@ -363,8 +370,8 @@ class Model:
         data = {}
         exclude_keys = [
             "path",  # Don't include the path, so models can be trivially copied on disk
-            "strat_image",  # don't include image handles
-            "chrono_image",  # don't include image handles
+            "stratigraphic_image",  # don't include image handles
+            "chronological_image",  # don't include image handles
             "resid_or_intru_strat_image",  # don't include image handles
             "node_df",  # don't include the the locations of images from svgs?
             "mcmc_data",  # don't include the mcmc_data object, which has been saved elsewhere. @todo include a relative path in it's place?
@@ -883,31 +890,32 @@ class Model:
     def render_chrono_graph(self) -> None:
         """Render the chronological graph as a PNG and an SVG, mutating the Model state
 
-        Formerly imgrender2
+        Formerly `imgrender2`
 
-        @todo - better temporary file names / paths?
-        @todo - working dir / set paths explicitly"""
+        Todo:
+            @todo - better temporary file names / paths?
+        """
         workdir = self.get_working_directory()
-        workdir.mkdir(parents=True, exist_ok=True)  # @todo - shouldnt be neccessary
-        fi_new_chrono = workdir / "fi_new_chrono"  # @todo make this a model member?
+        workdir.mkdir(parents=True, exist_ok=True)
+        fi_new_chrono = workdir / "fi_new_chrono"
         if self.load_check and fi_new_chrono.is_file():
             render("dot", "png", fi_new_chrono)
-            render("dot", "svg", fi_new_chrono)  # @todo - is the svg needed?
+            render("dot", "svg", fi_new_chrono)
             inp = Image.open(workdir / "fi_new_chrono.png")
             inp_final = trim(inp)
             # scale_factor = min(canv_width/inp.size[0], canv_height/inp.size[1])
             # inp_final = inp.resize((int(inp.size[0]*scale_factor), int(inp.size[1]*scale_factor)), Image.ANTIALIAS)
             inp_final.save(workdir / "testdag_chrono.png")
-            self.chrono_image = Image.open(workdir / "testdag_chrono.png")
+            self.chronological_image = Image.open(workdir / "testdag_chrono.png")
         else:
-            self.chrono_image = None  # formerly 'No_image'
+            self.chronological_image = None
 
     def reopen_strat_image(self) -> None:
         """Re-open the stratigraphic image from disk
 
         Used when the window is reiszed as the in memory copy may have been resized
 
-        Formerly part of StartPage.resize
+        Formerly part of `StartPage.resize`
 
         @todo - instead of re-opening from disk, maybe keep a separate in-memory copy.
         @todo - actual path"""
@@ -917,20 +925,19 @@ class Model:
         if png_path.is_file():
             self.stratigraphic_image = Image.open(png_path)
 
-    def reopen_chrono_image(self) -> None:
+    def reopen_chronological_image(self) -> None:
         """Re-open the chrono image from disk
 
         Used when the window is reiszed as the in memory copy may have been resized
 
-        Formerly part of StartPage.resize2
+        Formerly part of `StartPage.resize2`
 
         @todo - instead of re-opening from disk, maybe keep a separate in-memory copy.
         @todo - actual path"""
         workdir = self.get_working_directory()
-        workdir.mkdir(parents=True, exist_ok=True)  # @todo - shouldnt be neccessary
         png_path = workdir / "testdag_chrono.png"
         if png_path.is_file():
-            self.chrono_image = Image.open(png_path)
+            self.chronological_image = Image.open(png_path)
 
     def record_deleted_node(self, context: str, reason: Optional[str] = None) -> None:
         """Method to add a node to the list of deleted nodes
@@ -970,12 +977,12 @@ class Model:
         @todo decide if this should mutate state or not (key_ref and CONT_TYPE). it does orinally, but might be better not to as mcmc func needs to be executed multiple times."""
 
         # @todo - validate that the model is in a state which can be MCMC'd
-        if self.chrono_dag is None:
+        if self.stratigraphic_dag is None or self.chronological_dag is None:
             print("Error: model is not MCMC ready @todo.")
             return  # @todo temp
 
         context_no = [x for x in list(self.context_no_unordered) if x not in self.node_del_tracker]
-        topo = list(nx.topological_sort(self.chrono_dag))
+        topo = list(nx.topological_sort(self.chronological_dag))
         topo_sort = [x for x in topo if (x not in self.node_del_tracker) and (x in context_no)]
         topo_sort.reverse()
         context_no = topo_sort
@@ -984,7 +991,6 @@ class Model:
         strat_vec = []
         resids = [j for i, j in enumerate(context_no) if self.CONT_TYPE[i] == "residual"]
         intrus = [j for i, j in enumerate(context_no) if self.CONT_TYPE[i] == "intrusive"]
-        # @todo - should this be strat_graph or chrono_dag???
         for i, j in enumerate(context_no):
             if self.CONT_TYPE[i] == "residual":
                 low = []
@@ -1003,7 +1009,6 @@ class Model:
         rcd_err = [
             int(list(self.radiocarbon_df["error"])[list(self.radiocarbon_df["context"]).index(i)]) for i in context_no
         ]
-        # self.prev_phase, self.post_phase = self.prev_phase, self.post_phase  # @todo - redundent statement
         # Write calibration inputs to disk in csv. @todo make optional?
         input_1 = [
             strat_vec,
@@ -1018,7 +1023,8 @@ class Model:
             self.CONT_TYPE,
         ]
         workdir = self.get_working_directory()
-        workdir.mkdir(parents=True, exist_ok=True)  # @todo - shouldnt be neccessary
+        workdir.mkdir(parents=True, exist_ok=True)
+        # @todo - the input file needs to be .csv, but also could make this a nicer file for interrogation (as trhis is not used programatically?). Alos should this be copied into a specific directory or left in workdir?
         f = open(workdir / "input_file", "w")  # @todo .csv
         writer = csv.writer(f)
         #  for i in input_1:

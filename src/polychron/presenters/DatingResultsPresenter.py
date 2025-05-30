@@ -143,12 +143,12 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
         self.view.bind_littlecanvas2_callback("<Button-1>", self.on_left)
         # Show the right click menu
         model_model: Optional[Model] = self.model.current_model
-        has_image = model_model.chrono_image is not None
-        # Show the test menu, returnign the coords it was place at?
+        has_image = model_model.chronological_image is not None
+        # Show the test menu, returning the coords it was place at?
         x_scal, y_scal = self.view.show_testmenu(has_image)
         # If the model has a chronographic image presented, check if a node has been right clicked on and store in a member variable
-        # this was part of PageOne.chrono_nodes, but standardised to match the other tab a bit more.
-        if model_model.chrono_image is not None and x_scal is not None and y_scal is not None:
+        # this was part of `PageOne.chrono_nodes``, but standardised to match the other tab a bit more.
+        if model_model.chronological_image is not None and x_scal is not None and y_scal is not None:
             self.node = self.nodecheck(x_scal, y_scal)
 
     def on_canvas_wheel2(self, event: Any) -> None:
@@ -169,7 +169,7 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
-        if model_model.chrono_image is not None:
+        if model_model.chronological_image is not None:
             self.view.littlecanvas2.scan_mark(event.x, event.y)  # @todo tkinter in presenter
 
     def on_canvas_move_to2(self, event: Any) -> None:
@@ -182,7 +182,7 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
-        if model_model.chrono_image is not None:  # @Todo - double check this.
+        if model_model.chronological_image is not None:  # @Todo - double check this.
             self.view.littlecanvas2.scan_dragto(event.x, event.y, gain=1)  # @todo tkinter in presenter
             self.view.show_image2()
 
@@ -198,9 +198,9 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
             # Render the chronological graph, mutating the model
             model_model.render_chrono_graph()
             # If the render succeeded
-            if model_model.chrono_image is not None:
+            if model_model.chronological_image is not None:
                 # Update the view with the image
-                self.view.update_littlecanvas2(model_model.chrono_image)
+                self.view.update_littlecanvas2(model_model.chronological_image)
 
     def tkraise(self, aboveThis: Optional[Any] = None) -> None:
         """Loads the graph and ensures this window is raised above another.
@@ -224,23 +224,23 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
         if model_model is None:
             return node_inside
 
-        node_df_con = node_coords_fromjson(model_model.chrono_dag)
+        node_df_con = node_coords_fromjson(model_model.chronological_dag)
         node_df = node_df_con[0]
         xmax, ymax = node_df_con[1]
         # forms a dataframe from the dicitonary of coords
-        x, y = model_model.chrono_image.size
+        x, y = model_model.chronological_image.size
         cavx = x * self.view.imscale2
         cany = y * self.view.imscale2
         xscale = (x_current) * (xmax) / cavx
         yscale = (cany - y_current) * (ymax) / cany
-        outline = nx.get_node_attributes(model_model.chrono_dag, "color")
+        outline = nx.get_node_attributes(model_model.chronological_dag, "color")
         for n_ind in range(node_df.shape[0]):
             if (node_df.iloc[n_ind].x_lower < xscale < node_df.iloc[n_ind].x_upper) and (
                 node_df.iloc[n_ind].y_lower < yscale < node_df.iloc[n_ind].y_upper
             ):
                 node_inside = node_df.iloc[n_ind].name
                 outline[node_inside] = "red"
-                nx.set_node_attributes(model_model.chrono_dag, outline, "color")
+                nx.set_node_attributes(model_model.chronological_dag, outline, "color")
         return node_inside
 
     def clear_results_list(self) -> None:
@@ -433,7 +433,7 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
                 plot1.spines["top"].set_visible(False)
                 fig.gca().invert_xaxis()
                 plot1.set_ylim([0, 0.02])
-                nodes = list(nx.topological_sort(model_model.chrono_dag))
+                nodes = list(nx.topological_sort(model_model.chronological_dag))
                 uplim = nodes[0]
                 lowlim = nodes[-1]
                 min_plot = min(model_model.mcmc_data.resultsdict[uplim])

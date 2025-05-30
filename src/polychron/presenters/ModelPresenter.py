@@ -177,12 +177,12 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
             self.view.bind_littlecanvas_callback("<Button-3>", self.pre_click)
 
-        # Render the chrono if possible
-        if model_model.chrono_dag is not None:
+        # Render the chronological graph if possible
+        if model_model.chronological_dag is not None:
             model_model.render_chrono_graph()
-            if model_model.chrono_image is not None:
+            if model_model.chronological_image is not None:
                 # Update the view
-                self.view.update_littlecanvas2(model_model.chrono_image)
+                self.view.update_littlecanvas2(model_model.chronological_image)
                 self.view.bind_littlecanvas2_callback("<Configure>", self.on_resize_2)
                 self.view.show_image2()
 
@@ -285,12 +285,12 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 self.save_as_new_model()
                 model_model.load_check = False
                 self.view.clear_littlecanvas2()
-                model_model.chrono_dag = self.chronograph_render()
+                model_model.chronological_dag = self.chronograph_render()
             else:
                 pass  # @todo - do somethign in this case? Query intended behaviour.
         else:
             self.view.clear_littlecanvas2()
-            model_model.chrono_dag = self.chronograph_render()
+            model_model.chronological_dag = self.chronograph_render()
 
     def chronograph_render(self) -> Optional[nx.DiGraph]:
         """initiates residual checking function then renders the graph when thats done
@@ -315,11 +315,11 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             # Render the chronological graph, mutating the model
             model_model.render_chrono_graph()
             # If the render succeeded
-            if model_model.chrono_image is not None:
+            if model_model.chronological_image is not None:
                 # Try and update the view
                 try:
                     # Update the view including rebinding events which may have been removed
-                    self.view.update_littlecanvas2(model_model.chrono_image)
+                    self.view.update_littlecanvas2(model_model.chronological_image)
                     self.view.bind_littlecanvas2_callback("<Configure>", self.on_resize_2)
                     self.view.show_image2()
                 except (RuntimeError, TypeError, NameError):
@@ -327,7 +327,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                     model_model.load_check = False
             else:
                 pass  # @todo - should this also set model_model.load_check = False?
-        return model_model.chrono_dag  # superfluous?
+        return model_model.chronological_dag  # superfluous?
 
     def resid_check(self) -> None:
         """Loads a text box to check if the user thinks any samples are residual
@@ -1089,10 +1089,10 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         if model_model is None:
             return
         # Re-open the image inside the Model
-        model_model.reopen_chrono_image()
-        if model_model.chrono_image is not None:
+        model_model.reopen_chronological_image()
+        if model_model.chronological_image is not None:
             # Update the image in the view
-            self.view.update_littlecanvas2_image_only(model_model.chrono_image, event)
+            self.view.update_littlecanvas2_image_only(model_model.chronological_image, event)
 
     def move_from(self, event: Any) -> None:
         """Remembers previous coordinates for scrolling with the mouse
@@ -1131,7 +1131,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
-        if model_model.chrono_image is not None:
+        if model_model.chronological_image is not None:
             self.view.littlecanvas2.scan_mark(event.x, event.y)  # @todo tkinter in presenter
 
     def move_to2(self, event: Any) -> None:
@@ -1144,7 +1144,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
-        if model_model.chrono_image is not None:
+        if model_model.chronological_image is not None:
             self.view.littlecanvas2.scan_dragto(event.x, event.y, gain=1)  # @todo tkinter in presenter
             self.view.show_image2()
 
