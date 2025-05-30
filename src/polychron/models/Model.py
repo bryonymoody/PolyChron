@@ -210,18 +210,20 @@ class Model:
         - @todo - make a list of a dataclass instead? Not using a dict so the same node can be deleted, added, then deleted again
     """
 
-    resid_or_intru_strat_graph: Optional[nx.DiGraph] = field(default=None)
-    """Copy of straigraphic_graph for the residual or intrusive window
+    resid_or_intru_dag: Optional[nx.DiGraph] = field(default=None)
+    """Copy of stratigraphic_dag for the residual or intrusive workflow
 
     This is mutated to show which nodes have been marked as residual or intrusive.
+
+    This does not need saving.
 
     Formerly `PageTwo.graphcopy`
 
     Todo:
-        @todo - move this a model class for the residual or intrusive page.
+       - @todo - move this a model class for the residual or intrusive page.
     """
 
-    resid_or_intru_strat_image: Optional[Image.Image] = field(default=None)
+    resid_or_intru_image: Optional[Image.Image] = field(default=None)
     """Image handle for the rendered png of the stratigraphic graph with residual or intrusive node highlighting.
 
     A handle to this needs to be maintained to avoid garbage collection
@@ -397,7 +399,8 @@ class Model:
             "path",  # Don't include the path, so models can be trivially copied on disk
             "stratigraphic_image",  # don't include image handles
             "chronological_image",  # don't include image handles
-            "resid_or_intru_strat_image",  # don't include image handles
+            "resid_or_intru_dag",  # no need to save the residual or intrusive dag, it's ephemeral
+            "resid_or_intru_image",  # don't include image handles
             "node_coords_and_scale",  # don't include the the locations of images from svgs?
             "mcmc_data",  # don't include the mcmc_data object, which has been saved elsewhere. @todo include a relative path in it's place?
         ]
@@ -800,7 +803,7 @@ class Model:
         else:
             self.__render_strat_graph()
 
-    def render_resid_or_intru_strat_graph(self) -> None:
+    def render_resid_or_intru_dag(self) -> None:
         """Render the residual or intrusive sratigraphic graph as a png and svg, with or without phasing depending on model state. Also updates the locatison of each node
 
         This graph will have different presentation information to highlight which contexts have been marked as residual or intrusive.
@@ -809,9 +812,9 @@ class Model:
         @todo - de-duplicate"""
         # Call the appropraite render_strat method, depending if the model is set up to render in phases or not.
         if self.grouped_rendering:
-            self.__render_resid_or_intru_strat_graph_phase()
+            self.__render_resid_or_intru_dag_phase()
         else:
-            self.__render_resid_or_intru_strat_graph()
+            self.__render_resid_or_intru_dag()
 
     def __render_strat_graph(self) -> None:
         """Render the stratigraphic graph mutating the Model state
@@ -860,7 +863,7 @@ class Model:
         self.stratigraphic_image = Image.open(workdir / "testdag.png")
         self.node_coords_and_scale = node_coords_fromjson(self.stratigraphic_dag)
 
-    def __render_resid_or_intru_strat_graph(self) -> None:
+    def __render_resid_or_intru_dag(self) -> None:
         """Render the stratigraphic graph mutating the Model state
 
         Formerly imgrender
@@ -874,17 +877,17 @@ class Model:
         )  # @todo - make this render into a subfolder? 0.1 does not.
         workdir.mkdir(exist_ok=True)
 
-        self.resid_or_intru_strat_graph.graph["graph"] = {"splines": "ortho"}
-        write_dot(self.resid_or_intru_strat_graph, workdir / "fi_new")
+        self.resid_or_intru_dag.graph["graph"] = {"splines": "ortho"}
+        write_dot(self.resid_or_intru_dag, workdir / "fi_new")
         render("dot", "png", workdir / "fi_new")
         render("dot", "svg", workdir / "fi_new")
         inp = Image.open(workdir / "fi_new.png")
         inp_final = trim(inp)
         inp_final.save(workdir / "testdag.png")
-        self.resid_or_intru_strat_image = Image.open(workdir / "testdag.png")
-        self.node_coords_and_scale = node_coords_fromjson(self.resid_or_intru_strat_graph)
+        self.resid_or_intru_image = Image.open(workdir / "testdag.png")
+        self.node_coords_and_scale = node_coords_fromjson(self.resid_or_intru_dag)
 
-    def __render_resid_or_intru_strat_graph_phase(self) -> None:
+    def __render_resid_or_intru_dag_phase(self) -> None:
         """Render the stratigraphic graph, with phasing mutating the Model state
 
         Formerly imgrender_phase
@@ -896,21 +899,21 @@ class Model:
         )  # @todo - make this render into a subfolder? 0.1 does not.
         workdir.mkdir(exist_ok=True)
 
-        write_dot(self.resid_or_intru_strat_graph, workdir / "fi_new.txt")
+        write_dot(self.resid_or_intru_dag, workdir / "fi_new.txt")
         my_file = open(workdir / "fi_new.txt")
         file_content = my_file.read()
-        new_string = rank_func(phase_info_func(self.resid_or_intru_strat_graph)[0], file_content)
+        new_string = rank_func(phase_info_func(self.resid_or_intru_dag)[0], file_content)
         textfile = open(workdir / "fi_new.txt", "w")
         textfile.write(new_string)
         textfile.close()
-        (self.resid_or_intru_strat_graph,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")
-        self.resid_or_intru_strat_graph.write_png(workdir / "test.png")
+        (self.resid_or_intru_dag,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")
+        self.resid_or_intru_dag.write_png(workdir / "test.png")
         inp = Image.open(workdir / "test.png")
         inp = trim(inp)
         # Call the real .tkraise
         inp.save(workdir / "testdag.png")
-        self.resid_or_intru_strat_image = Image.open(workdir / "testdag.png")
-        self.node_coords_and_scale = node_coords_fromjson(self.resid_or_intru_strat_graph)
+        self.resid_or_intru_image = Image.open(workdir / "testdag.png")
+        self.node_coords_and_scale = node_coords_fromjson(self.resid_or_intru_dag)
 
     def render_chrono_graph(self) -> None:
         """Render the chronological graph as a PNG and an SVG, mutating the Model state

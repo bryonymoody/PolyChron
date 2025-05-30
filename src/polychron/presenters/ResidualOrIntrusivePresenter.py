@@ -170,7 +170,7 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
         x_scal = cursorx2 + self.view.transx2
         y_scal = cursory2 + self.view.transy2
         node = self.nodecheck(x_scal, y_scal)
-        outline = nx.get_node_attributes(self.model.resid_or_intru_strat_graph, "color")
+        outline = nx.get_node_attributes(self.model.resid_or_intru_dag, "color")
         # changes colour of the node outline to represent: intrustive (green), residual (orange) or none (black)
         if (node in self.model.resid_list) and (self.mode != "intru"):
             self.model.resid_list.remove(node)
@@ -198,14 +198,14 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
         self.view.set_resid_label_text(self.model.resid_list)
 
         # updates the node outline colour
-        nx.set_node_attributes(self.model.resid_or_intru_strat_graph, outline, "color")
+        nx.set_node_attributes(self.model.resid_or_intru_dag, outline, "color")
 
         # re render the stratigraphic graph
-        self.model.render_resid_or_intru_strat_graph()
+        self.model.render_resid_or_intru_dag()
 
         # Update the image in the view
-        if self.model.resid_or_intru_strat_image is not None:
-            self.view.update_littlecanvas2_image_only(self.model.resid_or_intru_strat_image)
+        if self.model.resid_or_intru_image is not None:
+            self.view.update_littlecanvas2_image_only(self.model.resid_or_intru_image)
 
         # return the node which was clicked on
         return node
@@ -227,9 +227,9 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
         if self.model is None:
             return node_inside
 
-        if self.model.resid_or_intru_strat_graph is not None:
+        if self.model.resid_or_intru_dag is not None:
             # gets node coordinates from the graph
-            node_df_con = node_coords_fromjson(self.model.resid_or_intru_strat_graph)
+            node_df_con = node_coords_fromjson(self.model.resid_or_intru_dag)
             # forms a dataframe from the dicitonary of coords
             node_df = node_df_con[0]
             xmax, ymax = node_df_con[1]
@@ -240,13 +240,13 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
             xscale = (x_current) * (xmax) / cavx
             yscale = (cany - y_current) * (ymax) / cany
             # gets current node colours
-            outline = nx.get_node_attributes(self.model.resid_or_intru_strat_graph, "color")
+            outline = nx.get_node_attributes(self.model.resid_or_intru_dag, "color")
             for n_ind in range(node_df.shape[0]):
                 if (node_df.iloc[n_ind].x_lower < xscale < node_df.iloc[n_ind].x_upper) and (
                     node_df.iloc[n_ind].y_lower < yscale < node_df.iloc[n_ind].y_upper
                 ):
                     node_inside = node_df.iloc[n_ind].name
-                    nx.set_node_attributes(self.model.resid_or_intru_strat_graph, outline, "color")
+                    nx.set_node_attributes(self.model.resid_or_intru_dag, outline, "color")
         return node_inside
 
     def load_graph(self) -> None:
@@ -257,27 +257,27 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
         @todo - this doesn't need to return and set the model property directly really."""
         # loads start page so we get get variables from that class
         # startpage = self.controller.get_page('StartPage')
-        self.model.resid_or_intru_strat_graph = copy.deepcopy(self.model.stratigraphic_dag)
-        datadict = nx.get_node_attributes(self.model.resid_or_intru_strat_graph, "Determination")
-        nodes = self.model.resid_or_intru_strat_graph.nodes()
+        self.model.resid_or_intru_dag = copy.deepcopy(self.model.stratigraphic_dag)
+        datadict = nx.get_node_attributes(self.model.resid_or_intru_dag, "Determination")
+        nodes = self.model.resid_or_intru_dag.nodes()
         removed_nodes_tracker = []
         for i in nodes:
             if datadict[i] == [None, None]:
                 removed_nodes_tracker.append(i)
-        color = nx.get_node_attributes(self.model.resid_or_intru_strat_graph, "color")
-        fill = nx.get_node_attributes(self.model.resid_or_intru_strat_graph, "fontcolor")
+        color = nx.get_node_attributes(self.model.resid_or_intru_dag, "color")
+        fill = nx.get_node_attributes(self.model.resid_or_intru_dag, "fontcolor")
         for j in removed_nodes_tracker:
             color[j] = "gray"
             fill[j] = "gray"
-        nx.set_node_attributes(self.model.resid_or_intru_strat_graph, color, "color")
-        nx.set_node_attributes(self.model.resid_or_intru_strat_graph, fill, "fontcolor")
+        nx.set_node_attributes(self.model.resid_or_intru_dag, color, "color")
+        nx.set_node_attributes(self.model.resid_or_intru_dag, fill, "fontcolor")
 
         # render the stratigraphic graph
-        self.model.render_resid_or_intru_strat_graph()
+        self.model.render_resid_or_intru_dag()
 
         # Update the image in the view
-        if self.model.resid_or_intru_strat_image is not None:
-            self.view.update_littlecanvas2_image_only(self.model.resid_or_intru_strat_image)
+        if self.model.resid_or_intru_image is not None:
+            self.view.update_littlecanvas2_image_only(self.model.resid_or_intru_image)
 
         print("@todo - double check this is no longer required / standardisze")
         self.view.icon = ImageTk.PhotoImage(self.view.image2)
