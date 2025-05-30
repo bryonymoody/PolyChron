@@ -57,20 +57,20 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
         nodes = self.graphcopy.nodes()
 
         # empty node tracker
-        self.node_del_tracker = []
+        self.removed_nodes_tracker = []
 
         # checks for each context and if there isn't node or phase info, it deletes it
         for i in nodes:
             if phasedict[i] is None:
-                self.node_del_tracker.append(i)
+                self.removed_nodes_tracker.append(i)
             elif datadict[i] == [None, None]:
-                self.node_del_tracker.append(i)
-        for j in self.node_del_tracker:
+                self.removed_nodes_tracker.append(i)
+        for j in self.removed_nodes_tracker:
             self.graphcopy = node_del_fixed(self.graphcopy, j)
 
         # sets up a context list
         self.context_no_unordered = [
-            x for x in list(self.model.stratigraphic_dag.nodes()) if x not in self.node_del_tracker
+            x for x in list(self.model.stratigraphic_dag.nodes()) if x not in self.removed_nodes_tracker
         ]
         # set up context types
         self.context_types = ["normal" for _ in self.context_no_unordered]
@@ -299,7 +299,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
         self.model.chronological_dag = (
             self.graphcopy
         )  # @todo - is this correct? does it need to be graphcopy in the model?
-        self.model.node_del_tracker = self.node_del_tracker
+        self.model.removed_nodes_tracker = self.removed_nodes_tracker
         # Close the popup window
         self.close_window()
 

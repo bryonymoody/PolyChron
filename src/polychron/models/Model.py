@@ -309,10 +309,13 @@ class Model:
     
     Formerly StartPage.PHI_REF"""
 
-    node_del_tracker: List[str] = field(default_factory=list)
-    """List of contexts / nodes for which there was insufficent node or phase info, and has been removed during group relationship management
+    removed_nodes_tracker: List[str] = field(default_factory=list)
+    """List of nodes (contexts) for which there was insufficient node or group information, and so been removed during group relationship management. 
+
+    This is separate from nodes which were deleted by the user.
     
-    @todo - double check this description"""
+    Formerly `StartPage.node_del_tracker`, `PageTwo.node_del_tracker` and `popupWindow3.node_del_tracker`
+    """
 
     key_ref: List[Any] = field(default_factory=list)
     """List of something @todo. Generated and used during calibration, used in popupWindow9/10 too 
@@ -1009,9 +1012,9 @@ class Model:
             print("Error: model is not MCMC ready @todo.")
             return  # @todo temp
 
-        context_no = [x for x in list(self.context_no_unordered) if x not in self.node_del_tracker]
+        context_no = [x for x in list(self.context_no_unordered) if x not in self.removed_nodes_tracker]
         topo = list(nx.topological_sort(self.chronological_dag))
-        topo_sort = [x for x in topo if (x not in self.node_del_tracker) and (x in context_no)]
+        topo_sort = [x for x in topo if (x not in self.removed_nodes_tracker) and (x in context_no)]
         topo_sort.reverse()
         context_no = topo_sort
         self.key_ref = [list(self.group_df["Group"])[list(self.group_df["context"]).index(i)] for i in context_no]

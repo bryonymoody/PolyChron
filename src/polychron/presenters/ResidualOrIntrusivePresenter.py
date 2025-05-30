@@ -260,13 +260,13 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
         self.model.resid_or_intru_strat_graph = copy.deepcopy(self.model.stratigraphic_dag)
         datadict = nx.get_node_attributes(self.model.resid_or_intru_strat_graph, "Determination")
         nodes = self.model.resid_or_intru_strat_graph.nodes()
-        node_del_tracker = []
+        removed_nodes_tracker = []
         for i in nodes:
             if datadict[i] == [None, None]:
-                node_del_tracker.append(i)
+                removed_nodes_tracker.append(i)
         color = nx.get_node_attributes(self.model.resid_or_intru_strat_graph, "color")
         fill = nx.get_node_attributes(self.model.resid_or_intru_strat_graph, "fontcolor")
-        for j in node_del_tracker:
+        for j in removed_nodes_tracker:
             color[j] = "gray"
             fill[j] = "gray"
         nx.set_node_attributes(self.model.resid_or_intru_strat_graph, color, "color")
