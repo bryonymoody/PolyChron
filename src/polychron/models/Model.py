@@ -87,10 +87,14 @@ class Model:
     context_no_unordered: Optional[List[str]] = field(default=None)
     """A list of stratigraphic graph nodes, initially populated within open_scientific_dating_file before being used elsewhere.
 
-    @todo - correct annotation
-    @todo - better name? make this private/protected?
-    @todo - does this belong to a separate class which represents a stratigraphic graph instead?
-    @todo - make this only settable by method?
+    This list is in the order from the input file, rather than a topological order.
+
+    Todo:
+        - @todo - rename context_label_?
+        - @todo - correct annotation
+        - @todo - better name? make this private/protected?
+        - @todo - does this belong to a separate class which represents a stratigraphic graph instead?
+        - @todo - make this only settable by method?
     """
 
     phase_df: Optional[pd.DataFrame] = field(default=None)
