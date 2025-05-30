@@ -23,7 +23,9 @@ class MCMCData:
     """
 
     CONTEXT_NO: List[Any] = field(default_factory=list)
-    """List of contexts? passed in to and returned by run_MCMC, 
+    """List of contexts? passed in to and returned by run_MCMC. 
+
+    In topological order
     @todo document it's contents
     @todo typehint
     @todo try and improve when it is set / read?"""
@@ -98,6 +100,7 @@ class MCMCData:
             @todo - don't also include the same data in serialised version of this class?
             @todo - make the file names saved queryable so Model.save can discover them
             @todo - csv column names?
+            @todo - key_ref.csv could be renamed
 
         """
 
@@ -107,6 +110,7 @@ class MCMCData:
         full_results_df_path = path / "full_results_df"
         df.to_csv(full_results_df_path)
 
+        # List containing the the group for each context, in order of topologically sorted contexts.
         key_ref = [list(group_df["Group"])[list(group_df["context"]).index(i)] for i in self.CONTEXT_NO]
         df1 = pd.DataFrame(key_ref)
         df1.to_csv(path / "key_ref.csv")

@@ -317,13 +317,6 @@ class Model:
     Formerly `StartPage.node_del_tracker`, `PageTwo.node_del_tracker` and `popupWindow3.node_del_tracker`
     """
 
-    key_ref: List[Any] = field(default_factory=list)
-    """List of something @todo. Generated and used during calibration, used in popupWindow9/10 too 
-    
-    @todo better docstring
-    @todo rename?
-    """
-
     mcmc_data: MCMCData = field(default_factory=MCMCData)
     """MCMC data for this model. Includes values used as inputs and outputs for the MCMC data pase
     
@@ -1017,7 +1010,8 @@ class Model:
         topo_sort = [x for x in topo if (x not in self.removed_nodes_tracker) and (x in context_no)]
         topo_sort.reverse()
         context_no = topo_sort
-        self.key_ref = [list(self.group_df["Group"])[list(self.group_df["context"]).index(i)] for i in context_no]
+        # Get a list contaiing the group per context (in reverse topological order)
+        key_ref = [list(self.group_df["Group"])[list(self.group_df["context"]).index(i)] for i in context_no]
         self.context_types = [self.context_types[list(self.context_no_unordered).index(i)] for i in topo_sort]
         strat_vec = []
         resids = [j for i, j in enumerate(context_no) if self.context_types[i] == "residual"]
@@ -1045,7 +1039,7 @@ class Model:
             strat_vec,
             rcd_est,
             rcd_err,
-            self.key_ref,
+            key_ref,
             context_no,
             self.phi_ref,
             self.prev_group,
@@ -1072,7 +1066,7 @@ class Model:
             strat_vec,
             rcd_est,
             rcd_err,
-            self.key_ref,
+            key_ref,
             context_no,
             self.phi_ref,
             self.prev_group,
