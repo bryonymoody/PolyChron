@@ -1,7 +1,4 @@
-"""Main methnods / cli parsing
-
-@todo find this a more permanent positon once the refactor has progressed enough to remove the original gui.py
-"""
+"""The entrypoint module contains the intended main method for initiating PolyChron and methods for command line argument processing."""
 
 import argparse
 from importlib.metadata import version
@@ -21,8 +18,6 @@ def parse_cli(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--version", action="store_true", help="Show version information and exit")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
-
-    # @todo - consider using a 2 element --load instead of -p <p> -m <m>
     parser.add_argument(
         "-p",
         "--project",
@@ -56,12 +51,12 @@ def main() -> None:
         config.verbose = True
         print(f"Config path: {Config._get_config_filepath()}")
 
-    # If version requested on the command line, provide it
+    # If version requested on the command line, provide it and return.
     if args.version:
         print_version()
+        return
     else:
         # Import and lauch the GUI via an instance of the GUIApp class
         from .GUIApp import GUIApp
 
-        app = GUIApp()
-        app.launch(project_name=args.project, model_name=args.model)
+        GUIApp().launch(project_name=args.project, model_name=args.model)
