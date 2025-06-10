@@ -9,13 +9,7 @@ import pandas as pd
 from networkx.drawing.nx_pydot import read_dot
 from PIL import Image, ImageChops
 
-"""Utiltiy methods which do not (yet) have a home
-
-@todo - find a better home for each of these methods
-
-@todo - rename methods 
-@todo - rename variables in methods
-@todo - type annotations
+"""Utiltiy methods
 """
 
 
@@ -72,13 +66,16 @@ def rank_func(tes, file_content):
     return new_string
 
 
-def node_coords_fromjson(graph):
+def node_coords_fromjson(graph) -> Tuple[pd.DataFrame, List[float]]:
     """Gets coordinates of each node
 
-    Todo:
-        @todo - rename this method? it's actually from svg?
-        @todo - typehint
-        @todo - the svg generated via nx_pydot here, may differ from the rendered graphviz graph (if/when graphviz is behaving nondeterministally on re-renders of the same graph)?. So only do this once and store it, making this a Model method instead(or only use this through a Model method)"""
+    Parameters:
+        graph: The graph to extract coordinates from
+
+    Returns:
+        A dataframe of coordinates, and svg scale information.
+    """
+
     if "pydot" in str(type(graph)):
         graphs = graph
     else:
@@ -100,9 +97,8 @@ def node_coords_fromjson(graph):
 def phase_info_func(file_graph: nx.DiGraph) -> Tuple[Dict[Any, Any], List[Any], List[Any], Any]:
     """returns a dictionary of phases and nodes in each phase
 
-    @todo - Find a more appropraite location for this method
-    @todo - add/fix type annotations, param/variable names etc
-    @todo - better handling of FILE_INPUT if/else, which is the path to the .dot file which has been opened (unless a .csv strat file has been opened since)
+    Todo:
+        This has not been fully-reimplemented for cases where stratigraphic data was provided via .dot/.gv file, see FILE_INPUT
     """
     FILE_INPUT = None  # @todo - model.stratigraphic_graphviz_file
     res = []
@@ -142,9 +138,9 @@ def phase_info_func(file_graph: nx.DiGraph) -> Tuple[Dict[Any, Any], List[Any], 
 
 def edge_of_phase(test1, pset, node_list, node_info):
     """find nodes on edge of each phase
-    @tood - move this to a models class.
-    @todo - type annotations
-    @todo - test/implement FILE_INPUT is not None branch for .dot file version
+
+    Todo:
+        This has not been fully-reimplemented for cases where stratigraphic data was provided via .dot/.gv file, see FILE_INPUT
     """
     FILE_INPUT = None  # @todo - model.stratigraphic_graphviz_file
     x_l = []
@@ -181,11 +177,7 @@ def edge_of_phase(test1, pset, node_list, node_info):
 
 
 def node_del_fixed(graph: nx.DiGraph, node: str) -> nx.DiGraph:
-    """Remove a node from the graph, replacing edges where possible
-
-    @todo - this probably belongs in model.Model?
-    @todo - find a better home
-    """
+    """Remove a node from the graph, replacing edges where possible"""
     in_nodes = [i[0] for i in list(graph.in_edges(node))]
     out_nodes = [i[1] for i in list(graph.out_edges(node))]
     graph.remove_node(node)
@@ -203,12 +195,7 @@ def node_del_fixed(graph: nx.DiGraph, node: str) -> nx.DiGraph:
 
 
 def all_node_info(node_list: List[Any], x_image: List[str], node_info: List[Any]) -> List[Any]:
-    """obtains node attributes from original dot file
-
-    @todo - no need to node_info the value passed in by reference
-    @todo - full docstrings and typehints
-    @todo - find a better home
-    """
+    """obtains node attributes from original dot file"""
     for i in node_list:
         for j in x_image:
             b_string = re.search('"(.*)" ', j)
@@ -228,11 +215,7 @@ def all_node_info(node_list: List[Any], x_image: List[str], node_info: List[Any]
 
 
 def phase_length_finder(con_1: Any, con_2: Any, accept_group_limits: Dict[Any, Any]) -> List[Any]:
-    """finding the phase length between any two contexts or phase boundaries
-
-    @todo - full docstrings and typehints
-    @todo - find a better home
-    """
+    """finding the phase length between any two contexts or phase boundaries"""
     phase_lengths = []
     x_3 = accept_group_limits[con_1]
     x_4 = accept_group_limits[con_2]
@@ -246,10 +229,7 @@ def phase_length_finder(con_1: Any, con_2: Any, accept_group_limits: Dict[Any, A
 
 
 def imagefunc(dotfile: Any) -> Any:
-    """Sets note attributes to a dot string from the provided file
-
-    @todo - full docstrings and typehints
-    @todo - find a better home"""
+    """Sets note attributes to a dot string from the provided file"""
     file = read_dot(dotfile)
     #  code to get colours####
     f_string = open(str(dotfile), "r")
@@ -276,10 +256,7 @@ def imagefunc(dotfile: Any) -> Any:
 def phase_relabel(graph: nx.DiGraph) -> nx.DiGraph:
     """relabels the phase labels to be alphas and betas, for display only,
     still refer to them with a's and b's
-
-    @todo - full docstrings and typehints
-    @todo - find a better home
-    @todo - this prevents nodes from including a_ form users. Either need to explicitly prevent this, or to make this more niche / unlikely to occur?"""
+    """
     label_dict = {}
     for i in graph.nodes():
         if "a_" in i:
@@ -299,19 +276,13 @@ def phase_relabel(graph: nx.DiGraph) -> nx.DiGraph:
 
 
 def alp_beta_node_add(x: Any, graph: nx.DiGraph) -> None:
-    """adds an alpha and beta node to node x
-
-    @todo - full docstrings and typehints
-    @todo - find a better home"""
+    """adds an alpha and beta node to node x"""
     graph.add_node("a_" + str(x), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
     graph.add_node("b_" + str(x), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
 
 
 def phase_labels(phi_ref, POST_PHASE, phi_accept, all_samps_phi) -> Tuple[List[str], Dict[str, Any], Dict[str, Any]]:
-    """provides phase limits for a phase
-
-    @todo - full docstrings and typehints
-    @todo - find a better home"""
+    """provides phase limits for a phase"""
     labels = ["a_" + str(phi_ref[0])]
     i = 0
     results_dict = {labels[0]: phi_accept[i]}
@@ -348,13 +319,7 @@ def phase_labels(phi_ref, POST_PHASE, phi_accept, all_samps_phi) -> Tuple[List[s
 
 
 def del_empty_phases(phi_ref: List[Any], del_phase: Set[Any], phasedict: Dict[str, Any]) -> List[List[Any]]:
-    """checks for any phase rels that need changing due to missing dates
-
-    Todo:
-        - @todo - full docstrings and typehints
-        - @todo - find a better home
-        - phase -> group
-    """
+    """checks for any phase rels that need changing due to missing dates"""
     del_phase = [i for i in phi_ref if i in del_phase]
     del_phase_dict_1 = {}
     for j in del_phase:
@@ -396,11 +361,7 @@ def del_empty_phases(phi_ref: List[Any], del_phase: Set[Any], phasedict: Dict[st
 def group_rels_delete_empty(
     file_graph: nx.DiGraph, new_group_rels, p_list, phasedict, phase_nodes, graph_data
 ) -> Tuple[nx.DiGraph, List[str], Dict[str, str]]:
-    """adds edges between phases that had gaps due to no contexts being left in them
-
-    @todo - full docstrings and typehints
-    @todo - find a better home
-    @todo - make this more robust / error nicer if p is not in pahse dict (i.e. when users have not got the correct older/newer group relationships)"""
+    """adds edges between phases that had gaps due to no contexts being left in them"""
     phase_relabel(file_graph)
     # adds edges between phases that had gaps due to no contexts being left in them
     label_dict = {}
@@ -450,11 +411,7 @@ def chrono_edge_add(
     post_dict: Dict[Any, Any],
     prev_dict: Dict[Any, Any],
 ) -> Tuple[nx.DiGraph, List[Any], List[str]]:
-    """chrono_edge_add
-
-    @todo - full docstrings and typehints
-    @todo - find a better home
-    """
+    """chrono_edge_add"""
     xs = xs_ys[0]
     ys = xs_ys[1]
     phase_nodes = []
@@ -506,10 +463,7 @@ def chrono_edge_add(
 
 
 def chrono_edge_remov(file_graph: nx.DiGraph) -> Tuple[nx.DiGraph, List[List[Any]], List[Any], List[Any]]:
-    """removes any excess edges so we can render the chronograph
-
-    @todo - full docstrings and typehints
-    @todo - find a better home"""
+    """removes any excess edges so we can render the chronograph"""
     xs, ys = [], []
     # gets a list of all the edges and splits into above and below
     for x, y in list(file_graph.edges):
@@ -580,8 +534,7 @@ def edge_label(src: str, dst: str) -> str:
     Parameters:
         src (str): The context label for the start of the directed edge
         dst (str): The context label for the destination of the directed edge
-
-    @todo rename, rehome?, refactor?"""
+    """
     assert src is not None
     assert dst is not None
 

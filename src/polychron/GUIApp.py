@@ -11,7 +11,6 @@ from ttkthemes import ThemedStyle, ThemedTk
 
 from .Config import Config, get_config
 from .interfaces import Mediator
-from .models.InterpolationData import InterpolationData
 from .models.ProjectSelection import ProjectSelection
 from .presenters.DatingResultsPresenter import DatingResultsPresenter
 from .presenters.FramePresenter import FramePresenter
@@ -30,10 +29,6 @@ class GUIApp(Mediator):
     This includes code which used to belong to `MainFrame`
 
     This is the only class/file which should import tkinter / ThemedTK other than View classes (unless needed for typehinting?)
-
-    Todo:
-        - @todo ensure file opening starts in the correct location thoughtout?
-        - @todo ensure all tk.messagebox calls withint the app have the appropriate parent set (or replace with in-window messages)
     """
 
     def __init__(self) -> None:
@@ -44,9 +39,6 @@ class GUIApp(Mediator):
         self.root: ThemedTk = ThemedTk(theme="arc")
 
         # style / font configuration options.
-        # @todo - abstract into a method somewhere
-        # @todo - check these actually behave as intended.
-        # style.set_theme("arc")
         style = ThemedStyle(self.root)
         default_font = tkFont.nametofont("TkDefaultFont")
         default_font.configure(size=12, weight="bold")
@@ -67,24 +59,16 @@ class GUIApp(Mediator):
         self.register_protocols()
 
         # Add a frame which fills the full root window, in to which other main window frames will be placed.
-        # @todo - make this a ttk frame instead?
-        # @todo - make this ContainerView or something?
         self.container = tk.Frame(self.root)
         self.container.pack(side="top", fill="both", expand=True)
         self.container.grid_rowconfigure(0, weight=1)
         self.container.grid_columnconfigure(0, weight=1)
 
         # Instantiate the "global" applcation data object
-        # @todo - rename / add a nother layer of heirarchy
         self.project_selector_obj: ProjectSelection = ProjectSelection(self.config.projects_directory)
-
-        # @todo - move this to where it is needed, though checking on startup is nice.
-        self.calibration: InterpolationData = InterpolationData()
-        # self.calibration.load() # @todo
 
         # Construct the views and presenters for main window views (i.e. not-popups)
         self.current_presenter_key: Optional[str] = None
-        # @todo - decide on and use the appropriate data object for the MVP model parameter for each display. May need to
         self.presenters: Dict[str, FramePresenter] = {
             "Splash": SplashPresenter(self, SplashView(self.container), self.project_selector_obj),
             "Model": ModelPresenter(self, ModelView(self.container), self.project_selector_obj),
@@ -92,29 +76,41 @@ class GUIApp(Mediator):
         }
 
         # Place each main window within the container
-        # @todo - make this part of a common base class mainWindowFrameView?
         for presenter in self.presenters.values():
             presenter.view.grid(row=0, column=0, sticky="nsew")
             # Immeditely hide the frame, but remember it's settings.
             presenter.view.grid_remove()
 
-        # Construct views and presenters for popups? @todo
-        # Or should these be owned by the presenter which leads to them being opened? @todo
-
     def set_window_title(self, suffix: Optional[str] = None) -> None:
-        """Update the window title to include Polychron, the version of polychron, and the optional suffix"""
+        """Update the window title to include Polychron, the version of polychron, and the optional suffix
+
+        Parameters:
+            suffix: an optional suffix which will be appended to the default window title
+        """
         title = f"PolyChron {version('polychron')}"
         if suffix is not None and len(str(suffix)) > 0:
             title += f" | {suffix}"
         self.root.title(title)
 
     def get_presenter(self, key: Optional[str]) -> Optional[FramePresenter]:
+        """Get a main frame presenter by it's name.
+
+        Parameters:
+            key: The string key used for the presenter
+
+        Returns:
+            The FramePresenter if the key is valid, else None.
+        """
         if key is not None and key in self.presenters:
             return self.presenters[key]
         else:
             return None
 
     def switch_presenter(self, key: Optional[str]) -> None:
+        """Switch the current presenter using the provided key
+
+        Parameters:
+            key (str): The key for the presenter to switch to."""
         if (new_presenter := self.get_presenter(key)) is not None:
             # Hide the current presenter if set
             if current_presenter := self.get_presenter(self.current_presenter_key):
@@ -133,29 +129,26 @@ class GUIApp(Mediator):
             # Update the window title to potentially include a suffix.
             self.set_window_title(new_presenter.get_window_title_suffix())
         else:
-            raise Exception("@todo better error missing frame")
+            raise RuntimeError(
+                f"Invalid presenter key '{key}' for GUIApp.switch_presenter. Valid values: {list(self.presenters.keys())}"
+            )
 
     def close_window(self, reason: Optional[str] = None) -> None:
-        print(
-            "@todo - decide on if this should existr, or implement GUIApp::close_window or separate a Mediator and ClosableMediator"
-        )
         self.exit_application()
 
     def register_global_keybinds(self) -> None:
         """Register application-wide key bindings"""
-        # ctrl+w to close the window @todo this might need changing for sub-windows..
+        # ctrl+w to close the window
         self.root.bind("<Control-w>", self.exit_application)
         # ctrl+s to save the current model
-        self.root.bind("<Control-s>", self.save_current_model)
+        # self.root.bind("<Control-s>", self.save_current_model)
 
     def register_protocols(self) -> None:
         """Register protocols with the root window - i.e. what to do on (graceful) application exit"""
         self.root.protocol("WM_DELETE_WINDOW", self.exit_application)
 
     def save_current_model(self, event: Optional[Any] = None) -> None:
-        """If a model is currently open, save it
-
-        @todo - this should probably be a keybind owned by the tab, which just calls the right method."""
+        """If a model is currently open, save it"""
         if (
             self.current_presenter_key == "Model"
             or self.current_presenter_key == "DatingResults"
@@ -168,7 +161,6 @@ class GUIApp(Mediator):
 
     def exit_application(self, event: Optional[Any] = None) -> None:
         """Callback function for graceful application exit via keybind or window manager close."""
-        # @todo - add any exit behaviour here
         # Quit the root window
         self.root.quit()
 
@@ -205,14 +197,12 @@ class GUIApp(Mediator):
         # Lazily load the projects directory, so (potential) existing models and projects are known.
         self.project_selector_obj.projects_directiory.lazy_load()
 
-        # @todo - this is a bit gross and needs improving.
         # Instantiate the child presenter and view, which otherwise would be done by SplashPresenter.on_select_project
         popup_presenter = ProjectSelectProcessPopupPresenter(
             self, ProjectSelectProcessPopupView(splash_presenter.view), self.project_selector_obj
         )
 
         # Handle the --project and --model cli-provided arguments.
-        # @todo validate project_name and model_name are valid project/model (directory) names? I.e. not . or /
         have_project_name = project_name is not None and len(project_name) > 0
         have_model_name = model_name is not None and len(model_name) > 0
 
@@ -238,14 +228,12 @@ class GUIApp(Mediator):
                 reason = "load_model" if self.project_selector_obj.next_model is not None else "new_model"
 
                 # Update the model to the "next" project & model.
-                # @todo - this may raise an error, but cli options may also be removed in the future
                 self.project_selector_obj.switch_to_next_project_model(load_ok=True, create_ok=True)
 
                 # Close the popup window with the appropraite reason (load or new model)
                 popup_presenter.close_window(reason)
 
         # If the window has not been closed, make it visible and on top
-        # @todo - this is likely to need changing
         if popup_presenter.view is not None:
             # Ensure the project selection popup is visible and on top
             popup_presenter.view.lift()

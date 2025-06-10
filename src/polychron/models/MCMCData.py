@@ -15,10 +15,6 @@ class MCMCData:
     """Dataclass containing all of the MCMC results.
 
     This enables lighter-weight "save" behaviour
-
-    Todo:
-        @todo - Better docstrings.
-        @todo - more precise type-hints
     """
 
     contexts: List[str] = field(default_factory=list)
@@ -37,11 +33,6 @@ class MCMCData:
     """Accepted group boundaries from MCMC simulation
     
     Formerly `StartPage.PHI_ACCEPT`
-
-    Todo:
-        - @todo - actually rename this?
-        - @todo - better docstring
-        - @todo - Only set, never read so could be omitted? & not saved?
     """
 
     A: int = field(default=0)
@@ -76,22 +67,12 @@ class MCMCData:
     """A dictionary of group limits from accepted phi samples. Produced in `phase_labels`. 
 
     Formerly `StartPage.resultsdict`
-
-    Todo:
-        - @todo better docstring
-        - @todo better name? 
-        - @todo - not sure this name is ideal, includes more than just phase boundaries?
     """
 
     all_group_limits: Dict[Any, Any] = field(default_factory=dict)
     """A dictionary of all_results? returned by MCMC_func, which is used to find the phase lengths during node finding on the results page.
     
     Formerly `StartPage.all_results_dict`
-
-    Todo:
-        - @todo better docstring
-        - @todo better name? 
-        - @todo - not sure this name is ideal, includes more than just phase boundaries?
     """
 
     def save_results_dataframes(self, path: pathlib.Path, group_df: pd.DataFrame) -> None:
@@ -102,17 +83,6 @@ class MCMCData:
         Parameters:
             path (pathlib.Path): The path to the directory in which files should be created
             group_df (pd.DataFrame): A pandas dataframe containing context group information.
-
-        Raises:
-            Exception: Exceptions may be raised if errors occur during saving @todo (permissions etc)
-
-        Todo:
-            @todo - File extension(s)
-            @todo - don't also include the same data in serialised version of this class?
-            @todo - make the file names saved queryable so Model.save can discover them
-            @todo - csv column names?
-            @todo - key_ref.csv could be renamed
-
         """
 
         df = pd.DataFrame()
@@ -134,10 +104,6 @@ class MCMCData:
 
         Parameters:
             pretty (bool): If the json should be prettified or not.
-
-        Todo:
-            - @todo decide which bits to exclude form saving/loading, and generate on reconstruction instead.
-            - @todo - how to handle dataframes, Image.Image, files on disk, relative vs abs paths in the case a directory has been copied.
         """
 
         # Create a dictionary contianing a subset of this instance's member variables, converted to formats which can be json serialised.
@@ -145,10 +111,8 @@ class MCMCData:
 
         for k, v in self.__dict__.items():
             if v is None:
-                # @todo - decide what to do for None values, include or not.
                 data[k] = v
             elif isinstance(v, tuple([str, int, float, list, dict, tuple])):
-                # @todo - may need to recurse into lists, dicts and tuples to make sure their members are all json serialiseable
                 data[k] = v
             elif isinstance(v, pathlib.Path):
                 data[k] = str(v)
@@ -164,12 +128,6 @@ class MCMCData:
         Parameters:
             path (pathlib.Path ): The directory in which the files will be saved.
             group_df (pd.DataFrame): A pandas dataframe containing context group information
-
-        Raises:
-            Exception: @todo - document the specific exceptions which may be raised
-
-        Todo:
-            @todo Would be nicer if group_df didn't need to be passed in here?
         """
 
         # Ensure that the parent directory exists
@@ -203,9 +161,9 @@ class MCMCData:
                     print(f"  files:      {timer_files.elapsed(): .6f}s")
 
             except Exception as e:
-                raise Exception(f"@todo - an exeption occurred during MCMC saving:\n {e}")
+                raise e
         else:
-            raise Exception(f"@todo - {path} does not exist")
+            raise RuntimeError(f"'{path}' is not a directory, unable to save \"polychron_mcmc_data.json\"")
 
     @classmethod
     def load_from_disk(cls, json_path: pathlib.Path) -> "MCMCData":
@@ -213,10 +171,8 @@ class MCMCData:
 
         Parameters:
             json_path: Path to json file to load it from
-
-        Raises:
-            Exception: @todo - docuemnt the specific exceptions which may be raised
         """
+        import sys
 
         # Ensure the file exists
         if not json_path.is_file():
@@ -227,10 +183,9 @@ class MCMCData:
             data = json.load(f)
             # Raise an excpetion if required keys are missing
             if "polychron_version" not in data:
-                # @todo - missing version might just mean we assume a current one?
-                raise RuntimeError("@todo - bad json, missing version")
+                raise RuntimeError("Required key 'polychron_version' missing from '{json_path}'")
             if "mcmc_data" not in data:
-                raise RuntimeError("@todo - bad json, missing mcmc_data")
+                raise RuntimeError("Required key 'mcmc_data' missing from '{json_path}'")
 
             mcmc_data = data["mcmc_data"]
 
@@ -240,15 +195,12 @@ class MCMCData:
                 pass
 
             # Convert certain values back based on the hint for the data type.
-            # @todo - improve this for some types?
-            # @todo - discard keys we don't want to load before trying to convert them?
             cls_type_hints = get_type_hints(cls)
             # Also build a list of keys to remove
             unexpected_keys = []
             for k in mcmc_data:
                 if k in cls_type_hints:
                     type_hint = cls_type_hints[k]
-                    # If the values is None, do nothing. @todo - should this only be possible for Optionals?
                     if mcmc_data[k] is None:
                         pass
                     elif type_hint in [pathlib.Path, Optional[pathlib.Path]]:
@@ -258,8 +210,7 @@ class MCMCData:
                         mcmc_data[k] = [tuple(sub) for sub in mcmc_data[k]]
                 else:
                     # If the key is not in the typehints, it will cause the ctor to trigger a runtime assertion, so remove it.
-                    # @todo - make this visible in the UI?
-                    print(f"Warning: unexpected MCMCData member '{k}' during deserialisation")
+                    print(f"Warning: unexpected MCMCData member '{k}' during deserialisation", file=sys.stderr)
                     unexpected_keys.append(k)
 
             # Remove any unexpected keys
@@ -268,8 +219,6 @@ class MCMCData:
 
         # Create an instance of the Model
         obj: MCMCData = cls(**mcmc_data)
-
-        # @todo - any post creation validation?
 
         # Return the instance
         return obj

@@ -21,81 +21,52 @@ from ..automated_mcmc_ordering_coupling_copy import run_MCMC
 from ..Config import get_config
 from ..models.MCMCData import MCMCData
 from ..util import MonotonicTimer, node_coords_fromjson, phase_info_func, phase_labels, rank_func, trim
-from .InterpolationData import InterpolationData
+from .InterpolatedRCDCalibrationCurve import InterpolatedRCDCalibrationCurve
 
 
 @dataclass
 class Model:
-    """MVP Model representing a polychron model.
-
-    @todo - refactor some parts out into other clasess (which this has an isntance of)
-    @todo - add setters/getters to avoid direct access of values which are not intended to be directly mutable.
-    @todo - Multiple instances of the same model will both create files on disk, overwriting one another. Add locking to prevent this?
-    @todo - stop this being a dataclass? it's got complex enough that it's own ctor might be required(for **kwargs to allow robust partial deserialisetion)
-    """
+    """MVP Model representing a polychron model."""
 
     name: str
     """The name of the model within the project (unique)"""
 
     path: pathlib.Path
     """The path to the directory representing this model on disk
-    
-    @todo - this and name are not both required, could have parent_path and an dynamic path? (i.e. avoid duplication during construction). Or even require path to be proivided for save() and load()
     """
 
     stratigraphic_graphviz_file: Optional[pathlib.Path] = field(default=None)
     """Stratigraphic path for .dot/.gv input
     
     Formerly StartPage.FILE_INPUT
-
-    Todo:
-        - @todo - special case saving logic? Need to check usage.
     """
 
     stratigraphic_df: Optional[pd.DataFrame] = field(default=None)
     """The stratigraphic file from CSV, if loaded.
 
-    Formerly StartPage.stratfile
-    
-    Todo: 
-        - @todo - refactor this to be it's own model class which performs validation etc?"""
+    Formerly `StartPage.stratfile`
+    """
 
     stratigraphic_dag: Optional[nx.DiGraph] = field(default=None)
     """Stratigraphic Directed Acyclic Graph, initially produced from the stratigraphic dataframe or graphviz file before being mutated.
     
-    Formerly StartPage.graph
-
-    Todo:
-        - @todo @enhancement - When a new stratigraphic_df is loaded, clear other members, or re-apply the same changes to this?
+    Formerly `StartPage.graph`
     """
 
     stratigraphic_image: Optional[Image.Image] = field(default=None)
     """Rendered version of the stratigraphic graph as an image, for whicle a handle must be kept for persistence.
-
-    Todo:
-        - @todo Could belong to the presenter instead
     """
 
     radiocarbon_df: Optional[pd.DataFrame] = field(default=None)
     """Dataframe containing radiocarbon dating information, loaded from disk
     
-    Formerly StartPage.datefile
-
-    Todo: 
-        - @todo - refactor this to be it's own model class which performs validation etc?
+    Formerly `StartPage.datefile`
     """
 
     context_no_unordered: Optional[List[str]] = field(default=None)
     """A list of stratigraphic graph nodes, initially populated within open_scientific_dating_file before being used elsewhere.
 
     This list is in the order from the input file, rather than a topological order.
-
-    Todo:
-        - @todo - rename context_label_?
-        - @todo - correct annotation
-        - @todo - better name? make this private/protected?
-        - @todo - does this belong to a separate class which represents a stratigraphic graph instead?
-        - @todo - make this only settable by method?
     """
 
     group_df: Optional[pd.DataFrame] = field(default=None)
@@ -104,10 +75,6 @@ class Model:
     Expected columns ["context", "Group"]
     
     Formerly `StartPage.phasefile`
-
-    Todo:
-        - @todo - refactor this to be it's own model class which performs validation etc?
-        - @todo - "Group" > "group" in csv and df?. validate?    
     """
 
     group_relationship_df: Optional[pd.DataFrame] = field(default=None)
@@ -116,51 +83,30 @@ class Model:
     Expected columns ["above", "below"], although order of columns is used not the column names
 
     Formerly `phase_rel_df` in `StartPage.open_file5`
-    
-    Todo:
-        - @todo - expected column names /  use column names. 
-        - @todo - refactor this to be it's own model class which performs validation etc?
     """
 
     group_relationships: Optional[List[Tuple[str, str]]] = field(default=None)
     """A list of the relative relationships between groups, stored as Tuples of (above, below))
 
     Formerly `StartPage.phase_rels`
-
-    Todo:
-        @todo - does this belong to a separate class which represents a stratigraphic graph instead?
-        @todo - make this only settable by method?
     """
 
     context_equality_df: Optional[pd.DataFrame] = field(default=None)
     """Dataframe containing context equality relationship information loaded from disk
     
     Formerly `equal_rel_df` in `StartPage.open_file6`
-
-    Todo: 
-        - @todo - define and validate the column names?
-        - @todo - refactor this to be it's own model class which performs validation etc?
     """
 
     load_check: bool = False
     """If the chronological graph has been rendered for the current state of the model
     
     Formerly `global load_check`, where "loaded" is now True and "not_loaded" is False.
-
-    Todo:
-        - @todo - make this a private / protected
-        - @todo - rename, make dynamic?
-        - @todo - double check all occurrences have been met
     """
 
     chronological_dag: Optional[nx.DiGraph] = field(default=None)
     """Chronological directed graph, produced by rendering the chronological graph
     
     Formerly `StartPage.chrono_dag`
-
-    Todo:
-        - @todo - move function which generates this into this class (or an object for the chronograph with it's other bits)
-        - @todo - setter&getter with protected member?
     """
 
     chronological_image: Optional[Image.Image] = field(default=None)
@@ -169,22 +115,12 @@ class Model:
     When load_check is True, this image is valid for the current state of the Model.
 
     Formerly `StartPage.image2`
-
-
-    Todo: 
-        - @todo - migrate generation of this into a class method, and only provide a public getter.
-        - @todo - let this be owned by the presenter instead?
     """
 
     mcmc_check: bool = False
     """If the model has been calibrated
     
     Formerly `global mcmc_check`, where "mcmc_loaded" is now True and "mcmc_notloaded" is False.
-
-    Todo:
-        - @todo - make this a private / protected / a property?
-        - @todo - rename
-        - @todo - if the state has been mutated since the last render, should this be different?
     """
 
     deleted_nodes: List[Tuple[str, str]] = field(default_factory=list)
@@ -193,9 +129,6 @@ class Model:
     This may include the same node multiple times (as nodes can be deleted, then added again)
     
     Formerly `StartPage.delnodes` and `StartPage.delnodes_meta`
-
-    Todo:
-        @todo - make a list of a dataclass instead? Not using a dict so the same node can be deleted, added, then deleted again
     """
 
     deleted_edges: List[Tuple[str, str, str]] = field(default_factory=list)
@@ -206,9 +139,6 @@ class Model:
     This may include the same edges multiple times (as edges can be deleted, then added again)
     
     Formerly `StartPage.edges_del` and `StartPage.deledges_meta`
-
-    Todo:
-        - @todo - make a list of a dataclass instead? Not using a dict so the same node can be deleted, added, then deleted again
     """
 
     resid_or_intru_dag: Optional[nx.DiGraph] = field(default=None)
@@ -219,9 +149,6 @@ class Model:
     This does not need saving.
 
     Formerly `PageTwo.graphcopy`
-
-    Todo:
-       - @todo - move this a model class for the residual or intrusive page.
     """
 
     resid_or_intru_image: Optional[Image.Image] = field(default=None)
@@ -230,43 +157,26 @@ class Model:
     A handle to this needs to be maintained to avoid garbage collection
 
     Formerly `PageTwo.image`
-
-    Todo:
-        @todo - move this a model class for the residual or intrusive page.
     """
 
     intrusive_contexts: List[str] = field(default_factory=list)
     """List of intrusive contexts/nodes.
 
     Formerly `PageTwo.intru_list`
-
-    Todo:
-        @todo - move this a model class for the residual or intrusive page. It is not used outside of the residual process.
     """
 
     residual_contexts: List[str] = field(default_factory=list)
     """List of residual contexts/nodes.
 
     Formerly `PageTwo.resid_list`
-
-    Todo:
-        @todo - move this a model class for the residual or intrusive page. It is not used outside of the residual process.
     """
 
     intrusive_context_types: Dict[str, str] = field(default_factory=dict)
     """Dict of selected drop down choice for intrusive context/nodes.
-
-    Todo:
-        @todo - move this a model class for the residual or intrusive page. It is not used outside of the residual process.
-        @todo - make this a Dict[str, Enum] or Dict[str, Optional[Literal[]]]? 
     """
 
     residual_context_types: Dict[str, str] = field(default_factory=dict)
     """Dict of selected drop down choice for intrusive context/nodes.
-
-    Todo:
-        @todo - move this a model class for the residual or intrusive page. It is not used outside of the residual process.
-        @todo - make this a Dict[str, Enum] or Dict[str, Optional[Literal[]]]? 
     """
 
     grouped_rendering: bool = False
@@ -289,10 +199,6 @@ class Model:
     Initialised in `ManageGroupRelationshipsPresenter.full_chronograph_func`
 
     Formerly `StartPage.prev_phase` and `popupWindow3.prev_phase`
-
-    Todo:
-        - @todo determine order?
-        - @todo move to popupWindow3 data object? (but will also need a copy here anyway)
     """
 
     post_group: List[str] = field(default_factory=list)
@@ -301,20 +207,12 @@ class Model:
     Initialised in `ManageGroupRelationshipsPresenter.full_chronograph_func`
 
     Formerly `StartPage.post_phase` and `popupWindow3.post_phase`
-
-    Todo:
-        - @todo determine order?
-        - @todo move to popupWindow3 data object? (but will also need a copy here anyway)
     """
 
     phi_ref: List[str] = field(default_factory=list)
     """Ordered list of groups, from oldest to youngest.
         
     Formerly `StartPage.phi_ref`
-        
-    Todo:
-        - @todo . Decide what to rename this to (ASAP)
-    
     """
 
     removed_nodes_tracker: List[str] = field(default_factory=list)
@@ -328,7 +226,7 @@ class Model:
     mcmc_data: MCMCData = field(default_factory=MCMCData)
     """MCMC data for this model. Includes values used as inputs and outputs for the MCMC data pase
     
-    if mcmc_check is true, it is implied that this has been saved to disk
+    If mcmc_check is true, it is implied that this has been saved to disk
     """
 
     node_coords_and_scale: Optional[Tuple[pd.DataFrame, List[float]]] = field(default=None)
@@ -345,14 +243,13 @@ class Model:
         - @todo `nodecheck` included `node_df = node_df_con[0]` which would store just the df in the global, but imgrender and imgrender_phase would store the tuple. This will need making consistent
     """
 
+    __calibration: Optional[InterpolatedRCDCalibrationCurve] = field(default=None, init=False, repr=False)
+    """Interpolated RCD calibration curve object, which is storedin a member variable so it is loaded once and only once"""
+
     def get_working_directory(self) -> pathlib.Path:
         """Get the working directory to be used for dynamically created files
 
         This allows the "saved" version of the model to different from the version currently being worked on. I.e. the rendered chronological graph used in the UI as changes are made can be different to the version from when save the model was last saved.
-
-        Todo:
-            - @todo - consider the file size implications of this (i.e. we have everything twice).
-            - @todo Make this @property? (I.e. read only member variable)
         """
         return self.path / "workdir"
 
@@ -361,9 +258,6 @@ class Model:
 
         Returns:
             The path to the `chronological_graph` directory for this model
-
-        Todo:
-            - @todo Make this @property? (I.e. read only member variable)
         """
         return self.path / "chronological_graph"
 
@@ -372,9 +266,6 @@ class Model:
 
         Returns:
             The path to the `stratigraphic_graph` directory for this model
-
-        Todo:
-            - @todo Make this @property? (I.e. read only member variable)
         """
         return self.path / "stratigraphic_graph"
 
@@ -383,9 +274,6 @@ class Model:
 
         Returns:
             The path to the `mcmc_results` directory for this model
-
-        Todo:
-            - @todo Make this @property? (I.e. read only member variable)
         """
         return self.path / "mcmc_results"
 
@@ -394,18 +282,11 @@ class Model:
 
         Returns:
             The path to the `python_only` directory for this model
-
-        Todo:
-            - @todo Make this @property? (I.e. read only member variable)
         """
         return self.path / "python_only"
 
     def to_json(self, pretty: bool = False):
-        """Serialise this object to JSON
-
-        @todo decide which bits to exclude form saving/loading, and generate on reconstruction instead.
-        @todo - how to handle dataframes, Image.Image, files on disk, relative vs abs paths in the case a directory has been copied.
-        """
+        """Serialise this object to JSON, excluding ephemeral members"""
         # Create a dictionary contianing a subset of this instance's member variables, converted to formats which can be json serialised.
         data = {}
         exclude_keys = [
@@ -419,22 +300,19 @@ class Model:
             "residual_contexts",  # not needed, ephemeral
             "residual_context_types",  # not needed, ephemeral
             "node_coords_and_scale",  # don't include the the locations of images from svgs?
-            "mcmc_data",  # don't include the mcmc_data object, which has been saved elsewhere. @todo include a relative path in it's place?
+            "mcmc_data",  # don't include the mcmc_data object, which has been saved elsewhere.
+            "__calibration",  # don't save the interpolated calibration curve, it is already on disk
         ]
         for k, v in self.__dict__.items():
             if k not in exclude_keys:
                 if v is None:
-                    # @todo - decide what to do for None values, include or not.
                     data[k] = v
-                    # pass
                 elif isinstance(v, tuple([str, int, float, list, dict, tuple])):
-                    # @todo - may need to recurse into lists, dicts and tuples to make sure their members are all json serialiseable
                     data[k] = v
                 elif isinstance(v, pathlib.Path):
                     data[k] = str(v)
                 elif isinstance(v, pd.DataFrame):
                     # For dataframes, export to json so pandas handles the type conversion, before returning to a python object.
-                    # @todo - this is a lot of float > str and str > float conversion for calibration data which is not free.
                     data[k] = json.loads(v.to_json(orient="columns"))
                 elif isinstance(v, nx.DiGraph):
                     # Encode graphs as json via networkx node_link_data, which can be de-serialised via node_link_graph. This should be safe for round-trips, other than node names being converted to strings (which they are anyway)
@@ -450,12 +328,7 @@ class Model:
         """Save the current state of this model to disk at self.path
 
         Raises:
-            Exception: raised when any error occured during saving, with a message to present to the user. @todo specialise the exception type(s)
-
-        Todo:
-            @todo - need to ensure that on save, all temp files in the project directory are correct for the saved model & not overwrite the "saved" versions if mutating in gui without saving? On load, images should be regenerated to ensure they match the saved state of the serialised data?
-            @todo - delete out of date files on save. I.e. MCMC should be deleted if the model has been mutated?
-            @todo - de-duplicate saving things to disk. I.e. full_results_df is included int he MCMCData json file as well as it's own file (but may not be the same data?)
+            Exception: raised when any error occured during saving, with a message to present to the user
         """
 
         # Ensure directories requried exist
@@ -519,9 +392,11 @@ class Model:
                     print(f"  files:      {timer_files.elapsed(): .6f}s")
 
             except Exception as e:
-                raise Exception(f"@todo - an exeption occurred during saving:\n {e}")
+                raise e
         else:
-            raise Exception("@todo - could not create model directories")
+            raise RuntimeError(
+                'An error occured while creating Model directories, unable to save "polychron_model.json"'
+            )
 
     @classmethod
     def load_from_disk(cls, path: pathlib.Path) -> "Model":
@@ -531,12 +406,8 @@ class Model:
             path: Path to a model directory (not the json file)
 
         Raises:
-            RuntimeWarning: when the model could not be loaded, but in a recoverable way. I.e. the directory exits but no files are contained (so allow the model to be "loaded") @todo - probably change this?
+            RuntimeWarning: when the model could not be loaded, but in a recoverable way. I.e. the directory exits but no files are contained (so allow the model to be "loaded")
             RuntimeError: when the model could not be loaded, but use of this model directory should be prevented?
-
-        Todo:
-            - @todo how to handle version compatible saving/loading?
-            - @todo async loading of mcmc data?
         """
 
         # Ensure required files/folders are present
@@ -544,10 +415,9 @@ class Model:
             raise RuntimeWarning(f"Error loading from Model from path '{path}' it is not a directory")
 
         # Ensure the json file exists
-        model_json_path = path / "python_only" / "polychron_model.json"  # @todo - reduce string literals?
+        model_json_path = path / "python_only" / "polychron_model.json"
+        # If the json file does not exist, return the default.
         if not model_json_path.is_file():
-            # @todo - decide if this should be an exception or not.
-            # raise RuntimeWarning(f"Error loading Model from json file '{model_json_path}' it is not a file")
             # Return a Model instance with just the path and name set, if no json do to load
             return cls(name=path.name, path=path)
 
@@ -563,10 +433,9 @@ class Model:
 
             # Raise an excpetion if required keys are missing
             if "polychron_version" not in data:
-                # @todo - missing version might just mean we assume a current one?
-                raise RuntimeError("@todo - bad json, missing version")
+                raise RuntimeError("Required key 'polychron_version' missing from '{json_path}'")
             if "model" not in data:
-                raise RuntimeError("@todo - bad json, missing model")
+                raise RuntimeError("Required key 'model' missing from '{json_path}'")
 
             model_data = data["model"]
 
@@ -576,23 +445,20 @@ class Model:
                 pass
 
             # Convert certain values back based on the hint for the data type.
-            # @todo - find a more robust way to compare type hints to literal types? in the case of unions etc?
-            # @todo - discard keys we don't want to load before trying to convert them?
             cls_type_hints = get_type_hints(cls)
             # Also build a list of keys to remove
             unexpected_keys = []
             for k in model_data:
                 if k in cls_type_hints:
                     type_hint = cls_type_hints[k]
-
-                    # If the values is None, do nothing. @todo - should this only be possible for Optionals?
+                    # If the values is None, do nothing.
                     if model_data[k] is None:
                         pass
                     elif type_hint in [pathlib.Path, Optional[pathlib.Path]]:
                         model_data[k] = pathlib.Path(model_data[k])
                     elif type_hint in [pd.DataFrame, Optional[pd.DataFrame]]:
                         # DataFrames are encoded as json, parsed back into a dictionary before being encoded as json again. At this point, the first json decode has occurred so we should have a dictionary of dictionaries (one per column) which can be reconverted.
-                        # However, this may have lost typing information for the columns, but they were probably all strings anyway? @todo check this.
+                        # However, this may have lost typing information for the columns, but they should have been strings anyway
                         if isinstance(model_data[k], dict):
                             model_data[k] = pd.DataFrame.from_dict(model_data[k], orient="columns")
                     elif type_hint in [nx.DiGraph, Optional[nx.DiGraph]]:
@@ -604,7 +470,6 @@ class Model:
                         model_data[k] = [tuple(sub) for sub in model_data[k]]
                 else:
                     # If the key is not in the typehints, it will cause the ctor to trigger a runtime assertion, so remove it.
-                    # @todo - make this visible in the UI?
                     print(f"Warning: unexpected Model member '{k}' during deserialisation", file=sys.stderr)
                     unexpected_keys.append(k)
 
@@ -632,11 +497,8 @@ class Model:
                 if mcmc_data_path.is_file():
                     model.mcmc_data = MCMCData.load_from_disk(mcmc_data_path)
                 else:
-                    print(f"Failed to load MCMCData {mcmc_data_path} @todo - exception?.")
+                    print(f"Failed to load MCMCData from '{mcmc_data_path}'", file=sys.stderr)
                 timer_mcmc.stop()
-
-            # Handle non-json loading of files (copy over temp?)
-            pass  # @todo
 
             # Stop the timer and report timing if verbose
             timer_load.stop()
@@ -651,7 +513,7 @@ class Model:
             # Return the Model
             return model
 
-        # If this point is reached, an error occurred and should be propagated @todo
+        # If this point is reached, an error occurred and should have be propagated
         return None
 
     def create_dirs(self) -> bool:
@@ -665,8 +527,7 @@ class Model:
         try:
             # Ensure the model (and implictly project) directory exists
             self.path.mkdir(parents=True, exist_ok=True)
-            # Create each expected child directory. @todo make this class members instead so they can be accessed directly?
-            # @todo - these directories do not get consistently used by 0.1.
+            # Create each expected child directory.
             expected_model_dirs = [
                 self.get_stratigraphic_graph_directory(),
                 self.get_chronological_graph_directory(),
@@ -677,11 +538,10 @@ class Model:
             for path in expected_model_dirs:
                 path.mkdir(parents=True, exist_ok=True)
 
-            # Change the working dir to the model directory. @todo decide if this is desirbale or not.
+            # Change the working dir to the model directory.
             os.chdir(self.path)
 
         except Exception as e:
-            # @todo - better error handling. Should be due to permsissions, invalid filepaths or disk issues only
             print(e, file=sys.stderr)
             return False
         return True
@@ -690,11 +550,6 @@ class Model:
         """Save the delete contexts metadata to disk
 
         Formerly StartPage.tree2, in save_state_1
-
-        Todo:
-            @todo - .csv extension on the file
-            @todo - for all to_csv, use index=False
-            @todo - handle newlines in the CSV export correctly.
         """
 
         cols = ("context", "Reason for deleting")
@@ -708,9 +563,7 @@ class Model:
         self.stratigraphic_graphviz_file = pathlib.Path(file_input)
 
     def set_stratigraphic_df(self, df: pd.DataFrame) -> None:
-        """Provided a dataframe for stratigraphic relationships, set the values locally and post-process it to produce the stratgiraphic graph
-
-        @todo return value"""
+        """Provided a dataframe for stratigraphic relationships, set the values locally and post-process it to produce the stratgiraphic graph"""
 
         self.stratigraphic_df = df.copy()
         G = nx.DiGraph(graph_attr={"splines": "ortho"})
@@ -735,51 +588,34 @@ class Model:
 
         Parameters:
             df (pd.Dataframe): dataframe containing radiocarbon dating information. Expected columns ["context", "date", "error"]
-
-        Todo:
-            Indicate success via a return value?
         """
         # Store a copy of the dataframe
         self.radiocarbon_df = df.copy()
         # Post process
         self.radiocarbon_df = self.radiocarbon_df.applymap(str)
-        # @todo - better handling of loading strat graph after date.
+
         if self.stratigraphic_dag:
             for i, j in enumerate(self.radiocarbon_df["context"]):
                 self.stratigraphic_dag.nodes()[str(j)].update(
                     {"Determination": [self.radiocarbon_df["date"][i], self.radiocarbon_df["error"][i]]}
                 )
-        # @todo - consider a better way to manage this.
         self.context_no_unordered = list(self.stratigraphic_dag.nodes())
 
     def set_group_df(self, df: pd.DataFrame) -> None:
-        """Provided a dataframe for context grouping information, set the values locally and perform post processing
-
-        Todo:
-            - @todo validate columns and values
-            - @todo indicate success via a return value?
-        """
+        """Provided a dataframe for context grouping information, set the values locally and perform post processing"""
         # Store a copy of the dataframe
         self.group_df = df.copy()
         # Post processing of the dataframe
-        # @todo - better handling of loading strat graph after date.
         if self.stratigraphic_dag:
             for i, j in enumerate(self.group_df["context"]):
                 self.stratigraphic_dag.nodes()[str(j)].update({"Group": self.group_df["Group"][i]})
 
     def set_group_relationship_df(self, df: pd.DataFrame, group_relationships: List[Tuple[str, str]]) -> None:
-        """Provided a dataframe for group relationships information, set the values locally and post-process
-
-        Todo:
-            - @todo - make this consistent with other setters.
-            - @todo validate the incoming df here (and/or elsewhere) and provide a return valu
-        """
+        """Provided a dataframe for group relationships information, set the values locally and post-process"""
         # Store a copy of the dataframe
         self.group_relationship_df = df.copy()
         # Store a copy of the list of tuples extracted from the dataframe
         self.group_relationships = group_relationships.copy()
-        # Post processing of the dataframe
-        # @todo
 
     def set_context_equality_df(self, df: pd.DataFrame) -> None:
         """Provided a dataframe for context equality information, set the values locally and post-process
@@ -788,12 +624,6 @@ class Model:
 
         Parameters:
             df (pd.DataFrame): A dataframe containinig context equality data.
-
-        Todo:
-            - @todo - make this consistent with other setters.
-            - @todo validate the incoming df here (and/or elsewhere). I.e. c,d; d,c is a runtime error, or loading a context equalities file that has alrady been applied is an error
-            - @todo - sort each equality so that duplicates can be removed? (c,d; d,c)
-            - @todo - handle multiple equalities (c,d;d,e)?
         """
         # Store a copy of the dataframe
         self.context_equality_df = df.copy()
@@ -811,10 +641,7 @@ class Model:
             self.stratigraphic_dag = nx.relabel_nodes(self.stratigraphic_dag, mapping)
 
     def render_strat_graph(self) -> None:
-        """Render the sratigraphic graph as a png and svg, with or without phasing depending on model state. Also updates the locatison of each node via the svg
-
-        Todo:
-            @todo - de-duplicate"""
+        """Render the sratigraphic graph as a png and svg, with or without phasing depending on model state. Also updates the locatison of each node via the svg"""
         # Call the appropraite render_strat method, depending if the model is set up to render in phases or not.
         if self.grouped_rendering:
             self.__render_strat_graph_phase()
@@ -825,9 +652,7 @@ class Model:
         """Render the residual or intrusive sratigraphic graph as a png and svg, with or without phasing depending on model state. Also updates the locatison of each node
 
         This graph will have different presentation information to highlight which contexts have been marked as residual or intrusive.
-
-        @todo - don't return?
-        @todo - de-duplicate"""
+        """
         # Call the appropraite render_strat method, depending if the model is set up to render in phases or not.
         if self.grouped_rendering:
             self.__render_resid_or_intru_dag_phase()
@@ -837,14 +662,11 @@ class Model:
     def __render_strat_graph(self) -> None:
         """Render the stratigraphic graph mutating the Model state
 
-        Formerly imgrender
-
-        @todo - de-duplicate with the residual or intrusive verisons. Both might not striclty be required.
-        @todo - better filenames + subdirectory.
+        Formerly `imgrender`
         """
 
         workdir = self.get_working_directory()
-        workdir.mkdir(parents=True, exist_ok=True)  # @todo shouldn't be neccesary?
+        workdir.mkdir(parents=True, exist_ok=True)
         self.stratigraphic_dag.graph["graph"] = {"splines": "ortho"}
         write_dot(self.stratigraphic_dag, workdir / "fi_new")
         render("dot", "png", workdir / "fi_new")
@@ -859,11 +681,9 @@ class Model:
         """Render the stratigraphic graph, with phasing mutating the Model state
 
         Formerly imgrender_phase
-
-        @todo - de-duplicate with the residual or intrusive verisons. Both might not striclty be required.
-        @todo - better filenames + subdirectory."""
+        """
         workdir = self.get_working_directory()
-        workdir.mkdir(parents=True, exist_ok=True)  # @todo shouldn't be neccesary?
+        workdir.mkdir(parents=True, exist_ok=True)
 
         write_dot(self.stratigraphic_dag, workdir / "fi_new.txt")
         my_file = open(workdir / "fi_new.txt")
@@ -884,15 +704,9 @@ class Model:
     def __render_resid_or_intru_dag(self) -> None:
         """Render the stratigraphic graph mutating the Model state
 
-        Formerly imgrender
-
-        @todo - de-duplicate with the residual or intrusive verisons. Both might not striclty be required.
-        @todo - better filenames + subdirectory.
+        Formerly `imgrender`
         """
-
-        workdir = (
-            self.get_working_directory() / "resid_or_intru"
-        )  # @todo - make this render into a subfolder? 0.1 does not.
+        workdir = self.get_working_directory() / "resid_or_intru"
         workdir.mkdir(exist_ok=True)
 
         self.resid_or_intru_dag.graph["graph"] = {"splines": "ortho"}
@@ -908,13 +722,9 @@ class Model:
     def __render_resid_or_intru_dag_phase(self) -> None:
         """Render the stratigraphic graph, with phasing mutating the Model state
 
-        Formerly imgrender_phase
-
-        @todo - de-duplicate with the residual or intrusive verisons. Both might not striclty be required.
-        @todo - better filenames + subdirectory."""
-        workdir = (
-            self.get_working_directory() / "resid_or_intru"
-        )  # @todo - make this render into a subfolder? 0.1 does not.
+        Formerly `imgrender_phase`
+        """
+        workdir = self.get_working_directory() / "resid_or_intru"
         workdir.mkdir(exist_ok=True)
 
         write_dot(self.resid_or_intru_dag, workdir / "fi_new.txt")
@@ -937,12 +747,10 @@ class Model:
         """Render the chronological graph as a PNG and an SVG, mutating the Model state
 
         Formerly `imgrender2`
-
-        Todo:
-            @todo - better temporary file names / paths?
         """
         workdir = self.get_working_directory()
         workdir.mkdir(parents=True, exist_ok=True)
+
         fi_new_chrono = workdir / "fi_new_chrono"
         if self.load_check and fi_new_chrono.is_file():
             render("dot", "png", fi_new_chrono)
@@ -962,11 +770,9 @@ class Model:
         Used when the window is reiszed as the in memory copy may have been resized
 
         Formerly part of `StartPage.resize`
-
-        @todo - instead of re-opening from disk, maybe keep a separate in-memory copy.
-        @todo - actual path"""
+        """
         workdir = self.get_working_directory()
-        workdir.mkdir(parents=True, exist_ok=True)  # @todo - shouldnt be neccessary
+        workdir.mkdir(parents=True, exist_ok=True)
         png_path = workdir / "testdag.png"
         if png_path.is_file():
             self.stratigraphic_image = Image.open(png_path)
@@ -977,9 +783,7 @@ class Model:
         Used when the window is reiszed as the in memory copy may have been resized
 
         Formerly part of `StartPage.resize2`
-
-        @todo - instead of re-opening from disk, maybe keep a separate in-memory copy.
-        @todo - actual path"""
+        """
         workdir = self.get_working_directory()
         png_path = workdir / "testdag_chrono.png"
         if png_path.is_file():
@@ -991,9 +795,6 @@ class Model:
         Patameters:
             context: the context / node which was removed
             reason: the reason the node was deleted, if provided.
-
-        Todo:
-            @todo Make this the only way to mutate deleted_nodes?
         """
         self.deleted_nodes.append((context, reason))
 
@@ -1004,10 +805,6 @@ class Model:
             context_a: one context from the edge
             context_a: the other context from the edge
             reason: the reason the node was deleted, if provided.
-
-        Todo:
-            @todo Make this the only way to mutate deleted_edges?
-            @todo include the call to remove_edge here (or another func which does both)
         """
         self.deleted_edges.append((context_a, context_b, reason))
 
@@ -1016,18 +813,14 @@ class Model:
 
         gathers all the inputs for the mcmc module and then runs it and returns resuslts dictionaries
 
-        Returns a tuple of calibration results @todo move into a dataclass of it's own?
+        Returns:
+            a tuple of calibration results
 
         Formerly `StartPage.MCMC_func`
+        """
 
-        Todo:
-            - @todo type hints
-            - @todo decide if this should mutate state or not (`key_ref` and `context_types`). it does orinally, but might be better not to as mcmc func needs to be executed multiple times?"""
-
-        # @todo - validate that the model is in a state which can be MCMC'd
         if self.stratigraphic_dag is None or self.chronological_dag is None:
-            print("Error: model is not MCMC ready @todo.")
-            return  # @todo temp
+            raise RuntimeError("Model is not MCMC ready, the stratigraphic and chronographic dag are not valid")
 
         context_no = [x for x in list(self.context_no_unordered) if x not in self.removed_nodes_tracker]
         topo = list(nx.topological_sort(self.chronological_dag))
@@ -1059,7 +852,6 @@ class Model:
             int(list(self.radiocarbon_df["error"])[list(self.radiocarbon_df["context"]).index(i)]) for i in context_no
         ]
         # Write calibration inputs to disk in csv. @todo make optional?
-        # @todo - topo_sort and context_no are the same here? No need for both as inputs.
         input_1 = [
             strat_vec,
             rcd_est,
@@ -1074,20 +866,16 @@ class Model:
         ]
         workdir = self.get_working_directory()
         workdir.mkdir(parents=True, exist_ok=True)
-        # @todo - the input file needs to be .csv, but also could make this a nicer file for interrogation (as trhis is not used programatically?). Alos should this be copied into a specific directory or left in workdir?
-        f = open(workdir / "input_file", "w")  # @todo .csv
+        f = open(workdir / "input_file", "w")
         writer = csv.writer(f)
-        #  for i in input_1:
         writer.writerow(input_1)
         f.close()
 
-        # Load calibration data. @todo - pass this into this method rather than loading here.
-        calibration: InterpolationData = InterpolationData()
-        calibration.load()
+        # Load calibration data.
+        self.__calibration: InterpolatedRCDCalibrationCurve = InterpolatedRCDCalibrationCurve()
 
-        # @todo run_mcmc takes args, and also returns them, even when pass by ref?
         context_no, accept, phi_accept, phi_ref, A, P, all_samples_context, all_samples_phi = run_MCMC(
-            calibration.get_dataframe(),
+            self.__calibration.df,
             strat_vec,
             rcd_est,
             rcd_err,

@@ -161,7 +161,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
 
         @todo Ensure that this method updates each UI element for the current model (if there is one). I.e. both graphs, + 3 tables + data loaded drop down + presenter properties like the selected node."""
         # Get the actual model
-        # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
         model_model: Optional[Model] = self.model.current_model
         # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
@@ -218,7 +217,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
 
         Formerly StartPage.load_mcmc
         """
-        # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
         model_model: Optional[Model] = self.model.current_model
         if model_model is None:  # @todo - should never occur.
             return
@@ -260,7 +258,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
 
         @todo - migrate some of this code into the Model.
         """
-        # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
         model_model: Optional[Model] = self.model.current_model
         if model_model is None:  # @todo - should never occur.
             return
@@ -301,7 +298,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
 
         """
 
-        # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
         model_model: Optional[Model] = self.model.current_model
         if model_model is None:  # @todo - should never occur.
             return
@@ -384,7 +380,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         """
         file = askopenfile(mode="r", filetypes=[("DOT Files", "*.dot"), ("Graphviz Files", "*.gv")])
         if file is not None:
-            # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
             model_model: Optional[Model] = self.model.current_model
 
             # Store the path, marking that the most rencent input was a .dot/gv file
@@ -416,8 +411,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
 
         Formerly StartPage.open_file2
 
-        @todo - abstract askfileopen somewhere else to limit importing tkinter?
-
         @todo - Column and value validation (within the data model, with exceptions handeled here?)
 
         @todo - if a new strat file is loaded over the top of an old one, what should happen to the other bits of data?
@@ -426,7 +419,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
 
         if file is not None:
             try:
-                # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
                 model_model: Optional[Model] = self.model.current_model
                 df = pd.read_csv(file, dtype=str)
                 # @todo - Validate the parsed df here, so the errors can be included in the file popup?
@@ -470,7 +462,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
 
         if file is not None:
             try:
-                # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
                 model_model: Optional[Model] = self.model.current_model
                 df = pd.read_csv(file)
                 df = df.applymap(str)
@@ -490,8 +481,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
 
         Formerly StartPage.open_file4
 
-        @todo - abstract askfileopen somewhere else to limit importing tkinter?
-
         @todo - Consistent use of terms - phase vs group.
 
         @todo - Column and value validation (within the data model, with exceptions handeled here?)
@@ -499,7 +488,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
         if file is not None:
             try:
-                # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
                 model_model: Optional[Model] = self.model.current_model
                 df = pd.read_csv(file)
                 df = df.applymap(str)
@@ -518,17 +506,10 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         """Callback function when File > Load group relationship file (.csv) is selected, opening a group relationship / phase relationship file
 
         Formerly StartPage.open_file5
-
-        @todo - abstract askfileopen somewhere else to limit importing tkinter?
-
-        @todo - Nothing happens with the result from file_popup here. I.e. pressing load or not doesn't matter.
-
-        @todo - Column and value validation (within the data model, with exceptions handeled here?)
         """
         file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
         if file is not None:
             try:
-                # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
                 model_model: Optional[Model] = self.model.current_model
                 df = pd.read_csv(file)
                 # @todo - de-duplicate this into the model
@@ -537,7 +518,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 load_it = self.file_popup(pd.DataFrame(group_rels, columns=["Younger group", "Older group"]))
                 model_model.set_group_relationship_df(df, group_rels)
                 if load_it:
-                    pass  # @todo - 0.1 doesn't check the result / handle the paths differently.
+                    pass  # 0.1 doesn't check the result / handle the paths differently.
                 self.phase_rel_check = True
                 self.check_list_gen()
                 tk.messagebox.showinfo("Success", "Group relationships data loaded")
@@ -556,7 +537,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
         if file is not None:
             try:
-                # @todo - rename model it's confusing + make model_model this presenters' main model object (with some other way to get out of it?)
                 model_model: Optional[Model] = self.model.current_model
                 df = pd.read_csv(file)
                 df = df.applymap(str)
