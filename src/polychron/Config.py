@@ -9,13 +9,10 @@ import yaml
 
 @dataclasses.dataclass
 class Config:
-    """A dataclass representing user configuration
-
-    Todo:
-        @todo - handle relative user provided paths (and home/env vars here?) via @property and @projects_directory.setter? although ideally a save would not include the expansion"""
+    """A dataclass representing user configuration, loaded from yaml on disk."""
 
     projects_directory: pathlib.Path = pathlib.Path.home() / "Documents" / "polychron" / "projects"
-    """Value on disk for the users projects directory, which defaults to the value provided by get_default_projects_directory"""
+    """Path to the projects directory for the user"""
 
     verbose: bool = False
     """If verbose output is enabled or not"""
@@ -23,8 +20,20 @@ class Config:
     geometry: str = "1920x1080"
     """The initial window geometry"""
 
+    def __post_init__(self) -> None:
+        """Fixup member variabels post initialisation
+
+        This ensures that environment variables and ~ have been expanded in the projects_directory
+        """
+        if self.projects_directory is not None:
+            self.projects_directory = pathlib.Path(os.path.expandvars(self.projects_directory.expanduser()))
+
     def load(self, path: pathlib.Path) -> None:
-        """Load values from the specified path on disk"""
+        """Load values from the specified path on disk"
+
+        Parameters:
+            path (pathlib.Path): The path to a yaml file where configuration should be loaded from.
+        """
         if path.is_file():
             try:
                 with open(path, "r") as f:
@@ -37,10 +46,14 @@ class Config:
                 print(f"Error loading configuration: {e}", file=sys.stderr)
 
     def save(self, path: pathlib.Path) -> None:
-        """Save the on-disk representation of the application config to the specified path
+        """Save the on-disk representation of the application config to the specified path as yaml
 
-        note: this is not comment or order preserving
-        note: this will save default values to disk, rather than just mutated or loaded values, which is not ideal. @todo
+        Parameters:
+            path (pathlib.Path): The path where the file should be saved
+
+        Note:
+            - this is not comment or order preserving
+            - this will save default values to disk, rather than just mutated or loaded values, which is not ideal
         """
 
         # Ensure the target file is not an existing directory
@@ -55,12 +68,14 @@ class Config:
             if value is not None:
                 if isinstance(value, (str, int, float)):
                     data[field.name] = value
+                elif isinstance(value, pathlib.Path):
+                    data[field.name] = str(os.path.expandvars(value.expanduser()))
                 else:
                     data[field.name] = str(value)
 
         # Ensure the parent exists before saving the file
-        # @todo - this should probably be made more safe?
         path.parent.mkdir(parents=True, exist_ok=True)
+
         # Attempt to save the yaml represenation to disk at the specified path
         try:
             with open(path, "w") as f:
@@ -70,7 +85,11 @@ class Config:
 
     @classmethod
     def _get_config_dir(cls) -> pathlib.Path:
-        """Gets the appropriate configuration directory based on the operating system."""
+        """Gets the appropriate configuration directory based on the operating system.
+
+        Returns:
+            The platform specific configuration directory for polychron, based on common standards such as XDG on linux.
+        """
         system = platform.system()
         if system == "Windows":
             return pathlib.Path(os.environ.get("LOCALAPPDATA", pathlib.Path.home() / "AppData" / "Local")) / "polychron"
@@ -79,12 +98,20 @@ class Config:
 
     @classmethod
     def _get_config_filepath(cls) -> pathlib.Path:
-        """Get the default/expected file path for the config file on disk"""
+        """Get the default/expected file path for the config file on disk
+
+        Returns:
+            The platform speicfic path to the expected configuration file location on disk
+        """
         return cls._get_config_dir() / "config.yaml"
 
     @classmethod
     def from_default_filepath(cls) -> "Config":
-        """Construct a Config instance from the default configuration file path"""
+        """Construct a Config instance from the default configuration file path
+
+        Returns:
+            A Config instance, populated from the config file at the platform specific location
+        """
         c = Config()
         try:
             c.load(Config._get_config_filepath())
