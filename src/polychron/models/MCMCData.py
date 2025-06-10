@@ -45,22 +45,17 @@ class MCMCData:
         - @todo - Only set, never read so could be omitted? & not saved?
     """
 
-    a: int = field(default=0)
-    """A limit for the calbp range considered during MCMC to reduce the range?
+    A: int = field(default=0)
+    """The newer limit for the Cal BP range to be considered considered during MCMC, denoting the most recent time.
 
     Formerly `StartPage.A`
-    
-    Todo:
-        - @todo - this is only set, never read, so no need to store this?
     """
 
-    p: int = field(default=0)
-    """The other limit for the calbp range considered during MCMC to reduce the range?
+    P: int = field(default=0)
+    """The older limit for the Cal BP range to be considered considered during MCMC
 
     Formerly `StartPage.P`
-    
-    Todo:
-        - @todo - this is only set, never read, so no need to store this?"""
+    """
 
     all_samples_context: Optional[List[List[float]]] = field(default=None)
     """A list of lists containing all samples for contexts from MCMC, including rejected samples. 
