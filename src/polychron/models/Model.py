@@ -14,6 +14,7 @@ import pandas as pd
 import pydot
 from graphviz import render
 from networkx.drawing.nx_pydot import write_dot
+from packaging.version import Version
 from PIL import Image
 
 from ..automated_mcmc_ordering_coupling_copy import run_MCMC
@@ -569,8 +570,9 @@ class Model:
 
             model_data = data["model"]
 
-            polychron_version = data["polychron_version"]
-            if polychron_version == "0.2.0":
+            # Handle version specific loading requiremetns. I.e. renaming members, or changing types.
+            file_version = Version(data["polychron_version"])
+            if file_version >= Version("0.2.0") and file_version < Version("0.3.0"):
                 pass
 
             # Convert certain values back based on the hint for the data type.

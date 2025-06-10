@@ -26,7 +26,7 @@ class MCMCData:
     """
 
     accept_samples_context: List[List[float]] = field(default_factory=lambda: [[]])
-    """A list of accepted samples from the MCMC process. 
+    """A list of accepted samples from the MCMC process.
 
     The number of accepted samples is important.
         
@@ -34,8 +34,7 @@ class MCMCData:
     """
 
     accept_samples_phi: Optional[Any] = field(default=None)
-    """Accepted group boundaries from MCMC simulation?
-
+    """Accepted group boundaries from MCMC simulation
     
     Formerly `StartPage.PHI_ACCEPT`
 
@@ -87,7 +86,7 @@ class MCMCData:
     all_group_limits: Dict[Any, Any] = field(default_factory=dict)
     """A dictionary of all_results? returned by MCMC_func, which is used to find the phase lengths during node finding on the results page.
     
-    Formerly `StartPage.all_group_limits`
+    Formerly `StartPage.all_results_dict`
 
     Todo:
         - @todo better docstring
