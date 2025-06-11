@@ -16,36 +16,25 @@ from .FramePresenter import FramePresenter
 
 
 class DatingResultsPresenter(FramePresenter[ProjectSelection]):
-    """Presenter for the Dating Results page/tab.
-
-    Todo:
-        @todo - if the model has been loaded, only render any dating resutls content if all required data is present.
-    """
+    """Presenter for the Dating Results page/tab."""
 
     def __init__(self, mediator: Mediator, view: DatingResultsView, model: ProjectSelection):
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 
         self.results_list: List[str] = []
-        """A list of results to be shown in this view? @todo move to a model class?"""
+        """A list of results to be shown in this view?"""
 
         self.node = "no node"
         """The currenly selected node for right click operations
-        @todo - make Optional[str] instead of using "no node"?
-        @todo - rename self.selected_node?
-        @todo - on resize?
-        @todo - in 0.1, possible to get right click menu stuck containing "get time elapsed between no node and ..."
         """
 
         self.phase_len_nodes = []
         """Used during testmenu2 (right click menu) operations, seimilar to self.node
-        
-        @todo document use case, maybe find a new home."""
+        """
 
         self.fig = None
-        """A handle to a matplotlib figure being presented. 
-        
-        @todo rename? move location? Does this need a class handle? Should this be in a model class?"""
+        """A handle to a matplotlib figure being presented."""
 
         # Bind callback functions for switching between the main view tabs
         view.bind_sasd_tab_button(lambda: self.mediator.switch_presenter("Model"))
@@ -79,9 +68,8 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
         self.update_view()
 
     def update_view(self) -> None:
-        # Ensure content is correct when switching tab, which prev was covered by tkraise in 0.1? @todo tidy this up / be consistent with use of update_view
+        # Ensure content is correct when switching tab
         self.chronograph_render_post()
-        pass  # @todo
 
     def get_window_title_suffix(self) -> Optional[str]:
         return f"{self.model.current_project_name} - {self.model.current_model_name}"
@@ -92,7 +80,6 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
         Formerly a call to startpage::save_state_1
         """
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
         model_model.save()
@@ -101,19 +88,19 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
         """Callback for when the "Posterior densities" button is pressed
 
         Formerly startpage::mcmc_output"""
-        self.mcmc_output()  # @todo - better split?
+        self.mcmc_output()
 
     def on_button_hpd_button(self) -> None:
         """Callback for when the "HPD intervals" button is pressed
 
         Formerly startpage::get_hpd_interval"""
-        self.get_hpd_interval()  # @todo
+        self.get_hpd_interval()
 
     def on_button_clear_list_button(self) -> None:
         """Callback for when the "Clear list" button is pressed
 
         Formerly clear_results_list"""
-        self.clear_results_list()  # @todo
+        self.clear_results_list()
 
     def pre_click(self, *args) -> None:
         """makes test menu appear and removes any previous test menu
@@ -138,7 +125,7 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
         """Makes the test menu appear after right click
 
         Formerly PageOne.onRight"""
-        # Unbind and rebind on_left. @todo this feels wrong.
+        # Unbind and rebind on_left.
         self.view.unbind_littlecanvas2_callback("<Button-1>")
         self.view.bind_littlecanvas2_callback("<Button-1>", self.on_left)
         # Show the right click menu
@@ -154,47 +141,40 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
     def on_canvas_wheel2(self, event: Any) -> None:
         """Zoom with mouse wheel for the chronological image canvas
 
-        Formerly PageOne.wheel2
-
-        @todo refactor to use view methods rather than directly accessing view members and leaking tkinter"""
+        Formerly `PageOne.wheel2`
+        """
         self.view.wheel2(event)
 
     def on_canvas_move_from2(self, event: Any) -> None:
         """Remembers previous coordinates for scrolling with the mouse
 
-        Formerly PageOne.move_from2
-        @todo - this is leaking tkinter into the presenter. Abstract this away a little?
+        Formerly `PageOne.move_from2`
         """
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
         if model_model.chronological_image is not None:
-            self.view.littlecanvas2.scan_mark(event.x, event.y)  # @todo tkinter in presenter
+            self.view.littlecanvas2.scan_mark(event.x, event.y)
 
     def on_canvas_move_to2(self, event: Any) -> None:
         """Drag (move) canvas to the new position
 
-        Formerly PageOne.move_to2
-        @todo - this is leaking tkinter into the presenter. Abstract this away a little?
+        Formerly `PageOne.move_to2`
         """
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
-        if model_model.chronological_image is not None:  # @Todo - double check this.
-            self.view.littlecanvas2.scan_dragto(event.x, event.y, gain=1)  # @todo tkinter in presenter
+        if model_model.chronological_image is not None:
+            self.view.littlecanvas2.scan_dragto(event.x, event.y, gain=1)
             self.view.show_image2()
 
     def chronograph_render_post(self) -> None:
-        """Formerly PageOne.chronograph_render_post"""
+        """Formerly `PageOne.chronograph_render_post`"""
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
 
         if model_model.load_check:
-            # @todo - better handling of backing out of this process.
             # Render the chronological graph, mutating the model
             model_model.render_chrono_graph()
             # If the render succeeded
@@ -205,9 +185,7 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
     def tkraise(self, aboveThis: Optional[Any] = None) -> None:
         """Loads the graph and ensures this window is raised above another.
 
-        @todo - make this get called when switcing to this presenter.
-
-        Formerly PageOne.tkraise"""
+        Formerly `PageOne.tkraise`"""
         self.chronograph_render_post()
         super().tkraise(aboveThis)
 
@@ -215,16 +193,10 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
         """Returns the node that corresponds to the mouse coordinates
 
         Formerly `PageOne.nodecheck`
-
-        Todo:
-            - @todo refactor. This is directly accessing view data (imscale2)
-            - @todo - use None for node_inside rather than "no node"
-            - @todo - use a stored version of the node coordinates, rather than re-generating the svg in node_coords_fromjson (i.e. don't keep re-invoking graphviz)
         """
         node_inside = "no node"
 
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return node_inside
 
@@ -248,10 +220,10 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
         return node_inside
 
     def clear_results_list(self) -> None:
-        """deletes nodes from results lists
+        """clears nodes from results lists
 
-        Formerly PageOne.clear_results_list
-        @todo - refactor more bits into the view"""
+        Formerly `PageOne.clear_results_list`
+        """
         self.results_list = []
         # Clear the right canvas
         self.view.clear_littlecanvas3(id=False)
@@ -263,17 +235,14 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
     def get_hpd_interval(self) -> None:
         """loads hpd intervals into the results page
 
-        Formerly PageOne.get_hpd_interval
-        @todo - more refacotring
-        @todo - user input validation"""
+        Formerly `PageOne.get_hpd_interval`
+        """
 
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
 
         if len(self.results_list) != 0:
-            # @todo - migrate into a view class?
             USER_INP = simpledialog.askstring(
                 title="HPD interval percentage",
                 prompt="Please input HPD interval percentage. Note, 95% is used as standard \n \n Percentage:",
@@ -285,7 +254,6 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
                 intervals = []
                 for i, j in enumerate(list(set(self.results_list))):
                     node = str(j)
-                    # @todo - putt this in model?
                     interval = list(
                         HPD_interval(np.array(model_model.mcmc_data.accept_group_limits[j][1000:]), lim=lim)
                     )
@@ -304,21 +272,15 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
         """finds nodes in the chronodag on results page
 
         Formerly PageOn.node_finder
-
-        @todo rename? typehints, refactoring.
-        @todo - this still pollutes this a fair bit.
-        @tood - make this match ModelPreesnter.on_testmenu a bit?
         """
 
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
 
         # Show the testmenu
-        self.view.testmenu2.place_forget()  # @todo tidy away into a view method.
+        self.view.testmenu2.place_forget()
 
-        # @todo - refactor into an ifelif that just calls other small methods?
         testmenu2_value = self.view.get_testmenu2_selection()
         if testmenu2_value == "Add to results list":
             self.testmenu_add_to_results_list()
@@ -348,7 +310,6 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
 
     def testmenu_get_time_elapsed_between(self) -> None:
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None or not model_model.mcmc_check:
             return
 
@@ -390,7 +351,6 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
         """When the "get time elasped" option has been selected in the right click menu:
         - Remove any existing elabsed_between options
         - Add a new get time elapsed option.
-        @todo
         """
         if len(self.phase_len_nodes) == 1:
             self.view.remove_testmenu2_entry(
@@ -407,13 +367,10 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
 
         Formerly PageOne.mcmc_output"""
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
 
-        # @todo - for all places which do mcmc_check, should also check that the mcmc data is present.
         if model_model.mcmc_check:
-            # @todo abstract into the view
             if self.view.canvas_plt is not None:
                 self.view.canvas_plt.get_tk_widget().pack_forget()
             if self.view.toolbar is not None:
@@ -421,7 +378,7 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
 
             fig = Figure(figsize=(8, min(30, len(self.results_list) * 3)), dpi=100)
             for i, j in enumerate(self.results_list):
-                # must be single digit number @todo.
+                # must be single digit number.
                 n = min(len(self.results_list), 10)
                 plt.rcParams["text.usetex"]
 
@@ -445,8 +402,6 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
                 min_plot = min(model_model.mcmc_data.accept_group_limits[uplim])
                 max_plot = max(model_model.mcmc_data.accept_group_limits[lowlim])
                 plot1.set_xlim(min_plot, max_plot)
-                # @todo - this assumes regular context labels do not include the leters a or b. Is this true? Updated to  a_/b_ for now.
-                # @todo - abstract this to a function which can be unit tested in isolation of matplotlib.
                 node = str(j)
                 if "a_" in node or "b_" in node:
                     if "a_" in node:

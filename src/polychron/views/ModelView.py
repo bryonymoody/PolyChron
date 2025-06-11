@@ -307,12 +307,7 @@ class ModelView(FrameView):
         callback_move_from: Callable[[], Optional[Any]],
         callback_move_to: Callable[[], Optional[Any]],
     ) -> None:
-        """Bind mouse callback events for interacting with the graph canvas
-
-        @todo - split this method?
-
-        @todo better callback names
-        """
+        """Bind mouse callback events for interacting with the graph canvas"""
         self.littlecanvas2.bind("<MouseWheel>", callback_wheel)
         self.littlecanvas2.bind("<Button-4>", callback_wheel)  # only with Linux, wheel scroll down
         self.littlecanvas2.bind("<Button-5>", callback_wheel)

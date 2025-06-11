@@ -9,12 +9,7 @@ T = TypeVar("T", bound=Any)
 
 
 class FramePresenter(ABC, Generic[T]):
-    """Abstract Base Class for Presenters for views which are in the main window, which act as the middle man between a veiw and the underlying data structures (model).
-
-    @todo should / could this be combined with a simialr class for popup window presenters?
-
-    @todo - use Generic and TypeVar for the tpye of the model (and of the view??). Can't use class Foo[T] as that requires 3.12+ Same in other ABCs.
-    """
+    """Abstract Base Class for Presenters for views which are in the main window, which act as the middle man between a veiw and the underlying data structures (model)."""
 
     def __init__(self, mediator: Mediator, view: type[FrameView], model: T) -> None:
         """Initialise the presenter
@@ -36,11 +31,7 @@ class FramePresenter(ABC, Generic[T]):
 
     @abstractmethod
     def update_view(self) -> None:
-        """Update view data for the current state of the model
-
-        @todo - actually do this in smaller methods?
-        @todo - rename?
-        """
+        """Update view data for the current state of the model"""
         pass
 
     def get_window_title_suffix(self) -> Optional[str]:
@@ -49,5 +40,3 @@ class FramePresenter(ABC, Generic[T]):
         Returns:
             Optional suffix for the window title when this frame is being displayed"""
         return None
-
-    # @todo - bind abstract method which binds all callbacks?

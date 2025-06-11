@@ -41,11 +41,7 @@ class PopupPresenter(ABC, Generic[T]):
 
     @abstractmethod
     def update_view(self) -> None:
-        """Update view data for the current state of the model
-
-        @todo - actually do this in smaller methods?
-        @todo - rename?
-        """
+        """Update view data for the current state of the model"""
         pass
 
     def display_view(self) -> None:
@@ -62,9 +58,5 @@ class PopupPresenter(ABC, Generic[T]):
         self.view.withdraw()
 
     def close_view(self, event: Optional[Any] = None) -> None:
-        """Close the popup aftger performing any actions. This method should be overridden by presenters which require graceful destruction
-
-        @todo consider if this should be an abstract method or not
-        """
+        """Close the popup aftger performing any actions. This method should be overridden by presenters which require graceful destruction"""
         self.view.destroy()
-        # @todo - a destroyed view object is not very useful? in which case the presenter is no longer useful either?

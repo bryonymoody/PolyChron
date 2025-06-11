@@ -66,7 +66,6 @@ class MCMCProgressPresenter(PopupPresenter[Model]):
         # Run the MCMC calibration
         self.model.mcmc_data.accept_samples_context = [[]]  # @Todo - reset the full mcmc data instance?
         while min([len(i) for i in self.model.mcmc_data.accept_samples_context]) < 50000:
-            # @todo - as all of these get stored in the model, why not just make mcmc_func mutate itself?
             (
                 self.model.mcmc_data.contexts,
                 self.model.mcmc_data.accept_samples_context,

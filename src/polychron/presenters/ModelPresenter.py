@@ -162,9 +162,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         @todo Ensure that this method updates each UI element for the current model (if there is one). I.e. both graphs, + 3 tables + data loaded drop down + presenter properties like the selected node."""
         # Get the actual model
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
-            # @todo if there is no model, reset everything to empty
             return
 
         # Render the image if possible
@@ -329,9 +327,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         """Loads a text box to check if the user thinks any samples are residual
 
         When the popupwindows have been closed (correctly) the model will have been updated accordingly.
-
-        @todo - should the import of tk be moved into a view  / wrap tk.messagebox?
-        @todo - is this the most appropraite place for this method? (think so)
         """
         if self.model.current_model is not None:
             MsgBox = tk.messagebox.askquestion(
@@ -344,31 +339,27 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 popup_presenter = ResidualOrIntrusivePresenter(
                     self.mediator, ResidualOrIntrusiveView(self.view), self.model.current_model
                 )
-                popup_presenter.view.lift()  # @todo - not sure these are neccesary
+                popup_presenter.view.lift()
                 # Wait for the popup to be closed
-                self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
+                self.view.wait_window(popup_presenter.view)
             else:
                 # If not, show the group relation ship management view/presenter, formerly popupWindow3
                 popup_presenter = ManageGroupRelationshipsPresenter(
                     self.mediator, ManageGroupRelationshipsView(self.view), self.model.current_model
                 )
-                popup_presenter.view.lift()  # @todo - not sure these are neccesary
-                self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
+                popup_presenter.view.lift()
+                self.view.wait_window(popup_presenter.view)
 
     def file_popup(self, df: Any) -> str:
-        """For a gien dataframe, preview the data to the user. Returns the users decision
-
-        @todo - make this return a bool instead of 'load' or 'cancel'
-        """
-        # @todo set and get model data appropriately
+        """For a gien dataframe, preview the data to the user. Returns the users decision"""
         temp_model = {"df": df, "result": "cancel"}
         popup_presenter = DatafilePreviewPresenter(self.mediator, DatafilePreviewView(self.view), temp_model)
-        popup_presenter.view.lift()  # @todo - not sure these are neccesary
+        popup_presenter.view.lift()
 
         # Prevent the view's canvas element from being interacted with?
-        self.view.canvas["state"] = "disabled"  # @todo
-        self.view.parent.wait_window(popup_presenter.view)  # @todo - view.parent mignt not have wiat_window?
-        self.view.canvas["state"] = "normal"  # @todo
+        self.view.canvas["state"] = "disabled"
+        self.view.parent.wait_window(popup_presenter.view)
+        self.view.canvas["state"] = "normal"
         return temp_model["result"]
 
     def open_strat_dot_file(self) -> None:
@@ -385,7 +376,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             # Store the path, marking that the most rencent input was a .dot/gv file
             model_model.set_stratigraphic_graphviz_file(file.name)
 
-            # @todo polychron 0.1 does not mark the strat as loaded in this case
+            # polychron 0.1 does not mark the strat as loaded in this case
             # self.strat_check = True
             # Update the check list
             # self.check_list_gen()
@@ -395,13 +386,13 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             # Render the image in phases or not
             model_model.render_strat_graph()
 
-            # Clear the list of deleted nodes. @todo method / part of setting the stratigraphic graph?
-            # @todo - also clear deleted_edges?
+            # Clear the list of deleted nodes.
             model_model.deleted_nodes = []
+            model_model.deleted_edges = []
 
             # Update the view and any keybindings
             self.view.update_littlecanvas(model_model.stratigraphic_image)
-            # self.bind("<Configure>", self.resize) @todo
+            # self.bind("<Configure>", self.resize)
             self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
             self.view.bind_littlecanvas_callback("<Button-3>", self.pre_click)
             self.show_image()
@@ -410,10 +401,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         """Callback function when File > Load stratigraphic relationship file (.csv) is selected, opening a plain text strat file
 
         Formerly StartPage.open_file2
-
-        @todo - Column and value validation (within the data model, with exceptions handeled here?)
-
-        @todo - if a new strat file is loaded over the top of an old one, what should happen to the other bits of data?
         """
         file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
 
@@ -421,7 +408,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             try:
                 model_model: Optional[Model] = self.model.current_model
                 df = pd.read_csv(file, dtype=str)
-                # @todo - Validate the parsed df here, so the errors can be included in the file popup?
                 load_it = self.file_popup(df)
                 if load_it == "load":
                     # update the model with the dataframe, perofrming post processing, producing the graph
@@ -435,17 +421,18 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                     # Render the image in phases or not
                     model_model.render_strat_graph()
 
-                    # Clear the list of deleted nodes. @todo method / part of setting the stratr graph?
+                    # Clear the list of deleted nodes and edges.
                     model_model.deleted_nodes = []
+                    model_model.deleted_edges = []
 
                     # Update the view and any keybindings
                     self.view.update_littlecanvas(model_model.stratigraphic_image)
-                    # self.bind("<Configure>", self.resize) @todo
+                    # self.bind("<Configure>", self.resize)
                     self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
                     self.view.bind_littlecanvas_callback("<Button-3>", self.pre_click)
 
                 else:
-                    pass  # @todo this case.
+                    pass
             except ValueError:
                 tk.messagebox.showerror("showerror", "Data not loaded, please try again")
 
@@ -453,10 +440,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         """Callback function when File > Load scientific dating file (.csv) is selected, opening a scientific dating file
 
         Formerly StartPage.open_file3
-
-        Todo:
-            - @todo abstract askfileopen somewhere else to limit importing tkinter?
-            - @todo Column and value validation (within the data model, with exceptions handeled here?)
         """
         file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
 
@@ -472,18 +455,14 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                     self.check_list_gen()
                     tk.messagebox.showinfo("Success", "Scientific dating data loaded")
                 else:
-                    pass  # @todo - should this also show an error when the user chooses not to press load?
+                    pass
             except ValueError:
                 tk.messagebox.showerror("showerror", "Data not loaded, please try again")
 
     def open_context_grouping_file(self) -> None:
         """Callback function when File > Load context grouping file (.csv) is selected, opening context grouping / phase file
 
-        Formerly StartPage.open_file4
-
-        @todo - Consistent use of terms - phase vs group.
-
-        @todo - Column and value validation (within the data model, with exceptions handeled here?)
+        Formerly `StartPage.open_file4`
         """
         file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
         if file is not None:
@@ -498,7 +477,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                     self.check_list_gen()
                     tk.messagebox.showinfo("Success", "Grouping data loaded")
                 else:
-                    pass  # @todo - should this also show an error when the user chooses not to press load?
+                    pass
             except ValueError:
                 tk.messagebox.showerror("showerror", "Data not loaded, please try again")
 
@@ -512,9 +491,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             try:
                 model_model: Optional[Model] = self.model.current_model
                 df = pd.read_csv(file)
-                # @todo - de-duplicate this into the model
                 group_rels = [(str(df["above"][i]), str(df["below"][i])) for i in range(len(df))]
-                # @todo - this is not an actual input file preview like the others, but a preview of the reshaped data. i.e. titles don't match.
                 load_it = self.file_popup(pd.DataFrame(group_rels, columns=["Younger group", "Older group"]))
                 model_model.set_group_relationship_df(df, group_rels)
                 if load_it:
@@ -528,11 +505,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
     def open_context_equalities_file(self) -> None:
         """Callback function when File > Load context equalities file (.csv) is selected, opening a file providing context equalities (in time)
 
-        Formerly StartPage.open_file6
-
-        @todo - Show a preview of this to the user to match other file loading?
-
-        @todo - Column and value validation (within the data model, with exceptions handeled here?)
+        Formerly `StartPage.open_file6`
         """
         file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
         if file is not None:
@@ -542,13 +515,12 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 df = df.applymap(str)
                 # Update the model & post process, updating the graph
                 model_model.set_equal_rel_df(df)
-                # @todo - this method did not open a file_preview / popup.
 
                 # Render the image in phases or not
                 model_model.render_strat_graph()
                 # Update the view, showing the new image
                 self.view.update_littlecanvas(model_model.stratigraphic_image)
-                # self.bind("<Configure>", self.resize) @todo
+                # self.bind("<Configure>", self.resize)
                 self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
                 self.view.bind_littlecanvas_callback("<Button-3>", self.pre_click)
                 tk.messagebox.showinfo("Success", "Equal contexts data loaded")
@@ -566,23 +538,19 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         Runs image render function with phases on seperate levels
 
         Formerly `StartPage.phasing`
-
-        Todo:
-            @todo - Make this toggle on and off, rather than just on.
-            @todo - need a test case which actually renders differntly when in phasing mode (a not fully conencted graph, with contexts in differnte groups)
         """
 
         # Render the strat graph in pahse mode, if there is one to render, updating the model and view
         model_model: Optional[Model] = self.model.current_model
         if model_model is not None:
-            # Store a flag marking this as being enabled. Should this be model data? @todo
+            # Store a flag marking this as being enabled. Should this be model data?
             model_model.grouped_rendering = True
 
             if model_model.stratigraphic_dag is not None:
                 model_model.render_strat_graph()
                 # Update the rendered image in the canvas
                 self.view.update_littlecanvas(model_model.stratigraphic_image)
-                # self.bind("<Configure>", self.resize) @todo
+                # self.bind("<Configure>", self.resize)
                 self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
                 self.view.bind_littlecanvas_callback("<Button-3>", self.pre_click)
 
@@ -605,12 +573,10 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         """Callback for when the testmenu is selected (the right option menu when right clicking on the littlecanvas)
 
         Formerly StartPage.nodes
-
-        @todo - rename
         """
 
         # Hide the right click menu
-        self.view.testmenu.place_forget()  # @todo move into a method on the view
+        self.view.testmenu.place_forget()
         testmenu_value = self.view.get_testmenu_selection()
         # Depending on the option selected from the right click menu, act accordingly.
         if testmenu_value == "Delete context":
@@ -638,7 +604,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
 
         # Get the Model object
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
         # Update the image in the canvas
@@ -650,27 +615,26 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         self.view.set_testmenu_selection("Node Action")
         # Update some bindings.
         self.view.unbind_littlecanvas_callback("<Button-1>")
-        self.view.bind_littlecanvas_callback("<Button-1>", self.move_from)  # Shoudl this not be on_left? @todo
+        self.view.bind_littlecanvas_callback("<Button-1>", self.move_from)
         self.view.bind_littlecanvas_callback("<MouseWheel>", self.on_wheel)
 
     def testmenu_delete_context(self) -> None:
         """Callback function from the testmenu for deleting a single context"""
         # Get the Model object
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
 
         if self.node != "no node":
             if model_model.load_check:
-                model_model.load_check = False  # @todo - this should probably be conditional on the askquestion window being closed with yes/no not jsut the window closing
+                model_model.load_check = False
                 answer = tk.messagebox.askquestion(
                     "Warning!",
                     "Chronological DAG already loaded, do you want to save this as a new model first? \n\n Click Yes to save as new model and No to overwrite existing model",
                 )
                 if answer == "yes":
                     self.save_as_new_model()
-                # self.littlecanvas2.delete("all") # @todo
+                # self.littlecanvas2.delete("all")
             model_model.stratigraphic_dag = node_del_fixed(model_model.stratigraphic_dag, self.node)
             nodedel_reason = self.node_del_popup(self.node)
             model_model.record_deleted_node(self.node, nodedel_reason)
@@ -680,7 +644,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         """Callback function from the testmenu for adding contexts"""
         # Get the Model object
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
         if model_model.load_check:
@@ -690,17 +653,17 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             )
             if answer == "yes":
                 self.save_as_new_model()
-            # self.littlecanvas2.delete("all") # @todo
+            # self.littlecanvas2.delete("all")
             model_model.load_check = "not_loaded"
 
-        popup_data = {"value": None}  # @todo - temp. use a proppert object.
+        popup_data = {"value": None}
         popup_presenter = AddContextPresenter(self.mediator, AddContextView(self.view), popup_data)
         popup_presenter.view.lift()
-        self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
+        self.view.wait_window(popup_presenter.view)
         self.node = popup_data["value"]
         model_model.stratigraphic_dag.add_node(
             self.node, shape="box", fontsize="30.0", fontname="helvetica", penwidth="1.0"
-        )  # @todo - abstract this into the model class
+        )
 
     def testmenu_delete_strat_with(self) -> None:
         """Callback function from the testmenu for deleting stratigrahic relationship edges
@@ -709,7 +672,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         @note - order of popup and already loaded check has been changed to match"""
         # Get the Model object
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
 
@@ -721,7 +683,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             )
             if answer == "yes":
                 self.save_as_new_model()
-            # self.littlecanvas2.delete("all") # @todo
+            # self.littlecanvas2.delete("all")
             model_model.load_check = False
 
         # Find the correct direction of the selected edge to delete, or error if it does not exist. Use a copy so menu deletion can be matinained
@@ -760,7 +722,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         """Callback function from the testmenu for adding stratigrahic relationship"""
         # Get the Model object
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
 
@@ -770,8 +731,8 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 "Chronological DAG already loaded, do you want to save this as a new model first? \n Click YES to save as new model and NO to overwrite existing model",
             )
             if answer == "yes":
-                self.refresh_4_new_model()  # @todo self.controller, proj_dir, load=False)
-        # self.littlecanvas2.delete("all") @todo
+                self.refresh_4_new_model()
+        # self.littlecanvas2.delete("all")
         model_model.load_check = False
         self.edge_nodes = np.append(self.edge_nodes, self.node)
         self.addedge(self.edge_nodes)
@@ -782,7 +743,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         """Callback function from the testmenu for deleting stratigraphic relationships, adding an option to the menu when a node was selected."""
         # Get the Model object
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
 
@@ -798,7 +758,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         """Callback function from the testmenu to equate two contexts (when one has already been selected)"""
         # Get the Model object
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
 
@@ -830,7 +789,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         """Callback function from the testmenu which sets up menu to equate context for when user picks next node"""
         # Get the Model object
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
         if len(self.comb_nodes) == 1:
@@ -851,7 +809,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         """Callback function from the testmenu to show supplementary data for the selected context/node"""
         # Get the Model object
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
 
@@ -879,7 +836,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         """Callback function from the testmenu which sets up for placing one context above another"""
         # Get the Model object
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
 
@@ -1021,12 +977,10 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         popup_presenter.view.lift()
 
         # Wait for the popup window to be closed before saving the new model
-        self.view.wait_window(popup_presenter.view)  # @todo - abstract this away.
-        # @todo - block input while the child popup is open?
+        self.view.wait_window(popup_presenter.view)
 
         # Get the new model
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
 
@@ -1046,7 +1000,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         @todo - don't re-open from disk, maintain an unzoomed copy in the model?
         """
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
 
@@ -1065,7 +1018,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         @todo - don't re-open from disk, maintain an unzoomed copy in the model?
         """
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
         # Re-open the image inside the Model
@@ -1081,7 +1033,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         @todo - this is leaking tkinter into the presenter. Abstract this away a little?
         """
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
         if model_model.stratigraphic_image is not None:
@@ -1094,7 +1045,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         @todo - this is leaking tkinter into the presenter. Abstract this away a little?
         """
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
         if model_model.stratigraphic_image is not None:
@@ -1108,7 +1058,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         @todo - this is leaking tkinter into the presenter. Abstract this away a little?
         """
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
         if model_model.chronological_image is not None:
@@ -1121,7 +1070,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         @todo - this is leaking tkinter into the presenter. Abstract this away a little?
         """
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
         if model_model.chronological_image is not None:
@@ -1151,7 +1099,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         @todo partially refactor into a method on models.model
         @todo renaming etc"""
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
         x_1 = edgevec[0]
@@ -1175,7 +1122,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         @todo - using np.append to extend a set?
         @todo renaming etc"""
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return
         rellist = list(nx.line_graph(model_model.stratigraphic_dag))
@@ -1211,7 +1157,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         node_inside = "no node"  # @todo use None instead?
 
         model_model: Optional[Model] = self.model.current_model
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if model_model is None:
             return node_inside
 
@@ -1258,7 +1203,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         popup_presenter = RemoveContextPresenter(self.mediator, RemoveContextView(self.view), data)
         # self.canvas["state"] = "disabled" # @todo
         popup_presenter.view.lift()
-        self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
+        self.view.wait_window(popup_presenter.view)
         # self.canvas["state"] = "normal" # @todo
         return data["reason"]
 
@@ -1283,6 +1228,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         )
         # self.canvas["state"] = "disabled" # @todo
         popup_presenter.view.lift()
-        self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
+        self.view.wait_window(popup_presenter.view)
         # self.canvas["state"] = "normal" # @todo
         return data["reason"]

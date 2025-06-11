@@ -435,9 +435,8 @@ class DatingResultsView(FrameView):
     def wheel2(self, event):
         """Zoom with mouse wheel for the stratigraphic image canvas
 
-        Formerly (part of) PageOne.wheel
-
-        @todo this abstraction could probably be improved"""
+        Formerly (part of) `PageOne.wheel`
+        """
 
         # If there is no container2 yet, i.e. no image, don't do anything. @todo improve this check.
         if not hasattr(self, "container2") or self.container2 is None:

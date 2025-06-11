@@ -8,11 +8,7 @@ from ..models.ProjectsDirectory import ProjectsDirectory
 
 
 class ProjectSelection:
-    """A class containing a ProjectsDirectory object, and variables related to the currently selected project/model, and the next project/model to be slelected
-
-    @todo - rename this class.
-    @todo - consider making this a data class again? Could take a ProjectsDirectory instance instead of a pathlib?
-    """
+    """A class containing a ProjectsDirectory object, and variables related to the currently selected project/model, and the next project/model to be slelected"""
 
     def __init__(self, projects_directory_path: pathlib.Path):
         """Initailse an instance of the ProjectSelection class, using a projects directory from a specified path."""
@@ -44,10 +40,7 @@ class ProjectSelection:
         self.__using_new_project_process: bool = False
         """Boolean indicating if the new/create project process is being used, of if project selection is being used. 
 
-        This is to provide correct back button behaviour, without validating the user provided new project name does not already exist. 
-
-        Todo: 
-            @todo - Either validate new project names when provide by a user, or if a new project name alrady exists, show the load model view next? 
+        This is to provide correct back button behaviour, without validating the user provided new project name does not already exist.
         """
 
     @property
@@ -73,10 +66,7 @@ class ProjectSelection:
 
     @property
     def current_project(self) -> Optional[Project]:
-        """Get (a reference) to the currently selected Project object
-
-        Todo:
-            @todo - exceptions?"""
+        """Get (a reference) to the currently selected Project object"""
         if self.current_project_name is not None:
             return self.__projects_directory.get_project(self.current_project_name)
         else:
@@ -84,11 +74,7 @@ class ProjectSelection:
 
     @property
     def current_model(self) -> Optional[Model]:
-        """Get (a reference) to the currently selected model object
-
-        Todo:
-            @todo - exceptions? Project.get_model may load from disk, raising various exceptions"""
-
+        """Get (a reference) to the currently selected model object"""
         if (project := self.current_project) is not None:
             if self.current_model_name is not None:
                 return project.get_model(self.current_model_name)
@@ -97,19 +83,12 @@ class ProjectSelection:
 
     @current_project_name.setter
     def current_project_name(self, name: str) -> None:
-        """Set the current project by name
-
-        Todo:
-            @todo - should this validate the project name here, raising if it doesn not exist yet?"""
+        """Set the current project by name"""
         self.__current_project_name = name
 
     @current_model_name.setter
     def current_model_name(self, name: str) -> None:
-        """Set the current model by name
-
-        Todo:
-            @todo - should this raise if ther is no current project yet?
-            @todo - should this validate the model name here, raising if it doesn not exist yet? (and if there is not project set)"""
+        """Set the current model by name"""
         self.__current_model_name = name
 
     @property
@@ -124,10 +103,7 @@ class ProjectSelection:
 
     @property
     def next_project(self) -> Optional[Project]:
-        """Get (a reference) to the "next" Project object, if it already exists
-
-        Todo:
-            @todo - exceptions?"""
+        """Get (a reference) to the "next" Project object, if it already exists"""
         if self.next_project_name is not None:
             return self.__projects_directory.get_project(self.next_project_name)
         else:
@@ -135,11 +111,7 @@ class ProjectSelection:
 
     @property
     def next_model(self) -> Optional[Model]:
-        """Get (a reference) to the "next" model object, if it already exists within the next project
-
-        Todo:
-            @todo - exceptions? Project.get_model may load from disk, raising various exceptions"""
-
+        """Get (a reference) to the "next" model object, if it already exists within the next project"""
         if (project := self.next_project) is not None:
             if self.next_model_name is not None:
                 return project.get_model(self.next_model_name)
@@ -151,24 +123,15 @@ class ProjectSelection:
         """Set the current project by name
 
         This project may or may not exist yet.
-
-        Todo:
-            @todo - should this validate the string is a valid project name (i.e. directory name)?
         """
         self.__next_project_name = name
-
-        #
-        self.__next_project_name_is_new = False
 
     @next_model_name.setter
     def next_model_name(self, name: Optional[str]) -> None:
         """Set the current model by name
 
         This model may or may not exist yet
-
-        Todo:
-            @todo - should this validate the string is a valid model name (i.e. directory name)?
-            @todo - should this raise if ther is no next project yet?"""
+        """
         self.__next_model_name = name
 
     @property
@@ -199,11 +162,6 @@ class ProjectSelection:
         Parameters:
             load_ok (bool): If loading existing models is allowed
             create_ok (bool): If creating new models is allowed
-
-        Todo:
-            @todo - document exceptions, which are raised if loading or creation failed, or if "next" internal state has not yet been setup
-            @todo - specialise exception types for better handling downstream
-            @todo - should this raise if the current model has not been saved? Or should that be handled elsewhere (probably elsewhere)
         """
         import inspect
 

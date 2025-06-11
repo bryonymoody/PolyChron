@@ -851,7 +851,7 @@ class Model:
         rcd_err = [
             int(list(self.radiocarbon_df["error"])[list(self.radiocarbon_df["context"]).index(i)]) for i in context_no
         ]
-        # Write calibration inputs to disk in csv. @todo make optional?
+        # Write calibration inputs to disk in csv
         input_1 = [
             strat_vec,
             rcd_est,

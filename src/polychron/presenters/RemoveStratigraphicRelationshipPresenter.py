@@ -9,9 +9,6 @@ class RemoveStratigraphicRelationshipPresenter(PopupPresenter[Dict[str, Optional
     """Presenter for a popup window to provide the reason for the removal of a single stratigraphic relationship
 
     Formerly `popupWindow6`, called by StartPage.edge_del_popup, triggered when "Delete stratigraphic relationship" is selected on an edge
-
-    Todo:
-        @todo - use a an actual Model class not just a Dict.
     """
 
     def __init__(

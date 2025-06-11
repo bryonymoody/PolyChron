@@ -119,11 +119,10 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
         @todo - this is leaking tkinter into the presenter. Abstract this away a little?
         @todo - rename this, doesn't need the 2?
         """
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
         if self.model is None:
             return
         if self.view.image2 is not None:
-            self.view.graphcanvas.scan_mark(event.x, event.y)  # @todo tkinter in presenter
+            self.view.graphcanvas.scan_mark(event.x, event.y)
 
     def move_to2(self, event: Any) -> None:
         """Drag (move) canvas to the new position
@@ -133,9 +132,6 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
         @todo - this is leaking tkinter into the presenter. Abstract this away a little?
         @todo - rename this, doesn't need the 2?
         """
-        # @todo - this should never occur. Switch to an assert & fix the root cause when switching back from the results tab?
-        if self.model is None:
-            return
         if self.view.image2 is not None:
             self.view.graphcanvas.scan_dragto(event.x, event.y, gain=1)  # @todo tkinter in presenter
             self.view.show_image2()
@@ -157,11 +153,7 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
         @todo - rename on_?
         @todo - refactor into a view method + model methods. This is directly accessing view data (imscale)
         @todo - rename some variables.
-
         """
-        if self.model is None:
-            return
-
         # @todo - is this update idle tasks needed for correct mouse coords?
         # startpage = self.controller.get_page('StartPage')
         # startpage.update_idletasks()

@@ -17,8 +17,6 @@ class Project:
 
     path: pathlib.Path
     """The directory representing this project on disk
-    
-    @todo - this and name are not both required, could have parent_path and an dynamic path? (i.e. avoid duplication during construction)
     """
 
     models: dict[str, Optional[Model]] = field(default_factory=dict)
@@ -34,14 +32,11 @@ class Project:
             # Ensure the model (and implictly project) directory exists
             self.path.mkdir(parents=True, exist_ok=True)
         except Exception as e:
-            # @todo - better error handling. Should be due to permsissions, invalid filepaths or disk issues only
             print(e, file=sys.stderr)
             return False
 
     def has_model(self, name: str) -> bool:
-        """Cheeck if a model exists within the project.
-
-        @todo - should this return tuple of bools? if it exists, and if it has been loaded?"""
+        """Cheeck if a model exists within the project."""
         return name in self.models
 
     def get_model(self, name: str) -> Optional[Model]:
@@ -60,10 +55,6 @@ class Project:
 
         Returns:
             The existing or new model with the specified model name
-
-        Todo:
-            @todo - document rasised exceptions
-            @todo - Possible disk-race if files/directories are created in this model. Create model first, and if it rases the "this already exists" exception return the loaded one?
         """
         if self.has_model(name):
             model = self.get_model(name)
@@ -86,9 +77,7 @@ class Project:
         Raises:
             RuntimeError: if the model already exists or an invalid name is provided.
             OSError: if the model directories could not be created, e.g. due to permissions or avialable space.
-
-        @todo - make checking for an existing model lighter weight than a full load?
-        @todo - explicitly limit the usable model name characters to reduce the risk of os exceptions (i.e. [a-zA-Z0-9\\-_]+)?) This would prevent some valid names."""
+        """
 
         # Attempt to load the model with the provided name.
         existing_model = self.get_model(name)
@@ -134,8 +123,6 @@ class Project:
 
         Paramaters:
             name: The name of the model to load.
-
-        @todo - return value or exception of model does not exist?
         """
         try:
             # Try and load the model from disk
@@ -145,8 +132,7 @@ class Project:
             self.models[model.name] = model
 
         except Exception as e:
-            # @todo - correclty handle any exceptions attempting to load models
-            print(f"loading exception @Todo {e}")
+            print(f"An exception occured when attempting to load {name}: {e}", file=sys.stderr)
             raise e
 
     def lazy_load(self) -> None:
@@ -155,8 +141,6 @@ class Project:
         This update the models dictionary to ensure that each model which could be loaded from disk is listed as a model, without performing the (relatively) expensive disk operations. This does not guarantee the model will be loadable.
 
         I.e. any non-empty directory within the project directory is considered to be a model.
-
-        @todo - decide if this should return success or raise/not raise / return the number of models?
         """
         if self.path.is_dir():
             for p in self.path.iterdir():
@@ -164,14 +148,11 @@ class Project:
                     self.models[p.name] = None
 
     def load(self) -> None:
-        """Load all models within this project from disk.
-
-        @todo - decide if this should return success or raise/not raise / return the number of models?
-        """
+        """Load all models within this project from disk."""
         if self.path.is_dir():
             for p in self.path.iterdir():
                 if p.is_dir():
                     try:
                         self.load_model_from_disk(p.name)
                     except Exception as e:
-                        raise e  # @todo
+                        raise e

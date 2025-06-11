@@ -9,9 +9,6 @@ class AddContextPresenter(PopupPresenter[Dict[str, Optional[str]]]):
     """Presenter for adding an additional context to the current model
 
     Formerly `popupWindow`
-
-    Todo:
-        @todo - non-dict model class
     """
 
     def __init__(self, mediator: Mediator, view: AddContextView, model: Dict[str, Optional[str]]) -> None:
@@ -25,11 +22,10 @@ class AddContextPresenter(PopupPresenter[Dict[str, Optional[str]]]):
         self.update_view()
 
     def update_view(self) -> None:
-        pass  # @todo
+        pass
 
     def on_ok(self) -> None:
         """When the OK button is pressed, validate user in put, update the model and close the popup"""
-        # @todo - validate user input, here before closing the popup?
         self.model["value"] = self.view.get_input()
         # Close the popup
         self.close_view()
