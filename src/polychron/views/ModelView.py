@@ -13,10 +13,6 @@ class ModelView(FrameView):
     I.e. the "Stratigraphy and supplementary data" tab
 
     Formely part of `StartPage`
-
-    Todo:
-        @todo - consider splitting each canvas to it's own separate classes?
-        @todo - Make the testmenu have a default option of "Node Action" which appears to have been intended?
     """
 
     def __init__(self, parent: tk.Frame) -> None:
@@ -31,7 +27,6 @@ class ModelView(FrameView):
         self.canvas.place(relx=0, rely=0.03, relwidth=1, relheight=0.97)
 
         # Add buttons to switch between the main windows.
-        # @todo - abstract this esle where to avoid duplication
         self.sasd_tab_button = tk.Button(
             self,
             text="Stratigraphy and supplementary data",
@@ -123,9 +118,9 @@ class ModelView(FrameView):
             "Equate context with another",
             "Place above other context",
             "Add new contexts",
-            # "Supplementary data menu (BROKEN)", # @todo see https://github.com/bryonymoody/PolyChron/issues/69
+            # "Supplementary data menu (BROKEN)", # see https://github.com/bryonymoody/PolyChron/issues/69
         ]
-        self.__testmenu_variable = tk.StringVar(self.littlecanvas)  # @todo - not using but required?
+        self.__testmenu_variable = tk.StringVar(self.littlecanvas)
         self.__testmenu_variable.set("Node Action")
         self.__testmenu_callback: Callable[[], Optional[Any]] = lambda event: None
         """reference to the callback method for the test menu, as it does not appear that an OptionMenu(command) can be changed after construction."""
@@ -178,14 +173,6 @@ class ModelView(FrameView):
         self.tree3["columns"] = ["Meta"]
         self.tree3.place(relx=0.758, rely=0.405)
         self.tree3.heading("Meta", text="Reason for deleting")
-        # @todo - this was in StartPage.__init__, however f_1 is used to comapre to f_2 and set newvars which is never used, so don't think it's required?
-        # f = dir(self)
-        # self.f_1 = [var for var in f if ('__' or 'grid' or 'get') not in var]
-        # self.littlecanvas.update()
-        # try:
-        #     self.restore_state()
-        # except FileNotFoundError:
-        #     self.save_state_1()
 
         # Button and canvas for showing what data has been loaded so far.
         self.data_button = tk.Button(
@@ -212,8 +199,6 @@ class ModelView(FrameView):
         """Bind the callback for the stratigraphic graph right-click menu
 
         ttk.OptionMenu doesn not accept commadns to .config, only on the constructor? So in this case the view contains a reference to the callback
-
-        @todo rename testmenu and this method
         """
         self.__testmenu_callback = callback
 
@@ -274,7 +259,6 @@ class ModelView(FrameView):
         self.testmenu.config(width=testmenuWidth)
 
         # Return the scaled x and y coords so the presenter can check if a node was presesd.
-        # @todo improve this separation of concerns
         if has_image:
             x_scal = cursor_x + self.transx
             y_scal = cursor_y + self.transy
@@ -289,12 +273,7 @@ class ModelView(FrameView):
         callback_move_from: Callable[[], Optional[Any]],
         callback_move_to: Callable[[], Optional[Any]],
     ) -> None:
-        """Bind mouse callback events for interacting with the graph canvas
-
-        @todo - split this method?
-
-        @todo better callback names
-        """
+        """Bind mouse callback events for interacting with the graph canvas"""
         self.littlecanvas.bind("<MouseWheel>", callback_wheel)
         self.littlecanvas.bind("<Button-4>", callback_wheel)  # only with Linux, wheel scroll down
         self.littlecanvas.bind("<Button-5>", callback_wheel)
@@ -446,10 +425,8 @@ class ModelView(FrameView):
         self.datalittlecanvas.pack()
 
     def update_littlecanvas(self, image) -> None:
-        """Update the image within the littlecanvas element
-
-        @todo bindings"""
-        self.image = image  # @todo don't store this in the view.
+        """Update the image within the littlecanvas element"""
+        self.image = image
         self.littlecanvas.delete("all")
         self.littlecanvas.img = ImageTk.PhotoImage(self.image)
         self.littlecanvas_img = self.littlecanvas.create_image(0, 0, anchor="nw", image=self.littlecanvas.img)
@@ -463,9 +440,7 @@ class ModelView(FrameView):
         self.show_image()
 
     def show_image(self) -> None:
-        """Show image on the Canvas
-
-        @todo the logic for this should probably be elsewhere / add parameters?"""
+        """Show image on the Canvas"""
         bbox1 = [0, 0, int(self.image.size[0] * self.imscale), int(self.image.size[1] * self.imscale)]
         # Remove 1 pixel shift at the sides of the bbox1
         bbox1 = (bbox1[0] + 1, bbox1[1] + 1, bbox1[2] - 1, bbox1[3] - 1)
@@ -509,20 +484,12 @@ class ModelView(FrameView):
             self.littlecanvas.imagetk = self.imagetk
 
     def clear_littlecanvas2(self) -> None:
-        """Delete all elments from within the littlecavnas2
-
-        @todo - rename to mention chrono graph instead."""
+        """Delete all elments from within the littlecavnas2"""
         self.littlecanvas2.delete("all")
 
     def update_littlecanvas2(self, image: Image.Image) -> None:
-        """Update the image within the littlecanvas2 element - i.e. the chronological graph.
-
-        @todo type hints
-        @todo bindings
-        @todo - rename method
-        @todo - which of these values are actually needed as class members?
-        """
-        self.image2 = image  # @todo don't store this in the view.
+        """Update the image within the littlecanvas2 element - i.e. the chronological graph."""
+        self.image2 = image
 
         self.littlecanvas2.delete("all")
         self.littlecanvas2.img = ImageTk.PhotoImage(image)
@@ -537,10 +504,7 @@ class ModelView(FrameView):
         self.show_image2()
 
     def show_image2(self) -> None:
-        """Show image on the 2nd Canvas
-
-        @todo the logic for this should probably be elsewhere / add parameters?
-        @todo rename methdo"""
+        """Show image on the 2nd Canvas"""
         bbox1 = [0, 0, int(self.image2.size[0] * self.imscale2), int(self.image2.size[1] * self.imscale2)]
         # Remove 1 pixel shift at the sides of the bbox1
         bbox1 = (bbox1[0] + 1, bbox1[1] + 1, bbox1[2] - 1, bbox1[3] - 1)
@@ -583,31 +547,24 @@ class ModelView(FrameView):
             self.littlecanvas2.imagetk2 = self.imagetk2
 
     def update_littlecanvas_image_only(self, image: Image.Image, event: Any) -> None:
-        """Update the image within the littlecanvas, during resizing.
-
-        @todo - this and the other update method can probably be combined
-        """
+        """Update the image within the littlecanvas, during resizing."""
         self.littlecanvas.img = ImageTk.PhotoImage(image)
-        self.w_1 = event.width  # @todo - not used
-        self.h_1 = event.height  # @todo - not used
+        # self.w_1 = event.width  # not used
+        # self.h_1 = event.height  # not used
         self.littlecanvas.itemconfig(self.littlecanvas_img, image=self.littlecanvas.img)
 
     def update_littlecanvas2_image_only(self, image: Image.Image, event: Any) -> None:
-        """Update the image within the littlecanvas2, during resizing.
-
-        @todo - this and the other update method can probably be combined
-        """
+        """Update the image within the littlecanvas2, during resizing."""
         self.littlecanvas2.img = ImageTk.PhotoImage(image)
-        self.w_1 = event.width  # @todo - not used
-        self.h_1 = event.height  # @todo - not used
+        self.w_1 = event.width  # not used
+        self.h_1 = event.height  # not used
         self.littlecanvas2.itemconfig(self.littlecanvas2_img, image=self.littlecanvas2.img)
 
     def wheel(self, event: Any) -> None:
         """Zoom with mouse wheel for the stratigraphic image canvas
 
         Formerly (part of) StartPage.wheel
-
-        @todo this abstraction could probably be improved"""
+        """
         x_zoom = self.littlecanvas.canvasx(event.x)
         y_zoom = self.littlecanvas.canvasy(event.y)
         bbox = self.littlecanvas.bbox(self.container)  # get image area
@@ -635,11 +592,10 @@ class ModelView(FrameView):
     def wheel2(self, event: Any) -> None:
         """Zoom with mouse wheel for the stratigraphic image canvas
 
-        Formerly (part of) StartPage.wheel
+        Formerly (part of) `StartPage.wheel`
+        """
 
-        @todo this abstraction could probably be improved"""
-
-        # If there is no container2 yet, i.e. no image, don't do anything. @todo improve this check.
+        # If there is no container2 yet, i.e. no image, don't do anything
         if not hasattr(self, "container2") or self.container2 is None:
             return
 
@@ -676,10 +632,7 @@ class ModelView(FrameView):
             self.tree2.insert("", "end", text=node, values=[meta])
 
     def append_deleted_node(self, node: str, meta: str) -> None:
-        """Append the node and meta data to the deleted nodes treeview
-
-        @todo - make this take an object instead of 2 strs?
-        """
+        """Append the node and meta data to the deleted nodes treeview"""
         self.tree2.insert("", "end", text=node, values=[meta])
 
     def set_deleted_edges(self, deleted_edges: List[Tuple[str, str]]) -> None:
@@ -694,16 +647,11 @@ class ModelView(FrameView):
         """Append the edge and meta data to the deleted edges treeview
 
         Includes part of StartPage.edgeRender
-
-        @todo - make this 3 cols not 2?
         """
         self.tree3.insert("", "end", text=edge_label, values=[meta])
 
     def append_testmenu_entry(self, text: str) -> None:
-        """Append an entry to the end of the right click testmenu.
-
-        @todo - insert instead?
-        @todo - edit instead of overwrite self.testmenu"""
+        """Append an entry to the end of the right click testmenu."""
         self.OptionList.append(text)
         self.testmenu = ttk.OptionMenu(
             self.littlecanvas,
@@ -714,10 +662,7 @@ class ModelView(FrameView):
         )
 
     def remove_testmenu_entry(self, text: str) -> None:
-        """Remove an entry to the end of the right click testmenu.
-
-        @todo - edit instead of overwrite self.testmenu"""
-
+        """Remove an entry to the end of the right click testmenu."""
         self.OptionList.remove(text)
         self.testmenu = ttk.OptionMenu(
             self.littlecanvas,

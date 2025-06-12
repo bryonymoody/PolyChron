@@ -100,7 +100,7 @@ def phase_info_func(file_graph: nx.DiGraph) -> Tuple[Dict[Any, Any], List[Any], 
     Todo:
         This has not been fully-reimplemented for cases where stratigraphic data was provided via .dot/.gv file, see FILE_INPUT
     """
-    FILE_INPUT = None  # @todo - model.stratigraphic_graphviz_file
+    FILE_INPUT = None  # model.stratigraphic_graphviz_file ?
     res = []
     node_list = list(file_graph.nodes)
     nd = dict(file_graph.nodes(data=True))
@@ -142,7 +142,7 @@ def edge_of_phase(test1, pset, node_list, node_info):
     Todo:
         This has not been fully-reimplemented for cases where stratigraphic data was provided via .dot/.gv file, see FILE_INPUT
     """
-    FILE_INPUT = None  # @todo - model.stratigraphic_graphviz_file
+    FILE_INPUT = None  # model.stratigraphic_graphviz_file ?
     x_l = []
     y_l = []
     mydict = {}

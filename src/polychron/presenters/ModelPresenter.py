@@ -35,15 +35,7 @@ from .ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresent
 
 
 class ModelPresenter(FramePresenter[ProjectSelection]):
-    """Presenter for the main model tab
-
-    @todo - re-order methods and properties to be logical (rather than in order of porting)
-    @todo - reduce duplciation inside methods
-    @todo - abstract logic into the Model where possible / appropraite
-    @todo - improve view-presenter separation of concerns once behving as intended.
-    @todo - split out image canvas areas into their own mini presenters to simplify this file / abstract it away? They could potentially share (most of) an implementation.
-    @todo - move imports which are only required in one function into the function to avoid polluting namespaces?
-    """
+    """Presenter for the main model tab"""
 
     def __init__(self, mediator: Mediator, view: ModelView, model: ProjectSelection) -> None:
         # Call the parent class' consturctor
@@ -51,51 +43,27 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
 
         # Properties
         self.strat_check: bool = False
-        """If a strat file has been loaded or not
-        
-        @todo - Should this actually belong to the .model.Model?
-        @todo - initalse these variables with values from the model on load?
-        """
+        """If a strat file has been loaded or not"""
 
         self.date_check: bool = False
-        """If a data file has been loaded or not
-        
-        @todo - Should this actually belong to the .model.Model?
-        @todo - initalse these variables with values from the model on load?
-        """
+        """If a data file has been loaded or not"""
 
         self.phase_check: bool = False
-        """If a phase file has been loaded or not
-        
-        @todo - Should this actually belong to the .model.Model?
-        @todo - initalse these variables with values from the model on load?
-        """
+        """If a phase file has been loaded or not"""
 
         self.phase_rel_check: bool = False
-        """If a phase_rel file has been loaded or not
-        
-        @todo - Should this actually belong to the .model.Model?
-        @todo - initalse these variables with values from the model on load?
-        """
+        """If a phase_rel file has been loaded or not"""
 
         self.node: str = "no node"
-        """The currently selected node for right click operations on the stratigraphic graph
-        
-        @todo - make Optional[str] instead of using "no node"?
-        @todo - rename self.selected_node?
-        """
+        """The currently selected node for right click operations on the stratigraphic graph"""
 
         self.edge_nodes: List[Any] = []
-        """Used during testmenu (right click menu) options similar to self.node
-        
-        @todo document it's use, and refactor into a more appropraite name or location"""
+        """Used during testmenu (right click menu) options similar to self.node"""
 
         self.comb_nodes: List[Any] = []
         """Used during testmenu (right click menu) options similar to self.node
 
-        Context equality only?
-        
-        @todo document it's use, and refactor into a more appropraite name or location"""
+        Context equality only?"""
 
         # Bind callback functions for switching between the main view tabs
         view.bind_sasd_tab_button(lambda: self.mediator.switch_presenter("Model"))
@@ -136,7 +104,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
 
         # Bind button clicks
         # Bind the "Data loaded" button callback
-        self.display_data_var = "hidden"  # @todo - this could just be a bool.
+        self.display_data_var = "hidden"
         self.view.bind_data_button(lambda: self.on_data_button())
 
         # Bind the callback for activating the testmenu
@@ -157,9 +125,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         self.update_view()
 
     def update_view(self) -> None:
-        """Update the view to reflect the current state of the model
-
-        @todo Ensure that this method updates each UI element for the current model (if there is one). I.e. both graphs, + 3 tables + data loaded drop down + presenter properties like the selected node."""
+        """Update the view to reflect the current state of the model"""
         # Get the actual model
         model_model: Optional[Model] = self.model.current_model
         if model_model is None:
@@ -170,7 +136,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             model_model.render_strat_graph()
             # Update the view
             self.view.update_littlecanvas(model_model.stratigraphic_image)
-            # self.bind("<Configure>", self.resize) @todo
+            # self.bind("<Configure>", self.resize)
             self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
             self.view.bind_littlecanvas_callback("<Button-3>", self.pre_click)
 
@@ -184,7 +150,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 self.view.show_image2()
 
         # Make sure that the check marks are up to date
-        # @todo - replace teh _check variables with properties that just do these checks instead?
         if model_model.stratigraphic_df is not None:
             self.strat_check = True
         if model_model.radiocarbon_df is not None:
@@ -211,9 +176,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
     def popup_calibrate_model(self) -> None:
         """Callback function for when Tools -> Calibrate model is selected
 
-        @todo - this allows multiple open project windows to be created, which is not ideal
-
-        Formerly StartPage.load_mcmc
+        Formerly `StartPage.load_mcmc`
         """
         model_model: Optional[Model] = self.model.current_model
         if model_model is None:
@@ -223,55 +186,37 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         # Ensure it is visible and on top
         popup_presenter.view.lift()
         # Run the calibration
-        # @todo - gracefully handle errors during calibration
         popup_presenter.run()
         # Close the popup (formerly .cleanup)
         popup_presenter.close_view()
-        # Change to the DatingResults tab (assuming the calibration ran successfully @todo)
+        # Change to the DatingResults tab
         self.mediator.switch_presenter("DatingResults")
-
-        # @todo - self.f_2 and self.newvars are never read. no need to store?
-        # f = dir(self)
-        # self.f_2 = [var for var in f if ("__" or "grid" or "get") not in var]
-        # self.newvars = [var for var in self.f_2 if var not in self.f_1]
-
-        # @todo - esnure the presenter is destroyed (for all popup presenters, it should be unless tk is holding references.)
 
     def popup_calibrate_multiple(self) -> None:
         """Callback function for when Tools -> Calibrate multiple projects from project is selected
 
         Opens a new popup box allowing the user to select which models from a list to calibrate as a batch.
 
-        Formerly popupWindow8
-
-        @todo - this allows multiple open project windows to be created, which is not ideal
-        @todo - this does not autoclose the window on O
+        Formerly `popupWindow8`
         """
         popup_presenter = CalibrateModelSelectPresenter(self.mediator, CalibrateModelSelectView(self.view), self.model)
         # Ensure it is visible and on top
         popup_presenter.view.lift()
 
     def chronograph_render_wrap(self) -> None:
-        """wraps chronograph render so we can assign a variable when runing the func using a button
-
-        @todo - migrate some of this code into the Model.
-        """
+        """wraps chronograph render so we can assign a variable when runing the func using a button"""
         model_model: Optional[Model] = self.model.current_model
         if model_model is None:
             return
 
-        # @todo - move this condition into a model function.
         if (
             model_model.group_relationships is None
             or model_model.group_df is None
             or model_model.radiocarbon_df is None
         ):
-            # @todo - abstract this into a view
             tk.messagebox.showinfo("Error", "You haven't loaded in all the data required for a chronological graph")
             return
         if model_model.load_check:
-            # @todo - abstract this tk call somewhere?
-            # @todo - this message does not match behaviour.
             answer = tk.messagebox.askquestion(
                 "Warning!",
                 "Chronological DAG already loaded, are you sure you want to write over it? You can copy this model in the file menu if you want to consider multiple models",
@@ -282,7 +227,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 self.view.clear_littlecanvas2()
                 model_model.chronological_dag = self.chronograph_render()
             else:
-                pass  # @todo - do somethign in this case? Query intended behaviour.
+                pass
         else:
             self.view.clear_littlecanvas2()
             model_model.chronological_dag = self.chronograph_render()
@@ -291,9 +236,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         """initiates residual checking function then renders the graph when thats done
 
         Returns a copy of the produced chronological graph (if requirements met and no error occurs?).
-
-        @todo - move this into models.Model and make it just self-assign rather than return?
-
         """
 
         model_model: Optional[Model] = self.model.current_model
@@ -305,7 +247,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             model_model.load_check = True
             # Check for residuals & update model state when aproved
             self.resid_check()
-            # @todo - better handling of backing out of this process.
             # Render the chronological graph, mutating the model
             model_model.render_chrono_graph()
             # If the render succeeded
@@ -320,7 +261,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                     # If any error enountered, make sure to mark the graph as not actually rendered.
                     model_model.load_check = False
             else:
-                pass  # @todo - should this also set model_model.load_check = False?
+                pass
         return model_model.chronological_dag  # superfluous?
 
     def resid_check(self) -> None:
@@ -365,10 +306,11 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
     def open_strat_dot_file(self) -> None:
         """Callback function when File > Load stratigraphic diagram file (.dot) (.csv) is selected, opening a .dot / graphviz file representing the stratigraphic relationships
 
-        Formerly StartPage.open_file1
-
-        @todo - Implement this, once a "valid" dotfile for this is found.
+        Formerly `StartPage.open_file1`
         """
+        raise NotImplementedError(
+            "open_strat_dot_file is not implemented due to lack of a compaitble GraphViz input file"
+        )
         file = askopenfile(mode="r", filetypes=[("DOT Files", "*.dot"), ("Graphviz Files", "*.gv")])
         if file is not None:
             model_model: Optional[Model] = self.model.current_model
@@ -413,7 +355,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                     # update the model with the dataframe, perofrming post processing, producing the graph
                     model_model.set_stratigraphic_df(df)
                     tk.messagebox.showinfo("Success", "Stratigraphic data loaded")
-                    # Mark the strat file as loaded @todo this can just be implicit from the model's state
+                    # Mark the strat file as loaded
                     self.strat_check = True
                     # Update the check list
                     self.check_list_gen()
@@ -529,7 +471,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
 
     def close_application(self) -> None:
         """Close polychron gracefully via File > Exit"""
-        # @todo - alert on any unsaved changed?
         self.mediator.close_window("exit")
 
     def phasing(self) -> None:
@@ -557,9 +498,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
     def on_data_button(self) -> None:
         """Callback for when the "Data Loaded" button is pressed, which toggles the visibility of which required input files have been parsed or not
 
-        Formerly StartPage.display_data_func
-
-        @todo enum
+        Formerly `StartPage.display_data_func`
         """
 
         if self.display_data_var == "hidden":
@@ -666,10 +605,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         )
 
     def testmenu_delete_strat_with(self) -> None:
-        """Callback function from the testmenu for deleting stratigrahic relationship edges
-
-        @todo - further refactoring?
-        @note - order of popup and already loaded check has been changed to match"""
+        """Callback function from the testmenu for deleting stratigrahic relationship edges"""
         # Get the Model object
         model_model: Optional[Model] = self.model.current_model
         if model_model is None:
@@ -709,7 +645,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
 
         # Remove the edge, updating the model and the view.
         # This no longer needs to be attempted in either direction, or in a try catch really.
-        # @todo refactor this into a method on the models.Model
         model_model.stratigraphic_dag.remove_edge(edge_src, edge_dst)
         model_model.record_deleted_edge(edge_src, edge_dst, reason)
         self.view.append_deleted_edge(edge_label(edge_src, edge_dst), reason)
@@ -731,7 +666,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 "Chronological DAG already loaded, do you want to save this as a new model first? \n Click YES to save as new model and NO to overwrite existing model",
             )
             if answer == "yes":
-                self.refresh_4_new_model()
+                self.save_as_new_model()
         # self.littlecanvas2.delete("all")
         model_model.load_check = False
         self.edge_nodes = np.append(self.edge_nodes, self.node)
@@ -749,10 +684,8 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         if len(self.edge_nodes) == 1:
             self.view.remove_testmenu_entry("Delete stratigraphic relationship with " + str(self.edge_nodes[0]))
             self.edge_nodes = []
-        self.edge_nodes = np.append(self.edge_nodes, self.node)  # @todo shouldn't need to use np.append ever?
-        self.view.append_testmenu_entry(
-            "Delete stratigraphic relationship with " + str(self.edge_nodes[0])
-        )  # @todo use fstrings rather than explicit casting
+        self.edge_nodes = np.append(self.edge_nodes, self.node)
+        self.view.append_testmenu_entry("Delete stratigraphic relationship with " + str(self.edge_nodes[0]))
 
     def testmenu_equate_context_with(self) -> None:
         """Callback function from the testmenu to equate two contexts (when one has already been selected)"""
@@ -766,7 +699,8 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 "Warning!",
                 "Chronological DAG already loaded, do you want to save this as a new model first? \n Click YES to save as new model and NO to overwrite existing model",
             )
-            print(f"@todo - answer ({answer}) not used in this case.")  # @todo
+            if answer == "yes":
+                pass
         self.comb_nodes = np.append(self.comb_nodes, self.node)
         strat_graph_temp = nx.contracted_nodes(model_model.stratigraphic_dag, self.comb_nodes[0], self.comb_nodes[1])
         x_nod = list(strat_graph_temp)
@@ -775,13 +709,13 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         mapping = dict(zip(x_nod, y_nod))
         strat_graph_temp = nx.relabel_nodes(strat_graph_temp, mapping)
         try:
-            self.graph_check = nx.transitive_reduction(
-                strat_graph_temp
-            )  # @todo - this assigns but never uses it. double check
+            # Check for cycles, updating the model if no cycles occur.
+            nx.transitive_reduction(strat_graph_temp)
             model_model.stratigraphic_dag = strat_graph_temp
-        except Exception as e:
-            if e.__class__.__name__ == "NetworkXError":  # @todo improve
-                tk.messagebox.showinfo("Error!", "This creates a cycle so you cannot equate these contexts")
+        except nx.NetworkXError:
+            tk.messagebox.showinfo("Error!", "This creates a cycle so you cannot equate these contexts")
+        except Exception:
+            pass
         self.view.remove_testmenu_entry("Equate context with " + str(self.comb_nodes[0]))
         self.comb_nodes = []
 
@@ -799,11 +733,14 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
     def testmenu_supplementary_menu(self) -> None:
         """Callback function from the testmenu for users to provide additional supplementary data
 
-        I.e. launches what was formerly popupWindow2
+        I.e. launches what was formerly `popupWindow2`
 
-        @todo - implement this (or remove it for now). Non functional in polychron 0.1. https://github.com/bryonymoody/PolyChron/issues/69
+        Note:
+            This is not currently implemented. See https://github.com/bryonymoody/PolyChron/issues/69
         """
-        pass
+        raise NotImplementedError(
+            "testmenu_supplementary_menu has not been implemented. See https://github.com/bryonymoody/PolyChron/issues/69"
+        )
 
     def testmenu_get_supplementary_for_context(self) -> None:
         """Callback function from the testmenu to show supplementary data for the selected context/node"""
@@ -868,7 +805,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         """Makes the test menu appear after right click
 
         Formerly StartPage.onRight"""
-        # Unbind and rebind on_left. @todo this feels wrong.
+        # Unbind and rebind on_left.
         self.view.unbind_littlecanvas_callback("<Button-1>")
         self.view.bind_littlecanvas_callback("<Button-1>", self.on_left)
         # Show the right click menu
@@ -907,8 +844,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         """Open a popup dialog to load an existing model from the current project (althoug possible to go back?)
 
         Formerly a call to load_Window(MAIN_FRAME, proj_dir)
-
-        @todo - the ProjectSelectProcessPopupPresenter having a separate model object here than the ModelView would be useful, to avoid the back button followed by closing the popup causing issues
         """
         # Instantiate the child presenter and view
         popup_presenter = ProjectSelectProcessPopupPresenter(
@@ -937,24 +872,12 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             else:
                 # State saving success if no exceptions occurred
                 tk.messagebox.showinfo("Success", "Your model has been saved")
-        else:
-            pass  # @todo handle gracefully, but this should never occur.
 
     def save_as_new_model(self) -> None:
         """Save the current state of the model, as a new model (with a new name) initially in the same project (although possible to put in a new project).
         Switches to the "new" model for any future changes.
 
-        Formerly StartPage.refresh_4_new_model
-
-        Todo:
-            @todo - in PolyChron 0.1, save as new model maintains current state in a new project, but does not save the state to disk until save_model is called. On load however, this fails to load anything. Query with Bryony the intended behaviour.
-            Error: dot: can't open fi_new_chrono
-
-            @todo - in PolyChron 0.1, if the new model name is already taken, the popup is presented but the window closes anyway rather than allowing a new name to be made.
-
-            @todo - in PolyChron 0.1, it's possible to press Back, enter a new project name, and then a new model name. This just creates a blank model in the new project. Decide how this should behave / if the back button should even be there.
-
-            # @todo - conditionally handle how the popup window was closed, i.e was save pressed or not?.
+        Formerly `StartPage.refresh_4_new_model`
         """
 
         # Store the old project and model names, to check if the model was changed or not.
@@ -994,10 +917,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
     def on_resize(self, event: Any) -> None:
         """resizes image on canvas
 
-        Formerly StartPage.resize
-
-        @todo rename
-        @todo - don't re-open from disk, maintain an unzoomed copy in the model?
+        Formerly `StartPage.resize`
         """
         model_model: Optional[Model] = self.model.current_model
         if model_model is None:
@@ -1012,10 +932,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
     def on_resize_2(self, event: Any) -> None:
         """resizes image on canvas2
 
-        Formerly StartPage.resize2
-
-        @todo rename
-        @todo - don't re-open from disk, maintain an unzoomed copy in the model?
+        Formerly `StartPage.resize2`
         """
         model_model: Optional[Model] = self.model.current_model
         if model_model is None:
@@ -1142,10 +1059,9 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         """returns the node that corresponds to the mouse cooridinates
 
         Formerly StartPage.nodecheck
-        @todo - refactor. This is directly accessing view data (imscale)
         """
 
-        node_inside = "no node"  # @todo use None instead?
+        node_inside = "no node"
 
         model_model: Optional[Model] = self.model.current_model
         if model_model is None:
@@ -1188,10 +1104,10 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         }
         # Create the popup window, formerly popupWindow5
         popup_presenter = RemoveContextPresenter(self.mediator, RemoveContextView(self.view), data)
-        # self.canvas["state"] = "disabled" # @todo
+        self.view.canvas["state"] = "disabled"
         popup_presenter.view.lift()
         self.view.wait_window(popup_presenter.view)
-        # self.canvas["state"] = "normal" # @todo
+        self.view.canvas["state"] = "normal"
         return data["reason"]
 
     def edge_del_popup(self, context_a: str, context_b: str) -> Optional[str]:
@@ -1202,7 +1118,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         Formerly `StartPage.edge_del_popup`
         """
 
-        # @todo actual data class / object.
         data = {
             "context_a": context_a,
             "context_b": context_b,
