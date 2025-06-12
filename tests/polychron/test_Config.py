@@ -38,7 +38,6 @@ class TestConfig:
                 assert config_dir == pathlib.Path.home() / ".config" / "polychron"
 
     def test__get_config_filepath(self):
-        # @todo - this test needs to be made more robust, to account for env variables with being present/missing / check both ways.
         filepath = Config._get_config_filepath()
         # It should be a path
         assert isinstance(filepath, pathlib.Path)

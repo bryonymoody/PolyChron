@@ -14,17 +14,13 @@ from .PopupPresenter import PopupPresenter
 
 
 class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
-    """Presenter for managing Residual vs Intrusive contexsts
-
-    @todo - createa a popup for this and the confirmation version
-    """
+    """Presenter for managing Residual vs Intrusive contexts"""
 
     def __init__(self, mediator: Mediator, view: ManageGroupRelationshipsView, model: Model) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 
         # Create a box per phase in the model, based on the models phase releationships
-        # @todo - move some of this into Model or similar.
         phases = []
         for i in self.model.group_relationships:
             phases.append(i[0])
@@ -32,17 +28,13 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
         phase_labels = list(set(phases))
         self.view.create_phase_boxes(phase_labels)
 
-        # @todo - these 3 might belong in model? and need better names
         self.prev_dict = {}
         self.post_dict = {}
         self.menudict = {}  # aka phasedict?
 
         self.graphcopy = copy.deepcopy(self.model.stratigraphic_dag)
-        """A copt of the model's stratigraphic graph for mutation in this process. @todo make it another Model member?"""
+        """A copt of the model's stratigraphic graph for mutation in this process."""
 
-        # @todo - these should belong to a separate model object, that gets copied into the Model at the end?
-        # @todo - need to think about cases where go back should restore the state of Model in general?
-        # self.context_types = None
         self.prev_group = []
         self.post_group = []
         self.phi_ref = []
@@ -82,9 +74,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
             elif self.model.residual_context_types[i] == "Exclude from modelling":
                 self.graphcopy = node_del_fixed(self.graphcopy, i)
                 self.context_types.pop(np.where(np.array(self.context_no_unordered) == i)[0][0])
-                self.context_no_unordered.remove(
-                    i
-                )  # self.model.residual_contexts[i]) # @todo - this was incorrect. i is not an index? Should this be an enumerate?
+                self.context_no_unordered.remove(i)
 
         for j in self.model.intrusive_contexts:
             if self.model.intrusive_context_types[j] == "Treat as TAQ":
@@ -96,7 +86,6 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
         self.step_1 = chrono_edge_remov(self.graphcopy)
 
         # Update the table
-        # @todo - superfluous if update_view is called here.
         self.view.update_tree_2col(self.model.group_relationships)
 
         # Bind buttons
@@ -111,20 +100,16 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
         self.update_view()
 
     def update_view(self) -> None:
-        pass  # @todo
+        pass
 
     def on_confirm(self) -> None:
         self.get_coords()
-        # @todo trigger changes in the model for the confirm view
-        # @todo - simplify, not using a mediator? Separate views might be nicer but would lead to a lot of duplciation?
-        # self.mediator.switch_presenter("residual_check_confirm")
 
     def on_move(self, event: Optional[Any]) -> None:
         """on move event for dragging boxes around
 
-        Formerly popupWindow3.on_move
-
-        @todo remove tkinter calls from this?"""
+        Formerly `popupWindow3.on_move`
+        """
         component = event.widget
         locx, locy = component.winfo_x(), component.winfo_y()  # top left coords for where the object is
         w, h = self.view.canvas.winfo_width(), self.view.canvas.winfo_height()  # width of master canvas
@@ -153,9 +138,8 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
 
         Builds prev_dict, post_dict and menudict based on the relative postiions of the phase boxes before updating the view to the 2nd stage.
 
-        Formerly popupWindow3.get_coords
-
-        @todo - finish improved separation of tkinter from presenter"""
+        Formerly `popupWindow3.get_coords`
+        """
         label_dict = self.view.get_phase_boxes()
         y_list = []
         for i in label_dict.keys():
@@ -205,11 +189,10 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
     def full_chronograph_func(self) -> None:
         """renders the chronological graph and forms the prev_phase and past_phase vectors
 
-        Formerly popupWindow3.full_chronograph_func
-        @todo - how much of this could become a Model method?"""
+        Formerly `popupWindow3.full_chronograph_func`
+        """
 
         workdir = self.model.get_working_directory()
-        workdir.mkdir(parents=True, exist_ok=True)  # @todo - shouldnt be neccessary
 
         self.prev_group = ["start"]
         self.post_group = []
@@ -286,19 +269,15 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
             for i in nodes:
                 self.graphcopy.nodes[i].pop("contraction", None)
 
-        # @todo move this into the model?
         write_dot(self.graphcopy, workdir / "fi_new_chrono")
 
         # write output variables into the Model once it is confirmed.
-        # @todo - might be better for this presenter to own a deep copy, which on confirmation is updated? Thoguht that won't be useful for any on-disk files?
         self.model.context_types = self.context_types
         self.model.prev_group = self.prev_group
         self.model.post_group = self.post_group
         self.model.phi_ref = self.phi_ref
         self.model.context_no_unordered = self.context_no_unordered
-        self.model.chronological_dag = (
-            self.graphcopy
-        )  # @todo - is this correct? does it need to be graphcopy in the model?
+        self.model.chronological_dag = self.graphcopy
         self.model.removed_nodes_tracker = self.removed_nodes_tracker
         # Close the popup window
         self.close_window()

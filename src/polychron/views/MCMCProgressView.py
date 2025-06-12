@@ -15,11 +15,10 @@ class MCMCProgressView(PopupView):
         # Call the parent class constructor
         super().__init__(parent)
 
-        # self.geometry("%dx%d%+d%+d" % (700, 200, 600, 400))  # @todo - handle geometry setting elsewhere
         self.geometry("700x200")
         self.title("MCMC in progress")
-        self.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
-        # @todo block certain actions while this is on going?
+        self.attributes("-topmost", "true")
+
         self.backcanvas = tk.Canvas(self, bg="#AEC7D6")
         self.backcanvas.place(relx=0, rely=0, relwidth=1, relheight=1)
 
@@ -35,9 +34,8 @@ class MCMCProgressView(PopupView):
     def update_progress(self, percent: int) -> None:
         """Update the progress bar and text label with current progress
 
-        # @todo - assert integer is between 0 and 100 inclusive
-        # @todo - should this be split into 2 methods which just sets a passed in string and integer separately from the appropriate presenter, to make this view more passive
-        # i.e. move as much testing as possible out of the view?
+        Patameters:
+            percent (int): MCMC calibration progress as an integer percentage in the inclusive range [0, 100]
         """
         self.output_label["text"] = f"{percent}% complete"
         self.progress_bar["value"] = percent

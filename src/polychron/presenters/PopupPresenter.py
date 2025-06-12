@@ -9,10 +9,7 @@ T = TypeVar("T", bound=Any)
 
 
 class PopupPresenter(ABC, Generic[T]):
-    """Abstract Base Class for Presenters for views which are in the main window, which act as the middle man between a veiw and the underlying data structures (model).
-
-    @todo common base class with FramePresenter?
-    """
+    """Abstract Base Class for Presenters for views which are in the main window, which act as the middle man between a veiw and the underlying data structures (model)."""
 
     def __init__(self, mediator: Mediator, view: type[PopupView], model: T) -> None:
         """Initialise the presenter
@@ -33,11 +30,9 @@ class PopupPresenter(ABC, Generic[T]):
         """The MVP model object which includes the data to be presented and methods to manipulate it"""
 
         # Bind keyboard shortcuts for the popup window
-        # @todo - make this a method which can be overridden?
-        self.view.register_keybinds({"<Control-w>": self.close_view})
+        self.view.register_keybinds({"<Control-w>": lambda _: self.close_view()})
         # Bind protocols for the popup window
-        # @todo - make this a method which can be overridden?
-        self.view.register_protocols({"WM_DELETE_WINDOW": self.close_view})
+        self.view.register_protocols({"WM_DELETE_WINDOW": lambda: self.close_view()})
 
     @abstractmethod
     def update_view(self) -> None:
@@ -58,5 +53,7 @@ class PopupPresenter(ABC, Generic[T]):
         self.view.withdraw()
 
     def close_view(self, event: Optional[Any] = None) -> None:
-        """Close the popup aftger performing any actions. This method should be overridden by presenters which require graceful destruction"""
+        """Close the popup aftger performing any actions.
+
+        This method should be overridden by presenters which require graceful destruction or wish to disable window closing."""
         self.view.destroy()

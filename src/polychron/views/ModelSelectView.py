@@ -6,24 +6,20 @@ from .FrameView import FrameView
 
 
 class ModelSelectView(FrameView):
-    """Passive view for Model loading/selection
-
-    @todo @enhancement - Include the current project name in this view.
-    """
+    """Passive view for Model loading/selection"""
 
     def __init__(self, parent: tk.Frame) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
         super().__init__(parent)
 
-        # Set this element's background to white @todo use a theme?
+        # Set this element's background to white
         self.config(background="white")
 
         self.list_label = tk.Label(self, text="Model list", bg="white", font=("helvetica 14 bold"), fg="#2F4858")
         self.list_label.place(relx=0.36, rely=0.1)
         self.model_listbox = tk.Listbox(
             self,
-            # listvariable=self.model_list, # @todo consider re-using
             bg="#eff3f6",
             font=("Helvetica 11 bold"),
             fg="#2F4858",
@@ -67,7 +63,6 @@ class ModelSelectView(FrameView):
             self.create_model_button.config(command=callback)
 
     def bind_list_select(self, callback: Callable[[], Optional[Any]]) -> None:
-        # @todo - unbind old callback? for this event?
         if callback is not None:
             self.model_listbox.bind("<<ListboxSelect>>", callback)
 

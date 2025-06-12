@@ -4,7 +4,6 @@ from typing import Any, Callable, Optional
 from .FrameView import FrameView
 
 
-# @todo - base class for frames that aren't main window frames? Maybe it's the same thing?
 class ProjectCreateView(FrameView):
     """Passive view for project creation"""
 
@@ -13,7 +12,7 @@ class ProjectCreateView(FrameView):
         # Call the parent class constructor
         super().__init__(parent)
 
-        # Set this element's background to white @todo use a theme?
+        # Set this element's background to white
         self.config(background="white")
 
         # Add a text label

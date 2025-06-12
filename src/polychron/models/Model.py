@@ -237,10 +237,6 @@ class Model:
     Values are returned from `node_coords_fromjson`, or in some cases set to just be the dataframe.
 
     Formerly `global node_df`
-
-    Todo:
-        - @todo The Model instance of this does not appear to be used, (which might be a bug refactoring from the global), which might account for graphviz issues?
-        - @todo `nodecheck` included `node_df = node_df_con[0]` which would store just the df in the global, but imgrender and imgrender_phase would store the tuple. This will need making consistent
     """
 
     __calibration: Optional[InterpolatedRCDCalibrationCurve] = field(default=None, init=False, repr=False)

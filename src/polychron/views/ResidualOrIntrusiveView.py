@@ -18,7 +18,7 @@ class ResidualOrIntrusiveView(PopupView):
         # Call the parent class constructor
         super().__init__(parent)
 
-        # @todo view level proeprties that might need documenting or removing or refactoring?
+        # View properties
         self.imscale2 = 1.0
         self.delta2 = 1.1
         self.icon = None
@@ -26,15 +26,12 @@ class ResidualOrIntrusiveView(PopupView):
         self.transy2 = 0
         self.width2 = 0
         self.height2 = 0
-        self.image2: Optional[Image.Image] = (
-            None  # in-memory rendered image. @todo should this actually belong to the model?
-        )
+        self.image2: Optional[Image.Image] = None  # in-memory rendered image.
 
-        # @todo cleaner popup separation?
         self.title("Identify Residual or Intrusive Contexts")
         self.configure(bg="#AEC7D6")
-        self.geometry("2000x1000")  # @todo - differnt geometry?
-        self.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
+        self.geometry("2000x1000")
+        self.attributes("-topmost", "true")
 
         self.canvas = tk.Canvas(self, bd=0, highlightthickness=0)
         self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)
@@ -42,12 +39,11 @@ class ResidualOrIntrusiveView(PopupView):
             self.canvas, bd=0, bg="white", selectborderwidth=0, highlightthickness=0, insertwidth=0
         )
         self.graphcanvas.place(relx=0.02, rely=0.05, relwidth=0.35, relheight=0.9)
-        self.graphcanvas.update()  # @todo - is this neccessary?
+        self.graphcanvas.update()
         self.container = self.graphcanvas.create_rectangle(
             0, 0, self.graphcanvas.winfo_width(), self.graphcanvas.winfo_height(), width=0
-        )  # @todo this should be the image width and height?
+        )
 
-        # @todo - this label suggests blue boxes, but green is used. https://github.com/bryonymoody/PolyChron/issues/68
         self.label = tk.Message(
             self,
             text="Using this page: \n\n Please click on the buttons below to set into residual or intrusive mode. Then double right click on any context to set as residual/intrusive. \n\n Note that orange boxes denote intrusive contexts and blue boxes denote residual contexts. \n\n If you have clicked on a context by mistake, double right click to remove any label attributed to the context.",
@@ -85,17 +81,11 @@ class ResidualOrIntrusiveView(PopupView):
         self.show_image2()
 
     def set_resid_label_text(self, residual_contexts: List[str]) -> None:
-        """Update the intrusive list
-
-        @todo - check this behaves as intended, it might make a copy?
-        """
+        """Update the intrusive list"""
         self.resid_label["text"] = str(residual_contexts).replace("'", "")[1:-1]
 
     def set_intru_label_text(self, intrusive_contexts: List[str]) -> None:
-        """Update the intrusive list
-
-        @todo - check this behaves as intended, it might make a copy?
-        """
+        """Update the intrusive list"""
         self.intru_label["text"] = str(intrusive_contexts).replace("'", "")[1:-1]
 
     def bind_proceed_button(self, callback: Callable[[], Optional[Any]]) -> None:
@@ -126,12 +116,7 @@ class ResidualOrIntrusiveView(PopupView):
         callback_move_from: Callable[[], Optional[Any]],
         callback_move_to: Callable[[], Optional[Any]],
     ) -> None:
-        """Bind mouse callback events for interacting with the graph canvas
-
-        @todo - split this method?
-
-        @todo better callback names
-        """
+        """Bind mouse callback events for interacting with the graph canvas"""
         self.graphcanvas.bind("<MouseWheel>", callback_wheel)
         self.graphcanvas.bind("<Button-4>", callback_wheel)  # only with Linux, wheel scroll down
         self.graphcanvas.bind("<Button-5>", callback_wheel)
@@ -142,10 +127,8 @@ class ResidualOrIntrusiveView(PopupView):
     def wheel2(self, event: Any) -> None:
         """Zoom with mouse wheel
 
-        Formerly (part of) PageTwo.wheel
-
-        @todo this abstraction could probably be improved
-        @todo - rename this, doesn't need 2"""
+        Formerly (part of) `PageTwo.wheel`
+        """
         x_zoom = self.graphcanvas.canvasx(event.x)
         y_zoom = self.graphcanvas.canvasy(event.y)
         bbox = self.graphcanvas.bbox(self.container)  # get image area
@@ -171,10 +154,7 @@ class ResidualOrIntrusiveView(PopupView):
         self.show_image2()
 
     def update_littlecanvas2_image_only(self, image: Image.Image) -> None:
-        """Update the image within the littlecanvas2, during resizing.
-
-        @todo - this and the other update method can probably be combined
-        """
+        """Update the image within the littlecanvas2, during resizing."""
         # rerends the image of the strat DAG with right colours
         self.image2 = image
         width2, height2 = self.image2.size
@@ -183,17 +163,12 @@ class ResidualOrIntrusiveView(PopupView):
         self.graphcanvas.update()
 
     def show_image2(self) -> None:
-        """Show image on the Canvas
-
-        @todo the logic for this should probably be elsewhere / add parameters?
-        @todo - rename this, doesn't need 2
-        @todo - can probably refactor this as common canvas zooming behaviour with other views"""
+        """Show image on the Canvas"""
 
         if self.image2 is None:
             return
 
-        # startpage = self.controller.get_page('StartPage') # @todo not needed?
-        # startpage.update_idletasks()
+        # .update_idletasks() ?
         bbox1 = [0, 0, int(self.image2.size[0] * self.imscale2), int(self.image2.size[1] * self.imscale2)]
         # Remove 1 pixel shift at the sides of the bbox1
         bbox1 = (bbox1[0] + 1, bbox1[1] + 1, bbox1[2] - 1, bbox1[3] - 1)

@@ -20,8 +20,7 @@ class ModelCreatePresenter(FramePresenter[ProjectSelection]):
         self.update_view()
 
     def update_view(self) -> None:
-        """Update text & tables within the view to reflect the current state of the model"""
-        pass  # @todo
+        pass
 
     def on_submit_button(self) -> None:
         """When the submit button is pressed, update the data model, validate and close the view or present an error"""
@@ -35,22 +34,17 @@ class ModelCreatePresenter(FramePresenter[ProjectSelection]):
                 self.model.switch_to_next_project_model(load_ok=False, create_ok=True)
             except RuntimeError as e:
                 # Runtime errors currently include existing directories (and missing values)
-                # @todo - abstract use of tk.messagebox into the presenter or view base classes
-                # @todo - better error message, formerly "The folder name exists, please change it"
                 messagebox.showerror("Tips", f"An error occured while creating the model: {e}", parent=self.view)
             except Exception as e:
                 # Other exceptions may occur, i.e. permission errors. Forward the message to the user.
-                # @todo - abstract use of tk.messagebox into the presenter or view base classes
-                # @todo - better error message, formerly "The folder name exists, please change it"
                 messagebox.showerror("Tips", f"An error occured while creating the model: {e}", parent=self.view)
             else:
                 # If no exceptions occurred, and the model has been created (and it's folders) present a succes message and close the popup.
-                # @todo - abstract use of tk.messagebox into the presenter or view base classes
                 messagebox.showinfo("Tips:", "model created successfully!", parent=self.view)
                 # Close the model loading popup.
                 self.mediator.close_window("new_model")
         else:
-            print("Warning: a project name must be provided. @todo GUI error message", file=stderr)
+            print("Warning: a project name must be provided.", file=stderr)
 
     def on_back_button(self) -> None:
         """When the back button is pressed, return to the previous view

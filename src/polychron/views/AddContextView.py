@@ -18,10 +18,9 @@ class AddContextView(PopupView):
         # Call the parent class constructor
         super().__init__(parent)
 
-        # @todo cleaner popup separation?
         self.configure(bg="#AEC7D6")
         self.geometry("1000x400")
-        self.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
+        self.attributes("-topmost", "true")
 
         # Label
         self.label = ttk.Label(self, text="Context Number")
@@ -31,11 +30,9 @@ class AddContextView(PopupView):
         self.entry = ttk.Entry(self)
         self.entry.pack()
 
-        # Button
-        self.ok_button = ttk.Button(self, text="Ok")  # gets ridof the popup
+        # OK Button
+        self.ok_button = ttk.Button(self, text="Ok")
         self.ok_button.pack()
-
-        # @todo - cancel button?
 
     def bind_ok_button(self, callback: Callable[[], Optional[Any]]) -> None:
         """Bind the callback for when the ok_button is pressed"""
@@ -43,4 +40,9 @@ class AddContextView(PopupView):
             self.ok_button.config(command=callback)
 
     def get_input(self) -> str:
+        """Get the string provided by the user
+
+        Returns:
+            User provided string
+        """
         return self.entry.get()

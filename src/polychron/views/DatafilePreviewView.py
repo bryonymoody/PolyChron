@@ -16,10 +16,8 @@ class DatafilePreviewView(PopupView):
         # Call the parent class constructor
         super().__init__(parent)
 
-        # self.configure(bg ='white') # @todo popupwindow7 doesn't have a background.
-        # self.geometry("1000x400") # @todo popupwindow7 doesn't have a fixed geometry defined
         self.title("Data preview")
-        self.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
+        self.attributes("-topmost", "true")
 
         self.canvas = tk.Canvas(self, bg="white")
         self.canvas.pack()

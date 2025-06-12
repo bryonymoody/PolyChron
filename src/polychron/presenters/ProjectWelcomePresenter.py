@@ -18,12 +18,12 @@ class ProjectWelcomePresenter(FramePresenter[ProjectSelection]):
 
     def update_view(self) -> None:
         """Update text & tables within the view to reflect the current state of the model"""
-        pass  # @todo
+        pass
 
     def on_load_button(self) -> None:
         """When the load button is pressed, update the SelectProject view and switch to it"""
         # Update the list of available projects from disk (in case any have been created since)
-        self.model.projects_directiory.lazy_load()  # @todo - could this go in an on_switched_to() for the dest presenter instead? Unsure how viable with tkinter
+        self.model.projects_directiory.lazy_load()
         self.mediator.switch_presenter("project_select")
 
     def on_create_button(self) -> None:

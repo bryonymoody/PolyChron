@@ -19,7 +19,7 @@ class ProjectWelcomeView(FrameView):
         # Call the parent class constructor
         super().__init__(parent)
 
-        # Set this element's background to white @todo use a theme?
+        # Set this element's background to white
         self.config(background="white")
 
         # Load the image from the package resources, and add it to the current frame

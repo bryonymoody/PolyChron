@@ -15,11 +15,10 @@ class CalibrateModelSelectView(PopupView):
         # Call the parent class constructor
         super().__init__(parent)
 
-        # @todo cleaner popup separation?
         self.configure(bg="white")
         self.title("Model calibration")
         self.geometry("1000x400")
-        self.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
+        self.attributes("-topmost", "true")
 
         # Add instruction text
         self.label = tk.Label(

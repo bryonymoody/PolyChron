@@ -15,9 +15,6 @@ class SplashView(FrameView):
     This is displayed in the main window before a project is opened, and just allows users to re-open the new/load project popup in case they close it without loading anything.
 
     This is implemented as a passive view, i.e. UI elements have no callbacks at constrution, and they must be explcitly bound afterwards
-
-    Todo:
-        Implement a new base class (which extends FrameView) with common elements for other frame views which belong to the GUIApp (ModelView and DatingResultsView) which contains common elements such as the file bars and methods to populate them to reduce duplication
     """
 
     def __init__(self, parent: tk.Frame) -> None:
@@ -66,10 +63,7 @@ class SplashView(FrameView):
         self.canvas.bind("<Configure>", lambda event: self.recenter_image(event))
 
     def recenter_image(self, event) -> None:
-        """Callback for when the window is resized to re-center the image
-
-        @todo - resize the image too when the remainign window size is too small.
-        """
+        """Callback for when the window is resized to re-center the image"""
         canvas_center_x = self.parent.winfo_width() / 2
         canvas_center_y = (0.97 * self.parent.winfo_height()) / 2
         self.canvas.coords(self.canvas_img_id, canvas_center_x, canvas_center_y)
@@ -79,9 +73,6 @@ class SplashView(FrameView):
 
         Parameters:
             items: A List of menu entries to add, which may be None to identify a separator, or a tuple containing a label anf callback fucntion.
-
-        Todo:
-            Not sure Optional[Any] is required in this type hint?
         """
         # Get a handle to the Menu belonging to the MenuButton
         menubar: ttk.Menubutton = self.file_menubar

@@ -12,21 +12,14 @@ class ProjectSelectPresenter(FramePresenter[ProjectSelection]):
         super().__init__(mediator, view, model)
 
         # Bind button callbacks to presenter methods
-        # @todo - be consistent with use of lambdas or not. For presenter class methods, should be fine without?
-        view.bind_load_button(self.on_load_button)
-        view.bind_back_button(self.on_back_button)
-
-        # Bind callback for when a project is selected
-        view.bind_list_select(self.on_select)
+        self.view.bind_load_button(self.on_load_button)
+        self.view.bind_back_button(self.on_back_button)
 
         # Update the view data for the model
         self.update_view()
 
     def update_view(self) -> None:
-        """Update text & tables within the view to reflect the current state of the model
-
-        @todo - sort the projects list?
-        """
+        """Update text & tables within the view to reflect the current state of the model"""
         project_names = list(self.model.projects_directiory.projects.keys())
         self.view.update_project_list(project_names)
 
@@ -39,13 +32,9 @@ class ProjectSelectPresenter(FramePresenter[ProjectSelection]):
             # Switch views
             self.mediator.switch_presenter("model_select")
         else:
-            print("Warning: No project selected. @todo this in gui if mouse click not on enter?", file=stderr)
+            print("Warning: No project selected", file=stderr)
 
     def on_back_button(self) -> None:
         """When the Back button is pressed, update the previous view and switch to it"""
         self.model.next_project_name = None
         self.mediator.switch_presenter("project_welcome")
-
-    def on_select(self, event=None) -> None:
-        """When a list item is selected, do soemthing"""
-        pass  # @todo remove this method?

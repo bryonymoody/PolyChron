@@ -11,8 +11,6 @@ class ManageGroupRelationshipsView(PopupView):
     """View for managing group relationships
 
     Formerly part of `popupWindow3`, Part of the Rendering chronological graph process
-
-    @todo - make this a popup rather than child of parent?
     """
 
     def __init__(self, parent: tk.Frame) -> None:
@@ -27,7 +25,7 @@ class ManageGroupRelationshipsView(PopupView):
         self.geometry("1500x400")
 
         # Ensure this window is on top
-        self.attributes("-topmost", "true")  # @todo maybe remove.
+        self.attributes("-topmost", "true")
 
         self.label_dict = {}
         """Dictionary of phases boxes/tkinter label elements"""
@@ -39,19 +37,19 @@ class ManageGroupRelationshipsView(PopupView):
         """Callback method for when the confirm button is pressed. 
         
         Stored in the view to allow deletion and recreation of the confirm button.
-        @todo consider if moving 2 views would be cleaner?"""
+        """
 
         self.__render_callback: Callable[[], Optional[Any]] = lambda: None
         """Callback method for when the render button is pressed. 
         
         Stored in the view to allow deletion and recreation of the render button.
-        @todo consider if moving 2 views would be cleaner?"""
+        """
 
         self.__change_callback: Callable[[], Optional[Any]] = lambda: None
         """Callback method for when the change button is pressed. 
         
         Stored in the view to allow deletion and recreation of the change button.
-        @todo consider if moving 2 views would be cleaner?"""
+        """
 
         self.maincanvas = tk.Canvas(
             self, bg="#AEC7D6", highlightthickness=0, borderwidth=0, highlightbackground="white"
@@ -106,7 +104,6 @@ class ManageGroupRelationshipsView(PopupView):
         self.render_button = None
         self.change_button = None
 
-        # @todo - less hardcoded version of this and start wrapping iff too many groups?
         self.COLORS = [
             "LavenderBlush2",
             "powder blue",
@@ -484,11 +481,10 @@ class ManageGroupRelationshipsView(PopupView):
 
     def create_phase_boxes(self, phase_labels: Optional[List[Tuple[str, str]]]) -> None:
         """Create a box within the canvas for each provided phase label"""
-        # @todo - propperly clear any existing phase labels
         self.label_dict = {}
 
         w, h = self.canvas.winfo_width(), self.canvas.winfo_height()
-        # @todo - temp workaround - if winfo_width is not returning a real value, use req instead. Not found the correct object/timing for calling update / update_idletasks on yet (incl self or parent, parent.parent or the acual root...)
+        # If the width and height info was not available, fallback to the requested dimensions
         if w == 1 and h == 1:
             w, h = self.canvas.winfo_reqwidth(), self.canvas.winfo_reqheight()
         m = len(phase_labels)
@@ -506,8 +502,7 @@ class ManageGroupRelationshipsView(PopupView):
             self.label_dict[phase_label] = label
 
     def get_phase_boxes(self) -> Dict[str, tk.Label]:
-        """Get the dictionary of tk label objects for each phase label
-        @todo - replace this with a method which returns a Tuple[width, height, x, y], but will also need to add a method to place them at new locations."""
+        """Get the dictionary of tk label objects for each phase label"""
         return self.label_dict
 
     def update_canvas(self) -> None:
@@ -521,10 +516,6 @@ class ManageGroupRelationshipsView(PopupView):
 
         Parameters:
             group_relationships: A list of tuples containing relationships between groups, (above, below)
-
-        Todo:
-            @todo - older, younger might fit better with the x axis?
-            @todo - rename
         """
         # Prep a local dataframe for presentation
         df = pd.DataFrame(group_relationships, columns=["Younger group", "Older group"])
@@ -616,10 +607,8 @@ class ManageGroupRelationshipsView(PopupView):
 
         This destroys then re-creates elements.
 
-        Formerly part of popupWindow3.get_coords
-
-        @todo - deicde if I am ok with this abstraction.
-        @todo rename"""
+        Formerly part of `popupWindow3.get_coords`
+        """
         self.instruc_label.destroy()
         self.confirm_button.destroy()
         self.tree.destroy()
@@ -656,10 +645,8 @@ class ManageGroupRelationshipsView(PopupView):
     def on_back(self) -> None:
         """Update the view to show the pre-confirmation state
 
-        Formerly popupWindow3.back_func
-
-        @todo - deicde if I am ok with this abstraction.
-        @todo rename"""
+        Formerly `popupWindow3.back_func`
+        """
         self.render_button.destroy()
         self.instruc_label.destroy()
         self.change_button.destroy()

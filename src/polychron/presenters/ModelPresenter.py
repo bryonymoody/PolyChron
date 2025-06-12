@@ -216,7 +216,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         Formerly StartPage.load_mcmc
         """
         model_model: Optional[Model] = self.model.current_model
-        if model_model is None:  # @todo - should never occur.
+        if model_model is None:
             return
         # Create the popup presenter and view
         popup_presenter = MCMCProgressPresenter(self.mediator, MCMCProgressView(self.view), model_model)
@@ -257,7 +257,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         @todo - migrate some of this code into the Model.
         """
         model_model: Optional[Model] = self.model.current_model
-        if model_model is None:  # @todo - should never occur.
+        if model_model is None:
             return
 
         # @todo - move this condition into a model function.
@@ -297,7 +297,7 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         """
 
         model_model: Optional[Model] = self.model.current_model
-        if model_model is None:  # @todo - should never occur.
+        if model_model is None:
             return
 
         # If the chronograph has not already been rendered/loaded for the current state of the model, render it.
@@ -1029,75 +1029,68 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
     def move_from(self, event: Any) -> None:
         """Remembers previous coordinates for scrolling with the mouse
 
-        Formerly StartPage.move_from
-        @todo - this is leaking tkinter into the presenter. Abstract this away a little?
+        Formerly `StartPage.move_from`
         """
         model_model: Optional[Model] = self.model.current_model
         if model_model is None:
             return
         if model_model.stratigraphic_image is not None:
-            self.view.littlecanvas.scan_mark(event.x, event.y)  # @todo tkinter in presenter
+            self.view.littlecanvas.scan_mark(event.x, event.y)
 
     def move_to(self, event: Any) -> None:
         """Drag (move) canvas to the new position
 
-        Formerly StartPage.move_to
-        @todo - this is leaking tkinter into the presenter. Abstract this away a little?
+        Formerly `StartPage.move_to`
         """
         model_model: Optional[Model] = self.model.current_model
         if model_model is None:
             return
         if model_model.stratigraphic_image is not None:
-            self.view.littlecanvas.scan_dragto(event.x, event.y, gain=1)  # @todo tkinter in presenter
+            self.view.littlecanvas.scan_dragto(event.x, event.y, gain=1)
             self.view.show_image()
 
     def move_from2(self, event: Any) -> None:
         """Remembers previous coordinates for scrolling with the mouse
 
-        Formerly StartPage.move_from2
-        @todo - this is leaking tkinter into the presenter. Abstract this away a little?
+        Formerly `StartPage.move_from2`
         """
         model_model: Optional[Model] = self.model.current_model
         if model_model is None:
             return
         if model_model.chronological_image is not None:
-            self.view.littlecanvas2.scan_mark(event.x, event.y)  # @todo tkinter in presenter
+            self.view.littlecanvas2.scan_mark(event.x, event.y)
 
     def move_to2(self, event: Any) -> None:
         """Drag (move) canvas to the new position
 
-        Formerly StartPage.move_to2
-        @todo - this is leaking tkinter into the presenter. Abstract this away a little?
+        Formerly `StartPage.move_to2`
         """
         model_model: Optional[Model] = self.model.current_model
         if model_model is None:
             return
         if model_model.chronological_image is not None:
-            self.view.littlecanvas2.scan_dragto(event.x, event.y, gain=1)  # @todo tkinter in presenter
+            self.view.littlecanvas2.scan_dragto(event.x, event.y, gain=1)
             self.view.show_image2()
 
     def on_wheel(self, event: Any) -> None:
         """Zoom with mouse wheel for the stratigraphic image canvas
 
-        Formerly StartPage.wheel
-
-        @todo refactor to use view methods rather than directly accessing view members and leaking tkinter"""
+        Formerly `StartPage.wheel`
+        """
         self.view.wheel(event)
 
     def on_wheel2(self, event: Any) -> None:
         """Zoom with mouse wheel for the chronological image canvas
 
-        Formerly StartPage.wheel2
-
-        @todo refactor to use view methods rather than directly accessing view members and leaking tkinter"""
+        Formerly `StartPage.wheel2`
+        """
         self.view.wheel2(event)
 
     def addedge(self, edgevec: List[str]) -> None:
         """adds an edge relationship (edgevec) to graph and rerenders the graph
 
-        Formerly StartPage.addedge
-        @todo partially refactor into a method on models.model
-        @todo renaming etc"""
+        Formerly `StartPage.addedge`
+        """
         model_model: Optional[Model] = self.model.current_model
         if model_model is None:
             return
@@ -1117,10 +1110,8 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
     def stratfunc(self, node: str) -> None:
         """obtains strat relationships for node
 
-        Formerly StartPage.stratfunc
-        @todo partially refactor into a method on models.model
-        @todo - using np.append to extend a set?
-        @todo renaming etc"""
+        Formerly `StartPage.stratfunc`
+        """
         model_model: Optional[Model] = self.model.current_model
         if model_model is None:
             return
@@ -1161,7 +1152,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
             return node_inside
 
         workdir = model_model.get_working_directory()
-        workdir.mkdir(parents=True, exist_ok=True)  # @todo - shouldnt be neccessary
 
         if model_model.grouped_rendering:
             (graph,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")
@@ -1182,7 +1172,6 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
                 node_df.iloc[n_ind].y_lower < yscale < node_df.iloc[n_ind].y_upper
             ):
                 node_inside = node_df.iloc[n_ind].name
-                # self.graph[node_inside] @todo - statement does nothing?
         return node_inside
 
     def node_del_popup(self, context_name: str) -> Optional[str]:
@@ -1190,11 +1179,9 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
 
         This blocks users interacting with the main window until the popup is closed
 
-        Formerly StartPage.node_del_popup
+        Formerly `StartPage.node_del_popup`
+        """
 
-        @todo refactor this to just mutate the model directly."""
-
-        # @todo propper model object?
         data = {
             "context": context_name,
             "reason": None,
@@ -1212,9 +1199,8 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
 
         This blocks users interacting with the main window until the popup is closed
 
-        Formerly StartPage.edge_del_popup
-
-        @todo refactor this to just mutate the model directly."""
+        Formerly `StartPage.edge_del_popup`
+        """
 
         # @todo actual data class / object.
         data = {
@@ -1226,8 +1212,8 @@ class ModelPresenter(FramePresenter[ProjectSelection]):
         popup_presenter = RemoveStratigraphicRelationshipPresenter(
             self.mediator, RemoveStratigraphicRelationshipView(self.view), data
         )
-        # self.canvas["state"] = "disabled" # @todo
+        self.view.canvas["state"] = "disabled"
         popup_presenter.view.lift()
         self.view.wait_window(popup_presenter.view)
-        # self.canvas["state"] = "normal" # @todo
+        self.view.canvas["state"] = "normal"
         return data["reason"]

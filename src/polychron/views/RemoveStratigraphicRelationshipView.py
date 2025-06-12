@@ -8,9 +8,6 @@ class RemoveStratigraphicRelationshipView(PopupView):
     """View for providing the reason wehn removing a specific stratigraphic relationship
 
     Formerly `popupWindow6`
-
-    @todo - Add the specific relationship details to the text label?
-    @todo - Add the option to not remove the relationship, i.e. cancel / go back?
     """
 
     def __init__(self, parent: tk.Frame) -> None:
@@ -18,11 +15,10 @@ class RemoveStratigraphicRelationshipView(PopupView):
         # Call the parent class constructor
         super().__init__(parent)
 
-        # @todo cleaner popup separation?
         self.configure(bg="white")
         self.geometry("1000x400")
         self.title("Removal of stratigraphic relationship")
-        self.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
+        self.attributes("-topmost", "true")
 
         # Add a label, without the text value set by update_label to avoid duplication
         self.label = tk.Label(
@@ -41,8 +37,6 @@ class RemoveStratigraphicRelationshipView(PopupView):
         # Place an OK button
         self.ok_button = tk.Button(self, text="OK", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6")
         self.ok_button.place(relx=0.3, rely=0.7)
-
-        # @todo cancel button?
 
     def bind_ok_button(self, callback: Callable[[], Optional[Any]]) -> None:
         """Bind the callback for when the ok_button is pressed"""

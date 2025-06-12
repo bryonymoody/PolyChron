@@ -6,9 +6,7 @@ from .FrameView import FrameView
 
 
 class ProjectSelectView(FrameView):
-    """Passive view for project loading/selection
-
-    @todo @enhancement - On return to this view, pre-populate the previously selected list entry."""
+    """Passive view for project loading/selection"""
 
     def __init__(self, parent: tk.Frame) -> None:
         """Construct the view, without binding any callbacks"""
@@ -16,16 +14,14 @@ class ProjectSelectView(FrameView):
         super().__init__(parent)
         self.parent = parent
 
-        # Set this element's background to white @todo use a theme?
+        # Set this element's background to white
         self.config(background="white")
 
         self.list_label = tk.Label(self, text="Select project", bg="white", font=("helvetica 14 bold"), fg="#2F4858")
         self.list_label.place(relx=0.36, rely=0.1)
 
-        # self.mylist_var = tk.StringVar() # @todo - consider switching back to stringvar
         self.project_listbox = tk.Listbox(
             self,
-            # listvariable=self.mylist_var,
             bg="#eff3f6",
             font=("Helvetica 11 bold"),
             fg="#2F4858",
@@ -55,7 +51,6 @@ class ProjectSelectView(FrameView):
             self.back_button.config(command=callback)
 
     def bind_list_select(self, callback: Callable[[], Optional[Any]]) -> None:
-        # @todo - unbind old callback? for this event?
         if callback is not None:
             self.project_listbox.bind("<<ListboxSelect>>", callback)
 

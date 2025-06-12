@@ -319,9 +319,6 @@ class ModelView(FrameView):
 
         Parameters:
             items: A List of menu entries to add, which may be None to identify a separator, or a tuple containing a label anf callback fucntion.
-
-        Todo:
-            Not sure Optional[Any] is required in this type hint?
         """
         # Get a handle to the Menu belonging to the MenuButton
         menubar: ttk.Menubutton = self.file_menubar
@@ -346,9 +343,6 @@ class ModelView(FrameView):
 
         Parameters:
             items: A List of menu entries to add, which may be None to identify a separator, or a tuple containing a label anf callback fucntion.
-
-        Todo:
-            Not sure Optional[Any] is required in this type hint?
         """
         # Get a handle to the Menu belonging to the MenuButton
         menubar: ttk.Menubutton = self.view_menubar
@@ -373,9 +367,6 @@ class ModelView(FrameView):
 
         Parameters:
             items: A List of menu entries to add, which may be None to identify a separator, or a tuple containing a label anf callback fucntion.
-
-        Todo:
-            Not sure Optional[Any] is required in this type hint?
         """
         # Get a handle to the Menu belonging to the MenuButton
         menubar: ttk.Menubutton = self.tool_menubar

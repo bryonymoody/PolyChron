@@ -32,7 +32,6 @@ class ManageIntrusiveOrResidualContextsPresenter(PopupPresenter[Model]):
 
     def on_back(self) -> None:
         """Callback for when the back button is pressed, which closes the popup (and previous popup origianlly)"""
-        # @todo decide / check if this should actually close the parent window or not
         self.close_view()
 
     def on_proceed(self) -> None:
@@ -46,16 +45,14 @@ class ManageIntrusiveOrResidualContextsPresenter(PopupPresenter[Model]):
         self.model.intrusive_context_types = self.view.get_intru_dropdown_selections()
 
         # Create the group relationship manager
-        # @todo - abstract this somewhere else? as this will be duplicated in modelPresenter.resid_check
         # show the residual check presenter, formerly popupWindow3
         popup_presenter = ManageGroupRelationshipsPresenter(
             self.mediator, ManageGroupRelationshipsView(self.view), self.model
         )
-        popup_presenter.view.lift()  # @todo - not sure these are neccesary
-        self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
+        popup_presenter.view.lift()
+        self.view.wait_window(popup_presenter.view)
 
         # Close the popup
         self.close_view()
         # Also close the parent popup.
-        # @todo - do this nicely, this is probably a leak of the presenter and view objects
         self.view.parent.destroy()

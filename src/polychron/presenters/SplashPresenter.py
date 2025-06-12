@@ -33,10 +33,7 @@ class SplashPresenter(FramePresenter[ProjectSelection]):
         pass
 
     def on_select_project(self) -> None:
-        """Function which is called when File > Select Project is selected. I.e. open the popup preesnter for selecting a project.
-
-        @todo - this allows multiple open project windows to be created, which is not ideal
-        """
+        """Function which is called when File > Select Project is selected. I.e. open the popup preesnter for selecting a project."""
 
         # Instantiate the child presenter and view
         popup_presenter = ProjectSelectProcessPopupPresenter(

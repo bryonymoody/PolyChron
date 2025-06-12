@@ -182,13 +182,6 @@ class DatingResultsPresenter(FramePresenter[ProjectSelection]):
                 # Update the view with the image
                 self.view.update_littlecanvas2(model_model.chronological_image)
 
-    def tkraise(self, aboveThis: Optional[Any] = None) -> None:
-        """Loads the graph and ensures this window is raised above another.
-
-        Formerly `PageOne.tkraise`"""
-        self.chronograph_render_post()
-        super().tkraise(aboveThis)
-
     def nodecheck(self, x_current: int, y_current: int) -> str:
         """Returns the node that corresponds to the mouse coordinates
 

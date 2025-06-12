@@ -19,28 +19,22 @@ class ProjectCreatePresenter(FramePresenter[ProjectSelection]):
         self.update_view()
 
     def update_view(self) -> None:
-        """Update text & tables within the view to reflect the current state of the model"""
-        pass  # @todo
+        pass
 
     def on_submit_button(self) -> None:
         """When the submit button is pressed, update the CreateModel view and switch to it"""
         new_project_name: str = self.view.get_name()
         if new_project_name is not None and len(new_project_name) > 0:
-            # @todo - validate that the new project is not a taken name. If so error? polychron 0.1 does not perform this check.
             self.model.next_project_name = new_project_name
             # Mark the flag indicating we are using the project_create process
             self.model.using_new_project_process = True
             # Switch to the model creation view
             self.mediator.switch_presenter("model_create")
         else:
-            print("Warning: a project name must be provieded. @todo GUI error message", file=stderr)
+            print("Warning: a project name must be provieded.", file=stderr)
 
     def on_back_button(self) -> None:
-        """When the back button is pressed, return to the project_welcome view
-
-        Todo:
-            @todo - The project_select view could have a "New Project" button, resplacing the welcome view? In which case this back button would need ammending
-        """
+        """When the back button is pressed, return to the project_welcome view"""
         # Clear the new project name
         self.model.next_project_name = None
         # Clear the flag indicating we are using the project_create process

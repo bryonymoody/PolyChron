@@ -17,10 +17,6 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
     """Presenter for managing the MCMC progress bar popup view.
 
     When MCMC calibration has completed, and the popup closes, the mediator should change to the DatingResults tab
-
-    @todo - image does not show when view is first opened (with a model attached), does when changed. Unclear why
-    @todo - further view/presenter refactoring required.
-    @todo - this needs to be closable by child popups, may need Mediator changes (or just in mediater.close call the parents mediator close based on the reason?)
     """
 
     def __init__(self, mediator: Mediator, view: ResidualOrIntrusiveView, model: Model) -> None:
@@ -31,8 +27,7 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
         """The currently selected mode, either None, "resid" or "intru"
         
         Formerly PageTwo.modevariable
-
-        @todo Enum rather than Literal?"""
+        """
 
         # Bind enabling residual mode
         self.view.bind_residual_mode_button(lambda: self.on_resid_button())
@@ -43,14 +38,11 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
         # Bind the proceed button, which should open another popup for the next stage
         self.view.bind_proceed_button(self.on_proceed)
 
-        # Bind canvas/graph interaction. @todo lambdas?
+        # Bind canvas/graph interaction
         self.view.bind_graphcanvas_events(self.on_wheel2, self.resid_node_click, self.move_from2, self.move_to2)
 
-        # @todo - this could belong to a presenter specific model?
-        # @todo load_graph should only be called once, though this block could/should be abstracted a little.
         if self.model.stratigraphic_dag is not None:
             self.load_graph()  # this mutates the model
-            # @todo - abstract some of this into a view method.
             self.view.imscale2 = min(921 / self.view.image2.size[0], 702 / self.view.image2.size[1])
             self.view.graphcanvas.scale("all", 0, 0, self.view.delta2, self.view.delta2)  # rescale all canvas objects
             self.view.show_image2()
@@ -65,8 +57,8 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
 
         Parts of this formerly in:
 
-        - StartPage.mode_set
-        - StartPage.__init__
+        - `StartPage.mode_set`
+        - `StartPage.__init__`
         """
         # Update button colours depending ont the mode.
         if self.mode == "resid":
@@ -107,17 +99,13 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
         popup_presenter = ManageIntrusiveOrResidualContextsPresenter(
             self.mediator, ManageIntrusiveOrResidualContextsView(self.view), self.model
         )
-        popup_presenter.view.lift()  # @todo - not sure these are neccesary
-        self.view.wait_window(popup_presenter.view)  # @todo - abstract this somewhere?
-        # @todo - to match polychron 0.1, this should also destroy the parent window, but that prevents back actually being a back button.
+        popup_presenter.view.lift()
+        self.view.wait_window(popup_presenter.view)
 
     def move_from2(self, event: Any) -> None:
         """Remembers previous coordinates for scrolling with the mouse
 
-        Formerly PageTwo.move_from2
-
-        @todo - this is leaking tkinter into the presenter. Abstract this away a little?
-        @todo - rename this, doesn't need the 2?
+        Formerly `PageTwo.move_from2`
         """
         if self.model is None:
             return
@@ -127,36 +115,24 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
     def move_to2(self, event: Any) -> None:
         """Drag (move) canvas to the new position
 
-        Formerly PageTwo.move_to2
-
-        @todo - this is leaking tkinter into the presenter. Abstract this away a little?
-        @todo - rename this, doesn't need the 2?
+        Formerly `PageTwo.move_to2`
         """
         if self.view.image2 is not None:
-            self.view.graphcanvas.scan_dragto(event.x, event.y, gain=1)  # @todo tkinter in presenter
+            self.view.graphcanvas.scan_dragto(event.x, event.y, gain=1)
             self.view.show_image2()
 
     def on_wheel2(self, event: Any) -> None:
         """Zoom with mouse wheel for the chronological image canvas
 
-        Formerly PageTwo.wheel2
-
-        @todo refactor to use view methods rather than directly accessing view members and leaking tkinter
-        @todo - rename this, doesn't need the 2?"""
+        Formerly `PageTwo.wheel2`
+        """
         self.view.wheel2(event)
 
     def resid_node_click(self, event: Any) -> None:
         """Gets node that you're clicking on and sets it as the right colour depending on if it's residual or intrusive
 
-        Formerly PageTwo.resid_node_click
-
-        @todo - rename on_?
-        @todo - refactor into a view method + model methods. This is directly accessing view data (imscale)
-        @todo - rename some variables.
+        Formerly `PageTwo.resid_node_click`
         """
-        # @todo - is this update idle tasks needed for correct mouse coords?
-        # startpage = self.controller.get_page('StartPage')
-        # startpage.update_idletasks()
         cursorx2 = int(self.view.graphcanvas.winfo_pointerx() - self.view.graphcanvas.winfo_rootx())
         cursory2 = int(self.view.graphcanvas.winfo_pointery() - self.view.graphcanvas.winfo_rooty())
         x_scal = cursorx2 + self.view.transx2
@@ -205,16 +181,9 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
     def nodecheck(self, x_current: int, y_current: int) -> str:
         """returns the node that corresponds to the mouse cooridinates
 
-        Formerly PageTwo.nodecheck
-        @todo - refactor. This is directly accessing view data (imscale)
+        Formerly `PageTwo.nodecheck`
         """
-        # global node_df
-        # @todo - is this needed?
-        # startpage = self.controller.get_page('StartPage')
-        # updates canvas to get the right coordinates
-        # startpage.update_idletasks()
-
-        node_inside = "no node"  # @todo use None instead?
+        node_inside = "no node"
 
         if self.model is None:
             return node_inside
@@ -242,11 +211,10 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
         return node_inside
 
     def load_graph(self) -> None:
-        """loads graph on results page
+        """Loads graph on results page
 
-        Formerly PageTwo.load_graph
-        @todo refactor this method, a lot can go into models.Model or the view.
-        @todo - this doesn't need to return and set the model property directly really."""
+        Formerly `PageTwo.load_graph`
+        """
         # loads start page so we get get variables from that class
         # startpage = self.controller.get_page('StartPage')
         self.model.resid_or_intru_dag = copy.deepcopy(self.model.stratigraphic_dag)
@@ -271,21 +239,10 @@ class ResidualOrIntrusivePresenter(PopupPresenter[Model], Mediator):
         if self.model.resid_or_intru_image is not None:
             self.view.update_littlecanvas2_image_only(self.model.resid_or_intru_image)
 
-        print("@todo - double check this is no longer required / standardisze")
         self.view.icon = ImageTk.PhotoImage(self.view.image2)
         self.view.graphcanvas_img = self.view.graphcanvas.create_image(0, 0, anchor="nw", image=self.view.icon)
         self.view.width2, self.view.height2 = self.view.image2.size
         self.view.imscale2 = 1.0  # scale for the canvaas image
         self.view.delta2 = 1.1  # zoom magnitude
-        # startpage.update_idletasks()
+        # .update_idletasks()
         self.view.container = self.view.graphcanvas.create_rectangle(0, 0, self.view.width2, self.view.height2, width=0)
-        return
-
-    def tkraise(self, aboveThis=None) -> None:
-        """Loads the graph and ensures this window is raised above another.
-
-        Formerly PageTwo.tkraise
-
-        @todo remove? this is a tkitner leak that isn't strictyl required? instead it should be an on creation?"""
-        self.load_graph()
-        self.view.tkraise(aboveThis)

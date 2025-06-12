@@ -28,11 +28,10 @@ class ManageIntrusiveOrResidualContextsView(PopupView):
         self.__resid_dropdowns = {}
         """Dict of dropdown tkinter widgets for residual nodes"""
 
-        # @todo cleaner popup separation?
         self.configure(bg="#AEC7D6")
         self.geometry("1000x400")
         self.title("Managing intrusive and residual contexts")
-        self.attributes("-topmost", "true")  # @todo maybe remove. # Forces the top level to always be on top.
+        self.attributes("-topmost", "true")
 
         self.back_button = tk.Button(self, text="Go back", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6")
         self.back_button.grid(column=30, row=4)
@@ -62,7 +61,6 @@ class ManageIntrusiveOrResidualContextsView(PopupView):
         """
 
         # Reset class the lists of ttk elements
-        # @todo - Explicitly delete drop down elements if any exist already?
         self.__resid_dropdown_labels = {}
         self.__resid_dropdowns = {}
         self.__intru_dropdown_labels = {}

@@ -27,7 +27,6 @@ class RemoveContextPresenter(PopupPresenter[Dict[str, Optional[str]]]):
 
     def on_ok_button(self) -> None:
         """When the ok button is pressed, store the dataframe in the model and close the popup"""
-        # @todo - validate input if it's required?
         # Store the provided reason in the model
         self.model["reason"] = self.view.get_reason()
         # Close the popup

@@ -30,6 +30,5 @@ class RemoveStratigraphicRelationshipPresenter(PopupPresenter[Dict[str, Optional
 
     def on_ok_button(self) -> None:
         """When the ok button is pressed, store the dataframe in the model and close the popup"""
-        # @todo - validate input and if ok update the model / trigger follow on actions.
         self.model["reason"] = self.view.get_reason()
         self.close_view()

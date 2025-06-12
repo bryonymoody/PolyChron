@@ -18,14 +18,7 @@ from .ProjectWelcomePresenter import ProjectWelcomePresenter
 
 
 class ProjectSelectProcessPopupPresenter(PopupPresenter[ProjectSelection], Mediator):
-    """Presenter for the project new or select process, which is a mult-frame presenter, much like the main window.
-
-    @todo - this is a bit different from a regular PopupPresenter, as it contains multiple views & itself probable needs to be a Mediator. Some of this could be abstracted.
-
-    @todo - this class name is terrible. Maybe split presenters/views into submopdules for mainwindow/popup etc
-
-    @todo - rename Mediator & Mediator protocols, something like MultiPresenterMediator?
-    """
+    """Presenter for the project new or select process, which is a mult-frame presenter, much like the main window."""
 
     def __init__(self, mediator: Mediator, view: ProjectSelectProcessPopupView, model: ProjectSelection) -> None:
         # Call the parent class' consturctor
@@ -37,12 +30,10 @@ class ProjectSelectProcessPopupPresenter(PopupPresenter[ProjectSelection], Media
             "project_welcome": ProjectWelcomePresenter(self, ProjectWelcomeView(self.view.container), self.model),
             "project_select": ProjectSelectPresenter(self, ProjectSelectView(self.view.container), self.model),
             "project_create": ProjectCreatePresenter(self, ProjectCreateView(self.view.container), self.model),
-            # @todo - should the model_ be children of the select/create bits instead?
             "model_select": ModelSelectPresenter(self, ModelSelectView(self.view.container), self.model),
             "model_create": ModelCreatePresenter(self, ModelCreateView(self.view.container), self.model),
         }
         # Intiialse all the views within the parent view
-        # @todo - abstract this somewhere?
         for presenter in self.presenters.values():
             presenter.view.grid(row=0, column=0, sticky="nsew")
             presenter.view.grid_remove()
@@ -51,7 +42,7 @@ class ProjectSelectProcessPopupPresenter(PopupPresenter[ProjectSelection], Media
         self.switch_presenter("project_welcome")
 
     def update_view(self) -> None:
-        pass  # @todo
+        pass
 
     def get_presenter(self, key: Optional[str]) -> Optional[FramePresenter]:
         if key is not None and key in self.presenters:
@@ -75,22 +66,19 @@ class ProjectSelectProcessPopupPresenter(PopupPresenter[ProjectSelection], Media
             # Give it focus for any keybind events
             new_presenter.view.focus_set()
         else:
-            raise Exception("@todo better error missing frame")
+            raise RuntimeError(
+                f"Invalid presenter key '{key}' for ProjectSelectProcessPopupPresenter.switch_presenter. Valid values: {list(self.presenters.keys())}"
+            )
 
     def close_window(self, reason: str = None) -> None:
         # 3.10 required for match, so using elif
         if reason is None:
             pass
         elif reason == "new_model":
-            # @todo - update model state in the relevant view
             self.mediator.switch_presenter("Model")
         elif reason == "load_model":
-            # @todo - update model state in the relevant view
             self.mediator.switch_presenter("Model")
         else:
-            raise Exception("@todo - bad reason for close_window.")
+            raise ValueError(f"Unknown reason {reason} for `ProjectSelectProcessPopupPresenter.close_window")
         # Close the view
         self.view.destroy()
-        self.view = None  # @todo this is mega dangerous / risky / will break things.
-
-        # @todo - presumably this is a memory leak? as although the popup.destroy() is called, the presenter is never removed / is still in scope?

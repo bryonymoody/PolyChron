@@ -15,10 +15,6 @@ class DatingResultsView(FrameView):
     I.e. the "Dating Results" tab
 
     Formerly part of `PageOne`
-
-    @todo - consider splitting each canvas to it's own separate classes?
-    @todo - Split the navbar into it's own class, to reduce duplication with ModelView)
-    @todo - rename a lot of the tk references.
     """
 
     def __init__(self, parent: tk.Frame) -> None:
@@ -33,10 +29,10 @@ class DatingResultsView(FrameView):
         self.imscale2 = 1.0  # scale for the canvaas image
         self.delta2 = 1.1
 
-        self.image2 = None  # @todo - can this just be model_model.crhono_image?
+        self.image2 = None
 
         self.tree_phases = None
-        """Table tree, doenst' always exist @todo"""
+        """Table tree, doenst' always exist"""
 
         self.results_text = None
         """tkinter text handle within the littlecanvas3."""
@@ -54,7 +50,6 @@ class DatingResultsView(FrameView):
         self.canvas.place(relx=0, rely=0.03, relwidth=1, relheight=0.97)
 
         # Add buttons to switch between the main windows.
-        # @todo - abstract this esle where to avoid duplication
         self.sasd_tab_button = tk.Button(
             self,
             text="Stratigraphy and supplementary data",
@@ -197,7 +192,7 @@ class DatingResultsView(FrameView):
             "Add to results list",
             "Get time elapsed",
         ]
-        self.__testmenu2_variable = tk.StringVar(self.littlecanvas)  # @todo - not using but required?
+        self.__testmenu2_variable = tk.StringVar(self.littlecanvas)
         self.__testmenu2_variable.set("Add to results list")
         self.__testmenu2_callback: Callable[[], Optional[Any]] = lambda event: None
         self.testmenu2 = ttk.OptionMenu(
@@ -220,8 +215,6 @@ class DatingResultsView(FrameView):
         """Bind the callback for the stratigraphic graph right-click menu
 
         ttk.OptionMenu doesn not accept commadns to .config, only on the constructor? So in this case the view contains a reference to the callback
-
-        @todo rename testmenu and this method
         """
         self.__testmenu2_callback = callback
 
@@ -265,12 +258,7 @@ class DatingResultsView(FrameView):
         callback_move_from: Callable[[], Optional[Any]],
         callback_move_to: Callable[[], Optional[Any]],
     ) -> None:
-        """Bind mouse callback events for interacting with the graph canvas
-
-        @todo - split this method?
-
-        @todo better callback names
-        """
+        """Bind mouse callback events for interacting with the graph canvas"""
         self.littlecanvas2.bind("<MouseWheel>", callback_wheel)
         self.littlecanvas2.bind("<Button-4>", callback_wheel)  # only with Linux, wheel scroll down
         self.littlecanvas2.bind("<Button-5>", callback_wheel)
@@ -283,9 +271,6 @@ class DatingResultsView(FrameView):
 
         Parameters:
             items: A List of menu entries to add, which may be None to identify a separator, or a tuple containing a label anf callback fucntion.
-
-        Todo:
-            Not sure Optional[Any] is required in this type hint?
         """
         # Get a handle to the Menu belonging to the MenuButton
         menubar: ttk.Menubutton = self.file_menubar
@@ -310,9 +295,6 @@ class DatingResultsView(FrameView):
 
         Parameters:
             items: A List of menu entries to add, which may be None to identify a separator, or a tuple containing a label anf callback fucntion.
-
-        Todo:
-            Not sure Optional[Any] is required in this type hint?
         """
         # Get a handle to the Menu belonging to the MenuButton
         menubar: ttk.Menubutton = self.view_menubar
@@ -338,8 +320,6 @@ class DatingResultsView(FrameView):
         Parameters:
             items: A List of menu entries to add, which may be None to identify a separator, or a tuple containing a label anf callback fucntion.
 
-        Todo:
-            Not sure Optional[Any] is required in this type hint?
         """
         # Get a handle to the Menu belonging to the MenuButton
         menubar: ttk.Menubutton = self.tool_menubar
@@ -362,14 +342,9 @@ class DatingResultsView(FrameView):
     def update_littlecanvas2(self, image):
         """Update the image within the littlecanvas2 element - i.e. the chronological graph.
 
-        Formerly part of PageOne.chornograph_render_post
-
-        @todo type hints
-        @todo bindings
-        @todo - rename method
-        @todo - which of these values are actually needed as class members?
+        Formerly part of `PageOne.chornograph_render_post`
         """
-        self.image2 = image  # @todo don't store this in the view.
+        self.image2 = image
         #    scale_factor = min(self.littlecanvas2.winfo_width()/self.image_ws.size[0], self.littlecanvas2.winfo_height()/self.image_ws.size[1])
         #    self.image2 = self.image_ws.resize((int(self.image_ws.size[0]*scale_factor), int(self.image_ws.size[1]*scale_factor)), Image.ANTIALIAS)
 
@@ -386,11 +361,7 @@ class DatingResultsView(FrameView):
         self.show_image2()
 
     def show_image2(self):
-        """Show image on the 2nd Canvas
-
-        @todo the logic for this should probably be elsewhere / add parameters?
-        @todo rename method"""
-        """Show image on the Canvas"""
+        """Show image on the 2nd Canvas"""
         bbox1 = [0, 0, int(self.image2.size[0] * self.imscale2), int(self.image2.size[1] * self.imscale2)]
         # Remove 1 pixel shift at the sides of the bbox1
         bbox1 = (bbox1[0] + 1, bbox1[1] + 1, bbox1[2] - 1, bbox1[3] - 1)
@@ -438,7 +409,7 @@ class DatingResultsView(FrameView):
         Formerly (part of) `PageOne.wheel`
         """
 
-        # If there is no container2 yet, i.e. no image, don't do anything. @todo improve this check.
+        # If there is no container2 yet, i.e. no image, don't do anything
         if not hasattr(self, "container2") or self.container2 is None:
             return
 
@@ -491,7 +462,6 @@ class DatingResultsView(FrameView):
         self.testmenu2.config(width=10)
 
         # Return the scaled x and y coords so the presenter can check if a node was presessed, this was part of PageOne.chrono_nodes
-        # @todo improve this separation of concerns
         if has_image:
             x_scal = cursor_x2 + self.transx2
             y_scal = cursor_y2 + self.transy2
@@ -504,7 +474,7 @@ class DatingResultsView(FrameView):
         """UI parts of loads hpd intervals into the results page
 
         Formerly PageOne.get_hpd_interval
-        @todo - more refacotring, typehints"""
+        """
 
         hpd_str = ""
         columns = ("context", "hpd_interval")
@@ -524,13 +494,14 @@ class DatingResultsView(FrameView):
         """UI parts of loads hpd intervals into the results page, with 3 clumsn this time?
 
         Formerly PageOne.get_hpd_interval
-        @todo - more refacotring, typehints"""
+        """
         columns = ("context_1", "context_2", "hpd_interval")
         self.tree_phases = ttk.Treeview(self.littlecanvas_a, columns=columns, show="headings")
         # define headings
         self.tree_phases.heading("context_1", text="Context 1")
         self.tree_phases.heading("context_2", text="Context 2")
         self.tree_phases.heading("hpd_interval", text="HPD interval")
+
         # add data to the treeview
         for contact in intervals:
             self.tree_phases.insert("", tk.END, values=contact)
@@ -542,10 +513,7 @@ class DatingResultsView(FrameView):
         scrollbar.grid(row=0, column=1, sticky="nsew")
 
     def append_testmenu2_entry(self, text) -> None:
-        """Append an entry to the end of the right click testmenu2.
-
-        @todo - insert instead?
-        @todo - edit instead of overwrite self.testmenu2"""
+        """Append an entry to the end of the right click testmenu2."""
         self.ResultList.append(text)
         self.testmenu2 = ttk.OptionMenu(
             self.littlecanvas2,
@@ -556,9 +524,7 @@ class DatingResultsView(FrameView):
         )
 
     def remove_testmenu2_entry(self, text) -> None:
-        """Remove an entry to the end of the right click testmenu2.
-
-        @todo - edit instead of overwrite self.testmenu2"""
+        """Remove an entry to the end of the right click testmenu2."""
 
         self.ResultList.remove(text)
         self.testmenu2 = ttk.OptionMenu(
@@ -574,8 +540,7 @@ class DatingResultsView(FrameView):
             self.canvas_plt.get_tk_widget().pack_forget()
 
     def clear_littlecanvas3(self, id: bool = False):
-        """Clear the littlecanvas3, always delting results_text, and sometiems littelcanvas3_id
-        @todo rename"""
+        """Clear the littlecanvas3, always delting results_text, and sometiems littelcanvas3_id"""
         self.littlecanvas3.delete(self.results_text)
         if id:
             self.littlecanvas3.delete(self.littlecanvas3_id)
@@ -589,11 +554,6 @@ class DatingResultsView(FrameView):
         """Update the contents of littlecanvas3
 
         Formerly part of PageOne.chornograph_render_post
-
-        @todo type hints
-        @todo bindings
-        @todo - rename method
-        @todo - which of these values are actually needed as class members?
         """
         self.clear_littlecanvas3()
         cont_canvas_list = ""
@@ -610,9 +570,7 @@ class DatingResultsView(FrameView):
         self.canvas_plt.draw_idle()
 
     def show_canvas_plot_with_toolbar(self, fig: Figure) -> None:
-        """Add (or reaplce) the visible plot with the provided figure
-
-        @todo - combine with show_canvas_plot, but one uses pack and the other uses place"""
+        """Add (or reaplce) the visible plot with the provided figure"""
         self.canvas_plt = FigureCanvasTkAgg(fig, master=self.littlecanvas)
         self.canvas_plt.draw()
         # creating the Matplotlib toolbar

@@ -3,12 +3,7 @@ from typing import Any, Callable, Dict, Optional
 
 
 class PopupView(tk.Toplevel):
-    """Base class for Views exist within their own popup window
-
-    @todo - base this on tkk.Toplevel for better theming, but needs changes to extending classes
-
-    @todo - should this contain a Toplevel rahter than extend one? I.e. prevent tkinter leaking out of the view
-    """
+    """Base class for Views exist within their own popup window"""
 
     def __init__(self, parent: tk.Toplevel) -> None:
         """Call the base class (Toplevel) constructor"""
