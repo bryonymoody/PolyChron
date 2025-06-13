@@ -197,7 +197,7 @@ class GUIApp(Mediator):
         # Lazily load the projects directory, so (potential) existing models and projects are known.
         self.project_selector_obj.projects_directiory.lazy_load()
 
-        # Instantiate the child presenter and view, which otherwise would be done by SplashPresenter.on_select_project
+        # Instantiate the child presenter and view, which otherwise would be done by SplashPresenter.on_select_project. This does not start hidden
         popup_presenter = ProjectSelectProcessPopupPresenter(
             self, ProjectSelectProcessPopupView(splash_presenter.view), self.project_selector_obj
         )
@@ -232,11 +232,6 @@ class GUIApp(Mediator):
 
                 # Close the popup window with the appropraite reason (load or new model)
                 popup_presenter.close_window(reason)
-
-        # If the window has not been closed, make it visible and on top
-        if popup_presenter.view is not None:
-            # Ensure the project selection popup is visible and on top
-            popup_presenter.view.lift()
 
         # Start the render loop
         self.root.mainloop()
