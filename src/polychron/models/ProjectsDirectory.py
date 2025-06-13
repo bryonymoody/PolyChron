@@ -36,7 +36,7 @@ class ProjectsDirectory:
     def get_project(self, project_name: str) -> Optional[Project]:
         """Fetch a project by it's name
 
-        Paramaters:
+        Parameters:
             project_name: the name of the project to fetch
 
         Returns:

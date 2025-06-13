@@ -14,14 +14,14 @@ class Mediator(Protocol):
     def switch_presenter(self, key: Optional[str]) -> None:
         """Switch the active presenter & view by string key.
 
-        Paramaters:
+        Parameters:
             key: The key of the presenter to switch to"""
         ...
 
     def get_presenter(self, key: Optional[str]) -> Optional[Union["FramePresenter", "PopupPresenter"]]:
         """Get a presenter by it's Key, if it valid
 
-        Paramaters:
+        Parameters:
             key: The key of the presenter to fetch
 
         Returns:

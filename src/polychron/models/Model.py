@@ -792,7 +792,7 @@ class Model:
     def record_deleted_node(self, context: str, reason: Optional[str] = None) -> None:
         """Method to add a node to the list of deleted nodes
 
-        Patameters:
+        Parameters:
             context: the context / node which was removed
             reason: the reason the node was deleted, if provided.
         """
@@ -801,7 +801,7 @@ class Model:
     def record_deleted_edge(self, context_a: str, context_b: str, reason: Optional[str] = None) -> None:
         """Method to add an edge to the list of deleted edges
 
-        Patameters:
+        Parameters:
             context_a: one context from the edge
             context_a: the other context from the edge
             reason: the reason the node was deleted, if provided.

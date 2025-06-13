@@ -34,7 +34,7 @@ class MCMCProgressView(PopupView):
     def update_progress(self, percent: int) -> None:
         """Update the progress bar and text label with current progress
 
-        Patameters:
+        Parameters:
             percent (int): MCMC calibration progress as an integer percentage in the inclusive range [0, 100]
         """
         self.output_label["text"] = f"{percent}% complete"

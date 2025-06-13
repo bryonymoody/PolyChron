@@ -121,7 +121,7 @@ class Project:
     def load_model_from_disk(self, name: str) -> None:
         """Load a single model from disk by it's name
 
-        Paramaters:
+        Parameters:
             name: The name of the model to load.
         """
         try:
