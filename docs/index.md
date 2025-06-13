@@ -9,6 +9,5 @@ In addition, it allows the user to obtain graph theoretic representations of the
 
 PolyChron is available from [github.com/bryonymoody/PolyChron](https://github.com/bryonymoody/PolyChron)
 
-!!! Danger
-
-    PolyChron's documentation is under development and not yet complete.
+> [!CAUTION]
+> PolyChron's documentation is under development and not yet complete.

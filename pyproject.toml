@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "polychron"
-version = "0.1.0"
+version = "0.2.0"
 requires-python = ">= 3.9"
 authors = [
     {name = "Bryony Moody", email = "bryony.moody@sheffield.ac.uk"},
@@ -35,7 +35,8 @@ dependencies = [
     "networkx>=2; python_version < '3.10'",
     "packaging",
     "pandas<2",
-    "pydot",
+    "pydot<4", # pydot 4 includes an api break which requires network 3.5 to support.
+    "pyyaml",
     "ttkthemes",
 ]
 
@@ -44,6 +45,10 @@ dependencies = [
 doc = [
     "mkdocstrings[python]>=0.18",
     "mkdocs-material>=9.5.0",
+    "mkdocs-gen-files",
+    "mkdocs-literate-nav",
+    "mkdocs-section-index",
+    "markdown-callouts",
 ]
 test = [
     "pytest>=6.0"
@@ -57,8 +62,8 @@ dev = [
 Repository = "https://github.com/bryonymoody/PolyChron"
 Issues = "https://github.com/bryonymoody/PolyChron/issues"
 
-[project.gui-scripts]
-polychron = "polychron.gui:main"
+[project.scripts]
+polychron = "polychron.entrypoint:main"
 
 # pytest options
 [tool.pytest.ini_options]
@@ -71,7 +76,7 @@ testpaths = [
     "tests",
 ]
 
-# Linter configuration
+# Lint & Format configuration
 [tool.ruff]
 line-length = 120
 indent-width = 4
@@ -79,9 +84,16 @@ indent-width = 4
 extend-exclude = [
     "src/polychron/automated_mcmc_ordering_coupling_copy.py",
 ]
+
+[tool.ruff.lint]
 # Select which ruff rules to apply when linting.
-lint.select = ["E4", "E7", "E9", "F"]
+select = ["E4", "E7", "E9", "F", "I"]
 # But ignore some of them
-lint.ignore = [
+ignore = [
     "E741", # https://docs.astral.sh/ruff/rules/ambiguous-variable-name/
+]
+
+[tool.ruff.format]
+exclude = [
+    "src/polychron/gui.py",
 ]
