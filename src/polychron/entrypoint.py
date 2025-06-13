@@ -1,8 +1,8 @@
 """The entrypoint module contains the intended main method for initiating PolyChron and methods for command line argument processing."""
 
 import argparse
-from importlib.metadata import version
 
+from . import __version__
 from .Config import Config, get_config
 
 
@@ -38,7 +38,7 @@ def print_version() -> None:
     Note:
         For editable installs the printed value may be incorrect
     """
-    print(f"PolyChron {version('polychron')}")
+    print(f"PolyChron {__version__}")
 
 
 def main() -> None:
