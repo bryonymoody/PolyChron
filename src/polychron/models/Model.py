@@ -7,6 +7,7 @@ import shutil
 import sys
 from dataclasses import dataclass, field
 from importlib.metadata import version
+from inspect import signature
 from typing import Any, Dict, List, Literal, Optional, Tuple, get_type_hints
 
 import networkx as nx
@@ -297,7 +298,7 @@ class Model:
             "residual_context_types",  # not needed, ephemeral
             "node_coords_and_scale",  # don't include the the locations of images from svgs?
             "mcmc_data",  # don't include the mcmc_data object, which has been saved elsewhere.
-            "__calibration",  # don't save the interpolated calibration curve, it is already on disk
+            "_Model__calibration",  # don't save the interpolated calibration curve, it is already on disk. Must use the fully qualified name for __ members?
         ]
         for k, v in self.__dict__.items():
             if k not in exclude_keys:
@@ -442,10 +443,13 @@ class Model:
 
             # Convert certain values back based on the hint for the data type.
             cls_type_hints = get_type_hints(cls)
+            # Get the class initiaser parameters so non-init feilds can be discarded
+            init_parameters = set(signature(cls.__init__).parameters.keys())
+            init_parameters.remove("self")
             # Also build a list of keys to remove
-            unexpected_keys = []
+            keys_to_remove = []
             for k in model_data:
-                if k in cls_type_hints:
+                if k in cls_type_hints and k in init_parameters:
                     type_hint = cls_type_hints[k]
                     # If the values is None, do nothing.
                     if model_data[k] is None:
@@ -465,12 +469,12 @@ class Model:
                         # tuples are stored as lists in json, so must convert from a list of lists to a list of tuples
                         model_data[k] = [tuple(sub) for sub in model_data[k]]
                 else:
-                    # If the key is not in the typehints, it will cause the ctor to trigger a runtime assertion, so remove it.
+                    # If the key is not in the typehints or __init__ kwargs it will cause the ctor to trigger a runtime assertion, so remove it.
                     print(f"Warning: unexpected Model member '{k}' during deserialisation", file=sys.stderr)
-                    unexpected_keys.append(k)
+                    keys_to_remove.append(k)
 
             # Remove any unexpected keys
-            for k in unexpected_keys:
+            for k in keys_to_remove:
                 del model_data[k]
 
             # Overwrite certain elements, i.e the path (in case the model fiels have been copied), but the path was included in the save file
