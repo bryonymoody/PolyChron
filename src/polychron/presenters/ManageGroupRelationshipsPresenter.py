@@ -13,7 +13,7 @@ from ..views.ManageGroupRelationshipsView import ManageGroupRelationshipsView
 from .PopupPresenter import PopupPresenter
 
 
-class ManageGroupRelationshipsPresenter(PopupPresenter[Model]):
+class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsView ,Model]):
     """Presenter for managing Residual vs Intrusive contexts"""
 
     def __init__(self, mediator: Mediator, view: ManageGroupRelationshipsView, model: Model) -> None:

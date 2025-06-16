@@ -7,7 +7,7 @@ from ..views.ModelSelectView import ModelSelectView
 from .FramePresenter import FramePresenter
 
 
-class ModelSelectPresenter(FramePresenter[ProjectSelection]):
+class ModelSelectPresenter(FramePresenter[ModelSelectView, ProjectSelection]):
     """Presenter for a frame allowing the user to select a model from a list of models within a project, or a button to create a new one."""
 
     def __init__(self, mediator: Mediator, view: ModelSelectView, model: ProjectSelection) -> None:

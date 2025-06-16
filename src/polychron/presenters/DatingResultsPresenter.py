@@ -15,7 +15,7 @@ from ..views.DatingResultsView import DatingResultsView
 from .FramePresenter import FramePresenter
 
 
-class DatingResultsPresenter(FramePresenter[ProjectSelection]):
+class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]):
     """Presenter for the Dating Results page/tab."""
 
     def __init__(self, mediator: Mediator, view: DatingResultsView, model: ProjectSelection):

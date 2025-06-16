@@ -29,7 +29,7 @@ class StdoutRedirector(object):
         pass
 
 
-class MCMCProgressPresenter(PopupPresenter[Model]):
+class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
     """Presenter for managing the MCMC progress bar popup view.
 
     When MCMC calibration has completed, and the popup closes, change to the DatingResults tab

@@ -5,7 +5,7 @@ from ..views.AddContextView import AddContextView
 from .PopupPresenter import PopupPresenter
 
 
-class AddContextPresenter(PopupPresenter[Dict[str, Optional[str]]]):
+class AddContextPresenter(PopupPresenter[AddContextView, Dict[str, Optional[str]]]):
     """Presenter for adding an additional context to the current model
 
     Formerly `popupWindow`
