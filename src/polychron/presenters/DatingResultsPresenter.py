@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from tkinter import simpledialog
-from typing import Any, List, Optional
+from typing import Any, List
 
 import matplotlib as plt
 import networkx as nx
@@ -8,7 +10,6 @@ from matplotlib.figure import Figure
 
 from ..automated_mcmc_ordering_coupling_copy import HPD_interval
 from ..interfaces import Mediator
-from ..models.Model import Model
 from ..models.ProjectSelection import ProjectSelection
 from ..util import node_coords_fromjson, phase_length_finder
 from ..views.DatingResultsView import DatingResultsView
@@ -71,7 +72,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         # Ensure content is correct when switching tab
         self.chronograph_render_post()
 
-    def get_window_title_suffix(self) -> Optional[str]:
+    def get_window_title_suffix(self) -> str | None:
         return f"{self.model.current_project_name} - {self.model.current_model_name}"
 
     def on_file_save(self) -> None:
@@ -79,7 +80,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
 
         Formerly a call to startpage::save_state_1
         """
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
         model_model.save()
@@ -129,7 +130,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         self.view.unbind_littlecanvas2_callback("<Button-1>")
         self.view.bind_littlecanvas2_callback("<Button-1>", self.on_left)
         # Show the right click menu
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         has_image = model_model.chronological_image is not None
         # Show the test menu, returning the coords it was place at?
         x_scal, y_scal = self.view.show_testmenu(has_image)
@@ -150,7 +151,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
 
         Formerly `PageOne.move_from2`
         """
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
         if model_model.chronological_image is not None:
@@ -161,7 +162,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
 
         Formerly `PageOne.move_to2`
         """
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
         if model_model.chronological_image is not None:
@@ -170,7 +171,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
 
     def chronograph_render_post(self) -> None:
         """Formerly `PageOne.chronograph_render_post`"""
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
 
@@ -189,7 +190,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         """
         node_inside = "no node"
 
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return node_inside
 
@@ -231,7 +232,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         Formerly `PageOne.get_hpd_interval`
         """
 
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
 
@@ -267,7 +268,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         Formerly PageOn.node_finder
         """
 
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
 
@@ -302,7 +303,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
             self.results_list.append(self.node)
 
     def testmenu_get_time_elapsed_between(self) -> None:
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None or not model_model.mcmc_check:
             return
 
@@ -359,7 +360,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         """loads posterior density plots into the graph
 
         Formerly PageOne.mcmc_output"""
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
 

@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List
 
 from .FrameView import FrameView
 
@@ -39,18 +41,18 @@ class ProjectSelectView(FrameView):
         self.back_button.place(relx=0.21, rely=0.01)
         self.back_button.bind("<Return>", lambda event: self.back_button.invoke())
 
-    def bind_load_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_load_button(self, callback: Callable[[], Any]) -> None:
         """Callback function for the load button, which is also bound for <Return> events with a list box selected"""
         if callback is not None:
             self.load_button.config(command=callback)
             self.project_listbox.bind("<Return>", lambda event: callback())
             self.project_listbox.bind("<Double-1>", lambda event: callback())
 
-    def bind_back_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_back_button(self, callback: Callable[[], Any]) -> None:
         if callback is not None:
             self.back_button.config(command=callback)
 
-    def bind_list_select(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_list_select(self, callback: Callable[[], Any]) -> None:
         if callback is not None:
             self.project_listbox.bind("<<ListboxSelect>>", callback)
 
@@ -61,7 +63,7 @@ class ProjectSelectView(FrameView):
         # Insert the new entries
         self.project_listbox.insert(tk.END, *project_names)
 
-    def get_selected_project(self) -> Optional[str]:
+    def get_selected_project(self) -> str | None:
         """Get the value of the currently selected project name"""
         selected_index = self.project_listbox.curselection()
         if selected_index:

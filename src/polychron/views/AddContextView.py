@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from .PopupView import PopupView
 
@@ -34,7 +36,7 @@ class AddContextView(PopupView):
         self.ok_button = ttk.Button(self, text="Ok")
         self.ok_button.pack()
 
-    def bind_ok_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_ok_button(self, callback: Callable[[], Any | None]) -> None:
         """Bind the callback for when the ok_button is pressed"""
         if callback is not None:
             self.ok_button.config(command=callback)

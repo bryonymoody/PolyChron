@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, List, Tuple
 
 import pandas as pd
 from PIL import Image, ImageTk
@@ -122,7 +124,7 @@ class ModelView(FrameView):
         ]
         self.__testmenu_variable = tk.StringVar(self.littlecanvas)
         self.__testmenu_variable.set("Node Action")
-        self.__testmenu_callback: Callable[[], Optional[Any]] = lambda event: None
+        self.__testmenu_callback: Callable[[], Any] = lambda event: None
         """reference to the callback method for the test menu, as it does not appear that an OptionMenu(command) can be changed after construction."""
         self.testmenu = ttk.OptionMenu(
             self.littlecanvas,
@@ -195,29 +197,29 @@ class ModelView(FrameView):
         """Set the value for the testmenu"""
         return self.__testmenu_variable.set(value)
 
-    def bind_testmenu_commands(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_testmenu_commands(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for the stratigraphic graph right-click menu
 
         ttk.OptionMenu doesn not accept commadns to .config, only on the constructor? So in this case the view contains a reference to the callback
         """
         self.__testmenu_callback = callback
 
-    def bind_sasd_tab_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_sasd_tab_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the sasd_tab_button is pressed"""
         if callback is not None:
             self.sasd_tab_button.config(command=callback)
 
-    def bind_dr_tab_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_dr_tab_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the dr_tab_button is pressed"""
         if callback is not None:
             self.dr_tab_button.config(command=callback)
 
-    def bind_data_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_data_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the data_button is pressed"""
         if callback is not None:
             self.data_button.config(command=callback)
 
-    def bind_littlecanvas_callback(self, sequence: str, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_littlecanvas_callback(self, sequence: str, callback: Callable[[], Any]) -> None:
         """Bind a single callback to the specified sequence on the littlecanvas. This is an alternative to an all in one bind method, as the canvas repeatedly gets cleared"""
         self.littlecanvas.bind(sequence, callback)
 
@@ -225,7 +227,7 @@ class ModelView(FrameView):
         """Unbind a single callback to the specified sequence on the littlecanvas. This is an alternative to an all in one bind method, as the canvas repeatedly gets cleared"""
         self.littlecanvas.unbind(sequence)
 
-    def bind_littlecanvas2_callback(self, sequence: str, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_littlecanvas2_callback(self, sequence: str, callback: Callable[[], Any]) -> None:
         """Bind a single callback to the specified sequence on the littlecanvas2. This is an alternative to an all in one bind method, as the canvas repeatedly gets cleared"""
         self.littlecanvas2.bind(sequence, callback)
 
@@ -233,7 +235,7 @@ class ModelView(FrameView):
         """Unbind a single callback to the specified sequence on the littlecanvas2. This is an alternative to an all in one bind method, as the canvas repeatedly gets cleared"""
         self.littlecanvas2.unbind(sequence)
 
-    def show_testmenu(self, has_image: bool) -> Tuple[Optional[int], Optional[int]]:
+    def show_testmenu(self, has_image: bool) -> Tuple[int | None, int | None]:
         """Show the test menu within the little canvas at the cursors' coordinates
 
         Formerly part of StartPage.onRight
@@ -269,9 +271,9 @@ class ModelView(FrameView):
 
     def bind_littlecanvas_events(
         self,
-        callback_wheel: Callable[[], Optional[Any]],
-        callback_move_from: Callable[[], Optional[Any]],
-        callback_move_to: Callable[[], Optional[Any]],
+        callback_wheel: Callable[[], Any],
+        callback_move_from: Callable[[], Any],
+        callback_move_to: Callable[[], Any],
     ) -> None:
         """Bind mouse callback events for interacting with the graph canvas"""
         self.littlecanvas.bind("<MouseWheel>", callback_wheel)
@@ -282,9 +284,9 @@ class ModelView(FrameView):
 
     def bind_littlecanvas2_events(
         self,
-        callback_wheel: Callable[[], Optional[Any]],
-        callback_move_from: Callable[[], Optional[Any]],
-        callback_move_to: Callable[[], Optional[Any]],
+        callback_wheel: Callable[[], Any],
+        callback_move_from: Callable[[], Any],
+        callback_move_to: Callable[[], Any],
     ) -> None:
         """Bind mouse callback events for interacting with the graph canvas"""
         self.littlecanvas2.bind("<MouseWheel>", callback_wheel)
@@ -293,7 +295,7 @@ class ModelView(FrameView):
         self.littlecanvas2.bind("<Button-1>", callback_move_from)
         self.littlecanvas2.bind("<B1-Motion>", callback_move_to)
 
-    def build_file_menu(self, items: List[Optional[Tuple[str, Callable[[], Optional[Any]]]]]) -> None:
+    def build_file_menu(self, items: List[Tuple[str, Callable[[], Any]] | None]) -> None:
         """Builds the 'file' menu element with labels and callback functions.
 
         Parameters:
@@ -317,7 +319,7 @@ class ModelView(FrameView):
         if len(items) > 0:
             menubar.configure(state=tk.NORMAL)
 
-    def build_view_menu(self, items: List[Optional[Tuple[str, Callable[[], Optional[Any]]]]]) -> None:
+    def build_view_menu(self, items: List[Tuple[str, Callable[[], Any]] | None]) -> None:
         """Builds the 'view' menu element with labels and callback functions.
 
         Parameters:
@@ -341,7 +343,7 @@ class ModelView(FrameView):
         if len(items) > 0:
             menubar.configure(state=tk.NORMAL)
 
-    def build_tool_menu(self, items: List[Optional[Tuple[str, Callable[[], Optional[Any]]]]]) -> None:
+    def build_tool_menu(self, items: List[Tuple[str, Callable[[], Any]] | None]) -> None:
         """Builds the 'tools' menu element with labels and callback functions.
 
         Parameters:

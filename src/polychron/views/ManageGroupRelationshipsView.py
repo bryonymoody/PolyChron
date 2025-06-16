@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 import pandas as pd
 
@@ -30,22 +32,22 @@ class ManageGroupRelationshipsView(PopupView):
         self.label_dict = {}
         """Dictionary of phases boxes/tkinter label elements"""
 
-        self.__phase_box_move_callback: Callable[[], Optional[Any]] = lambda event: None
+        self.__phase_box_move_callback: Callable[[], Any] = lambda event: None
         """Callback method for when a phase box is moved."""
 
-        self.__confirm_callback: Callable[[], Optional[Any]] = lambda: None
+        self.__confirm_callback: Callable[[], Any] = lambda: None
         """Callback method for when the confirm button is pressed. 
         
         Stored in the view to allow deletion and recreation of the confirm button.
         """
 
-        self.__render_callback: Callable[[], Optional[Any]] = lambda: None
+        self.__render_callback: Callable[[], Any] = lambda: None
         """Callback method for when the render button is pressed. 
         
         Stored in the view to allow deletion and recreation of the render button.
         """
 
-        self.__change_callback: Callable[[], Optional[Any]] = lambda: None
+        self.__change_callback: Callable[[], Any] = lambda: None
         """Callback method for when the change button is pressed. 
         
         Stored in the view to allow deletion and recreation of the change button.
@@ -479,7 +481,7 @@ class ManageGroupRelationshipsView(PopupView):
         ]
         """List of tkinter string colours used for phase boxes."""
 
-    def create_phase_boxes(self, phase_labels: Optional[List[Tuple[str, str]]]) -> None:
+    def create_phase_boxes(self, phase_labels: List[Tuple[str, str]] | None) -> None:
         """Create a box within the canvas for each provided phase label"""
         self.label_dict = {}
 
@@ -509,7 +511,7 @@ class ManageGroupRelationshipsView(PopupView):
         """Update the canvas to ensure coordinates are correct?"""
         self.canvas.update()
 
-    def update_tree_2col(self, group_relationships: Optional[List[Tuple[str, str]]]) -> None:
+    def update_tree_2col(self, group_relationships: List[Tuple[str, str]] | None) -> None:
         """Update the table of group relationships to the value(s) provided by the user
 
         This is the 2 column version, for the first step in the residual checking process.
@@ -579,7 +581,7 @@ class ManageGroupRelationshipsView(PopupView):
             self.tree.insert("", 0, text=index, values=list(row))
         self.tree["show"] = "headings"
 
-    def bind_phase_box_on_move(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_phase_box_on_move(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for moving the phase boxes.
 
         This is set on a (private) view class member, to avoid havnig to call this method again if the phase boxes are ever re-generated.
@@ -587,17 +589,17 @@ class ManageGroupRelationshipsView(PopupView):
         if callback is not None:
             self.__phase_box_move_callback = callback
 
-    def bind_confirm_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_confirm_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the confirm_button is pressed"""
         if callback is not None:
             self.__confirm_callback = callback
 
-    def bind_render_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_render_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the render_button is pressed"""
         if callback is not None:
             self.__render_callback = callback
 
-    def bind_change_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_change_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the change_button is pressed"""
         if callback is not None:
             self.__change_callback = callback

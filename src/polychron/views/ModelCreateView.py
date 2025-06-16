@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import tkinter as tk
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from .FrameView import FrameView
 
@@ -32,13 +34,13 @@ class ModelCreateView(FrameView):
         self.back_button.place(relx=0.21, rely=0.01)
         self.back_button.bind("<Return>", lambda event: self.back_button.invoke())
 
-    def bind_submit_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_submit_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the submit_button is pressed"""
         if callback is not None:
             self.submit_button.config(command=callback)
             self.user_input.bind("<Return>", (lambda event: callback()))
 
-    def bind_back_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_back_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the back button is pressed"""
         if callback is not None:
             self.back_button.config(command=callback)

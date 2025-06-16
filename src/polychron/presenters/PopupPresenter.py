@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Optional, TypeVar
+from typing import Any, Generic, TypeVar
 
 from ..interfaces import Mediator
 from ..views.PopupView import PopupView
@@ -54,7 +56,7 @@ class PopupPresenter(ABC, Generic[ViewT, ModelT]):
         """Hide (withdraw) the view"""
         self.view.withdraw()
 
-    def close_view(self, event: Optional[Any] = None) -> None:
+    def close_view(self, event: Any = None) -> None:
         """Close the popup aftger performing any actions.
 
         This method should be overridden by presenters which require graceful destruction or wish to disable window closing."""

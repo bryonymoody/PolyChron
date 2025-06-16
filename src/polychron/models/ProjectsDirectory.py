@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import pathlib
 from dataclasses import dataclass, field
-from typing import Optional
 
 from ..models.Project import Project
 
@@ -33,7 +34,7 @@ class ProjectsDirectory:
         """Check if the specified project exists or not"""
         return project_name in self.projects
 
-    def get_project(self, project_name: str) -> Optional[Project]:
+    def get_project(self, project_name: str) -> Project | None:
         """Fetch a project by it's name
 
         Parameters:

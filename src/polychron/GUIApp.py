@@ -1,11 +1,13 @@
 """The main GUI App class, which initialises the GUI application and can be used to run the main render loop"""
 
+from __future__ import annotations
+
 import re
 import tkinter as tk
 import tkinter.font as tkFont
 from importlib.metadata import version
 from tkinter import ttk
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from ttkthemes import ThemedStyle, ThemedTk
 
@@ -68,7 +70,7 @@ class GUIApp(Mediator):
         self.project_selector_obj: ProjectSelection = ProjectSelection(self.config.projects_directory)
 
         # Construct the views and presenters for main window views (i.e. not-popups)
-        self.current_presenter_key: Optional[str] = None
+        self.current_presenter_key: str | None = None
         self.presenters: Dict[str, FramePresenter] = {
             "Splash": SplashPresenter(self, SplashView(self.container), self.project_selector_obj),
             "Model": ModelPresenter(self, ModelView(self.container), self.project_selector_obj),
@@ -81,7 +83,7 @@ class GUIApp(Mediator):
             # Immeditely hide the frame, but remember it's settings.
             presenter.view.grid_remove()
 
-    def set_window_title(self, suffix: Optional[str] = None) -> None:
+    def set_window_title(self, suffix: str | None = None) -> None:
         """Update the window title to include Polychron, the version of polychron, and the optional suffix
 
         Parameters:
@@ -92,7 +94,7 @@ class GUIApp(Mediator):
             title += f" | {suffix}"
         self.root.title(title)
 
-    def get_presenter(self, key: Optional[str]) -> Optional[FramePresenter]:
+    def get_presenter(self, key: str | None) -> FramePresenter | None:
         """Get a main frame presenter by it's name.
 
         Parameters:
@@ -106,7 +108,7 @@ class GUIApp(Mediator):
         else:
             return None
 
-    def switch_presenter(self, key: Optional[str]) -> None:
+    def switch_presenter(self, key: str | None) -> None:
         """Switch the current presenter using the provided key
 
         Parameters:
@@ -133,7 +135,7 @@ class GUIApp(Mediator):
                 f"Invalid presenter key '{key}' for GUIApp.switch_presenter. Valid values: {list(self.presenters.keys())}"
             )
 
-    def close_window(self, reason: Optional[str] = None) -> None:
+    def close_window(self, reason: str | None = None) -> None:
         self.exit_application()
 
     def register_global_keybinds(self) -> None:
@@ -147,7 +149,7 @@ class GUIApp(Mediator):
         """Register protocols with the root window - i.e. what to do on (graceful) application exit"""
         self.root.protocol("WM_DELETE_WINDOW", self.exit_application)
 
-    def save_current_model(self, event: Optional[Any] = None) -> None:
+    def save_current_model(self, event: Any | None = None) -> None:
         """If a model is currently open, save it"""
         if (
             self.current_presenter_key == "Model"
@@ -159,7 +161,7 @@ class GUIApp(Mediator):
             if model is not None:
                 model.save()
 
-    def exit_application(self, event: Optional[Any] = None) -> None:
+    def exit_application(self, event: Any | None = None) -> None:
         """Callback function for graceful application exit via keybind or window manager close."""
         # Quit the root window
         self.root.quit()
@@ -182,7 +184,7 @@ class GUIApp(Mediator):
             # Apply the new window geometry
             self.root.geometry(new_geometry)
 
-    def launch(self, project_name: Optional[str] = None, model_name: Optional[str] = None) -> None:
+    def launch(self, project_name: str | None = None, model_name: str | None = None) -> None:
         """Method to launch the GUIApp, i.e. start the render loop
 
         Parameters:

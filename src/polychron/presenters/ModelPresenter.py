@@ -1,7 +1,7 @@
 import tkinter as tk
 import tkinter.messagebox
 from tkinter.filedialog import askopenfile
-from typing import Any, List, Optional
+from typing import Any, List
 
 import networkx as nx
 import numpy as np
@@ -9,7 +9,6 @@ import pandas as pd
 import pydot
 
 from ..interfaces import Mediator
-from ..models.Model import Model
 from ..models.ProjectSelection import ProjectSelection
 from ..presenters.AddContextPresenter import AddContextPresenter
 from ..presenters.CalibrateModelSelectPresenter import CalibrateModelSelectPresenter
@@ -127,7 +126,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
     def update_view(self) -> None:
         """Update the view to reflect the current state of the model"""
         # Get the actual model
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
 
@@ -170,7 +169,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 [tuple([edge_label(ctx_a, ctx_b), meta]) for ctx_a, ctx_b, meta in model_model.deleted_edges]
             )
 
-    def get_window_title_suffix(self) -> Optional[str]:
+    def get_window_title_suffix(self) -> str | None:
         return f"{self.model.current_project_name} - {self.model.current_model_name}"
 
     def popup_calibrate_model(self) -> None:
@@ -178,7 +177,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         Formerly `StartPage.load_mcmc`
         """
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
         # Create the popup presenter and view
@@ -205,7 +204,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
     def chronograph_render_wrap(self) -> None:
         """wraps chronograph render so we can assign a variable when runing the func using a button"""
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
 
@@ -232,13 +231,13 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             self.view.clear_littlecanvas2()
             model_model.chronological_dag = self.chronograph_render()
 
-    def chronograph_render(self) -> Optional[nx.DiGraph]:
+    def chronograph_render(self) -> nx.DiGraph | None:
         """initiates residual checking function then renders the graph when thats done
 
         Returns a copy of the produced chronological graph (if requirements met and no error occurs?).
         """
 
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
 
@@ -313,7 +312,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         )
         file = askopenfile(mode="r", filetypes=[("DOT Files", "*.dot"), ("Graphviz Files", "*.gv")])
         if file is not None:
-            model_model: Optional[Model] = self.model.current_model
+            model_model = self.model.current_model
 
             # Store the path, marking that the most rencent input was a .dot/gv file
             model_model.set_stratigraphic_graphviz_file(file.name)
@@ -348,7 +347,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         if file is not None:
             try:
-                model_model: Optional[Model] = self.model.current_model
+                model_model = self.model.current_model
                 df = pd.read_csv(file, dtype=str)
                 load_it = self.file_popup(df)
                 if load_it == "load":
@@ -387,7 +386,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         if file is not None:
             try:
-                model_model: Optional[Model] = self.model.current_model
+                model_model = self.model.current_model
                 df = pd.read_csv(file)
                 df = df.applymap(str)
                 load_it = self.file_popup(df)
@@ -409,7 +408,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
         if file is not None:
             try:
-                model_model: Optional[Model] = self.model.current_model
+                model_model = self.model.current_model
                 df = pd.read_csv(file)
                 df = df.applymap(str)
                 load_it = self.file_popup(df)
@@ -431,7 +430,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
         if file is not None:
             try:
-                model_model: Optional[Model] = self.model.current_model
+                model_model = self.model.current_model
                 df = pd.read_csv(file)
                 group_rels = [(str(df["above"][i]), str(df["below"][i])) for i in range(len(df))]
                 load_it = self.file_popup(pd.DataFrame(group_rels, columns=["Younger group", "Older group"]))
@@ -452,7 +451,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
         if file is not None:
             try:
-                model_model: Optional[Model] = self.model.current_model
+                model_model = self.model.current_model
                 df = pd.read_csv(file)
                 df = df.applymap(str)
                 # Update the model & post process, updating the graph
@@ -482,7 +481,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         """
 
         # Render the strat graph in pahse mode, if there is one to render, updating the model and view
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is not None:
             # Store a flag marking this as being enabled. Should this be model data?
             model_model.grouped_rendering = True
@@ -542,7 +541,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             self.testmenu_place_above_prep()
 
         # Get the Model object
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
         # Update the image in the canvas
@@ -560,7 +559,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
     def testmenu_delete_context(self) -> None:
         """Callback function from the testmenu for deleting a single context"""
         # Get the Model object
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
 
@@ -582,7 +581,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
     def testmenu_add_new_contexts(self) -> None:
         """Callback function from the testmenu for adding contexts"""
         # Get the Model object
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
         if model_model.load_check:
@@ -607,7 +606,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
     def testmenu_delete_strat_with(self) -> None:
         """Callback function from the testmenu for deleting stratigrahic relationship edges"""
         # Get the Model object
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
 
@@ -656,7 +655,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
     def testmenu_place_above(self) -> None:
         """Callback function from the testmenu for adding stratigrahic relationship"""
         # Get the Model object
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
 
@@ -677,7 +676,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
     def testmenu_delete_stratigraphic_prep(self) -> None:
         """Callback function from the testmenu for deleting stratigraphic relationships, adding an option to the menu when a node was selected."""
         # Get the Model object
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
 
@@ -690,7 +689,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
     def testmenu_equate_context_with(self) -> None:
         """Callback function from the testmenu to equate two contexts (when one has already been selected)"""
         # Get the Model object
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
 
@@ -722,7 +721,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
     def testmenu_equate_context_prep(self) -> None:
         """Callback function from the testmenu which sets up menu to equate context for when user picks next node"""
         # Get the Model object
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
         if len(self.comb_nodes) == 1:
@@ -745,7 +744,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
     def testmenu_get_supplementary_for_context(self) -> None:
         """Callback function from the testmenu to show supplementary data for the selected context/node"""
         # Get the Model object
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
 
@@ -772,7 +771,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
     def testmenu_place_above_prep(self) -> None:
         """Callback function from the testmenu which sets up for placing one context above another"""
         # Get the Model object
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
 
@@ -809,7 +808,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         self.view.unbind_littlecanvas_callback("<Button-1>")
         self.view.bind_littlecanvas_callback("<Button-1>", self.on_left)
         # Show the right click menu
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         has_image = model_model.stratigraphic_image is not None
         x_scal, y_scal = self.view.show_testmenu(has_image)
         # If the model has a stratigraphic image presented, check if a node has been right clicked on and store in a member variable
@@ -903,7 +902,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         self.view.wait_window(popup_presenter.view)
 
         # Get the new model
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
 
@@ -919,7 +918,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         Formerly `StartPage.resize`
         """
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
 
@@ -934,7 +933,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         Formerly `StartPage.resize2`
         """
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
         # Re-open the image inside the Model
@@ -948,7 +947,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         Formerly `StartPage.move_from`
         """
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
         if model_model.stratigraphic_image is not None:
@@ -959,7 +958,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         Formerly `StartPage.move_to`
         """
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
         if model_model.stratigraphic_image is not None:
@@ -971,7 +970,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         Formerly `StartPage.move_from2`
         """
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
         if model_model.chronological_image is not None:
@@ -982,7 +981,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         Formerly `StartPage.move_to2`
         """
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
         if model_model.chronological_image is not None:
@@ -1008,7 +1007,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         Formerly `StartPage.addedge`
         """
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
         x_1 = edgevec[0]
@@ -1029,7 +1028,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         Formerly `StartPage.stratfunc`
         """
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return
         rellist = list(nx.line_graph(model_model.stratigraphic_dag))
@@ -1063,7 +1062,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         node_inside = "no node"
 
-        model_model: Optional[Model] = self.model.current_model
+        model_model = self.model.current_model
         if model_model is None:
             return node_inside
 
@@ -1090,7 +1089,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 node_inside = node_df.iloc[n_ind].name
         return node_inside
 
-    def node_del_popup(self, context_name: str) -> Optional[str]:
+    def node_del_popup(self, context_name: str) -> str | None:
         """Open a popup window for the user to provide input on deleting a node, returning the value
 
         This blocks users interacting with the main window until the popup is closed
@@ -1110,7 +1109,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         self.view.canvas["state"] = "normal"
         return data["reason"]
 
-    def edge_del_popup(self, context_a: str, context_b: str) -> Optional[str]:
+    def edge_del_popup(self, context_a: str, context_b: str) -> str | None:
         """Open a popup window for the user to provide input on deleting an edge, returning the reason provided
 
         This blocks users interacting with the main window until the popup is closed

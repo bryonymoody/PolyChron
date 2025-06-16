@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import tkinter as tk
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from .PopupView import PopupView
 
@@ -38,12 +40,12 @@ class RemoveContextView(PopupView):
         self.ok_button = tk.Button(self, text="OK", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6")
         self.ok_button.place(relx=0.3, rely=0.7)
 
-    def bind_ok_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_ok_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the ok_button is pressed"""
         if callback is not None:
             self.ok_button.config(command=callback)
 
-    def update_label(self, context: Optional[str] = None) -> None:
+    def update_label(self, context: str | None = None) -> None:
         """Update the label text to include the context being removed."""
         context_name = "this context" if context is None else f"'{context}'"
         self.label.configure(text=f"Why are you removing {context_name} from your stratigraphy?")

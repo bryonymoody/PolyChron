@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import importlib.resources
 import io
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, List, Tuple
 
 from PIL import Image, ImageTk
 
@@ -68,7 +70,7 @@ class SplashView(FrameView):
         canvas_center_y = (0.97 * self.parent.winfo_height()) / 2
         self.canvas.coords(self.canvas_img_id, canvas_center_x, canvas_center_y)
 
-    def build_file_menu(self, items: List[Optional[Tuple[str, Callable[[], Optional[Any]]]]]) -> None:
+    def build_file_menu(self, items: List[Tuple[str, Callable[[], Any]] | None]) -> None:
         """Builds the 'file' menu element with labels and callback functions.
 
         Parameters:

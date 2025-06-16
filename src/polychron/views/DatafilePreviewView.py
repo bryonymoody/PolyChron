@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from .PopupView import PopupView
 
@@ -32,12 +34,12 @@ class DatafilePreviewView(PopupView):
         self.cancel_button = tk.Button(self, text="Cancel", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6")
         self.cancel_button.pack()
 
-    def bind_load_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_load_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the load_button is pressed"""
         if callback is not None:
             self.load_button.config(command=callback)
 
-    def bind_cancel_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_cancel_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the cancel_button is pressed"""
         if callback is not None:
             self.cancel_button.config(command=callback)
