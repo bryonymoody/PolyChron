@@ -8,7 +8,7 @@ from .FramePresenter import FramePresenter
 from .ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresenter
 
 
-class SplashPresenter(FramePresenter[ProjectSelection]):
+class SplashPresenter(FramePresenter[SplashView, ProjectSelection]):
     """Presenter for the Splash Frame, shown in the main view before a project has been loaded.
 
     This exists soley to allow users who close the initial project selection page to re-open it.

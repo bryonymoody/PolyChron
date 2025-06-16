@@ -34,7 +34,7 @@ from .ManageGroupRelationshipsPresenter import ManageGroupRelationshipsPresenter
 from .ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresenter
 
 
-class ModelPresenter(FramePresenter[ProjectSelection]):
+class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
     """Presenter for the main model tab"""
 
     def __init__(self, mediator: Mediator, view: ModelView, model: ProjectSelection) -> None:

@@ -4,7 +4,7 @@ from ..views.CalibrateModelSelectView import CalibrateModelSelectView
 from .PopupPresenter import PopupPresenter
 
 
-class CalibrateModelSelectPresenter(PopupPresenter[ProjectSelection]):
+class CalibrateModelSelectPresenter(PopupPresenter[CalibrateModelSelectView, ProjectSelection]):
     """Presenter for selecting which models to calibrate, when multiple models are to be calibrated at once.
 
     Formerly `popupWindow8`, used from "tool > Calibrate multiple projects from project"

@@ -6,7 +6,7 @@ from .ManageGroupRelationshipsPresenter import ManageGroupRelationshipsPresenter
 from .PopupPresenter import PopupPresenter
 
 
-class ManageIntrusiveOrResidualContextsPresenter(PopupPresenter[Model]):
+class ManageIntrusiveOrResidualContextsPresenter(PopupPresenter[ManageIntrusiveOrResidualContextsView, Model]):
     """Presenter for managing the MCMC progress bar popup view.
 
     When MCMC calibration has completed, and the popup closes, the DatingResults tab should be loaded

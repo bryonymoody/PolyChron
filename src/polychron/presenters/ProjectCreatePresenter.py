@@ -6,7 +6,7 @@ from ..views.ProjectCreateView import ProjectCreateView
 from .FramePresenter import FramePresenter
 
 
-class ProjectCreatePresenter(FramePresenter[ProjectSelection]):
+class ProjectCreatePresenter(FramePresenter[ProjectCreateView, ProjectSelection]):
     def __init__(self, mediator: Mediator, view: ProjectCreateView, model: ProjectSelection) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)

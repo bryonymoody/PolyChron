@@ -5,7 +5,7 @@ from ..views.DatafilePreviewView import DatafilePreviewView
 from .PopupPresenter import PopupPresenter
 
 
-class DatafilePreviewPresenter(PopupPresenter[Dict[str, Any]]):
+class DatafilePreviewPresenter(PopupPresenter[DatafilePreviewView, Dict[str, Any]]):
     """Presenter for selecting which models to calibrate, when multiple models are to be calibrated at once.
 
     Formerly `popupWindow7`, used when opening a csv-like file
