@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import importlib.resources
 import io
 import tkinter as tk
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from PIL import Image, ImageTk
 
@@ -58,12 +60,12 @@ class ProjectWelcomeView(FrameView):
         self.create_button.place(relx=0.62, rely=0.9)
         self.create_button.bind("<Return>", lambda event: self.create_button.invoke())
 
-    def bind_load_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_load_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the load_button is pressed"""
         if callback is not None:
             self.load_button.config(command=callback)
 
-    def bind_create_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_create_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the create_button is pressed"""
         if callback is not None:
             self.create_button.config(command=callback)

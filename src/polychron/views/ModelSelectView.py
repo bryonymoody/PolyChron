@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List
 
 from .FrameView import FrameView
 
@@ -45,24 +47,24 @@ class ModelSelectView(FrameView):
         self.create_model_button.place(relx=0.62, rely=0.9, relwidth=0.17)
         self.create_model_button.bind("<Return>", lambda event: self.create_model_button.invoke())
 
-    def bind_load_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_load_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the load_button is pressed & when enter is pressed with a list item selected"""
         if callback is not None:
             self.load_button.config(command=callback)
             self.model_listbox.bind("<Return>", lambda event: callback())
             self.model_listbox.bind("<Double-1>", lambda event: callback())
 
-    def bind_back_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_back_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the back_button is pressed"""
         if callback is not None:
             self.back_button.config(command=callback)
 
-    def bind_create_model_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_create_model_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the create_model_button is pressed"""
         if callback is not None:
             self.create_model_button.config(command=callback)
 
-    def bind_list_select(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_list_select(self, callback: Callable[[], Any]) -> None:
         if callback is not None:
             self.model_listbox.bind("<<ListboxSelect>>", callback)
 
@@ -73,7 +75,7 @@ class ModelSelectView(FrameView):
         # Insert the new entries
         self.model_listbox.insert(tk.END, *model_names)
 
-    def get_selected_model(self) -> Optional[str]:
+    def get_selected_model(self) -> str | None:
         """Get the value of the currently selected model name"""
         selected_index = self.model_listbox.curselection()
         if selected_index:

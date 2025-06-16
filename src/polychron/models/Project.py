@@ -1,9 +1,10 @@
+from __future__ import annotations
+
 import copy
 import pathlib
 import shutil
 import sys
 from dataclasses import dataclass, field
-from typing import Optional
 
 from .Model import Model
 
@@ -19,7 +20,7 @@ class Project:
     """The directory representing this project on disk
     """
 
-    models: dict[str, Optional[Model]] = field(default_factory=dict)
+    models: dict[str, Model | None] = field(default_factory=dict)
     """A dictionary of models within this project, with their name as the key"""
 
     def create_dirs(self) -> bool:
@@ -39,19 +40,19 @@ class Project:
         """Cheeck if a model exists within the project."""
         return name in self.models
 
-    def get_model(self, name: str) -> Optional[Model]:
+    def get_model(self, name: str) -> Model | None:
         """Get a model from within the project, loading from disk if it has not yet been loaded"""
         if name in self.models:
             if self.models[name] is None:
                 self.load_model_from_disk(name)
         return self.models.get(name, None)
 
-    def get_or_create_model(self, name: str, other: Optional[Model]) -> Model:
+    def get_or_create_model(self, name: str, other: Model | None) -> Model:
         """Get or create a model within this Project, copying a reference model if provided
 
         Parameters:
             name (str): The name of the model to be fetched or created
-            other (Optional[Model]): An optional model to copy from
+            other (Model | None): An optional model to copy from
 
         Returns:
             The existing or new model with the specified model name
@@ -64,12 +65,12 @@ class Project:
         # If no model was returned, create one and return it.
         return self.create_model(name, other)
 
-    def create_model(self, name: str, other: Optional[Model]) -> Model:
+    def create_model(self, name: str, other: Model | None) -> Model:
         """Create a new model within the project with the provided name , copying a reference model if provided
 
         Parameters:
             name (str): The name of the model to be created
-            other (Optional[Model]): An optional model to copy from
+            other (Model | None): An optional model to copy from
 
         Returns:
             The new Model

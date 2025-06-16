@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import tkinter as tk
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List
 
 from .PopupView import PopupView
 
@@ -40,12 +42,12 @@ class CalibrateModelSelectView(PopupView):
         )
         self.select_all_button.place(relx=0.6, rely=0.7)
 
-    def bind_ok_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_ok_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the ok_button is pressed"""
         if callback is not None:
             self.ok_button.config(command=callback)
 
-    def bind_select_all_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_select_all_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the select_all_button is pressed"""
         if callback is not None:
             self.select_all_button.config(command=callback)

@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Optional, TypeVar
+from typing import Any, Generic, TypeVar
 
 from ..interfaces import Mediator
 from ..views.FrameView import FrameView
@@ -36,7 +38,7 @@ class FramePresenter(ABC, Generic[ViewT, ModelT]):
         """Update view data for the current state of the model"""
         pass
 
-    def get_window_title_suffix(self) -> Optional[str]:
+    def get_window_title_suffix(self) -> str | None:
         """Get a optional suffix for the window title, for this frame.
 
         Returns:

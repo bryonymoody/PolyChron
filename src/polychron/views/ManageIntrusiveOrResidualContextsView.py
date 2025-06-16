@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List
 
 from .PopupView import PopupView
 
@@ -44,12 +46,12 @@ class ManageIntrusiveOrResidualContextsView(PopupView):
         )
         self.proceed_button.grid(column=30, row=6)
 
-    def bind_back_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_back_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the back_button is pressed"""
         if callback is not None:
             self.back_button.config(command=callback)
 
-    def bind_proceed_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_proceed_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the proceed_button is pressed"""
         if callback is not None:
             self.proceed_button.config(command=callback)

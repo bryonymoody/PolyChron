@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List
 
 from PIL import Image, ImageTk
 
@@ -26,7 +28,7 @@ class ResidualOrIntrusiveView(PopupView):
         self.transy2 = 0
         self.width2 = 0
         self.height2 = 0
-        self.image2: Optional[Image.Image] = None  # in-memory rendered image.
+        self.image2: Image.Image | None = None  # in-memory rendered image.
 
         self.title("Identify Residual or Intrusive Contexts")
         self.configure(bg="#AEC7D6")
@@ -88,17 +90,17 @@ class ResidualOrIntrusiveView(PopupView):
         """Update the intrusive list"""
         self.intru_label["text"] = str(intrusive_contexts).replace("'", "")[1:-1]
 
-    def bind_proceed_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_proceed_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the proceed_button is pressed"""
         if callback is not None:
             self.proceed_button.config(command=callback)
 
-    def bind_residual_mode_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_residual_mode_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the residual_mode_button is pressed"""
         if callback is not None:
             self.residual_mode_button.config(command=callback)
 
-    def bind_intrusive_mode_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_intrusive_mode_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the intrusive_mode_button is pressed"""
         if callback is not None:
             self.intrusive_mode_button.config(command=callback)
@@ -111,10 +113,10 @@ class ResidualOrIntrusiveView(PopupView):
 
     def bind_graphcanvas_events(
         self,
-        callback_wheel: Callable[[], Optional[Any]],
-        callback_node_click: Callable[[], Optional[Any]],
-        callback_move_from: Callable[[], Optional[Any]],
-        callback_move_to: Callable[[], Optional[Any]],
+        callback_wheel: Callable[[], Any],
+        callback_node_click: Callable[[], Any],
+        callback_move_from: Callable[[], Any],
+        callback_move_to: Callable[[], Any],
     ) -> None:
         """Bind mouse callback events for interacting with the graph canvas"""
         self.graphcanvas.bind("<MouseWheel>", callback_wheel)

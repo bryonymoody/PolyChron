@@ -1,17 +1,19 @@
-from typing import Dict, Optional
+from __future__ import annotations
+
+from typing import Dict
 
 from ..interfaces import Mediator
 from ..views.AddContextView import AddContextView
 from .PopupPresenter import PopupPresenter
 
 
-class AddContextPresenter(PopupPresenter[AddContextView, Dict[str, Optional[str]]]):
+class AddContextPresenter(PopupPresenter[AddContextView, Dict[str, str | None]]):
     """Presenter for adding an additional context to the current model
 
     Formerly `popupWindow`
     """
 
-    def __init__(self, mediator: Mediator, view: AddContextView, model: Dict[str, Optional[str]]) -> None:
+    def __init__(self, mediator: Mediator, view: AddContextView, model: Dict[str, str | None]) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 

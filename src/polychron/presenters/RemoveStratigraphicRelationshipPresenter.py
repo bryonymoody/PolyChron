@@ -1,4 +1,6 @@
-from typing import Dict, Optional
+from __future__ import annotations
+
+from typing import Dict
 
 from ..interfaces import Mediator
 from ..views.RemoveStratigraphicRelationshipView import RemoveStratigraphicRelationshipView
@@ -6,7 +8,7 @@ from .PopupPresenter import PopupPresenter
 
 
 class RemoveStratigraphicRelationshipPresenter(
-    PopupPresenter[RemoveStratigraphicRelationshipView, Dict[str, Optional[str]]]
+    PopupPresenter[RemoveStratigraphicRelationshipView, Dict[str, str | None]]
 ):
     """Presenter for a popup window to provide the reason for the removal of a single stratigraphic relationship
 
@@ -14,7 +16,7 @@ class RemoveStratigraphicRelationshipPresenter(
     """
 
     def __init__(
-        self, mediator: Mediator, view: RemoveStratigraphicRelationshipView, model: Dict[str, Optional[str]]
+        self, mediator: Mediator, view: RemoveStratigraphicRelationshipView, model: Dict[str, str | None]
     ) -> None:
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)

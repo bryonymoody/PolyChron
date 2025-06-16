@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import copy
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 import networkx as nx
 from PIL import ImageTk
@@ -23,7 +25,7 @@ class ResidualOrIntrusivePresenter(PopupPresenter[ResidualOrIntrusiveView, Model
         # Call the parent class' consturctor
         super().__init__(mediator, view, model)
 
-        self.mode: Optional[Literal["resid", "intru"]] = None
+        self.mode: Literal["resid", "intru"] | None = None
         """The currently selected mode, either None, "resid" or "intru"
         
         Formerly PageTwo.modevariable

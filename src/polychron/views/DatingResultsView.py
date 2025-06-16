@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable, List, Tuple
 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
@@ -37,10 +39,10 @@ class DatingResultsView(FrameView):
         self.results_text = None
         """tkinter text handle within the littlecanvas3."""
 
-        self.canvas_plt: Optional[FigureCanvasTkAgg] = None
+        self.canvas_plt: FigureCanvasTkAgg | None = None
         """Canvas which cotnains a plot"""
 
-        self.toolbar: Optional[NavigationToolbar2Tk] = None
+        self.toolbar: NavigationToolbar2Tk | None = None
         """Matplotlib toolkbar for the canvas_plt if it exists"""
 
         self.configure(background="#fcfdfd")
@@ -194,7 +196,7 @@ class DatingResultsView(FrameView):
         ]
         self.__testmenu2_variable = tk.StringVar(self.littlecanvas)
         self.__testmenu2_variable.set("Add to results list")
-        self.__testmenu2_callback: Callable[[], Optional[Any]] = lambda event: None
+        self.__testmenu2_callback: Callable[[], Any] = lambda event: None
         self.testmenu2 = ttk.OptionMenu(
             self.littlecanvas2,
             self.__testmenu2_variable,
@@ -211,39 +213,39 @@ class DatingResultsView(FrameView):
         """Set the value for the testmenu"""
         return self.__testmenu2_variable.set(value)
 
-    def bind_testmenu2_commands(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_testmenu2_commands(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for the stratigraphic graph right-click menu
 
         ttk.OptionMenu doesn not accept commadns to .config, only on the constructor? So in this case the view contains a reference to the callback
         """
         self.__testmenu2_callback = callback
 
-    def bind_sasd_tab_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_sasd_tab_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the sasd_tab_button is pressed"""
         if callback is not None:
             self.sasd_tab_button.config(command=callback)
 
-    def bind_dr_tab_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_dr_tab_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the dr_tab_button is pressed"""
         if callback is not None:
             self.dr_tab_button.config(command=callback)
 
-    def bind_posterior_densities_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_posterior_densities_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the posterior_densities_button is pressed"""
         if callback is not None:
             self.posterior_densities_button.config(command=callback)
 
-    def bind_hpd_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_hpd_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the hpd_button is pressed"""
         if callback is not None:
             self.hpd_button.config(command=callback)
 
-    def bind_clear_list_button(self, callback: Callable[[], Optional[Any]]) -> None:
+    def bind_clear_list_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the clear_list_button is pressed"""
         if callback is not None:
             self.clear_list_button.config(command=callback)
 
-    def bind_littlecanvas2_callback(self, sequence: str, callback: Callable[[], Optional[Any]]):
+    def bind_littlecanvas2_callback(self, sequence: str, callback: Callable[[], Any]):
         """Bind a single callback to the specified sequence on the littlecanvas2. This is an alternative to an all in one bind method, as the canvas repeatedly gets cleared"""
         self.littlecanvas2.bind(sequence, callback)
 
@@ -253,10 +255,10 @@ class DatingResultsView(FrameView):
 
     def bind_littlecanvas2_events(
         self,
-        callback_wheel: Callable[[], Optional[Any]],
-        callback_rightclick: Callable[[], Optional[Any]],
-        callback_move_from: Callable[[], Optional[Any]],
-        callback_move_to: Callable[[], Optional[Any]],
+        callback_wheel: Callable[[], Any],
+        callback_rightclick: Callable[[], Any],
+        callback_move_from: Callable[[], Any],
+        callback_move_to: Callable[[], Any],
     ) -> None:
         """Bind mouse callback events for interacting with the graph canvas"""
         self.littlecanvas2.bind("<MouseWheel>", callback_wheel)
@@ -266,7 +268,7 @@ class DatingResultsView(FrameView):
         self.littlecanvas2.bind("<Button-1>", callback_move_from)
         self.littlecanvas2.bind("<B1-Motion>", callback_move_to)
 
-    def build_file_menu(self, items: List[Optional[Tuple[str, Callable[[], Optional[Any]]]]]) -> None:
+    def build_file_menu(self, items: List[Tuple[str, Callable[[], Any]] | None]) -> None:
         """Builds the 'file' menu element with labels and callback functions.
 
         Parameters:
@@ -290,7 +292,7 @@ class DatingResultsView(FrameView):
         if len(items) > 0:
             menubar.configure(state=tk.NORMAL)
 
-    def build_view_menu(self, items: List[Optional[Tuple[str, Callable[[], Optional[Any]]]]]) -> None:
+    def build_view_menu(self, items: List[Tuple[str, Callable[[], Any]] | None]) -> None:
         """Builds the 'view' menu element with labels and callback functions.
 
         Parameters:
@@ -314,7 +316,7 @@ class DatingResultsView(FrameView):
         if len(items) > 0:
             menubar.configure(state=tk.NORMAL)
 
-    def build_tool_menu(self, items: List[Optional[Tuple[str, Callable[[], Optional[Any]]]]]) -> None:
+    def build_tool_menu(self, items: List[Tuple[str, Callable[[], Any]] | None]) -> None:
         """Builds the 'tools' menu element with labels and callback functions.
 
         Parameters:
@@ -437,7 +439,7 @@ class DatingResultsView(FrameView):
         self.littlecanvas2.scale("all", 0, 0, scale2, scale2)  # rescale all canvas objects
         self.show_image2()
 
-    def show_testmenu(self, has_image: bool) -> Tuple[Optional[int], Optional[int]]:
+    def show_testmenu(self, has_image: bool) -> Tuple[int | None, int | None]:
         """Show the test menu within the little canvas2 at the cursors' coordinates
 
         Formerly part of PageOne.onRight

@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 import importlib.resources
 import pathlib
 from dataclasses import dataclass, field
-from typing import Optional
 
 import pandas as pd
 
@@ -25,7 +26,7 @@ class InterpolatedRCDCalibrationCurve:
     )
     """Path to calibration data on disk. Defaults to the location of linear_interpolation.txt within the polychron package."""
 
-    __dataframe: Optional[pd.DataFrame] = field(default=None, init=None)
+    __dataframe: pd.DataFrame | None = field(default=None, init=None)
     """Dataframe containing the parsed calibrationd data"""
 
     def load(self) -> None:

@@ -1,4 +1,6 @@
-from typing import Dict, Optional
+from __future__ import annotations
+
+from typing import Dict
 
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
@@ -44,13 +46,13 @@ class ProjectSelectProcessPopupPresenter(PopupPresenter[ProjectSelectProcessPopu
     def update_view(self) -> None:
         pass
 
-    def get_presenter(self, key: Optional[str]) -> Optional[FramePresenter]:
+    def get_presenter(self, key: str | None) -> FramePresenter | None:
         if key is not None and key in self.presenters:
             return self.presenters[key]
         else:
             return None
 
-    def switch_presenter(self, key: Optional[str]) -> None:
+    def switch_presenter(self, key: str | None) -> None:
         if new_presenter := self.get_presenter(key):
             # Hide the current presenter if set
             if current_presenter := self.get_presenter(self.current_presenter_key):

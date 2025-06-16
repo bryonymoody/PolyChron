@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import ast
 import re
 import time
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Set, Tuple
 
 import networkx as nx
 import numpy as np
@@ -544,8 +546,8 @@ def edge_label(src: str, dst: str) -> str:
 class MonotonicTimer:
     """A monotonic timer, for capturing execution time for sections of code"""
 
-    __start: Optional[int] = None
-    __stop: Optional[int] = None
+    __start: int | None = None
+    __stop: int | None = None
 
     def start(self) -> "MonotonicTimer":
         """Record the start of the timed period

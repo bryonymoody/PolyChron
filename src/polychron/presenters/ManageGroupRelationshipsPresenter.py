@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import copy
-from typing import Any, Optional
+from typing import Any
 
 import networkx as nx
 import numpy as np
@@ -13,7 +15,7 @@ from ..views.ManageGroupRelationshipsView import ManageGroupRelationshipsView
 from .PopupPresenter import PopupPresenter
 
 
-class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsView ,Model]):
+class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsView, Model]):
     """Presenter for managing Residual vs Intrusive contexts"""
 
     def __init__(self, mediator: Mediator, view: ManageGroupRelationshipsView, model: Model) -> None:
@@ -105,7 +107,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
     def on_confirm(self) -> None:
         self.get_coords()
 
-    def on_move(self, event: Optional[Any]) -> None:
+    def on_move(self, event: Any) -> None:
         """on move event for dragging boxes around
 
         Formerly `popupWindow3.on_move`
@@ -282,6 +284,6 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
         # Close the popup window
         self.close_window()
 
-    def close_window(self, reason: Optional[str] = None) -> None:
+    def close_window(self, reason: str | None = None) -> None:
         # Close the view
         self.view.destroy()

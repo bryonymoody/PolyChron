@@ -1,8 +1,10 @@
+from __future__ import annotations
+
 import json
 import pathlib
 from dataclasses import dataclass, field
 from importlib.metadata import version
-from typing import Any, Dict, List, Optional, Tuple, get_type_hints
+from typing import Any, Dict, List, Tuple, get_type_hints
 
 import pandas as pd
 
@@ -29,7 +31,7 @@ class MCMCData:
     Formerly `StartPage.ACCEPT`
     """
 
-    accept_samples_phi: Optional[Any] = field(default=None)
+    accept_samples_phi: Any | None = field(default=None)
     """Accepted group boundaries from MCMC simulation
     
     Formerly `StartPage.PHI_ACCEPT`
@@ -47,7 +49,7 @@ class MCMCData:
     Formerly `StartPage.P`
     """
 
-    all_samples_context: Optional[List[List[float]]] = field(default=None)
+    all_samples_context: List[List[float]] | None = field(default=None)
     """A list of lists containing all samples for contexts from MCMC, including rejected samples. 
 
     I.e. accept_samples_context is a subset of this.
@@ -55,7 +57,7 @@ class MCMCData:
     Formerly `StartPage.ALL_SAMPS_CONT`
     """
 
-    all_samples_phi: Optional[List[List[float]]] = field(default=None)
+    all_samples_phi: List[List[float]] | None = field(default=None)
     """A list of lists, containing all samples for group boundaries from MCMC, including rejected samples.
 
     I.e. accept_samples_phi is a subset of this.
@@ -203,9 +205,9 @@ class MCMCData:
                     type_hint = cls_type_hints[k]
                     if mcmc_data[k] is None:
                         pass
-                    elif type_hint in [pathlib.Path, Optional[pathlib.Path]]:
+                    elif type_hint in [pathlib.Path, pathlib.Path | None]:
                         mcmc_data[k] = pathlib.Path(mcmc_data[k])
-                    elif type_hint in [Optional[List[Tuple[str, str]]]]:
+                    elif type_hint in [List[Tuple[str, str]] | None]:
                         # tuples are stored as lists in json, so must convert from a list of lists to a list of tuples
                         mcmc_data[k] = [tuple(sub) for sub in mcmc_data[k]]
                 else:

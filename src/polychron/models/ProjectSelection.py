@@ -1,6 +1,7 @@
+from __future__ import annotations
+
 import os
 import pathlib
-from typing import Optional
 
 from ..models.Model import Model
 from ..models.Project import Project
@@ -18,18 +19,18 @@ class ProjectSelection:
 
         self.__projects_directory: ProjectsDirectory = ProjectsDirectory(projects_directory_path)
 
-        self.__current_project_name: Optional[str] = None
+        self.__current_project_name: str | None = None
         """The currently selected project within the project directory."""
 
-        self.__current_model_name: Optional[str] = None
+        self.__current_model_name: str | None = None
         """The currently selected model within the currently selected project for this projects directory.
         """
 
-        self.__next_project_name: Optional[str] = None
+        self.__next_project_name: str | None = None
         """The name of the next project to be switched to, which may or may not exist
         """
 
-        self.__next_model_name: Optional[str] = None
+        self.__next_model_name: str | None = None
         """The name of a next model to be switched to, which may or may not exist
         """
 
@@ -55,17 +56,17 @@ class ProjectSelection:
         return self.__projects_directory
 
     @property
-    def current_project_name(self) -> Optional[str]:
+    def current_project_name(self) -> str | None:
         """The name of the currently selected project, which may be None"""
         return self.__current_project_name
 
     @property
-    def current_model_name(self) -> Optional[str]:
+    def current_model_name(self) -> str | None:
         """The name of the currently selected model, which may be None"""
         return self.__current_model_name
 
     @property
-    def current_project(self) -> Optional[Project]:
+    def current_project(self) -> Project | None:
         """Get (a reference) to the currently selected Project object"""
         if self.current_project_name is not None:
             return self.__projects_directory.get_project(self.current_project_name)
@@ -73,7 +74,7 @@ class ProjectSelection:
             return None
 
     @property
-    def current_model(self) -> Optional[Model]:
+    def current_model(self) -> Model | None:
         """Get (a reference) to the currently selected model object"""
         if (project := self.current_project) is not None:
             if self.current_model_name is not None:
@@ -92,17 +93,17 @@ class ProjectSelection:
         self.__current_model_name = name
 
     @property
-    def next_project_name(self) -> Optional[str]:
+    def next_project_name(self) -> str | None:
         """Get the name of the next project to be selected/created, which may be None"""
         return self.__next_project_name
 
     @property
-    def next_model_name(self) -> Optional[str]:
+    def next_model_name(self) -> str | None:
         """Get the name of the next model to be selected/created, which may be None"""
         return self.__next_model_name
 
     @property
-    def next_project(self) -> Optional[Project]:
+    def next_project(self) -> Project | None:
         """Get (a reference) to the "next" Project object, if it already exists"""
         if self.next_project_name is not None:
             return self.__projects_directory.get_project(self.next_project_name)
@@ -110,7 +111,7 @@ class ProjectSelection:
             return None
 
     @property
-    def next_model(self) -> Optional[Model]:
+    def next_model(self) -> Model | None:
         """Get (a reference) to the "next" model object, if it already exists within the next project"""
         if (project := self.next_project) is not None:
             if self.next_model_name is not None:
@@ -119,7 +120,7 @@ class ProjectSelection:
                 return None
 
     @next_project_name.setter
-    def next_project_name(self, name: Optional[str]) -> None:
+    def next_project_name(self, name: str | None) -> None:
         """Set the current project by name
 
         This project may or may not exist yet.
@@ -127,7 +128,7 @@ class ProjectSelection:
         self.__next_project_name = name
 
     @next_model_name.setter
-    def next_model_name(self, name: Optional[str]) -> None:
+    def next_model_name(self, name: str | None) -> None:
         """Set the current model by name
 
         This model may or may not exist yet

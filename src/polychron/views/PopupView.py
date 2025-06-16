@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import tkinter as tk
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict
 
 
 class PopupView(tk.Toplevel):
@@ -13,12 +15,12 @@ class PopupView(tk.Toplevel):
         self.parent = parent
         """A reference to the parent frame"""
 
-    def register_keybinds(self, bindings: Dict[str, Callable[[], Optional[Any]]]) -> None:
+    def register_keybinds(self, bindings: Dict[str, Callable[[], Any]]) -> None:
         """Register window-wide key bindings"""
         for sequence, callback in bindings.items():
             self.bind(sequence, callback)
 
-    def register_protocols(self, bindings: Dict[str, Callable[[], Optional[Any]]]) -> None:
+    def register_protocols(self, bindings: Dict[str, Callable[[], Any]]) -> None:
         """Register protocols with the window
 
         i.e. what happens when the window is closed using the OS decorations"""
