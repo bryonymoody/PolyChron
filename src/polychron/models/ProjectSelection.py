@@ -45,7 +45,7 @@ class ProjectSelection:
         """
 
     @property
-    def projects_directiory(self) -> ProjectsDirectory:
+    def projects_directory(self) -> ProjectsDirectory:
         """Get (a ref to) the projects directory object
 
         No setter is provided.
@@ -177,7 +177,7 @@ class ProjectSelection:
 
         # Get the existing or new project.
         # Any raised exceptions will be allowed to propagate upwards for presentation to the user
-        project = self.projects_directiory.get_or_create_project(self.next_project_name)
+        project = self.projects_directory.get_or_create_project(self.next_project_name)
 
         # Within that Project, get or create the model.
         # Any raised exceptions will be allowed to propagate upwards for presentation to the user
