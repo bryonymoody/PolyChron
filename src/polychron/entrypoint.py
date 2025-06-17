@@ -1,17 +1,21 @@
 """The entrypoint module contains the intended main method for initiating PolyChron and methods for command line argument processing."""
 
+from __future__ import annotations
+
 import argparse
 from importlib.metadata import version
+from typing import Sequence
 
 from .Config import Config, get_config
 
 
-def parse_cli(argv=None) -> argparse.Namespace:
+def parse_cli(argv: Sequence[str] | None = None) -> argparse.Namespace:
     """Parse and return command line arguments
 
-    Args:
-        argv (list[str] or None): optional list of command line parameters to parse. If None, sys.argv is used by `argparse.ArgumentParser.parse_args`
+    If an error is encountered, this will call sys.exit.
 
+    Args:
+        argv : optional list of command line parameters to parse. If None, sys.argv is used by `argparse.ArgumentParser.parse_args`
     Returns:
         (argparse.Namespace): Namespace object with arguments set as attributes, as returned by `argparse.ArgumentParser.parse_args()`
     """
@@ -29,6 +33,11 @@ def parse_cli(argv=None) -> argparse.Namespace:
     )
 
     args = parser.parse_args(argv)
+
+    # If a model is provided, but a project is not provided then we should raise an argument parsing error (and exit by default), as a model without a project is meaningless.
+    if args.project is None and args.model is not None:
+        parser.error("-m/--model requires a -p/--project to also be specified")
+
     return args
 
 
