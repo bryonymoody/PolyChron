@@ -37,11 +37,29 @@ class Project:
             return False
 
     def has_model(self, name: str) -> bool:
-        """Cheeck if a model exists within the project."""
+        """Cheeck if a model exists within the project.
+
+        Parameters:
+            name: The name of the model to check for
+
+        Returns:
+            Boolean indicating if the model exist or not (i.e. the model directory exists as a minimum)
+        """
         return name in self.models
 
     def get_model(self, name: str) -> Model | None:
-        """Get a model from within the project, loading from disk if it has not yet been loaded"""
+        """Get a model from within the project, loading from disk if it has not yet been loaded
+
+        Parameters:
+            name: The name of the model to attempt to fetch
+
+        Returns:
+            The `models.Model` instance if one exists, otherwise None
+
+        Raises:
+            RuntimeWarning: when the model could not be loaded, but in a recoverable way. I.e. the directory exits but no files are contained (so allow the model to be "loaded")
+            RuntimeError: when the model could not be loaded, but use of this model directory should be prevented?
+        """
         if name in self.models:
             if self.models[name] is None:
                 self.load_model_from_disk(name)
@@ -56,6 +74,12 @@ class Project:
 
         Returns:
             The existing or new model with the specified model name
+
+        Raises:
+            RuntimeWarning: when the model could not be loaded, but in a recoverable way. I.e. the directory exits but no files are contained (so allow the model to be "loaded")
+            RuntimeError: when the model could not be loaded, but use of this model directory should be prevented?
+            RuntimeError: if the model already exists or an invalid name is provided.
+            OSError: if the model directories could not be created, e.g. due to permissions or avialable space.
         """
         if self.has_model(name):
             model = self.get_model(name)
@@ -113,17 +137,15 @@ class Project:
             self.models[name] = new_model
             return self.models[name]
 
-    def lazy_load_model_from_disk(self) -> None:
-        if self.path.is_dir():
-            for p in self.path.iterdir():
-                if p.is_dir():
-                    self.models[p.name] = None
-
     def load_model_from_disk(self, name: str) -> None:
         """Load a single model from disk by it's name
 
         Parameters:
             name: The name of the model to load.
+
+        Raises:
+            RuntimeWarning: when the model could not be loaded, but in a recoverable way. I.e. the directory exits but no files are contained (so allow the model to be "loaded")
+            RuntimeError: when the model could not be loaded, but use of this model directory should be prevented?
         """
         try:
             # Try and load the model from disk
@@ -149,7 +171,12 @@ class Project:
                     self.models[p.name] = None
 
     def load(self) -> None:
-        """Load all models within this project from disk."""
+        """Load all models within this project from disk.
+
+        Raises:
+            RuntimeWarning: when the model could not be loaded, but in a recoverable way. I.e. the directory exits but no files are contained (so allow the model to be "loaded")
+            RuntimeError: when the model could not be loaded, but use of this model directory should be prevented?
+        """
         if self.path.is_dir():
             for p in self.path.iterdir():
                 if p.is_dir():
