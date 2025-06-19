@@ -23,18 +23,15 @@ class Project:
     models: dict[str, Model | None] = field(default_factory=dict)
     """A dictionary of models within this project, with their name as the key"""
 
-    def create_dirs(self) -> bool:
-        """Create the project directory.
+    def create_dir(self) -> None:
+        """Create the project directory if it does not already exist.
 
-        Returns:
-            Boolean indicating success of directory creation
+        Raises:
+            OSError: Propagated from `pathlib.Path.mkdir` if an OSError occurred during directory creation
+            NotADirectoryError: Propagated from `pathlib.Path.mkdir` if any ancestors within the path are not a directory
         """
-        try:
-            # Ensure the model (and implictly project) directory exists
-            self.path.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
-            print(e, file=sys.stderr)
-            return False
+        # Create the project directory if it does not already exist.
+        self.path.mkdir(parents=True, exist_ok=True)
 
     def has_model(self, name: str) -> bool:
         """Cheeck if a model exists within the project.
