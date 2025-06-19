@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Optional, Tuple, get_type_hints
 
 import pandas as pd
 
-from ..Config import get_config
 from ..util import MonotonicTimer
 
 
@@ -125,12 +124,17 @@ class MCMCData:
         indent = 2 if pretty else None
         return json.dumps({"polychron_version": version("polychron"), "mcmc_data": data}, indent=indent)
 
-    def save(self, path: pathlib.Path, group_df: pd.DataFrame) -> None:
+    def save(self, path: pathlib.Path, group_df: pd.DataFrame, verbose: bool = False) -> None:
         """Save the current state of this file to the specified path
 
         Parameters:
-            path (pathlib.Path ): The directory in which the files will be saved.
-            group_df (pd.DataFrame): A pandas dataframe containing context group information
+            path: The directory in which the files will be saved.
+            group_df: A pandas dataframe containing context group information
+            verbose: If verbose output should be used
+
+        Raises:
+            RuntimeError: If the provided path is not a directory
+            Exception: If other exceptions are raised during saving of files to disk
         """
 
         # Ensure that the parent directory exists
@@ -156,7 +160,7 @@ class MCMCData:
 
                 # Stop the timer and report timing if verbose
                 timer_save.stop()
-                if get_config().verbose:
+                if verbose:
                     print("Timing - MCMCData.save:")
                     print(f"  total:      {timer_save.elapsed(): .6f}s")
                     print(f"  to_json:    {timer_to_json.elapsed(): .6f}s")

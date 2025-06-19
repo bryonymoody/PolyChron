@@ -1,3 +1,4 @@
+from ..Config import get_config
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
 from ..views.CalibrateModelSelectView import CalibrateModelSelectView
@@ -63,7 +64,7 @@ class CalibrateModelSelectPresenter(PopupPresenter[CalibrateModelSelectView, Pro
                             # Update the model state to show it as having been calibrated
                             model.mcmc_check = True
                             # Save the mcmc data to disk
-                            model.mcmc_data.save(model.get_working_directory(), model.group_df)
+                            model.mcmc_data.save(model.get_working_directory(), model.group_df, get_config().verbose)
                             model.save()
         # Close the popup
         self.close_view()
