@@ -80,6 +80,7 @@ class Project:
             RuntimeError: when the model could not be loaded, but use of this model directory should be prevented?
             RuntimeError: if the model already exists or an invalid name is provided.
             OSError: if the model directories could not be created, e.g. due to permissions or avialable space.
+            NotADirectoryError: Propagated from `pathlib.Path.mkdir` if any model directory ancestors are not directories
         """
         if self.has_model(name):
             model = self.get_model(name)
@@ -102,6 +103,7 @@ class Project:
         Raises:
             RuntimeError: if the model already exists or an invalid name is provided.
             OSError: if the model directories could not be created, e.g. due to permissions or available space.
+            NotADirectoryError: Propagated from `pathlib.Path.mkdir` if any model directory ancestors are not directories
         """
 
         # Attempt to load the model with the provided name.
@@ -123,19 +125,19 @@ class Project:
             raise RuntimeError(
                 f"Model name '{name}' was converted to a non-matching directory name '{new_model.path.name}'. Please use an alternate model name"
             )
-        # Attempt to create the directories, reporting an error if an invalid model name was used. Ideally this would be on first-save, but we need the temporary directory to exist.
-        try:
-            new_model.create_dirs()
-        except OSError as e:
-            raise e
-        except Exception as e:
-            raise e
-        else:
-            # If no exceptions were raised potentially copy working files, store the new model and return it
-            if other is not None and other.get_working_directory().is_dir():
-                shutil.copytree(other.get_working_directory(), new_model.get_working_directory(), dirs_exist_ok=True)
-            self.models[name] = new_model
-            return self.models[name]
+
+        # Attempt to create the models's directories, to ensure the working directory exists and any desination directories when copying
+        # Ideally this would be on first-save, but we need the temporary directory to exist.
+        # This will raise and propagate OSError and NotADirectoryError if any errors occurred
+        new_model.create_dirs()
+
+        # If no exceptions were raised potentially copy working files, store the new model and return it
+        if other is not None and other.get_working_directory().is_dir():
+            shutil.copytree(other.get_working_directory(), new_model.get_working_directory(), dirs_exist_ok=True)
+
+        # Store and return the new Model instance
+        self.models[name] = new_model
+        return self.models[name]
 
     def load_model_from_disk(self, name: str) -> None:
         """Load a single model from disk by it's name
