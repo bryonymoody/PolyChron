@@ -343,74 +343,78 @@ class Model:
         """Save the current state of this model to disk at self.path
 
         Raises:
-            Exception: raised when any error occurred during saving, with a message to present to the user
+            RuntimeError: raised when any error occurred during saving, with a message to present to the user
         """
 
         # Ensure directories required exist
-        if self.create_dirs():
-            try:
-                timer_save = MonotonicTimer().start()
-
-                # create the representation of the Model to be saved to disk
-                timer_to_json = MonotonicTimer().start()
-                json_s = self.to_json(pretty=True)
-                timer_to_json.stop()
-
-                # Save the json representation of this object to disk
-                timer_json_write = MonotonicTimer().start()
-                json_path = self.get_python_only_directory() / "polychron_model.json"
-                with open(json_path, "w") as f:
-                    f.write(json_s)
-                timer_json_write.stop()
-
-                # Create / Copy other files to the correct location
-                timer_files = MonotonicTimer().start()
-                # Save the delete contexts metadata to the working directory (superfluos)
-                self.save_deleted_contexts()
-
-                # Ensure the "saved" versions of files are up to date.
-                # Prepare a dictionary of per-output location files to copy form the working dir.
-                files_to_copy = {
-                    self.get_chronological_graph_directory(): [
-                        "fi_new_chrono.png",
-                        "fi_new_chrono.svg",
-                        "fi_new_chrono",
-                        "testdag_chrono.png",
-                    ],
-                    self.get_stratigraphic_graph_directory(): [
-                        "fi_new.png",
-                        "fi_new.svg",
-                        "fi_new",
-                        "testdag.png",
-                        "deleted_contexts_meta",
-                    ],
-                    self.get_mcmc_results_directory(): ["full_results_df", "key_ref.csv", "context_no.csv"],
-                    self.get_python_only_directory(): ["polychron_mcmc_data.json"],
-                }
-                # Iterate the per output directory files, copying files if they exist and copying is required
-                for dst_dir, filenames in files_to_copy.items():
-                    for filename in filenames:
-                        src = self.get_working_directory() / filename
-                        dst = dst_dir / filename
-                        # Only copy the file, if the src exists and is not the same as the dst file
-                        if src.is_file() and (not dst.is_file() or not filecmp.cmp(src, dst, shallow=True)):
-                            shutil.copy2(src, dst)
-                timer_files.stop()
-
-                # Stop the timer and report timing if verbose
-                timer_save.stop()
-                if get_config().verbose:
-                    print("Timing - Model.save:")
-                    print(f"  total:      {timer_save.elapsed(): .6f}s")
-                    print(f"  to_json:    {timer_to_json.elapsed(): .6f}s")
-                    print(f"  json_write: {timer_json_write.elapsed(): .6f}s")
-                    print(f"  files:      {timer_files.elapsed(): .6f}s")
-
-            except Exception as e:
-                raise e
-        else:
+        try:
+            self.create_dirs()
+        except (OSError, NotADirectoryError) as e:
             raise RuntimeError(
-                'An error occurred while creating Model directories, unable to save "polychron_model.json"'
+                f'Unable to save "polychron_model.json", an error occurred while creating Model directories: {e}'
+            )
+
+        try:
+            timer_save = MonotonicTimer().start()
+
+            # create the representation of the Model to be saved to disk
+            timer_to_json = MonotonicTimer().start()
+            json_s = self.to_json(pretty=True)
+            timer_to_json.stop()
+
+            # Save the json representation of this object to disk
+            timer_json_write = MonotonicTimer().start()
+            json_path = self.get_python_only_directory() / "polychron_model.json"
+            with open(json_path, "w") as f:
+                f.write(json_s)
+            timer_json_write.stop()
+
+            # Create / Copy other files to the correct location
+            timer_files = MonotonicTimer().start()
+            # Save the delete contexts metadata to the working directory (superfluos)
+            self.save_deleted_contexts()
+
+            # Ensure the "saved" versions of files are up to date.
+            # Prepare a dictionary of per-output location files to copy form the working dir.
+            files_to_copy = {
+                self.get_chronological_graph_directory(): [
+                    "fi_new_chrono.png",
+                    "fi_new_chrono.svg",
+                    "fi_new_chrono",
+                    "testdag_chrono.png",
+                ],
+                self.get_stratigraphic_graph_directory(): [
+                    "fi_new.png",
+                    "fi_new.svg",
+                    "fi_new",
+                    "testdag.png",
+                    "deleted_contexts_meta",
+                ],
+                self.get_mcmc_results_directory(): ["full_results_df", "key_ref.csv", "context_no.csv"],
+                self.get_python_only_directory(): ["polychron_mcmc_data.json"],
+            }
+            # Iterate the per output directory files, copying files if they exist and copying is required
+            for dst_dir, filenames in files_to_copy.items():
+                for filename in filenames:
+                    src = self.get_working_directory() / filename
+                    dst = dst_dir / filename
+                    # Only copy the file, if the src exists and is not the same as the dst file
+                    if src.is_file() and (not dst.is_file() or not filecmp.cmp(src, dst, shallow=True)):
+                        shutil.copy2(src, dst)
+            timer_files.stop()
+
+            # Stop the timer and report timing if verbose
+            timer_save.stop()
+            if get_config().verbose:
+                print("Timing - Model.save:")
+                print(f"  total:      {timer_save.elapsed(): .6f}s")
+                print(f"  to_json:    {timer_to_json.elapsed(): .6f}s")
+                print(f"  json_write: {timer_json_write.elapsed(): .6f}s")
+                print(f"  files:      {timer_files.elapsed(): .6f}s")
+
+        except Exception as e:
+            raise RuntimeError(
+                f'Unable to save "polychron_model.json", an error occurred while creating Model directories: {e}'
             )
 
     @classmethod
@@ -454,7 +458,7 @@ class Model:
 
             model_data = data["model"]
 
-            # Handle version specific loading requiremetns. I.e. renaming members, or changing types.
+            # Handle version specific loading requirements. I.e. renaming members, or changing types.
             file_version = Version(data["polychron_version"])
             if file_version >= Version("0.2.0") and file_version < Version("0.3.0"):
                 pass
@@ -538,35 +542,31 @@ class Model:
         # If this point is reached, an error occurred and should have be propagated
         return None
 
-    def create_dirs(self) -> bool:
-        """Create the expected directories for this model, including wokring directories.
+    def create_dirs(self) -> None:
+        """Create the expected directories for this model, including working directories.
 
-        Returns:
-            Boolean indicating success of directory creation
+        Formerly part of `load_Window.create_file`, `popupWindow9.make_directories` & `popupWindow10.make_directories`
 
-        Formerly part of load_Window.create_file, popupWindow9.make_directories & popupWindow10.make_directories"""
+        Raises:
+            OSError: Propagated from `pathlib.Path.mkdir` if an OSError occurred during directory creation
+            NotADirectoryError: Propagated from `pathlib.Path.mkdir` if any ancestors within the path are not a directory
+        """
 
-        try:
-            # Ensure the model (and implicitly project) directory exists
-            self.path.mkdir(parents=True, exist_ok=True)
-            # Create each expected child directory.
-            expected_model_dirs = [
-                self.get_stratigraphic_graph_directory(),
-                self.get_chronological_graph_directory(),
-                self.get_mcmc_results_directory(),
-                self.get_python_only_directory(),
-                self.get_working_directory(),
-            ]
-            for path in expected_model_dirs:
-                path.mkdir(parents=True, exist_ok=True)
+        # Ensure the model (and implicitly project) directory exists
+        self.path.mkdir(parents=True, exist_ok=True)
+        # Create each expected child directory.
+        expected_model_dirs = [
+            self.get_stratigraphic_graph_directory(),
+            self.get_chronological_graph_directory(),
+            self.get_mcmc_results_directory(),
+            self.get_python_only_directory(),
+            self.get_working_directory(),
+        ]
+        for path in expected_model_dirs:
+            path.mkdir(parents=True, exist_ok=True)
 
-            # Change the working dir to the model directory.
-            os.chdir(self.path)
-
-        except Exception as e:
-            print(e, file=sys.stderr)
-            return False
-        return True
+        # Change the working dir to the model directory.
+        os.chdir(self.path)
 
     def save_deleted_contexts(self) -> None:
         """Save the delete contexts metadata to disk
