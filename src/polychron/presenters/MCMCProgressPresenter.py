@@ -3,6 +3,7 @@ import sys
 import tkinter as tk
 from tkinter import ttk
 
+from ..Config import get_config
 from ..interfaces import Mediator
 from ..models.Model import Model
 from ..views.MCMCProgressView import MCMCProgressView
@@ -71,7 +72,7 @@ class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
         # Update the model state to show it as having been calibrated
         self.model.mcmc_check = True
         # Save the mcmc data to disk
-        self.model.mcmc_data.save(self.model.get_working_directory(), self.model.group_df)
+        self.model.mcmc_data.save(self.model.get_working_directory(), self.model.group_df, get_config().verbose)
 
     def update_view(self) -> None:
         pass
