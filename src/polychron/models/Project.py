@@ -179,7 +179,4 @@ class Project:
         if self.path.is_dir():
             for p in self.path.iterdir():
                 if p.is_dir():
-                    try:
-                        self.load_model_from_disk(p.name)
-                    except Exception as e:
-                        raise e
+                    self.load_model_from_disk(p.name)
