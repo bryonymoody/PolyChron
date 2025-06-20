@@ -13,6 +13,7 @@ from inspect import signature
 from typing import Any, Dict, List, Literal, Optional, Tuple, get_type_hints
 
 import networkx as nx
+import packaging.version
 import pandas as pd
 import pydot
 from graphviz import render
@@ -319,8 +320,11 @@ class Model:
                     data[k] = json.loads(v.to_json(orient="columns"))
                 elif isinstance(v, nx.DiGraph):
                     # Encode graphs as json via networkx node_link_data, which can be de-serialised via node_link_graph. This should be safe for round-trips, other than node names being converted to strings (which they are anyway)
-                    # explicitly set edges value to future behaviour for networkx
-                    data[k] = nx.node_link_data(v, edges="edges")
+                    # For older networkx (for py 3.9) must use link, which is deprecated in 3.5 and removed in 3.6
+                    if packaging.version.parse(nx.__version__) < packaging.version.parse("3.4.0"):
+                        data[k] = nx.node_link_data(v, link="edges")
+                    else:
+                        data[k] = nx.node_link_data(v, edges="edges")
                 else:
                     data[k] = str(v)
 
@@ -469,8 +473,12 @@ class Model:
                             model_data[k] = pd.DataFrame.from_dict(model_data[k], orient="columns")
                     elif type_hint in [nx.DiGraph, Optional[nx.DiGraph]]:
                         # Convert the node_link_data encoded networkx digraph via node_link_graph
-                        # explicitly set edges value to future behaviour for networkx
-                        model_data[k] = nx.node_link_graph(model_data[k], edges="edges", multigraph=False)
+                        # For older networkx (for py 3.9) must use link, which is deprecated in 3.5 and removed in 3.6
+                        if packaging.version.parse(nx.__version__) < packaging.version.parse("3.4.0"):
+                            model_data[k] = nx.node_link_graph(model_data[k], link="edges", multigraph=False)
+                        else:
+                            model_data[k] = nx.node_link_graph(model_data[k], edges="edges", multigraph=False)
+
                     elif type_hint in [Optional[List[Tuple[str, str]]]]:
                         # tuples are stored as lists in json, so must convert from a list of lists to a list of tuples
                         model_data[k] = [tuple(sub) for sub in model_data[k]]
