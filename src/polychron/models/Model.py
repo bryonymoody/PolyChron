@@ -10,7 +10,7 @@ import sys
 from dataclasses import dataclass, field
 from importlib.metadata import version
 from inspect import signature
-from typing import Any, Dict, List, Literal, Tuple, get_type_hints
+from typing import Any, Dict, List, Literal, Optional, Tuple, get_type_hints
 
 import networkx as nx
 import pandas as pd
@@ -29,7 +29,11 @@ from .InterpolatedRCDCalibrationCurve import InterpolatedRCDCalibrationCurve
 
 @dataclass
 class Model:
-    """MVP Model representing a polychron model."""
+    """MVP Model representing a polychron model.
+
+    Note:
+        `Optional[foo]` must be used rather than `from __future__ import annotations` and `foo | None` in python 3.9 due to use of `get_type_hints`
+    """
 
     name: str
     """The name of the model within the project (unique)"""
@@ -38,41 +42,41 @@ class Model:
     """The path to the directory representing this model on disk
     """
 
-    stratigraphic_graphviz_file: pathlib.Path | None = field(default=None)
+    stratigraphic_graphviz_file: Optional[pathlib.Path] = field(default=None)
     """Stratigraphic path for .dot/.gv input
     
     Formerly StartPage.FILE_INPUT
     """
 
-    stratigraphic_df: pd.DataFrame | None = field(default=None)
+    stratigraphic_df: Optional[pd.DataFrame] = field(default=None)
     """The stratigraphic file from CSV, if loaded.
 
     Formerly `StartPage.stratfile`
     """
 
-    stratigraphic_dag: nx.DiGraph | None = field(default=None)
+    stratigraphic_dag: Optional[nx.DiGraph] = field(default=None)
     """Stratigraphic Directed Acyclic Graph, initially produced from the stratigraphic dataframe or graphviz file before being mutated.
     
     Formerly `StartPage.graph`
     """
 
-    stratigraphic_image: Image.Image | None = field(default=None)
+    stratigraphic_image: Optional[Image.Image] = field(default=None)
     """Rendered version of the stratigraphic graph as an image, for whicle a handle must be kept for persistence.
     """
 
-    radiocarbon_df: pd.DataFrame | None = field(default=None)
+    radiocarbon_df: Optional[pd.DataFrame] = field(default=None)
     """Dataframe containing radiocarbon dating information, loaded from disk
     
     Formerly `StartPage.datefile`
     """
 
-    context_no_unordered: List[str] | None = field(default=None)
+    context_no_unordered: Optional[List[str]] = field(default=None)
     """A list of stratigraphic graph nodes, initially populated within open_scientific_dating_file before being used elsewhere.
 
     This list is in the order from the input file, rather than a topological order.
     """
 
-    group_df: pd.DataFrame | None = field(default=None)
+    group_df: Optional[pd.DataFrame] = field(default=None)
     """Dataframe of context grouping information loaded from disk. 
 
     Expected columns ["context", "Group"]
@@ -80,7 +84,7 @@ class Model:
     Formerly `StartPage.phasefile`
     """
 
-    group_relationship_df: pd.DataFrame | None = field(default=None)
+    group_relationship_df: Optional[pd.DataFrame] = field(default=None)
     """Dataframe containing group relationship information loaded from disk
     
     Expected columns ["above", "below"], although order of columns is used not the column names
@@ -88,13 +92,13 @@ class Model:
     Formerly `phase_rel_df` in `StartPage.open_file5`
     """
 
-    group_relationships: List[Tuple[str, str]] | None = field(default=None)
+    group_relationships: Optional[List[Tuple[str, str]]] = field(default=None)
     """A list of the relative relationships between groups, stored as Tuples of (above, below))
 
     Formerly `StartPage.phase_rels`
     """
 
-    context_equality_df: pd.DataFrame | None = field(default=None)
+    context_equality_df: Optional[pd.DataFrame] = field(default=None)
     """Dataframe containing context equality relationship information loaded from disk
     
     Formerly `equal_rel_df` in `StartPage.open_file6`
@@ -106,13 +110,13 @@ class Model:
     Formerly `global load_check`, where "loaded" is now True and "not_loaded" is False.
     """
 
-    chronological_dag: nx.DiGraph | None = field(default=None)
+    chronological_dag: Optional[nx.DiGraph] = field(default=None)
     """Chronological directed graph, produced by rendering the chronological graph
     
     Formerly `StartPage.chrono_dag`
     """
 
-    chronological_image: Image.Image | None = field(default=None)
+    chronological_image: Optional[Image.Image] = field(default=None)
     """Rendered version of the Chronological graph as an image, for which a handle must be kept for persistence and to avoid regenerating when not required.
 
     When load_check is True, this image is valid for the current state of the Model.
@@ -144,7 +148,7 @@ class Model:
     Formerly `StartPage.edges_del` and `StartPage.deledges_meta`
     """
 
-    resid_or_intru_dag: nx.DiGraph | None = field(default=None)
+    resid_or_intru_dag: Optional[nx.DiGraph] = field(default=None)
     """Copy of stratigraphic_dag for the residual or intrusive workflow
 
     This is mutated to show which nodes have been marked as residual or intrusive.
@@ -154,7 +158,7 @@ class Model:
     Formerly `PageTwo.graphcopy`
     """
 
-    resid_or_intru_image: Image.Image | None = field(default=None)
+    resid_or_intru_image: Optional[Image.Image] = field(default=None)
     """Image handle for the rendered png of the stratigraphic graph with residual or intrusive node highlighting.
 
     A handle to this needs to be maintained to avoid garbage collection
@@ -232,7 +236,7 @@ class Model:
     If mcmc_check is true, it is implied that this has been saved to disk
     """
 
-    node_coords_and_scale: Tuple[pd.DataFrame, List[float]] | None = field(default=None)
+    node_coords_and_scale: Optional[Tuple[pd.DataFrame, List[float]]] = field(default=None)
     """A tuple containing a dataframe of node coordinates within the most recently rendered svg graph, and a list of 2 floating point numbers which are from svg scale properties.
 
     Set and used for node right-click detection
@@ -242,7 +246,7 @@ class Model:
     Formerly `global node_df`
     """
 
-    __calibration: InterpolatedRCDCalibrationCurve | None = field(default=None, init=False, repr=False)
+    __calibration: Optional[InterpolatedRCDCalibrationCurve] = field(default=None, init=False, repr=False)
     """Interpolated RCD calibration curve object, which is storedin a member variable so it is loaded once and only once"""
 
     def get_working_directory(self) -> pathlib.Path:
@@ -456,18 +460,18 @@ class Model:
                     # If the values is None, do nothing.
                     if model_data[k] is None:
                         pass
-                    elif type_hint in [pathlib.Path, pathlib.Path | None]:
+                    elif type_hint in [pathlib.Path, Optional[pathlib.Path]]:
                         model_data[k] = pathlib.Path(model_data[k])
-                    elif type_hint in [pd.DataFrame, pd.DataFrame | None]:
+                    elif type_hint in [pd.DataFrame, Optional[pd.DataFrame]]:
                         # DataFrames are encoded as json, parsed back into a dictionary before being encoded as json again. At this point, the first json decode has occurred so we should have a dictionary of dictionaries (one per column) which can be reconverted.
                         # However, this may have lost typing information for the columns, but they should have been strings anyway
                         if isinstance(model_data[k], dict):
                             model_data[k] = pd.DataFrame.from_dict(model_data[k], orient="columns")
-                    elif type_hint in [nx.DiGraph, nx.DiGraph | None]:
+                    elif type_hint in [nx.DiGraph, Optional[nx.DiGraph]]:
                         # Convert the node_link_data encoded networkx digraph via node_link_graph
                         # explicitly set edges value to future behaviour for networkx
                         model_data[k] = nx.node_link_graph(model_data[k], edges="edges", multigraph=False)
-                    elif type_hint in [List[Tuple[str, str]] | None]:
+                    elif type_hint in [Optional[List[Tuple[str, str]]]]:
                         # tuples are stored as lists in json, so must convert from a list of lists to a list of tuples
                         model_data[k] = [tuple(sub) for sub in model_data[k]]
                 else:
@@ -791,7 +795,7 @@ class Model:
         if png_path.is_file():
             self.chronological_image = Image.open(png_path)
 
-    def record_deleted_node(self, context: str, reason: str | None = None) -> None:
+    def record_deleted_node(self, context: str, reason: Optional[str] = None) -> None:
         """Method to add a node to the list of deleted nodes
 
         Parameters:
@@ -800,7 +804,7 @@ class Model:
         """
         self.deleted_nodes.append((context, reason))
 
-    def record_deleted_edge(self, context_a: str, context_b: str, reason: str | None = None) -> None:
+    def record_deleted_edge(self, context_a: str, context_b: str, reason: Optional[str] = None) -> None:
         """Method to add an edge to the list of deleted edges
 
         Parameters:
