@@ -2,7 +2,7 @@ import json
 import pathlib
 from dataclasses import dataclass, field
 from importlib.metadata import version
-from typing import Dict, List, Optional, Tuple, get_type_hints
+from typing import Dict, List, get_type_hints
 
 import pandas as pd
 
@@ -13,7 +13,7 @@ from ..util import MonotonicTimer
 class MCMCData:
     """Dataclass containing all of the MCMC results.
 
-    This enables lighter-weight "save" behaviour
+    This enables lighter-weight "save" behavior
 
     Note:
         `Optional[foo]` must be used rather than `from __future__ import annotations` and `foo | None` in python 3.9 due to use of `get_type_hints`
@@ -218,14 +218,8 @@ class MCMCData:
             unexpected_keys = []
             for k in mcmc_data:
                 if k in cls_type_hints:
-                    type_hint = cls_type_hints[k]
                     if mcmc_data[k] is None:
                         pass
-                    elif type_hint in [pathlib.Path, Optional[pathlib.Path]]:
-                        mcmc_data[k] = pathlib.Path(mcmc_data[k])
-                    elif type_hint in [Optional[List[Tuple[str, str]]]]:
-                        # tuples are stored as lists in json, so must convert from a list of lists to a list of tuples
-                        mcmc_data[k] = [tuple(sub) for sub in mcmc_data[k]]
                 else:
                     # If the key is not in the typehints, it will cause the ctor to trigger a runtime assertion, so remove it.
                     print(f"Warning: unexpected MCMCData member '{k}' during deserialisation", file=sys.stderr)
