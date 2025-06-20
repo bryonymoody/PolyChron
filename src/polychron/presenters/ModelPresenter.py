@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import tkinter as tk
 import tkinter.messagebox
 from tkinter.filedialog import askopenfile
