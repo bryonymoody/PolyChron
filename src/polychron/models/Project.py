@@ -65,7 +65,7 @@ class Project:
                 self.load_model_from_disk(name)
         return self.models.get(name, None)
 
-    def get_or_create_model(self, name: str, other: Model | None) -> Model:
+    def get_or_create_model(self, name: str, other: Model | None = None) -> Model:
         """Get or create a model within this Project, copying a reference model if provided
 
         Parameters:
@@ -90,7 +90,7 @@ class Project:
         # If no model was returned, create one and return it.
         return self.create_model(name, other)
 
-    def create_model(self, name: str, other: Model | None) -> Model:
+    def create_model(self, name: str, other: Model | None = None) -> Model:
         """Create a new model within the project with the provided name , copying a reference model if provided
 
         Parameters:
