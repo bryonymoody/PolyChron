@@ -23,7 +23,7 @@ class ProjectWelcomePresenter(FramePresenter[ProjectWelcomeView, ProjectSelectio
     def on_load_button(self) -> None:
         """When the load button is pressed, update the SelectProject view and switch to it"""
         # Update the list of available projects from disk (in case any have been created since)
-        self.model.projects_directiory.lazy_load()
+        self.model.projects_directory.lazy_load()
         self.mediator.switch_presenter("project_select")
 
     def on_create_button(self) -> None:
