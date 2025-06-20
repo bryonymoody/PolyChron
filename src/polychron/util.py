@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Set, Tuple
 
 import networkx as nx
 import numpy as np
+import packaging.version
 import pandas as pd
 from networkx.drawing.nx_pydot import read_dot
 from PIL import Image, ImageChops
@@ -81,6 +82,12 @@ def node_coords_fromjson(graph) -> Tuple[pd.DataFrame, List[float]]:
     if "pydot" in str(type(graph)):
         graphs = graph
     else:
+        # networkx.drawing.nx_pydot.to_pydot from networkx < 3.4 does not quote node attributes correctly if they contain characters such as :. Networkx 3.4 is only available for python >= 3.10, so a workaround is required for python 3.9 users.
+        # This is triggered for this method on the DatingResults view
+        if packaging.version.parse(nx.__version__) < packaging.version.parse("3.4.0"):
+            # Remove the contraction attribute from nodes.
+            for i in graph.nodes:
+                graph.nodes[i].pop("contraction", None)
         graphs = nx.nx_pydot.to_pydot(graph)
     svg_string = str(graphs.create_svg())
     scale_info = re.search("points=(.*?)/>", svg_string).group(1).replace(" ", ",")
