@@ -1,5 +1,7 @@
 from typing import Any, Dict
 
+import pandas as pd
+
 from ..interfaces import Mediator
 from ..views.DatafilePreviewView import DatafilePreviewView
 from .PopupPresenter import PopupPresenter
@@ -24,7 +26,7 @@ class DatafilePreviewPresenter(PopupPresenter[DatafilePreviewView, Dict[str, Any
 
     def update_view(self) -> None:
         # populate with dataframe contents
-        if "df" not in self.model:
+        if "df" not in self.model or not isinstance(self.model["df"], pd.DataFrame):
             return
         df = self.model["df"]
 
