@@ -10,7 +10,7 @@ import sys
 from dataclasses import dataclass, field
 from importlib.metadata import version
 from inspect import signature
-from typing import Any, Dict, List, Literal, Optional, Tuple, get_type_hints
+from typing import Dict, List, Literal, Optional, Tuple, get_type_hints
 
 import networkx as nx
 import packaging.version
@@ -837,7 +837,20 @@ class Model:
         """
         self.deleted_edges.append((context_a, context_b, reason))
 
-    def MCMC_func(self) -> Tuple[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]:
+    def MCMC_func(
+        self,
+    ) -> Tuple[
+        List[str],
+        List[List[float]],
+        List[List[float]],
+        List[str],
+        int,
+        int,
+        List[List[float]],
+        List[List[float]],
+        Dict[str[List[float]]],
+        Dict[str[List[float]]],
+    ]:
         """run the mcmc calibration on the current model, returning output values without (significantly) mutating state
 
         gathers all the inputs for the mcmc module and then runs it and returns resuslts dictionaries
