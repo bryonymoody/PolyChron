@@ -11,7 +11,7 @@ class TestAddContextPresenter:
     The Mediator and View are Mocked to avoid creation of tkinter UI components during test execution.
     """
 
-    def test_init(self, tmp_path):
+    def test_init(self):
         """Tests the __init__ method of the AddContextPresenter class.
 
         Checks that the presenter has the expected values after initialisation, and that any view methods were called as expected
@@ -41,7 +41,7 @@ class TestAddContextPresenter:
         # Assert that the single argument was a callable (i.e. a function)
         assert callable(args[0])
 
-    def test_update_view(self, tmp_path):
+    def test_update_view(self):
         """Test the update view method can be called
 
         In this case it has no impact, to assert for, but must be defined.
