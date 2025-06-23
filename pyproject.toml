@@ -79,6 +79,9 @@ filterwarnings = [
     # Suppress numpy find_common_type DeprecationWarnings, which are raised by some pandas versions
     "ignore:.*np.find_common_type.*:DeprecationWarning",
 ]
+markers = [
+    "importable: marks tests as import-only (deselect with '-m \"not importable\"')",
+]
 
 # Lint & Format configuration
 [tool.ruff]
