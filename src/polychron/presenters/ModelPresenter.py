@@ -457,7 +457,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 df = pd.read_csv(file)
                 df = df.applymap(str)
                 # Update the model & post process, updating the graph
-                model_model.set_equal_rel_df(df)
+                model_model.set_context_equality_df(df)
 
                 # Render the image in phases or not
                 model_model.render_strat_graph()
