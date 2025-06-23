@@ -48,7 +48,7 @@ class CalibrateModelSelectPresenter(PopupPresenter[CalibrateModelSelectView, Pro
                 for model_name in selected_models:
                     if project.has_model(model_name):
                         model = project.get_model(model_name)
-                        if model is not None:
+                        if model is not None and model.load_check:
                             (
                                 model.mcmc_data.contexts,
                                 model.mcmc_data.accept_samples_context,
