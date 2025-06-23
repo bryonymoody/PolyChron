@@ -28,14 +28,10 @@ class DatafilePreviewPresenter(PopupPresenter[DatafilePreviewView, Dict[str, Any
             return
         df = self.model["df"]
 
-        # Update the tree view
+        # Pass data to the view
         cols = list(df.columns)
-        self.view.tree["columns"] = cols
-        for i in cols:
-            self.view.tree.column(i, anchor="w")
-            self.view.tree.heading(i, text=i, anchor="w")
-        for index, row in df.iterrows():
-            self.view.tree.insert("", 00, text=index, values=list(row))
+        rows = [tuple([index, list(row)]) for index, row in df.iterrows()]
+        self.view.set_tree_data(cols, rows)
 
     def on_load_button(self) -> None:
         """When the load button is pressed, store the dataframe in the model and close the popup"""
