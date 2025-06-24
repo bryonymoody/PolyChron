@@ -122,7 +122,8 @@ pytest
 
 Linting is handled using [`ruff`](https://github.com/astral-sh/ruff) which can be installed as part of the `dev` extras.
 
-> **Note**: `automated_mcmc_ordering_coupling.py` is currently excluded from linting
+> [!NOTE]  
+> `automated_mcmc_ordering_coupling.py` is currently excluded from linting
 
 Ruff can then be invoked using:
 
@@ -131,3 +132,20 @@ python3 -m ruff check
 # or
 ruff check
 ```
+
+## Formatting
+
+Automatic code formatting is handled using [`ruff`](https://github.com/astral-sh/ruff) which can be installed as part of the `dev` extras.
+
+> [!NOTE]  
+> `automated_mcmc_ordering_coupling.py` is currently excluded from formatting
+
+Ruff can then be invoked using:
+
+```bash
+python3 -m ruff fromat
+# or
+ruff format
+```
+
+This can be automatically applied on commit through [pre-commit hooks](https://docs.astral.sh/ruff/integrations/#pre-commit)
