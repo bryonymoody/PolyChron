@@ -1,4 +1,4 @@
-from sys import stderr
+import sys
 from tkinter import messagebox as messagebox
 
 from ..interfaces import Mediator
@@ -49,7 +49,7 @@ class ModelSelectPresenter(FramePresenter[ModelSelectView, ProjectSelection]):
                 # Close the popup and switch to the ModelPresenter/View if no errors occured during loading
                 self.mediator.close_window("load_model")
         else:
-            print("Warning: No model selected", file=stderr)
+            print("Warning: No model selected", file=sys.stderr)
 
     def on_back_button(self) -> None:
         """When the Back button is pressed, update the previous view and switch to it
