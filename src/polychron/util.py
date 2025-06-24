@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import copy
 import re
 import time
 from typing import Any, Dict, List, Set, Tuple
@@ -82,12 +83,8 @@ def node_coords_fromjson(graph) -> Tuple[pd.DataFrame, List[float]]:
     if "pydot" in str(type(graph)):
         graphs = graph
     else:
-        # networkx.drawing.nx_pydot.to_pydot from networkx < 3.4 does not quote node attributes correctly if they contain characters such as :. Networkx 3.4 is only available for python >= 3.10, so a workaround is required for python 3.9 users.
-        # This is triggered for this method on the DatingResults view
-        if packaging.version.parse(nx.__version__) < packaging.version.parse("3.4.0"):
-            # Remove the contraction attribute from nodes.
-            for i in graph.nodes:
-                graph.nodes[i].pop("contraction", None)
+        # Ensure the graph is compatible with networkx < 3.4 nx_pydot
+        graph = remove_invalid_attributes_networkx_lt_3_4(graph)
         graphs = nx.nx_pydot.to_pydot(graph)
     svg_string = str(graphs.create_svg())
     scale_info = re.search("points=(.*?)/>", svg_string).group(1).replace(" ", ",")
@@ -548,6 +545,34 @@ def edge_label(src: str, dst: str) -> str:
     assert dst is not None
 
     return f"{src} above {dst}"
+
+
+def remove_invalid_attributes_networkx_lt_3_4(graph: nx.DiGraph) -> nx.DiGraph:
+    """Function which removes 'contraction' attribtues from the provided networkx DiGraph if they are set and networkx is less than 3.4.
+
+    This is required for networkx-pydot interaction, as networkx < 3.4 does not correctly escape these values in it's pydot interface, leading to unescaped `:` errors.
+
+    Networkx 3.4 requires python 3.10+, so while python 3.9 support is required we must also support older networkx releases which include this bug.
+
+    Parameters:
+        graph: The DiGraph to remove contraction attributes from
+
+    returns:
+        The graph with invalid contraction attribtues removed
+    """
+    # Check the version of networkx requires this
+    if packaging.version.parse(nx.__version__) < packaging.version.parse("3.4.0"):
+        # Copy the graph, to avoid mutating the original
+        mutated_graph = copy.deepcopy(graph)
+        # For each node in the graph, pop the contraction attribute
+        for i in mutated_graph.nodes:
+            mutated_graph.nodes[i].pop("contraction", None)
+        # For each edge in the graph, pop the contraction attribute (caused by setting context equalities)
+        for e in mutated_graph.edges:
+            mutated_graph.edges[e].pop("contraction", None)
+        return mutated_graph
+    else:
+        return graph
 
 
 class MonotonicTimer:

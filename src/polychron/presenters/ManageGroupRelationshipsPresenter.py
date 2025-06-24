@@ -5,12 +5,11 @@ from typing import Any
 
 import networkx as nx
 import numpy as np
-import packaging.version
 from networkx.drawing.nx_pydot import write_dot
 
 from ..interfaces import Mediator
 from ..models.Model import Model
-from ..util import chrono_edge_add, chrono_edge_remov, node_del_fixed
+from ..util import chrono_edge_add, chrono_edge_remov, node_del_fixed, remove_invalid_attributes_networkx_lt_3_4
 from ..views.ManageGroupRelationshipsView import ManageGroupRelationshipsView
 from .PopupPresenter import PopupPresenter
 
@@ -265,11 +264,8 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
         for b in edge_remove:
             self.graphcopy.remove_edge(b[0], b[1])
 
-        # networkx.drawing.nx_pydot.write_dot from networkx < 3.4 does not quote node attributes correctly if they contain characters such as :. Networkx 3.4 is only available for pythono >= 3.10, so a workaround is required for python 3.9 users.
-        if packaging.version.parse(nx.__version__) < packaging.version.parse("3.4.0"):
-            # Remove the contraction attribute from nodes.
-            for i in nodes:
-                self.graphcopy.nodes[i].pop("contraction", None)
+        # Ensure the graph is compatible with networkx < 3.4 nx_pydot
+        self.graphcopy = remove_invalid_attributes_networkx_lt_3_4(self.graphcopy)
 
         write_dot(self.graphcopy, workdir / "fi_new_chrono")
 
