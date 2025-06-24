@@ -63,7 +63,7 @@ class TestProjectWelcomePresenter:
         assert len(mock_view.bind_load_button.call_args.args) == 1
         assert callable(mock_view.bind_load_button.call_args.args[0])
 
-        # Assert that bind_load_button was called on the view, with one argument which was a callable
+        # Assert that bind_create_button was called on the view, with one argument which was a callable
         mock_view.bind_create_button.assert_called_once()
         assert len(mock_view.bind_create_button.call_args.args) == 1
         assert callable(mock_view.bind_create_button.call_args.args[0])

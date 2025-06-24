@@ -20,7 +20,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
     """Presenter for the Dating Results page/tab."""
 
     def __init__(self, mediator: Mediator, view: DatingResultsView, model: ProjectSelection):
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         self.results_list: List[str] = []

@@ -11,7 +11,7 @@ class ModelSelectPresenter(FramePresenter[ModelSelectView, ProjectSelection]):
     """Presenter for a frame allowing the user to select a model from a list of models within a project, or a button to create a new one."""
 
     def __init__(self, mediator: Mediator, view: ModelSelectView, model: ProjectSelection) -> None:
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         # Bind button callbacks

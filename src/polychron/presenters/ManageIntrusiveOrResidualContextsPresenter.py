@@ -13,7 +13,7 @@ class ManageIntrusiveOrResidualContextsPresenter(PopupPresenter[ManageIntrusiveO
     """
 
     def __init__(self, mediator: Mediator, view: ManageIntrusiveOrResidualContextsView, model: Model = None) -> None:
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         # Bind the back button

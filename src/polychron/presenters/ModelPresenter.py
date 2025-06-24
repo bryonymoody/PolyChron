@@ -39,7 +39,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
     """Presenter for the main model tab"""
 
     def __init__(self, mediator: Mediator, view: ModelView, model: ProjectSelection) -> None:
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         # Properties

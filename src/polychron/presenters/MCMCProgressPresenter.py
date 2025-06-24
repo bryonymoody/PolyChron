@@ -37,7 +37,7 @@ class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
     """
 
     def __init__(self, mediator: Mediator, view: MCMCProgressView, model: Model) -> None:
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         # Update view information to reflect the current state of the model

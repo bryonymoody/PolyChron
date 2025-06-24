@@ -12,7 +12,7 @@ class CalibrateModelSelectPresenter(PopupPresenter[CalibrateModelSelectView, Pro
     """
 
     def __init__(self, mediator: Mediator, view: CalibrateModelSelectView, model: ProjectSelection) -> None:
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         # Bind buttons
