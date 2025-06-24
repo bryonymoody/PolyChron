@@ -1,4 +1,4 @@
-from sys import stderr
+import sys
 from tkinter import messagebox as messagebox
 
 from ..interfaces import Mediator
@@ -44,7 +44,7 @@ class ModelCreatePresenter(FramePresenter[ModelCreateView, ProjectSelection]):
                 # Close the model loading popup.
                 self.mediator.close_window("new_model")
         else:
-            print("Warning: a project name must be provided.", file=stderr)
+            print("Warning: a project name must be provided.", file=sys.stderr)
 
     def on_back_button(self) -> None:
         """When the back button is pressed, return to the previous view

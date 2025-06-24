@@ -1,4 +1,4 @@
-from sys import stderr
+import sys
 
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
@@ -31,7 +31,7 @@ class ProjectCreatePresenter(FramePresenter[ProjectCreateView, ProjectSelection]
             # Switch to the model creation view
             self.mediator.switch_presenter("model_create")
         else:
-            print("Warning: a project name must be provieded.", file=stderr)
+            print("Warning: a project name must be provided.", file=sys.stderr)
 
     def on_back_button(self) -> None:
         """When the back button is pressed, return to the project_welcome view"""

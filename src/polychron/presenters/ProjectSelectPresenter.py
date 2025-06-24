@@ -1,4 +1,4 @@
-from sys import stderr
+import sys
 
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
@@ -32,7 +32,8 @@ class ProjectSelectPresenter(FramePresenter[ProjectSelectView, ProjectSelection]
             # Switch views
             self.mediator.switch_presenter("model_select")
         else:
-            print("Warning: No project selected", file=stderr)
+            self.model.next_project_name = None
+            print("Warning: No project selected", file=sys.stderr)
 
     def on_back_button(self) -> None:
         """When the Back button is pressed, update the previous view and switch to it"""
