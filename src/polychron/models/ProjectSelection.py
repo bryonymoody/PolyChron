@@ -83,7 +83,7 @@ class ProjectSelection:
                 return None
 
     @current_project_name.setter
-    def current_project_name(self, name: str) -> None:
+    def current_project_name(self, name: str | None) -> None:
         """Set the current project by name
 
         Todo:
@@ -92,7 +92,7 @@ class ProjectSelection:
         self.__current_project_name = name
 
     @current_model_name.setter
-    def current_model_name(self, name: str) -> None:
+    def current_model_name(self, name: str | None) -> None:
         """Set the current model by name
 
         Todo:
@@ -194,7 +194,7 @@ class ProjectSelection:
 
         # Within that Project, get or create the model.
         # Any raised exceptions will be allowed to propagate upwards for presentation to the user
-        # Depedning on function parameters, try to load or create the model
+        # Depending on function parameters, try to load or create the model
         if load_ok and create_ok:
             project.get_or_create_model(self.next_model_name, copy_from)
         elif load_ok and not create_ok:
@@ -207,7 +207,7 @@ class ProjectSelection:
             # This will raise a RuntimeError if the model already exists
             project.create_model(self.next_model_name, copy_from)
         else:
-            # Atleast one of load_ok or create_ok must be truthy
+            # At least one of load_ok or create_ok must be truthy
             function_name = inspect.currentframe().f_code.co_name
             raise ValueError(f"{function_name} requires at least one of 'load_ok' and 'create_ok' to be True")
 
