@@ -1,5 +1,4 @@
 import sys
-from tkinter import messagebox as messagebox
 
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
@@ -24,7 +23,7 @@ class ModelCreatePresenter(FramePresenter[ModelCreateView, ProjectSelection]):
 
     def on_submit_button(self) -> None:
         """When the submit button is pressed, update the data model, validate and close the view or present an error"""
-        new_model_name: str = self.view.get_name()
+        new_model_name = self.view.get_name()
         if len(new_model_name) > 0:
             # Set the next model name
             self.model.next_model_name = new_model_name
@@ -34,13 +33,13 @@ class ModelCreatePresenter(FramePresenter[ModelCreateView, ProjectSelection]):
                 self.model.switch_to_next_project_model(load_ok=False, create_ok=True)
             except RuntimeError as e:
                 # Runtime errors currently include existing directories (and missing values)
-                messagebox.showerror("Tips", f"An error occurred while creating the model: {e}", parent=self.view)
+                self.view.messagebox_error("Tips", f"An error occurred while creating the model: {e}")
             except Exception as e:
                 # Other exceptions may occur, i.e. permission errors. Forward the message to the user.
-                messagebox.showerror("Tips", f"An error occurred while creating the model: {e}", parent=self.view)
+                self.view.messagebox_error("Tips", f"An error occurred while creating the model: {e}")
             else:
-                # If no exceptions occurred, and the model has been created (and it's folders) present a succes message and close the popup.
-                messagebox.showinfo("Tips:", "model created successfully!", parent=self.view)
+                # If no exceptions occurred, and the model has been created (and it's folders) present a success message and close the popup.
+                self.view.messagebox_info("Tips:", "Model created successfully!")
                 # Close the model loading popup.
                 self.mediator.close_window("new_model")
         else:
