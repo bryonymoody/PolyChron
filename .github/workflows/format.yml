@@ -1,0 +1,46 @@
+name: Format
+
+on:
+  # on push to any branch
+  push:
+  # On workflow dispatch events (i.e. can manually run)
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      # Formatting is only really worth doing once, with the minimum supported python.
+      matrix:
+        os:
+          - ubuntu-24.04
+        python-version:
+          - "3.9"
+
+    steps:
+      # Checkout this repository
+      - uses: actions/checkout@v4
+
+      # Select the appropriate python version
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      # Install non-python dependencies. This could be skipped if we manually installed lint dependencies
+      - name: Install non-python dependencies
+        run: |
+          sudo apt-get -y install graphviz
+
+      # Install the package into the current python environment with the dev extra group
+      - name: Install polychron and dev dependencies
+        run: |
+          python3 -m pip install -U pip
+          python3 -m pip install .[dev]
+
+      # Run the formatter, esnuring a non-zero exit code is returned if any files were modified (as this checks for formatting errors, rather than fixes them)
+      - name: Run ruff format
+        run: |
+          python3 -m ruff format --check
