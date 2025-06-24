@@ -24,7 +24,15 @@ from PIL import Image
 from ..automated_mcmc_ordering_coupling_copy import run_MCMC
 from ..Config import get_config
 from ..models.MCMCData import MCMCData
-from ..util import MonotonicTimer, node_coords_fromjson, phase_info_func, phase_labels, rank_func, trim
+from ..util import (
+    MonotonicTimer,
+    node_coords_fromjson,
+    phase_info_func,
+    phase_labels,
+    rank_func,
+    remove_invalid_attributes_networkx_lt_3_4,
+    trim,
+)
 from .InterpolatedRCDCalibrationCurve import InterpolatedRCDCalibrationCurve
 
 
@@ -682,6 +690,8 @@ class Model:
         workdir = self.get_working_directory()
         workdir.mkdir(parents=True, exist_ok=True)
         self.stratigraphic_dag.graph["graph"] = {"splines": "ortho"}
+        # Ensure the graph is compatible with networkx < 3.4 nx_pydot
+        self.stratigraphic_dag = remove_invalid_attributes_networkx_lt_3_4(self.stratigraphic_dag)
         write_dot(self.stratigraphic_dag, workdir / "fi_new")
         render("dot", "png", workdir / "fi_new")
         render("dot", "svg", workdir / "fi_new")
@@ -699,6 +709,8 @@ class Model:
         workdir = self.get_working_directory()
         workdir.mkdir(parents=True, exist_ok=True)
 
+        # Ensure the graph is compatible with networkx < 3.4 nx_pydot
+        self.stratigraphic_dag = remove_invalid_attributes_networkx_lt_3_4(self.stratigraphic_dag)
         write_dot(self.stratigraphic_dag, workdir / "fi_new.txt")
         my_file = open(workdir / "fi_new.txt")
         file_content = my_file.read()
@@ -724,6 +736,8 @@ class Model:
         workdir.mkdir(exist_ok=True)
 
         self.resid_or_intru_dag.graph["graph"] = {"splines": "ortho"}
+        # Ensure the graph is compatible with networkx < 3.4 nx_pydot
+        self.resid_or_intru_dag = remove_invalid_attributes_networkx_lt_3_4(self.resid_or_intru_dag)
         write_dot(self.resid_or_intru_dag, workdir / "fi_new")
         render("dot", "png", workdir / "fi_new")
         render("dot", "svg", workdir / "fi_new")
@@ -740,7 +754,8 @@ class Model:
         """
         workdir = self.get_working_directory() / "resid_or_intru"
         workdir.mkdir(exist_ok=True)
-
+        # Ensure the graph is compatible with networkx < 3.4 nx_pydot
+        self.resid_or_intru_dag = remove_invalid_attributes_networkx_lt_3_4(self.resid_or_intru_dag)
         write_dot(self.resid_or_intru_dag, workdir / "fi_new.txt")
         my_file = open(workdir / "fi_new.txt")
         file_content = my_file.read()
