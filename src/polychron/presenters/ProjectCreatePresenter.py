@@ -31,6 +31,8 @@ class ProjectCreatePresenter(FramePresenter[ProjectCreateView, ProjectSelection]
             # Switch to the model creation view
             self.mediator.switch_presenter("model_create")
         else:
+            self.model.next_project_name = None
+            self.model.using_new_project_process = False
             print("Warning: a project name must be provided.", file=sys.stderr)
 
     def on_back_button(self) -> None:
