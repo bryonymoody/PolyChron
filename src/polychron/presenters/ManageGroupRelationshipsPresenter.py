@@ -18,7 +18,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
     """Presenter for managing Residual vs Intrusive contexts"""
 
     def __init__(self, mediator: Mediator, view: ManageGroupRelationshipsView, model: Model) -> None:
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         # Create a box per phase in the model, based on the models phase releationships

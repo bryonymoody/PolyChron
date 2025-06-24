@@ -8,7 +8,7 @@ from .FramePresenter import FramePresenter
 
 class ProjectCreatePresenter(FramePresenter[ProjectCreateView, ProjectSelection]):
     def __init__(self, mediator: Mediator, view: ProjectCreateView, model: ProjectSelection) -> None:
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         # Bind button callbacks to presenter methods

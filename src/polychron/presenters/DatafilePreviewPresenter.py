@@ -14,7 +14,7 @@ class DatafilePreviewPresenter(PopupPresenter[DatafilePreviewView, Dict[str, Any
     """
 
     def __init__(self, mediator: Mediator, view: DatafilePreviewView, model: Dict[str, Any]) -> None:
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         # Bind buttons

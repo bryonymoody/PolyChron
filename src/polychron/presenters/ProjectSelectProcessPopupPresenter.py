@@ -23,7 +23,7 @@ class ProjectSelectProcessPopupPresenter(PopupPresenter[ProjectSelectProcessPopu
     """Presenter for the project new or select process, which is a mult-frame presenter, much like the main window."""
 
     def __init__(self, mediator: Mediator, view: ProjectSelectProcessPopupView, model: ProjectSelection) -> None:
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         # Build a dictionary of child presenter-view pairings

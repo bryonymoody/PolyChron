@@ -22,7 +22,7 @@ class ResidualOrIntrusivePresenter(PopupPresenter[ResidualOrIntrusiveView, Model
     """
 
     def __init__(self, mediator: Mediator, view: ResidualOrIntrusiveView, model: Model) -> None:
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         self.mode: Literal["resid", "intru"] | None = None
