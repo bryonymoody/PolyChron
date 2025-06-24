@@ -154,7 +154,7 @@ class Project:
             self.models[model.name] = model
 
         except Exception as e:
-            print(f"An exception occured when attempting to load {name}: {e}", file=sys.stderr)
+            print(f"An exception occurred when attempting to load {name}: {e}", file=sys.stderr)
             raise e
 
     def lazy_load(self) -> None:

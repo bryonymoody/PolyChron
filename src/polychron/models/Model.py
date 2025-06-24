@@ -343,7 +343,7 @@ class Model:
         """Save the current state of this model to disk at self.path
 
         Raises:
-            RuntimeError: raised when any error occured during saving, with a message to present to the user
+            RuntimeError: raised when any error occurred during saving, with a message to present to the user
         """
 
         # Ensure directories requried exist
@@ -351,7 +351,7 @@ class Model:
             self.create_dirs()
         except (OSError, NotADirectoryError) as e:
             raise RuntimeError(
-                f'Unable to save "polychron_model.json", an error occured while creating Model directories: {e}'
+                f'Unable to save "polychron_model.json", an error occurred while creating Model directories: {e}'
             )
 
         try:
@@ -414,7 +414,7 @@ class Model:
 
         except Exception as e:
             raise RuntimeError(
-                f'Unable to save "polychron_model.json", an error occured while creating Model directories: {e}'
+                f'Unable to save "polychron_model.json", an error occurred while creating Model directories: {e}'
             )
 
     @classmethod

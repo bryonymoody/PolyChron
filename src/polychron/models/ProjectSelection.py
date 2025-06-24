@@ -211,7 +211,7 @@ class ProjectSelection:
             function_name = inspect.currentframe().f_code.co_name
             raise ValueError(f"{function_name} requires at least one of 'load_ok' and 'create_ok' to be True")
 
-        # Update internal state, setting the current and next project/model variables, if no exceptions occured so far
+        # Update internal state, setting the current and next project/model variables, if no exceptions occurred so far
         self.current_project_name = self.next_project_name
         self.current_model_name = self.next_model_name
         self.next_project_name = None

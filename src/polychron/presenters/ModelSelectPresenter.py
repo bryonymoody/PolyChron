@@ -39,14 +39,14 @@ class ModelSelectPresenter(FramePresenter[ModelSelectView, ProjectSelection]):
                 self.model.switch_to_next_project_model(load_ok=True, create_ok=False)
             except RuntimeWarning as e:
                 # Runtime errors currently include existing directories (and missing values)
-                messagebox.showerror("Tips", f"An error occured while loading the model: {e}", parent=self.view)
+                messagebox.showerror("Tips", f"An error occurred while loading the model: {e}", parent=self.view)
             except RuntimeError as e:
                 # Runtime errors currently include existing directories (and missing values)
-                messagebox.showerror("Tips", f"An error occured while loading the model: {e}", parent=self.view)
+                messagebox.showerror("Tips", f"An error occurred while loading the model: {e}", parent=self.view)
             except Exception as e:
                 raise e
             else:
-                # Close the popup and switch to the ModelPresenter/View if no errors occured during loading
+                # Close the popup and switch to the ModelPresenter/View if no errors occurred during loading
                 self.mediator.close_window("load_model")
         else:
             print("Warning: No model selected", file=sys.stderr)

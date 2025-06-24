@@ -34,10 +34,10 @@ class ModelCreatePresenter(FramePresenter[ModelCreateView, ProjectSelection]):
                 self.model.switch_to_next_project_model(load_ok=False, create_ok=True)
             except RuntimeError as e:
                 # Runtime errors currently include existing directories (and missing values)
-                messagebox.showerror("Tips", f"An error occured while creating the model: {e}", parent=self.view)
+                messagebox.showerror("Tips", f"An error occurred while creating the model: {e}", parent=self.view)
             except Exception as e:
                 # Other exceptions may occur, i.e. permission errors. Forward the message to the user.
-                messagebox.showerror("Tips", f"An error occured while creating the model: {e}", parent=self.view)
+                messagebox.showerror("Tips", f"An error occurred while creating the model: {e}", parent=self.view)
             else:
                 # If no exceptions occurred, and the model has been created (and it's folders) present a succes message and close the popup.
                 messagebox.showinfo("Tips:", "model created successfully!", parent=self.view)
