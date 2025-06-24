@@ -10,13 +10,13 @@ class RemoveStratigraphicRelationshipPresenter(
 ):
     """Presenter for a popup window to provide the reason for the removal of a single stratigraphic relationship
 
-    Formerly `popupWindow6`, called by StartPage.edge_del_popup, triggered when "Delete stratigraphic relationship" is selected on an edge
+    Formerly `popupWindow6`, called by `StartPage.edge_del_popup`, triggered when "Delete stratigraphic relationship" is selected on an edge
     """
 
     def __init__(
         self, mediator: Mediator, view: RemoveStratigraphicRelationshipView, model: Dict[str, Optional[str]]
     ) -> None:
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         # Bind buttons
@@ -27,6 +27,7 @@ class RemoveStratigraphicRelationshipPresenter(
         self.update_view()
 
     def update_view(self) -> None:
+        """Update the RemoveStratigraphicRelationshipView to include the relationship which is being removed"""
         if "context_a" in self.model and "context_b" in self.model:
             edge_label = f"'{self.model['context_a']}' and '{self.model['context_b']}'"
             self.view.update_label(edge_label)
