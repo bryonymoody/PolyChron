@@ -30,7 +30,7 @@ class ModelSelectPresenter(FramePresenter[ModelSelectView, ProjectSelection]):
     def on_load_button(self) -> None:
         """When the load button is pressed, update the wider application model data structure and close the popup"""
         selected_model = self.view.get_selected_model()
-        if selected_model is not None or selected_model == "":
+        if selected_model is not None and selected_model != "":
             # Update the data model to include the selected project
             self.model.next_model_name = selected_model
             # Try to switch to the model (load it, and update state)
