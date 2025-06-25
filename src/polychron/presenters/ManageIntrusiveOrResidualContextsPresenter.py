@@ -7,10 +7,7 @@ from .PopupPresenter import PopupPresenter
 
 
 class ManageIntrusiveOrResidualContextsPresenter(PopupPresenter[ManageIntrusiveOrResidualContextsView, Model]):
-    """Presenter for managing the MCMC progress bar popup view.
-
-    When MCMC calibration has completed, and the popup closes, the DatingResults tab should be loaded
-    """
+    """Presenter for selecting the type of residual and intrusive contexts"""
 
     def __init__(self, mediator: Mediator, view: ManageIntrusiveOrResidualContextsView, model: Model = None) -> None:
         # Call the parent class' constructor
@@ -35,9 +32,9 @@ class ManageIntrusiveOrResidualContextsPresenter(PopupPresenter[ManageIntrusiveO
         self.close_view()
 
     def on_proceed(self) -> None:
-        """Callback for when the back button is pressed, which closes the popup (and previous popup origianlly)
+        """Callback for when the proceed button is pressed, which closes the popup (and previous popup origianlly)
 
-        Formerly (some of) popupWindow4.move_to_graph
+        Formerly (some of) `popupWindow4.move_to_graph`
         """
 
         # Update the model with the selected values for the intrusive and residual drop downs.
