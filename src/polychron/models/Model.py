@@ -733,7 +733,7 @@ class Model:
         Formerly `imgrender`
         """
         workdir = self.get_working_directory() / "resid_or_intru"
-        workdir.mkdir(exist_ok=True)
+        workdir.mkdir(exist_ok=True, parents=True)
 
         self.resid_or_intru_dag.graph["graph"] = {"splines": "ortho"}
         # Ensure the graph is compatible with networkx < 3.4 nx_pydot
@@ -753,7 +753,7 @@ class Model:
         Formerly `imgrender_phase`
         """
         workdir = self.get_working_directory() / "resid_or_intru"
-        workdir.mkdir(exist_ok=True)
+        workdir.mkdir(exist_ok=True, parents=True)
         # Ensure the graph is compatible with networkx < 3.4 nx_pydot
         self.resid_or_intru_dag = remove_invalid_attributes_networkx_lt_3_4(self.resid_or_intru_dag)
         write_dot(self.resid_or_intru_dag, workdir / "fi_new.txt")
