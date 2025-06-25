@@ -16,6 +16,32 @@ class FrameView(tk.Frame):
         self.parent = parent
         """A reference to the parent frame"""
 
+        self.__grid_initialised: bool = False
+        """Flag indicating if place_in_container has been called"""
+
+    def place_in_container(self) -> None:
+        """Initial placement of the FrameView inside the containing element using grid, before immediately hiding"""
+        # Place in the parent grid
+        self.grid(row=0, column=0, sticky="nsew")
+        # Immediately hide the frame, but remembering placement
+        self.grid_remove()
+        self.__grid_initialised = True
+
+    def visible_in_container(self) -> None:
+        """Make the frame visible within the parent container (if it has one)"""
+        # If the frame has been placed via grid already, ensure it is on top of the grid and has focus
+        if self.__grid_initialised:
+            # Re-place in the grid using saved placement
+            self.grid()
+            # Give it focus for any keybind events
+            self.focus_set()
+
+    def not_visible_in_container(self) -> None:
+        """Make this FrameView not the "current" frame within a frame view with containers, via grid_remove"""
+        if self.__grid_initialised:
+            # Remove from the grid, but remembering placement within the container
+            self.grid_remove()
+
     def messagebox_info(self, title: str | None = None, message: str | None = None, **options: Dict[str, Any]) -> None:
         """Show an info message box with the provided type and message, and automatic parent setting:
 

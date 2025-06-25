@@ -79,9 +79,7 @@ class GUIApp(Mediator):
 
         # Place each main window within the container
         for presenter in self.presenters.values():
-            presenter.view.grid(row=0, column=0, sticky="nsew")
-            # Immediately hide the frame, but remember it's settings.
-            presenter.view.grid_remove()
+            presenter.view.place_in_container()
 
     def set_window_title(self, suffix: str | None = None) -> None:
         """Update the window title to include Polychron, the version of polychron, and the optional suffix
@@ -112,11 +110,19 @@ class GUIApp(Mediator):
         """Switch the current presenter using the provided key
 
         Parameters:
-            key (str): The key for the presenter to switch to."""
+            key: The key for the presenter to switch to (if not None)"""
+        # Get the current presenter
+        current_presenter = self.get_presenter(self.current_presenter_key)
+        # If the key is None, clear the current presenter
+        if key is None and current_presenter is not None:
+            current_presenter.view.grid_remove()
+            self.current_presenter_key = None
+            return
+
         if (new_presenter := self.get_presenter(key)) is not None:
             # Hide the current presenter if set
             if current_presenter := self.get_presenter(self.current_presenter_key):
-                current_presenter.view.grid_remove()
+                current_presenter.view.not_visible_in_container()
                 self.current_presenter_key = None
 
             # Update the now-current view
@@ -124,9 +130,7 @@ class GUIApp(Mediator):
             # Apply any view updates in case the model has been changed since last rendered
             new_presenter.update_view()
             # Re-place the frame using grid, with settings remembered from before
-            new_presenter.view.grid()
-            # Give it focus for any keybind events
-            new_presenter.view.focus_set()
+            new_presenter.view.visible_in_container()
 
             # Update the window title to potentially include a suffix.
             self.set_window_title(new_presenter.get_window_title_suffix())
