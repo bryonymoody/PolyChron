@@ -16,10 +16,7 @@ from .PopupPresenter import PopupPresenter
 
 
 class ResidualOrIntrusivePresenter(PopupPresenter[ResidualOrIntrusiveView, Model], Mediator):
-    """Presenter for managing the MCMC progress bar popup view.
-
-    When MCMC calibration has completed, and the popup closes, the mediator should change to the DatingResults tab
-    """
+    """Presenter for marking contexts as being residual or intrusive"""
 
     def __init__(self, mediator: Mediator, view: ResidualOrIntrusiveView, model: Model) -> None:
         # Call the parent class' constructor
@@ -28,7 +25,7 @@ class ResidualOrIntrusivePresenter(PopupPresenter[ResidualOrIntrusiveView, Model
         self.mode: Literal["resid", "intru"] | None = None
         """The currently selected mode, either None, "resid" or "intru"
         
-        Formerly PageTwo.modevariable
+        Formerly `PageTwo.modevariable`
         """
 
         # Bind enabling residual mode
