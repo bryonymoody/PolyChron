@@ -73,10 +73,20 @@ class ResidualOrIntrusivePresenter(PopupPresenter[ResidualOrIntrusiveView, Model
         self.view.set_intru_label_text(self.model.intrusive_contexts)
         self.view.set_resid_label_text(self.model.residual_contexts)
 
-    def set_mode(self, mode: Literal["resid", "intru"]) -> None:
+    def set_mode(self, mode: Literal["resid", "intru"] | None) -> None:
         """Set the current mode, and update the view accordingly.
 
-        Formerly part of StartPage.mode_set"""
+        Formerly part of `StartPage.mode_set`
+
+        Paramters:
+            mode: The mode to set
+
+        Raises:
+            ValueError: if mode is invalid
+        """
+        if mode not in ["resid", "intru", None]:
+            raise ValueError(f"invalid set_mode value '{mode}'")
+
         self.mode = mode
         self.update_view()
 
