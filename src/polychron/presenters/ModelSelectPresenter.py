@@ -1,5 +1,4 @@
 import sys
-from tkinter import messagebox as messagebox
 
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
@@ -31,24 +30,19 @@ class ModelSelectPresenter(FramePresenter[ModelSelectView, ProjectSelection]):
     def on_load_button(self) -> None:
         """When the load button is pressed, update the wider application model data structure and close the popup"""
         selected_model = self.view.get_selected_model()
-        if selected_model is not None:
+        if selected_model is not None or selected_model == "":
             # Update the data model to include the selected project
             self.model.next_model_name = selected_model
             # Try to switch to the model (load it, and update state)
             try:
                 self.model.switch_to_next_project_model(load_ok=True, create_ok=False)
-            except RuntimeWarning as e:
-                # Runtime errors currently include existing directories (and missing values)
-                messagebox.showerror("Tips", f"An error occurred while loading the model: {e}", parent=self.view)
-            except RuntimeError as e:
-                # Runtime errors currently include existing directories (and missing values)
-                messagebox.showerror("Tips", f"An error occurred while loading the model: {e}", parent=self.view)
-            except Exception as e:
-                raise e
-            else:
                 # Close the popup and switch to the ModelPresenter/View if no errors occurred during loading
                 self.mediator.close_window("load_model")
+            except (RuntimeWarning, RuntimeError, Exception) as e:
+                # Present an error message if an exception occurred
+                self.view.messagebox_error("Tips", f"An error occurred while loading the model: {e}")
         else:
+            self.model.next_model_name = None
             print("Warning: No model selected", file=sys.stderr)
 
     def on_back_button(self) -> None:
