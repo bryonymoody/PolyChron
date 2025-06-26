@@ -120,10 +120,10 @@ class Project:
         # Detect some invalid path errors, by checking that the model name matches the model path (i.e. name="/" or ".")
         if new_model.name != new_model.path.name:
             raise RuntimeError(
-                f"Model name '{name}' was converted to a non-matching directory name '{new_model.path.name}'. Please use an alternate model name"
+                f"Model name '{name}' was converted to an invalid directory name '{new_model.path.name}'."
             )
 
-        # Attempt to create the models's directories, to ensure the working directory exists and any desination directories when copying
+        # Attempt to create the models's directories, to ensure the working directory exists and any designation directories when copying
         # Ideally this would be on first-save, but we need the temporary directory to exist.
         # This will raise and propagate OSError and NotADirectoryError if any errors occurred
         new_model.create_dirs()
