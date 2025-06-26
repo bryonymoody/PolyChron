@@ -19,7 +19,7 @@ class StdoutRedirector(object):
 
     def write(self, text: str) -> None:
         """writes to canvas"""
-        self.pb1.update_idletasks
+        self.pb1.update_idletasks()
         str1 = re.findall(r"\d+", text)
         if len(str1) != 0:
             self.text_area["text"] = f"{str1[0]}% complete"
@@ -42,6 +42,9 @@ class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
 
         # Update view information to reflect the current state of the model
         self.update_view()
+
+    def update_view(self) -> None:
+        pass
 
     def run(self) -> None:
         """Runs model calibration for the current model"""
@@ -73,6 +76,3 @@ class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
         self.model.mcmc_check = True
         # Save the mcmc data to disk
         self.model.mcmc_data.save(self.model.get_working_directory(), self.model.group_df, get_config().verbose)
-
-    def update_view(self) -> None:
-        pass
