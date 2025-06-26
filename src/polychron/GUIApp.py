@@ -34,7 +34,7 @@ class GUIApp(Mediator):
     """
 
     def __init__(self) -> None:
-        # Initialse the application config object
+        # Initialise the application config object
         self.config: Config = get_config()
 
         # Construct the root tkinter window, as a themed TK app
@@ -66,7 +66,7 @@ class GUIApp(Mediator):
         self.container.grid_rowconfigure(0, weight=1)
         self.container.grid_columnconfigure(0, weight=1)
 
-        # Instantiate the "global" applcation data object
+        # Instantiate the "global" application data object
         self.project_selector_obj: ProjectSelection = ProjectSelection(self.config.projects_directory)
 
         # Construct the views and presenters for main window views (i.e. not-popups)
@@ -80,6 +80,9 @@ class GUIApp(Mediator):
         # Place each main window within the container
         for presenter in self.presenters.values():
             presenter.view.place_in_container()
+
+        # Set the initial presenter
+        self.switch_presenter("Splash")
 
     def set_window_title(self, suffix: str | None = None) -> None:
         """Update the window title to include Polychron, the version of polychron, and the optional suffix
