@@ -4,7 +4,7 @@ import pathlib
 import tkinter as tk
 from importlib.metadata import version
 from tkinter import ttk
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from ttkthemes import ThemedStyle, ThemedTk
@@ -14,7 +14,9 @@ from polychron.GUIApp import GUIApp
 from polychron.models.ProjectSelection import ProjectSelection
 from polychron.presenters.DatingResultsPresenter import DatingResultsPresenter
 from polychron.presenters.ModelPresenter import ModelPresenter
+from polychron.presenters.ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresenter
 from polychron.presenters.SplashPresenter import SplashPresenter
+from polychron.views.ProjectSelectProcessPopupView import ProjectSelectProcessPopupView
 
 
 class TestGUIApp:
@@ -198,8 +200,233 @@ class TestGUIApp:
             mock_root_quit.assert_called()
             mock_root_quit.reset_mock()
 
-    @pytest.mark.skip(reason="test_GUIApp not fully implemented")
     def test_register_global_keybinds(self):
-        """Assert that close_window behaves as expected"""
+        """Test that register_global_keybinds behaves as expected"""
         app = GUIApp()
-        app.register_global_keybinds()
+
+        # Patch out ThemedTk.bind and check it was called with the expected values
+        with patch("polychron.GUIApp.ThemedTk.bind") as mock_root_bind:
+            app.register_global_keybinds()
+            mock_root_bind.assert_called_once()
+            assert len(mock_root_bind.call_args.args) == 2
+            assert mock_root_bind.call_args.args[0] == "<Control-w>"
+            assert callable(mock_root_bind.call_args.args[1])
+
+    def test_register_protocols(self):
+        """Test that register_protocols behaves as expected"""
+        app = GUIApp()
+
+        # Patch out ThemedTk.protocol and check it was called with the expected values
+        with patch("polychron.GUIApp.ThemedTk.protocol") as mock_root_protocol:
+            app.register_protocols()
+            mock_root_protocol.assert_called_once()
+            assert len(mock_root_protocol.call_args.args) == 2
+            assert mock_root_protocol.call_args.args[0] == "WM_DELETE_WINDOW"
+            assert callable(mock_root_protocol.call_args.args[1])
+
+    def test_save_current_model(self):
+        """Test that save_current_model behaves as expected"""
+        app = GUIApp()
+
+        # Patch out Model.save and check it was called
+        with patch("polychron.models.Model.Model.save") as mock_model_save:
+            print(mock_model_save)
+            # Call with a default state app, which should not call the save method.
+            app.save_current_model()
+            mock_model_save.assert_not_called()
+            mock_model_save.reset_mock()
+
+            # Being on thee Model or DatingResults presenter but without a valid model should not trigger a save
+            app.switch_presenter("Model")
+            assert app.project_selector_obj.current_model is None
+            # Call save_current_model
+            app.save_current_model()
+            # Assert Model.save was not called
+            mock_model_save.assert_not_called()
+            mock_model_save.reset_mock()
+
+            app.switch_presenter("DatingResults")
+            assert app.project_selector_obj.current_model is None
+            # Call save_current_model
+            app.save_current_model()
+            # Assert Model.save was not called
+            mock_model_save.assert_not_called()
+            mock_model_save.reset_mock()
+
+            # Switch to the Model presenter, and select a valid model which should trigger save
+            app.switch_presenter("Model")
+            app.project_selector_obj.next_project_name = "foo"
+            app.project_selector_obj.next_model_name = "bar"
+            app.project_selector_obj.switch_to_next_project_model()
+            # Call save_current_model
+            app.save_current_model()
+            # Assert Model.save was called
+            mock_model_save.assert_called()
+            mock_model_save.reset_mock()
+
+            # Switch to the DatingResults presenter, and select a valid model which should trigger save
+            app.switch_presenter("DatingResults")
+            app.project_selector_obj.next_project_name = "foo"
+            app.project_selector_obj.next_model_name = "bar"
+            app.project_selector_obj.switch_to_next_project_model()
+            # Call save_current_model
+            app.save_current_model()
+            # Assert Model.save was called
+            mock_model_save.assert_called()
+            mock_model_save.reset_mock()
+
+    def test_exit_application(self):
+        """Test that exit_application behaves as expected"""
+        app = GUIApp()
+
+        # patch out ThemedTK.quit to ensure we can detect it would have been called
+        with patch("polychron.GUIApp.ThemedTk.quit") as mock_root_quit:
+            # no event should just quit the tkinter app
+            app.exit_application()
+            mock_root_quit.assert_called()
+            mock_root_quit.reset_mock()
+
+            # Also takes an optional event, but it does not alter behaviour
+            app.exit_application(None)
+            mock_root_quit.assert_called()
+            mock_root_quit.reset_mock()
+
+    @pytest.mark.parametrize(
+        ("input_str", "expected_geometry_arg"),
+        [
+            ("1280x720", "1280x720"),  # Smaller than screen
+            ("1920x1080", "1920x1080"),  # Same as screen
+            ("10000x10000", "1920x1080"),  # bigger than screen
+            ("-1280x-720", None),  # negative, does nothing
+            ("1280", None),  # single value, does nothing
+            ("axb", None),  # not digits, does nothing
+            ("", None),  # empty string, does nothing
+            ("1280x720+0+0", None),  # with positioning, currently does nothing but should be supported
+        ],
+    )
+    def test_resize_window(self, input_str: str, expected_geometry_arg: str | None):
+        """Test that the resize window is valid for multiple geometry strings.
+
+        This mocks out the winfo_screenwidth and winfo_screenheight to ensure that test behaviour is consistent"""
+        app = GUIApp()
+
+        # patch out winfo_screenwidth & winfo_screenheight for test consistency, and ThemedTK.geometry to ensure we can detect it would have been called
+        with (
+            patch("polychron.GUIApp.ThemedTk.winfo_screenwidth") as mock_screenwidth,
+            patch("polychron.GUIApp.ThemedTk.winfo_screenheight") as mock_screenheight,
+            patch("polychron.GUIApp.ThemedTk.geometry") as mock_root_geometry,
+        ):
+            # Set the return values for mocked screen width and height
+            mock_screenwidth.return_value = 1920
+            mock_screenheight.return_value = 1080
+
+            # Test with the parametrized value
+            app.resize_window(input_str)
+            # If the expected value is not None, check it was passed to the mock geometry method
+            if expected_geometry_arg is not None:
+                mock_root_geometry.assert_called_with(expected_geometry_arg)
+            else:
+                # Otherwise, assert that .geometry() was not called
+                mock_root_geometry.assert_not_called()
+
+    @pytest.mark.parametrize(
+        (
+            "project_name",
+            "model_name",
+            "expected_child_presenter_switch",
+            "expected_child_presenter_close",
+            "expect_stderr",
+        ),
+        [
+            ("foo", "bar", None, "load_model", False),  # existing project and model
+            ("foo", "new", None, "new_model", False),  # existing project, new model
+            ("new", "new", None, "new_model", False),  # new project, new model
+            ("new", None, "model_create", None, False),  # new project, no model
+            ("foo", None, "model_select", None, False),  # existing project, no model
+            (None, None, None, None, False),  # no project or model
+            ("foo", ".", None, None, True),  # valid project, invalid model name
+            # (".", "foo", None, None, True),  # Invalid project, valid model name
+        ],
+    )
+    @patch("polychron.GUIApp.ProjectSelectProcessPopupPresenter")
+    @patch("polychron.GUIApp.ProjectSelectProcessPopupView")
+    def test_launch(
+        self,
+        MockProjectSelectProcessPopupView,
+        MockProjectSelectProcessPopupPresenter,
+        project_name: str | None,
+        model_name: str | None,
+        expected_child_presenter_switch: str | None,
+        expected_child_presenter_close: str | None,
+        expect_stderr: bool,
+        capsys: pytest.CaptureFixture,
+    ):
+        """Test launch behaves as expected, mocking out methods which would trigger side effects to ensure the correct paths are taken.
+
+        Todo:
+            - Ensure that invalid project names are correctly handled
+        """
+        app = GUIApp()
+
+        # Prepare the Mocked child/popup View
+        mock_child_view_instance = MagicMock(spec=ProjectSelectProcessPopupView)
+        MockProjectSelectProcessPopupView.return_value = mock_child_view_instance
+        # Prepare the Mocked child/popup Presenter, including explicit setting of a mocked view member
+        mock_child_presenter_instance = MagicMock(spec=ProjectSelectProcessPopupPresenter)
+        mock_child_presenter_instance.view = mock_child_view_instance
+        MockProjectSelectProcessPopupPresenter.return_value = mock_child_presenter_instance
+
+        # Mock out root.mainloop()
+        with patch("polychron.GUIApp.ThemedTk.mainloop") as mock_root_mainloop:
+            capsys.readouterr()
+            # Call launch
+            app.launch(project_name, model_name)
+
+            # Check if stderr was printed to or not
+            captured = capsys.readouterr()
+            if expect_stderr:
+                assert len(captured.err) > 0
+            else:
+                assert len(captured.err) == 0
+
+            # Todo: Assert that the lazy_load method was called
+
+            # Assert the child presenter was instantiated
+            MockProjectSelectProcessPopupView.assert_called_once()
+            MockProjectSelectProcessPopupPresenter.assert_called_once()
+
+            # Assert that switch_presenter was called on the mock child_presenter instance with the expected value, if expected
+            if expected_child_presenter_switch is not None:
+                mock_child_presenter_instance.switch_presenter.assert_called_with(expected_child_presenter_switch)
+            else:
+                mock_child_presenter_instance.switch_presenter.assert_not_called()
+
+            # If the popup was expected to be closed, ensure that it was with an expected value.
+            if expected_child_presenter_close is not None:
+                mock_child_presenter_instance.close_window.assert_called_with(expected_child_presenter_close)
+            else:
+                mock_child_presenter_instance.close_window.assert_not_called()
+
+            # Assert that the project_selector_obj is in the correct state
+
+            # If the project name was not provided, or invalid so expecting stderr, current and next should be None
+            if project_name is None or expect_stderr:
+                assert app.project_selector_obj.current_project_name is None
+                assert app.project_selector_obj.current_model_name is None
+                assert app.project_selector_obj.next_project_name is None
+                assert app.project_selector_obj.next_model_name is None
+            # Otherwise if we have a project name but no model name, only the next_project_name should be set
+            elif project_name is not None and model_name is None:
+                assert app.project_selector_obj.current_project_name is None
+                assert app.project_selector_obj.current_model_name is None
+                assert app.project_selector_obj.next_project_name is project_name
+                assert app.project_selector_obj.next_model_name is None
+            # Otherwise if we have a project name and a model name, the current project should be set
+            elif project_name is not None and model_name is not None:
+                assert app.project_selector_obj.current_project_name == project_name
+                assert app.project_selector_obj.current_model_name == model_name
+                assert app.project_selector_obj.next_project_name is None
+                assert app.project_selector_obj.next_model_name is None
+
+            # Assert the render loop should have been started
+            mock_root_mainloop.assert_called_once()
