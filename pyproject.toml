@@ -14,8 +14,8 @@ maintainers = [
     {name = "Bryony Moody", email = "bryony.moody@sheffield.ac.uk"},
 ]
 readme = "README.md"
-# license = ""
-# license-files = ["LICENSE.md"]
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Programming Language :: Python :: 3",
