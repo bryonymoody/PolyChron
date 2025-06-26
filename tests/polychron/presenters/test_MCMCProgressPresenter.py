@@ -171,7 +171,7 @@ class TestMCMCProgressPresenter:
             presenter.run()
 
             # Assert that view.update_progress was called, this will eventually be used in-place of direct manipulation within the stdout redirector
-            assert mock_view.update_progress.called_with(0)
+            mock_view.update_progress.assert_called_with(0)
 
             # Assert that the MCMC_Func was called at least once
             mock_model_mcmc_func.assert_called()
