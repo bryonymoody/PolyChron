@@ -81,6 +81,9 @@ class GUIApp(Mediator):
         for presenter in self.presenters.values():
             presenter.view.place_in_container()
 
+        # Set the initial presenter
+        self.switch_presenter("Splash")
+
     def set_window_title(self, suffix: str | None = None) -> None:
         """Update the window title to include Polychron, the version of polychron, and the optional suffix
 
