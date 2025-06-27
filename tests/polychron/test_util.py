@@ -5,9 +5,11 @@ import time
 
 import networkx as nx
 import packaging.version
+import pandas as pd
 import pytest
 from networkx.drawing.nx_pydot import write_dot
 from PIL import Image, ImageDraw
+from pydot import Dot, graph_from_dot_data
 
 from polychron import util
 
@@ -87,25 +89,227 @@ class TestUtil:
         trimmed = util.trim(img)
         assert trimmed.size == tuple([100, 100])
 
-    @pytest.mark.skip(reason="test_polygonfunc not yet implemented")
-    def test_polygonfunc(self):
-        """Test polygonfunc behaves as expected for a range of inputs"""
-        pass
+    @pytest.mark.parametrize(
+        ("input", "expected"),
+        [
+            (
+                '1" class="node">\n<title>a</title>\n<polygon fill="none" stroke="black" points="54,-180 0,-180 0,-144 54,-144 54,-180"/>\n<text text-anchor="middle" x="27" y="-158.3" font-family="Times,serif" font-size="14.00">a',
+                [0.0, 54.0, 144.0, 180.0],
+            ),
+            (
+                '2" class="node">\n<title>b = c</title>\n<polygon fill="none" stroke="black" points="54,-108 0,-108 0,-72 54,-72 54,-108"/>\n<text text-anchor="middle" x="27" y="-86.3" font-family="Times,serif" font-size="14.00">b = c',
+                [0.0, 54.0, 72.0, 108.0],
+            ),
+            (
+                '3" class="node">\n<title>d</title>\n<polygon fill="none" stroke="black" points="54,-36 0,-36 0,0 54,0 54,-36"/>\n<text text-anchor="middle" x="27" y="-14.3" font-family="Times,serif" font-size="14.00">d',
+                [0.0, 54.0, -0.0, 36.0],
+            ),
+        ],
+    )
+    def test_polygonfunc(self, input: str, expected: list[float]):
+        """Test polygonfunc behaves as expected for a range of inputs
 
-    @pytest.mark.skip(reason="test_ellipsefunc not yet implemented")
-    def test_ellipsefunc(self):
-        """Test ellipsefunc behaves as expected for a range of inputs"""
-        pass
+        Todo:
+            - Test invalid inputs (i.e. elipses)
+        """
+        # Call polygonfunc with the parametrized input,
+        retval = util.polygonfunc(input)
+        assert retval == pytest.approx(expected)
+
+    @pytest.mark.parametrize(
+        ("input", "expected"),
+        [
+            (
+                '1" class="node">\n<title>ellipse</title>\n<ellipse fill="none" stroke="black" cx="33.8" cy="-187.09" rx="33.6" ry="18"/>\n<text text-anchor="middle" x="33.8" y="-183.39" font-family="Times,serif" font-size="14.00">ellipse',
+                [0.19999999999999574, 67.4, 169.09, 205.09],
+            ),
+            (
+                '2" class="node">\n<title>oval</title>\n<ellipse fill="none" stroke="black" cx="33.8" cy="-115.09" rx="27" ry="18"/>\n<text text-anchor="middle" x="33.8" y="-111.39" font-family="Times,serif" font-size="14.00">oval',
+                [6.799999999999997, 60.8, 97.09, 133.09],
+            ),
+            (
+                '3" class="node">\n<title>circle</title>\n<ellipse fill="none" stroke="black" cx="33.8" cy="-30.55" rx="30.59" ry="30.59"/>\n<text text-anchor="middle" x="33.8" y="-26.85" font-family="Times,serif" font-size="14.00">circle',
+                [3.2099999999999973, 64.39, -0.03999999999999915, 61.14],
+            ),
+        ],
+    )
+    def test_ellipsefunc(self, input: str, expected: list[float]):
+        """Test ellipsefunc behaves as expected for a range of inputs
+
+        Todo:
+            - Test invalid inputs (i.e. box/diamonds)
+        """
+        # Call ellipsefunc with the parametrized input,
+        retval = util.ellipsefunc(input)
+        assert retval == pytest.approx(expected)
 
     @pytest.mark.skip(reason="test_rank_func not yet implemented")
     def test_rank_func(self):
         """Test rank_func behaves as expected for a range of inputs"""
         pass
 
-    @pytest.mark.skip(reason="test_node_coords_fromjson not yet implemented")
     def test_node_coords_fromjson(self):
-        """Test node_coords_fromjson behaves as expected for a range of inputs"""
-        pass
+        """Test node_coords_fromjson behaves as expected for a range of inputs
+
+        Due to non-determinism within graphviz layout generation, we probably cannot rely on exact coordinates for all graphs, but ideally we should be able to for relatively simple graphs.
+        The test may need ammending to account for this.
+
+        Todo:
+            - Split node_coords_fromjson into a method which takes a graph and returns the coordinates, and an internally used method which takes a string containing an svg. svg extraction can then accurately be tested, while graphviz .svg generation cannot. This also means that we should ensure .png and .svg are regenerated on polychron launch, in case graphviz has changed.
+            - rectangular bounding boxes are always used for click detection, even for diamonds and elipses. This may be problematic if graphviz does not ensure that the rectangular bounding box of a diamond/kite is free from other nodes.
+            - Consider returning a dict instead of a dataframe.
+        """
+
+        # Get the node coordinates and scale for a nx.DiGraph
+        g = nx.DiGraph()
+        for node in ["a", "b", "c", "d"]:
+            g.add_node(node, shape="box")
+        for u, v in [("a", "b"), ("a", "c"), ("b", "d"), ("c", "d")]:
+            g.add_edge(u, v)
+        df, scale = util.node_coords_fromjson(g)
+        # Assert the types and shape of returned data is as it should be
+        assert isinstance(df, pd.DataFrame)
+        assert "x_lower" in df.columns
+        assert "x_upper" in df.columns
+        assert "y_lower" in df.columns
+        assert "y_upper" in df.columns
+        assert len(df) == 4
+        # Assert the types of values are correct, as we cannot test the values due to non-deterministic graphviz svg generation
+        for node in g.nodes():
+            assert node in df.index
+            assert isinstance(df["x_lower"][node], float)
+            assert isinstance(df["x_upper"][node], float)
+            assert isinstance(df["y_lower"][node], float)
+            assert isinstance(df["y_upper"][node], float)
+        # Assert the scale is the correct shape and types. We cannot test exact values here due to graphviz non-determinism
+        assert isinstance(scale, list)
+        assert len(scale) == 2
+        for value in scale:
+            assert isinstance(value, float)
+
+        # Get the node coordinates and scale for a nx.DiGraph including contraction attribtues, to ensure networkx < 3.4 compatibility (due to use of nx_pydot internally)
+        g = nx.DiGraph()
+        for node in ["a", "b", "c", "d"]:
+            g.add_node(node, shape="box")
+        for u, v in [("a", "b"), ("a", "c"), ("b", "d"), ("c", "d")]:
+            g.add_edge(u, v)
+        g = nx.contracted_nodes(g, "b", "c")
+        g = nx.relabel_nodes(g, {"b": "b = c"})
+        df, scale = util.node_coords_fromjson(g)
+        assert isinstance(df, pd.DataFrame)
+        assert "x_lower" in df.columns
+        assert "x_upper" in df.columns
+        assert "y_lower" in df.columns
+        assert "y_upper" in df.columns
+        assert len(df) == 3
+        # Assert the types of values are correct, as we cannot test the values due to non-deterministic graphviz svg generation
+        for node in g.nodes():
+            assert node in df.index
+            assert isinstance(df["x_lower"][node], float)
+            assert isinstance(df["x_upper"][node], float)
+            assert isinstance(df["y_lower"][node], float)
+            assert isinstance(df["y_upper"][node], float)
+        # Assert the scale is the correct shape and types. We cannot test exact values here due to graphviz non-determinism
+        assert isinstance(scale, list)
+        assert len(scale) == 2
+        for value in scale:
+            assert isinstance(value, float)
+
+        # Test with a pydot version of the graph already (which does not need to go through to_pydot)
+        dot_string = """digraph g {
+            a [label="a", shape="box"];
+            b [label="b", shape="box"];
+            c [label="c", shape="box"];
+            a -- b -- c;
+        }"""
+        pydot_g: Dot = graph_from_dot_data(dot_string)[0]
+        df, scale = util.node_coords_fromjson(pydot_g)
+        assert isinstance(df, pd.DataFrame)
+        assert "x_lower" in df.columns
+        assert "x_upper" in df.columns
+        assert "y_lower" in df.columns
+        assert "y_upper" in df.columns
+        assert len(df) == 3
+        # Assert the types of values are correct, as we cannot test the values due to non-deterministic graphviz svg generation
+        for node in pydot_g.get_nodes():
+            assert node.get_name() in df.index
+            assert isinstance(df["x_lower"][node.get_name()], float)
+            assert isinstance(df["x_upper"][node.get_name()], float)
+            assert isinstance(df["y_lower"][node.get_name()], float)
+            assert isinstance(df["y_upper"][node.get_name()], float)
+        # Assert the scale is the correct shape and types. We cannot test exact values here due to graphviz non-determinism
+        assert isinstance(scale, list)
+        assert len(scale) == 2
+        for value in scale:
+            assert isinstance(value, float)
+
+        # Test with a graph that includes kites similar to how they are used in chronological graphs
+        g = nx.DiGraph()
+        for node in ["a", "b", "c", "d"]:
+            g.add_node(node, shape="box")
+        for u, v in [("a", "b"), ("a", "c"), ("b", "d"), ("c", "d")]:
+            g.add_edge(u, v)
+        # Add 2 kites/diamonds with edges(though the edges are not required for svg coord extraction, but this better mirrors the real usage)
+        g.add_node("a_1", shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
+        g.add_node("b_1", shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
+        g.add_edge("a_1", "b_1", arrowhead="none")
+        g.add_edge("a_1", "a", arrowhead="none")
+        g.add_edge("b", "b_1", arrowhead="none")
+
+        df, scale = util.node_coords_fromjson(g)
+        assert isinstance(df, pd.DataFrame)
+        assert "x_lower" in df.columns
+        assert "x_upper" in df.columns
+        assert "y_lower" in df.columns
+        assert "y_upper" in df.columns
+        assert len(df) == 6
+        # Assert the types of values are correct, as we cannot test the values due to non-deterministic graphviz svg generation
+        for node in g.nodes():
+            assert node in df.index
+            assert isinstance(df["x_lower"][node], float)
+            assert isinstance(df["x_upper"][node], float)
+            assert isinstance(df["y_lower"][node], float)
+            assert isinstance(df["y_upper"][node], float)
+        # Assert the scale is the correct shape and types. We cannot test exact values here due to graphviz non-determinism
+        assert isinstance(scale, list)
+        assert len(scale) == 2
+        for value in scale:
+            assert isinstance(value, float)
+
+        # Test with a graph that includes elipses/ovals/circles
+        # polychron currently (0.2.0) only explicitly sets box or diamond, so this is only for .dot inputs which explciitly set custom shapes?
+        # Manually build a graph "ellipse" -> "oval" -> "circle"
+        g = nx.DiGraph()
+        g.add_node("ellipse", shape="ellipse")
+        g.add_node("oval", shape="oval")
+        g.add_node("circle", shape="circle")
+        g.add_edge("ellipse", "oval")
+        g.add_edge("oval", "circle")
+        df, scale = util.node_coords_fromjson(g)
+        # Assert the returned values are the correct types and shape
+        assert isinstance(df, pd.DataFrame)
+        assert "x_lower" in df.columns
+        assert "x_upper" in df.columns
+        assert "y_lower" in df.columns
+        assert "y_upper" in df.columns
+        assert len(df) == 3
+        assert isinstance(scale, list)
+        assert len(scale) == 2
+        # Assert each node is included
+        for node in g.nodes():
+            assert node in df.index
+        # Assert the types of values are correct, as we cannot test the values due to non-deterministic graphviz svg generation
+        for node in g.nodes():
+            assert node in df.index
+            assert isinstance(df["x_lower"][node], float)
+            assert isinstance(df["x_upper"][node], float)
+            assert isinstance(df["y_lower"][node], float)
+            assert isinstance(df["y_upper"][node], float)
+        # Assert the scale is the correct shape and types. We cannot test exact values here due to graphviz non-determinism
+        assert isinstance(scale, list)
+        assert len(scale) == 2
+        for value in scale:
+            assert isinstance(value, float)
 
     @pytest.mark.skip(reason="test_phase_info_func not yet implemented")
     def test_phase_info_func(self):
