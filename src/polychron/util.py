@@ -11,6 +11,7 @@ import networkx as nx
 import numpy as np
 import packaging.version
 import pandas as pd
+import pydot
 from networkx.drawing.nx_pydot import read_dot
 from PIL import Image, ImageChops
 
@@ -34,11 +35,22 @@ def trim(im_trim: Image.Image) -> Image.Image:
     return im_trim.crop(bbox)
 
 
-def polygonfunc(i):
-    """finds node coords of a kite"""
+def polygonfunc(i: str) -> list[float]:
+    """finds node coords of a polygon, from a string extracted from a svg
+
+    Parameters:
+        i: substring from an svg string, which shouuld include 'points='
+
+    Returns:
+        [x0, x1, y0, y1] - A list of 4 floating point numbers, which are the bounding box of the shape
+
+    Todo:
+        - Instead of using regular expressions, use a SVG (or just xml parsing, which is stdlib but defusedxml should probably be used instead.) library
+        - Handle being provided invalid inputs (strings without points)
+    """
     x = re.findall(r'points="(.*?)"', i)[0].replace(" ", ",")
     a = x.split(",")
-    # if loop checks if it's a rectangle or a kite then gets the right coords
+    # if statement checks if it's a rectangle or a kite then gets the right coords
     if -1 * float(a[7]) == -1 * float(a[3]):
         coords_converted = [float(a[2]), float(a[6]), -1 * float(a[5]), -1 * float(a[1])]
     else:
@@ -46,8 +58,19 @@ def polygonfunc(i):
     return coords_converted
 
 
-def ellipsefunc(i):
-    """finds coords from dot file for ellipse nodes"""
+def ellipsefunc(i: str) -> list[float]:
+    """finds coords from dot file for ellipse nodes, from a string extracted from a svg
+
+    Parameters:
+        i: substring from an svg string, which shouuld include 'cx='
+
+    Returns:
+        [x0, x1, y0, y1] - A list of 4 floating point numbers, which are the bounding box of the shape
+
+    Todo:
+        - Instead of using regular expressions, use a SVG (or just xml parsing, which is stdlib but defusedxml should probably be used instead.) library
+        - Handle being provided invalid inputs (strings without cx=)
+    """
     x = re.findall(r"cx=(.*?)/>", i)[0].replace(" ", ",")
     x = x.replace("cy=", "").replace("rx=", "").replace("ry=", "").replace('"', "")
     a = x.split(",")
@@ -78,7 +101,7 @@ def rank_func(tes, file_content):
     return new_string
 
 
-def node_coords_fromjson(graph) -> Tuple[pd.DataFrame, List[float]]:
+def node_coords_fromjson(graph: nx.DiGraph | pydot.Dot) -> Tuple[pd.DataFrame, List[float]]:
     """Gets coordinates of each node
 
     Parameters:
@@ -87,7 +110,6 @@ def node_coords_fromjson(graph) -> Tuple[pd.DataFrame, List[float]]:
     Returns:
         A dataframe of coordinates, and svg scale information.
     """
-
     if "pydot" in str(type(graph)):
         graphs = graph
     else:
