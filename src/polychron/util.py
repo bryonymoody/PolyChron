@@ -18,8 +18,15 @@ from PIL import Image, ImageChops
 """
 
 
-def trim(im_trim: Image.Image):
-    """Trims images down"""
+def trim(im_trim: Image.Image) -> Image.Image:
+    """Trims images down, cropping out dark background (<= 100/255 in all channels) unless the whole image is considerd dark (<= 100/255 in all channels)
+
+    Parameters:
+        im_trim: Input image to trim
+
+    Returns:
+        Potentially cropped version on im_trim
+    """
     bg_trim = Image.new(im_trim.mode, im_trim.size)
     diff = ImageChops.difference(im_trim, bg_trim)
     diff = ImageChops.add(diff, diff, 2.0, -100)
