@@ -83,9 +83,26 @@ def ellipsefunc(i: str) -> list[float]:
     return coords_converted
 
 
-def rank_func(tes, file_content):
-    #  t0 = time.time()
-    """adds strings into dot string to make nodes of the same phase the same rank"""
+def rank_func(tes: dict[str, list[str]], dot_str: str) -> str:
+    """adds strings into dot string to make nodes of the same group the same rank
+
+    Parameters:
+        tes: a dictionary
+        svg_str: The original svg string
+
+    Returns:
+        The mutated dot/gv string
+
+    Todo:
+        - Rename parameters and variables
+        - Use for key, x_rank in tes.items()
+        - find the closing } of the digraph instead of always getting rid of the final 2 chars
+        - use ",".join(x_rank) and an fstring
+        - Close the digraph on it's own line (i.e. add a newline at the end / don't include the [:-1])
+
+    """
+    if len(tes) == 0:
+        return dot_str
     rank_same = []
     for key in tes.keys():
         x_rank = tes[key]
@@ -97,7 +114,7 @@ def rank_func(tes, file_content):
         x_2 = "{rank = same; " + y_5 + ";}\n"
         rank_same.append(x_2)
     rank_string = "".join(rank_same)[:-1]
-    new_string = file_content[:-2] + rank_string + file_content[-2]
+    new_string = dot_str[:-2] + rank_string + dot_str[-2]
     return new_string
 
 
