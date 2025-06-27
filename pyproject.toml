@@ -78,6 +78,8 @@ testpaths = [
 filterwarnings = [
     # Suppress numpy find_common_type DeprecationWarnings, which are raised by some pandas versions
     "ignore:.*np.find_common_type.*:DeprecationWarning",
+    # Suppress nx_pydot DeprecationWarnings, which are raised by some verisons of pydot but have since been un-deprecated
+    "ignore:.*nx.nx_pydot.*:DeprecationWarning",
 ]
 markers = [
     "importable: marks tests as import-only (deselect with '-m \"not importable\"')",
