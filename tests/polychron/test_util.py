@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pathlib
 import time
+from textwrap import dedent
 
 import networkx as nx
 import packaging.version
@@ -143,10 +144,55 @@ class TestUtil:
         retval = util.ellipsefunc(input)
         assert retval == pytest.approx(expected)
 
-    @pytest.mark.skip(reason="test_rank_func not yet implemented")
     def test_rank_func(self):
-        """Test rank_func behaves as expected for a range of inputs"""
-        pass
+        """Test rank_func behaves as expected for a range of inputs
+
+        Todo:
+            - Expand the range of inputs which are tested
+        """
+        print()
+        # Prepare input parameters for rank_func:
+        # - A Dict containing the
+        # Manually prepare a dictionary which is equivalent to the 0th return value from phase_info_func for the below stratigraphic dag. This is based on an actual value used
+        map = {"1": ["c", "d", "e"], "2_below": ["b"]}
+
+        # Manually prepare a dotstring, for a graph with 7 nodes in 2 groups
+        dot_string = dedent("""\
+        digraph g {
+            splines=ortho;
+            a [shape="box", Group=2];
+            b [shape="box", Group=2];
+            c [shape="box", Group=1];
+            d [shape="box", Group=1];
+            e [shape="box", Group=1];
+            f [shape="box", Group=1];
+            g [shape="box", Group=1];
+            a -> b [arrowhead=none];
+            e -> h [arrowhead=none];
+            b -> c [arrowhead=none];
+            b -> d [arrowhead=none];
+            b -> e [arrowhead=none];
+            d -> f [arrowhead=none];
+        }
+        """)
+
+        # Call the fucntion
+        mutated_dot_string = util.rank_func(map, dot_string)
+        # Compare split lines of the original and mutated dot strings
+        split_dot_string = dot_string.splitlines()
+        split_mutated_string = mutated_dot_string.splitlines()
+        # Other than the final 2 characters of the original string should be the same. This test case ensurese they are on separate lines.
+        for mutated_line, original_line in zip(split_mutated_string[:-2], split_dot_string[:-2]):
+            assert mutated_line == original_line
+
+        # The second to last line should be a rank statement of the first group in the ordered dict
+        assert split_mutated_string[-2] == "{rank = same; c; d; e;}"
+        # The final line should be a rank statemnt of the second group in the ordered dict, plus the digraph closing bracet.
+        assert split_mutated_string[-1] == "{rank = same; b;}}"
+
+        # With an empty map, the new string should be the same as the old string
+        mutated_dot_string = util.rank_func({}, dot_string)
+        assert dot_string == mutated_dot_string
 
     def test_node_coords_fromjson(self):
         """Test node_coords_fromjson behaves as expected for a range of inputs
@@ -216,12 +262,13 @@ class TestUtil:
             assert isinstance(value, float)
 
         # Test with a pydot version of the graph already (which does not need to go through to_pydot)
-        dot_string = """digraph g {
+        dot_string = dedent("""\
+        digraph g {
             a [label="a", shape="box"];
             b [label="b", shape="box"];
             c [label="c", shape="box"];
             a -- b -- c;
-        }"""
+        }""")
         pydot_g: Dot = graph_from_dot_data(dot_string)[0]
         df, scale = util.node_coords_fromjson(pydot_g)
         assert isinstance(df, pd.DataFrame)
