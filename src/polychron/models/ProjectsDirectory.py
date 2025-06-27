@@ -31,14 +31,21 @@ class ProjectsDirectory:
                     self.projects[p.name] = p
 
     def has_project(self, project_name: str) -> bool:
-        """Check if the specified project exists or not"""
+        """Check if the specified project exists or not
+
+        Parameters:
+            project_name: The name of the project.
+
+        Returns:
+            If the project directory exists or not.
+        """
         return project_name in self.projects
 
     def get_project(self, project_name: str) -> Project | None:
         """Fetch a project by it's name
 
         Parameters:
-            project_name: the name of the project to fetch
+            project_name: The name of the project to fetch.
 
         Returns:
             The project if it exists, else None.
@@ -53,7 +60,6 @@ class ProjectsDirectory:
 
         Returns:
             The existing or new project with the specified project name
-
         """
         if self.has_project(project_name):
             project = self.get_project(project_name)

@@ -2,11 +2,10 @@ import json
 import pathlib
 from dataclasses import dataclass, field
 from importlib.metadata import version
-from typing import Any, Dict, List, Optional, Tuple, get_type_hints
+from typing import Dict, List, get_type_hints
 
 import pandas as pd
 
-from ..Config import get_config
 from ..util import MonotonicTimer
 
 
@@ -14,7 +13,7 @@ from ..util import MonotonicTimer
 class MCMCData:
     """Dataclass containing all of the MCMC results.
 
-    This enables lighter-weight "save" behaviour
+    This enables lighter-weight "save" behavior
 
     Note:
         `Optional[foo]` must be used rather than `from __future__ import annotations` and `foo | None` in python 3.9 due to use of `get_type_hints`
@@ -24,7 +23,7 @@ class MCMCData:
     """List of contexts passed in to and returned by run_MCMC, stored in topological order
     """
 
-    accept_samples_context: List[List[float]] = field(default_factory=lambda: [[]])
+    accept_samples_context: List[List[float]] = field(default_factory=list)
     """A list of accepted samples from the MCMC process.
 
     The number of accepted samples is important.
@@ -32,7 +31,7 @@ class MCMCData:
     Formerly `StartPage.ACCEPT`
     """
 
-    accept_samples_phi: Optional[Any] = field(default=None)
+    accept_samples_phi: List[List[float]] = field(default_factory=list)
     """Accepted group boundaries from MCMC simulation
     
     Formerly `StartPage.PHI_ACCEPT`
@@ -50,15 +49,15 @@ class MCMCData:
     Formerly `StartPage.P`
     """
 
-    all_samples_context: Optional[List[List[float]]] = field(default=None)
-    """A list of lists containing all samples for contexts from MCMC, including rejected samples. 
+    all_samples_context: List[List[float]] = field(default_factory=list)
+    """A list of lists containing all samples for contexts from MCMC, including rejected samples.
 
     I.e. accept_samples_context is a subset of this.
 
     Formerly `StartPage.ALL_SAMPS_CONT`
     """
 
-    all_samples_phi: Optional[List[List[float]]] = field(default=None)
+    all_samples_phi: List[List[float]] = field(default_factory=list)
     """A list of lists, containing all samples for group boundaries from MCMC, including rejected samples.
 
     I.e. accept_samples_phi is a subset of this.
@@ -72,7 +71,7 @@ class MCMCData:
     Formerly `StartPage.resultsdict`
     """
 
-    all_group_limits: Dict[Any, Any] = field(default_factory=dict)
+    all_group_limits: Dict[str, List[float]] = field(default_factory=dict)
     """A dictionary of all_results? returned by MCMC_func, which is used to find the phase lengths during node finding on the results page.
     
     Formerly `StartPage.all_results_dict`
@@ -86,8 +85,12 @@ class MCMCData:
         Parameters:
             path (pathlib.Path): The path to the directory in which files should be created
             group_df (pd.DataFrame): A pandas dataframe containing context group information.
+
+        Todo:
+            - Check if `full_results_df` include the first 10000 elements or not?
         """
 
+        # Output the some of all_group_limits
         df = pd.DataFrame()
         for i in self.all_group_limits.keys():
             df[i] = self.all_group_limits[i][10000:]
@@ -99,38 +102,43 @@ class MCMCData:
         df1 = pd.DataFrame(key_ref)
         df1.to_csv(path / "key_ref.csv")
 
+        # Output the context labels in topologically sorted order
         df2 = pd.DataFrame(self.contexts)
         df2.to_csv(path / "context_no.csv")
 
-    def to_json(self, pretty: bool = False):
+    def to_json(self, pretty: bool = False) -> str:
         """Serialise this object to JSON
 
         Parameters:
             pretty (bool): If the json should be prettified or not.
+
+        Return:
+            JSON string representing the MCMCData instance
         """
 
         # Create a dictionary contianing a subset of this instance's member variables, converted to formats which can be json serialised.
         data = {}
 
         for k, v in self.__dict__.items():
-            if v is None:
+            if isinstance(v, tuple([str, int, float, list, dict, tuple])):
                 data[k] = v
-            elif isinstance(v, tuple([str, int, float, list, dict, tuple])):
-                data[k] = v
-            elif isinstance(v, pathlib.Path):
-                data[k] = str(v)
             else:
                 data[k] = str(v)
 
         indent = 2 if pretty else None
         return json.dumps({"polychron_version": version("polychron"), "mcmc_data": data}, indent=indent)
 
-    def save(self, path: pathlib.Path, group_df: pd.DataFrame) -> None:
+    def save(self, path: pathlib.Path, group_df: pd.DataFrame, verbose: bool = False) -> None:
         """Save the current state of this file to the specified path
 
         Parameters:
-            path (pathlib.Path ): The directory in which the files will be saved.
-            group_df (pd.DataFrame): A pandas dataframe containing context group information
+            path: The directory in which the files will be saved.
+            group_df: A pandas dataframe containing context group information
+            verbose: If verbose output should be used
+
+        Raises:
+            RuntimeError: If the provided path is not a directory
+            Exception: If other exceptions are raised during saving of files to disk
         """
 
         # Ensure that the parent directory exists
@@ -156,7 +164,7 @@ class MCMCData:
 
                 # Stop the timer and report timing if verbose
                 timer_save.stop()
-                if get_config().verbose:
+                if verbose:
                     print("Timing - MCMCData.save:")
                     print(f"  total:      {timer_save.elapsed(): .6f}s")
                     print(f"  to_json:    {timer_to_json.elapsed(): .6f}s")
@@ -174,12 +182,19 @@ class MCMCData:
 
         Parameters:
             json_path: Path to json file to load it from
+
+        Returns:
+            MCMCData instance
+
+        Raises:
+            RuntimeError: If the json_path is not an existing file; or the 'polychron_version' key is missing from the json file'; or the 'mcmc_data' key is missing from the json file
+            json.JSONDecodeError: If the json_path does not point to a valid json file
         """
         import sys
 
         # Ensure the file exists
         if not json_path.is_file():
-            raise RuntimeError(f"Error loading from MCMCData from path '{json_path}' it is not a directory")
+            raise RuntimeError(f"Error loading MCMCData from path, '{json_path}' is not a file")
 
         # Attempt to open the json file, building an instance
         with open(json_path, "r") as f:
@@ -203,14 +218,8 @@ class MCMCData:
             unexpected_keys = []
             for k in mcmc_data:
                 if k in cls_type_hints:
-                    type_hint = cls_type_hints[k]
                     if mcmc_data[k] is None:
                         pass
-                    elif type_hint in [pathlib.Path, Optional[pathlib.Path]]:
-                        mcmc_data[k] = pathlib.Path(mcmc_data[k])
-                    elif type_hint in [Optional[List[Tuple[str, str]]]]:
-                        # tuples are stored as lists in json, so must convert from a list of lists to a list of tuples
-                        mcmc_data[k] = [tuple(sub) for sub in mcmc_data[k]]
                 else:
                     # If the key is not in the typehints, it will cause the ctor to trigger a runtime assertion, so remove it.
                     print(f"Warning: unexpected MCMCData member '{k}' during deserialisation", file=sys.stderr)

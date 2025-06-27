@@ -1,3 +1,4 @@
+from ..Config import get_config
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
 from ..views.CalibrateModelSelectView import CalibrateModelSelectView
@@ -11,7 +12,7 @@ class CalibrateModelSelectPresenter(PopupPresenter[CalibrateModelSelectView, Pro
     """
 
     def __init__(self, mediator: Mediator, view: CalibrateModelSelectView, model: ProjectSelection) -> None:
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         # Bind buttons
@@ -47,7 +48,7 @@ class CalibrateModelSelectPresenter(PopupPresenter[CalibrateModelSelectView, Pro
                 for model_name in selected_models:
                     if project.has_model(model_name):
                         model = project.get_model(model_name)
-                        if model is not None:
+                        if model is not None and model.load_check:
                             (
                                 model.mcmc_data.contexts,
                                 model.mcmc_data.accept_samples_context,
@@ -63,7 +64,7 @@ class CalibrateModelSelectPresenter(PopupPresenter[CalibrateModelSelectView, Pro
                             # Update the model state to show it as having been calibrated
                             model.mcmc_check = True
                             # Save the mcmc data to disk
-                            model.mcmc_data.save(model.get_working_directory(), model.group_df)
+                            model.mcmc_data.save(model.get_working_directory(), model.group_df, get_config().verbose)
                             model.save()
         # Close the popup
         self.close_view()

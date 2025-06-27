@@ -75,6 +75,15 @@ addopts = [
 testpaths = [
     "tests",
 ]
+filterwarnings = [
+    # Suppress numpy find_common_type DeprecationWarnings, which are raised by some pandas versions
+    "ignore:.*np.find_common_type.*:DeprecationWarning",
+    # Suppress nx_pydot DeprecationWarnings, which are raised by some verisons of pydot but have since been un-deprecated
+    "ignore:.*nx.nx_pydot.*:DeprecationWarning",
+]
+markers = [
+    "importable: marks tests as import-only (deselect with '-m \"not importable\"')",
+]
 
 # Lint & Format configuration
 [tool.ruff]
@@ -87,7 +96,7 @@ extend-exclude = [
 
 [tool.ruff.lint]
 # Select which ruff rules to apply when linting.
-select = ["E4", "E7", "E9", "F", "I"]
+select = ["E4", "E7", "E9", "F", "I", "PT"]
 # But ignore some of them
 ignore = [
     "E741", # https://docs.astral.sh/ruff/rules/ambiguous-variable-name/
