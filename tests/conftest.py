@@ -3,7 +3,36 @@ import pathlib
 import pandas as pd
 import pytest
 
+import polychron.Config  # must import the full Config module, to access the module-scoped __config_instance
 from polychron.models.Model import Model
+
+
+@pytest.fixture(autouse=True)
+def monkeypatch_Config__config_instance(monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path):
+    """Default fixture which monkeypatches polychron.Config.__config_instance to ensure that the users real config file and projects directory are not used.
+
+    `polychron.Config.__config_instance`, which is returned by `get_config()` is explictly set to a Config object with a temporary projects directory
+    """
+    # Apply the monkeypatch
+    monkeypatch.setattr(
+        polychron.Config, "__config_instance", polychron.Config.Config(projects_directory=tmp_path / "projects")
+    )
+    # Yield control to the test(s)
+    return
+    # Don't restore __config_instance to the original value, we do not want it to be used
+
+
+@pytest.fixture(autouse=True)
+def monkeypatch_Config_get_config_dir(monkeypatch: pytest.MonkeyPatch, tmp_path: pathlib.Path):
+    """Default fixture which monkeypatches polychron.Config.Config._get_config_filepath, to ensure the user's home folder is not accessed unintentionally.
+
+    `polychron.Config.Config.get_config_dir` is patched to return a the pytest temporary diretory
+
+    This is overridden by a fixture in test_Config.py which allows the real method to be tested on a per-test basis
+    """
+    # Apply the monkeypatch
+    monkeypatch.setattr(polychron.Config.Config, "_get_config_filepath", lambda: tmp_path / "config.yaml")
+    return
 
 
 @pytest.fixture

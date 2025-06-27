@@ -11,6 +11,15 @@ import yaml
 from polychron.Config import Config, get_config
 
 
+@pytest.fixture
+def monkeypatch_Config_get_config_dir():
+    """Locally-scoped non-default fixture which enables per-test opt-in use of the original get_config_dir behaviour.
+
+    This overrides the autouse fixture of the same name defined in conftest.py, allowing the real get_config_dir method to be tested
+    """
+    return
+
+
 class TestConfig:
     """Tests for the `polychron.Config` class"""
 
@@ -76,8 +85,16 @@ class TestConfig:
             # ("Darwin", {}, ".config/polychron"),
         ],
     )
-    def test__get_config_dir(self, platform_name: str, env_vars: Dict[str, str], expected_path: pathlib.Path):
+    def test__get_config_dir(
+        self,
+        platform_name: str,
+        env_vars: Dict[str, str],
+        expected_path: pathlib.Path,
+        monkeypatch_Config_get_config_dir,
+    ):
         """Ensure that the platform and environmental variable-specific method to get the expected directory for the configuration file behaves as intended
+
+        This method is monkeypatched by a default fixture, `monkeypatch_Config_get_config_dir` from conftestpy, but the original behaviour is restored by explicitly requesting a locally-scoped fixture with the same name
 
         Parameters:
             platform_name: The (mock) platform name otherwise returned by `platform.system`
@@ -136,21 +153,18 @@ class TestConfig:
 class TestGetConfig:
     """Tests for the module-scoped `polychron.get_config` method, which returns a shared instance of a Config.
 
-    Todo:
-        This test could be enhanced by ensuring that the module-scoped instance is always reset for these tests, and restored for other tests.
-
-        @todo - the default configuration instance is always going to need mocking? in case this method ever gets called in other places? (which it does).
+    the default instance, stored in polychron.Config.__config_instance, is monkeypatched by `monkeypatch_Config__config_instance` in `tests/conftest.py` to ensure that the config singleton is never instanciated with the path in the users home directory
     """
 
     def test_get_config(self, tmp_path):
-        """Test the get_config method always returns the same instance"""
+        """Test the get_config method always returns the same instance, which is the monkeypatched version that does not use the default projects_directory"""
 
         # Patch the default config filepath to a temporary file, to avoid accessing the current users config if they have one.
         tmp_config_file = tmp_path / "config.yaml"
         with patch("polychron.Config.Config._get_config_filepath", return_value=tmp_config_file):
-            # Get the config instance, it should be default
+            # Get the config instance, it should be the monkeypatched default
             c0 = get_config()
-            assert c0 == Config()
+            assert c0 == Config(projects_directory=tmp_path / "projects")
 
             # Get the same instance again, assert they are the same object
             c1 = get_config()
