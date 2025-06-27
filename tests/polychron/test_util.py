@@ -155,7 +155,7 @@ class TestUtil:
         The test may need ammending to account for this.
 
         Todo:
-            - the test should probably be relaxed, instead splitting the method into a from_svg(svg_str) which can reliably tested for exact node coordinates, while a graph accepting version is less strictly checked in case of graphviz svg generation variance. The from_svg method could further be split to extract scale, rect coords etc separately
+            - Split node_coords_fromjson into a method which takes a graph and returns the coordinates, and an internally used method which takes a string containing an svg. svg extraction can then accurately be tested, while graphviz .svg generation cannot. This also means that we should ensure .png and .svg are regenerated on polychron launch, in case graphviz has changed.
             - rectangular bounding boxes are always used for click detection, even for diamonds and elipses. This may be problematic if graphviz does not ensure that the rectangular bounding box of a diamond/kite is free from other nodes.
             - Consider returning a dict instead of a dataframe.
         """
@@ -174,31 +174,18 @@ class TestUtil:
         assert "y_lower" in df.columns
         assert "y_upper" in df.columns
         assert len(df) == 4
-        assert isinstance(scale, list)
-        assert len(scale) == 2
-        # Assert each node is included
+        # Assert the types of values are correct, as we cannot test the values due to non-deterministic graphviz svg generation
         for node in g.nodes():
             assert node in df.index
-        # Assert each node has the expected coordinates. This may not be stable with differnt graphviz builds
-        assert df["x_lower"]["a"] == pytest.approx(36.0)
-        assert df["x_upper"]["a"] == pytest.approx(90.0)
-        assert df["y_lower"]["a"] == pytest.approx(144.0)
-        assert df["y_upper"]["a"] == pytest.approx(180.0)
-        assert df["x_lower"]["b"] == pytest.approx(0.0)
-        assert df["x_upper"]["b"] == pytest.approx(54.0)
-        assert df["y_lower"]["b"] == pytest.approx(72.0)
-        assert df["y_upper"]["b"] == pytest.approx(108.0)
-        assert df["x_lower"]["c"] == pytest.approx(72.0)
-        assert df["x_upper"]["c"] == pytest.approx(126.0)
-        assert df["y_lower"]["c"] == pytest.approx(72.0)
-        assert df["y_upper"]["c"] == pytest.approx(108.0)
-        assert df["x_lower"]["d"] == pytest.approx(36.0)
-        assert df["x_upper"]["d"] == pytest.approx(90.0)
-        assert df["y_lower"]["d"] == pytest.approx(0.0)
-        assert df["y_upper"]["d"] == pytest.approx(36.0)
-        # Assert the scale values are as expected. This may be overfitting the test
-        assert scale[0] == pytest.approx(130.0)
-        assert scale[1] == pytest.approx(184.0)
+            assert isinstance(df["x_lower"][node], float)
+            assert isinstance(df["x_upper"][node], float)
+            assert isinstance(df["y_lower"][node], float)
+            assert isinstance(df["y_upper"][node], float)
+        # Assert the scale is the correct shape and types. We cannot test exact values here due to graphviz non-determinism
+        assert isinstance(scale, list)
+        assert len(scale) == 2
+        for value in scale:
+            assert isinstance(value, float)
 
         # Get the node coordinates and scale for a nx.DiGraph including contraction attribtues, to ensure networkx < 3.4 compatibility (due to use of nx_pydot internally)
         g = nx.DiGraph()
@@ -215,11 +202,18 @@ class TestUtil:
         assert "y_lower" in df.columns
         assert "y_upper" in df.columns
         assert len(df) == 3
-        assert isinstance(scale, list)
-        assert len(scale) == 2
-        # Assert each node is included
+        # Assert the types of values are correct, as we cannot test the values due to non-deterministic graphviz svg generation
         for node in g.nodes():
             assert node in df.index
+            assert isinstance(df["x_lower"][node], float)
+            assert isinstance(df["x_upper"][node], float)
+            assert isinstance(df["y_lower"][node], float)
+            assert isinstance(df["y_upper"][node], float)
+        # Assert the scale is the correct shape and types. We cannot test exact values here due to graphviz non-determinism
+        assert isinstance(scale, list)
+        assert len(scale) == 2
+        for value in scale:
+            assert isinstance(value, float)
 
         # Test with a pydot version of the graph already (which does not need to go through to_pydot)
         dot_string = """digraph g {
@@ -236,11 +230,18 @@ class TestUtil:
         assert "y_lower" in df.columns
         assert "y_upper" in df.columns
         assert len(df) == 3
-        assert isinstance(scale, list)
-        assert len(scale) == 2
-        # Assert each node is included
+        # Assert the types of values are correct, as we cannot test the values due to non-deterministic graphviz svg generation
         for node in pydot_g.get_nodes():
             assert node.get_name() in df.index
+            assert isinstance(df["x_lower"][node.get_name()], float)
+            assert isinstance(df["x_upper"][node.get_name()], float)
+            assert isinstance(df["y_lower"][node.get_name()], float)
+            assert isinstance(df["y_upper"][node.get_name()], float)
+        # Assert the scale is the correct shape and types. We cannot test exact values here due to graphviz non-determinism
+        assert isinstance(scale, list)
+        assert len(scale) == 2
+        for value in scale:
+            assert isinstance(value, float)
 
         # Test with a graph that includes kites similar to how they are used in chronological graphs
         g = nx.DiGraph()
@@ -262,40 +263,18 @@ class TestUtil:
         assert "y_lower" in df.columns
         assert "y_upper" in df.columns
         assert len(df) == 6
-        assert isinstance(scale, list)
-        assert len(scale) == 2
-        # Assert each node is included
+        # Assert the types of values are correct, as we cannot test the values due to non-deterministic graphviz svg generation
         for node in g.nodes():
             assert node in df.index
-
-        # Assert each node has the expected bounding box. This is almost certianly test overfitting.
-        assert df["x_lower"]["a"] == pytest.approx(72.0)
-        assert df["x_upper"]["a"] == pytest.approx(126.0)
-        assert df["y_lower"]["a"] == pytest.approx(168.0)
-        assert df["y_upper"]["a"] == pytest.approx(204.0)
-        assert df["x_lower"]["b"] == pytest.approx(72.0)
-        assert df["x_upper"]["b"] == pytest.approx(126.0)
-        assert df["y_lower"]["b"] == pytest.approx(96.0)
-        assert df["y_upper"]["b"] == pytest.approx(132.0)
-        assert df["x_lower"]["c"] == pytest.approx(0.0)
-        assert df["x_upper"]["c"] == pytest.approx(54.0)
-        assert df["y_lower"]["c"] == pytest.approx(96.0)
-        assert df["y_upper"]["c"] == pytest.approx(132.0)
-        assert df["x_lower"]["d"] == pytest.approx(16.0)
-        assert df["x_upper"]["d"] == pytest.approx(70.0)
-        assert df["y_lower"]["d"] == pytest.approx(12.0)
-        assert df["y_upper"]["d"] == pytest.approx(48.0)
-        assert df["x_lower"]["a_1"] == pytest.approx(76.0)
-        assert df["x_upper"]["a_1"] == pytest.approx(176.0)
-        assert df["y_lower"]["a_1"] == pytest.approx(240.0)
-        assert df["y_upper"]["a_1"] == pytest.approx(300.0)
-        assert df["x_lower"]["b_1"] == pytest.approx(96.0)
-        assert df["x_upper"]["b_1"] == pytest.approx(196.0)
-        assert df["y_lower"]["b_1"] == pytest.approx(-0.0)
-        assert df["y_upper"]["b_1"] == pytest.approx(60.0)
-        # Assert the scale values are as expected. This may be overfitting the test
-        assert scale[0] == pytest.approx(200.0)
-        assert scale[1] == pytest.approx(304.0)
+            assert isinstance(df["x_lower"][node], float)
+            assert isinstance(df["x_upper"][node], float)
+            assert isinstance(df["y_lower"][node], float)
+            assert isinstance(df["y_upper"][node], float)
+        # Assert the scale is the correct shape and types. We cannot test exact values here due to graphviz non-determinism
+        assert isinstance(scale, list)
+        assert len(scale) == 2
+        for value in scale:
+            assert isinstance(value, float)
 
         # Test with a graph that includes elipses/ovals/circles
         # polychron currently (0.2.0) only explicitly sets box or diamond, so this is only for .dot inputs which explciitly set custom shapes?
@@ -319,22 +298,18 @@ class TestUtil:
         # Assert each node is included
         for node in g.nodes():
             assert node in df.index
-        # Assert coordinate values, this is probably test overfitting
-        assert df["x_lower"]["ellipse"] == pytest.approx(0.2)
-        assert df["x_upper"]["ellipse"] == pytest.approx(67.40)
-        assert df["y_lower"]["ellipse"] == pytest.approx(169.09)
-        assert df["y_upper"]["ellipse"] == pytest.approx(205.09)
-        assert df["x_lower"]["oval"] == pytest.approx(6.80)
-        assert df["x_upper"]["oval"] == pytest.approx(60.80)
-        assert df["y_lower"]["oval"] == pytest.approx(97.09)
-        assert df["y_upper"]["oval"] == pytest.approx(133.09)
-        assert df["x_lower"]["circle"] == pytest.approx(3.21)
-        assert df["x_upper"]["circle"] == pytest.approx(64.39)
-        assert df["y_lower"]["circle"] == pytest.approx(-0.04)
-        assert df["y_upper"]["circle"] == pytest.approx(61.14)
-        # Assert the scale values
-        assert scale[0] == pytest.approx(71.59)
-        assert scale[1] == pytest.approx(209.09)
+        # Assert the types of values are correct, as we cannot test the values due to non-deterministic graphviz svg generation
+        for node in g.nodes():
+            assert node in df.index
+            assert isinstance(df["x_lower"][node], float)
+            assert isinstance(df["x_upper"][node], float)
+            assert isinstance(df["y_lower"][node], float)
+            assert isinstance(df["y_upper"][node], float)
+        # Assert the scale is the correct shape and types. We cannot test exact values here due to graphviz non-determinism
+        assert isinstance(scale, list)
+        assert len(scale) == 2
+        for value in scale:
+            assert isinstance(value, float)
 
     @pytest.mark.skip(reason="test_phase_info_func not yet implemented")
     def test_phase_info_func(self):
