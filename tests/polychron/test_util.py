@@ -369,10 +369,72 @@ class TestUtil:
         """Test edge_of_phase behaves as expected for a range of inputs"""
         pass
 
-    @pytest.mark.skip(reason="test_node_del_fixed not yet implemented")
     def test_node_del_fixed(self):
-        """Test node_del_fixed behaves as expected for a range of inputs"""
-        pass
+        """Test node_del_fixed behaves as expected for a range of inputs
+
+        Todo:
+            - how should this behave when removing interior nodes>?
+        """
+        # Using the graph
+        #   a
+        #  / \
+        # b0  b1
+        #  \ /
+        #   c
+        g_original = nx.DiGraph([("a", "b0"), ("a", "b1"), ("b0", "c"), ("b1", "c")])
+
+        # Test removing a node which only has outgoing edges, i.e. a
+        g_in = copy.deepcopy(g_original)
+        g_out = util.node_del_fixed(g_in, "a")
+        # Assert that a is no longer in the graph
+        assert not g_out.has_node("a")
+        # Assert that b0 and b1 no longer have any in edges
+        assert len(g_out.in_edges("b0")) == 0
+        assert len(g_out.in_edges("b1")) == 0
+
+        # phase_relabel currently mutates and returns the provided graph - i.e. they are the same object.
+        assert id(g_in) == id(g_out)
+
+        # Test removing a node which only has incoming edges, i.e. c
+        g_in = copy.deepcopy(g_original)
+        g_out = util.node_del_fixed(g_in, "c")
+        # Assert that c is no longer in the graph
+        assert not g_out.has_node("c")
+        # Assert that b0 and b1 no longer have any out edges
+        assert len(g_out.out_edges("b0")) == 0
+        assert len(g_out.out_edges("b1")) == 0
+
+        # Test removing a node which has incoming and outgoing edges, replacing with a new edge. i.e. b0. The graph should now be a -> b1 -> c and a -> c
+        g_in = copy.deepcopy(g_original)
+        g_out = util.node_del_fixed(g_in, "b0")
+        # Assert that b is no longer in the graph
+        assert not g_out.has_node("b0")
+        # Assert that a has one less out edge
+        assert len(g_out.out_edges("a")) == len(g_original.out_edges("a")) - 1
+        # Assert that d has one less in edge
+        assert len(g_out.in_edges("c")) == len(g_original.in_edges("c")) - 1
+        # Todo: Should there now be an edge from a->c, along with the path from a->b1->c?
+        # assert g_out.has_edge("a", "c")
+        # Assert the original path from a->b1->c remains
+        assert g_out.has_edge("a", "b1")
+        assert g_out.has_edge("b1", "c")
+
+        # Test removing 2 nodes which have incoming and outgoing edges, that would be replaced by the same edge. This should result in a graph with edge(s) from a->c.
+        g_in = copy.deepcopy(g_original)
+        g_out = util.node_del_fixed(g_in, "b0")
+        g_out = util.node_del_fixed(g_out, "b1")
+        # Assert that b0 and b1 are no longer in the graph
+        assert not g_out.has_node("b0")
+        assert not g_out.has_node("b1")
+        # There should now be a path from a->c, with a single edge? (potentially 2, but not a multigraph?)
+        assert len(g_out.edges) == 1
+        assert g_out.has_edge("a", "c")
+
+        # Test trying to remove an edge which is not present in the graph
+        g_in = copy.deepcopy(g_original)
+        assert not g_in.has_node("foo")
+        with pytest.raises(nx.NetworkXError):
+            g_out = util.node_del_fixed(g_in, "foo")
 
     @pytest.mark.skip(reason="test_all_node_info not yet implemented")
     def test_all_node_info(self):
