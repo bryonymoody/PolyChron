@@ -307,8 +307,18 @@ def imagefunc(dotfile: Any) -> Any:
 
 
 def phase_relabel(graph: nx.DiGraph) -> nx.DiGraph:
-    """relabels the phase labels to be alphas and betas, for display only,
+    """Relabels the phase labels to be alphas and betas, for display only,
     still refer to them with a's and b's
+
+    Parameters:
+        graph: The graph to modify
+
+    Returns:
+        The mutated graph
+
+    Todo:
+        - The input parameter is mutated, and returned by the function. This should probably either return a mutated copy or not return the graph.
+        - Ideally this should not create labels for nodes which do not start with a_/b_ but contain them, and ideally should only mutate for valid groups, in case user provided context labels include a_ (not currently prevented, although it may be as a workaround)
     """
     label_dict = {}
     for i in graph.nodes():
