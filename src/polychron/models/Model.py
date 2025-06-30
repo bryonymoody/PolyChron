@@ -571,12 +571,18 @@ class Model:
     def save_deleted_contexts(self) -> None:
         """Save the delete contexts metadata to disk
 
-        Formerly StartPage.tree2, in save_state_1
-        """
+        Formerly `StartPage.tree2`, in `save_state_1`
 
+        Raises:
+            OSError: if any OS errors occur during csv writing (e.g. if the disk is full)
+        """
+        # Prepare the CSV
         cols = ("context", "Reason for deleting")
         rows = [[x[0], x[1]] for x in self.deleted_nodes]
         df = pd.DataFrame(rows, columns=cols)
+        # Ensure output directory exists
+        self.create_dirs()
+        # Write csv to disk, which may raise OSError (e.g. if disk is full)
         path = self.get_working_directory() / "deleted_contexts_meta"
         df.to_csv(path)
 
