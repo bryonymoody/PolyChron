@@ -16,7 +16,12 @@ class TestModel:
     """Unit Tests for the `models.Model` class which represents a polychron Model"""
 
     def test_init(self, tmp_path: pathlib.Path):
-        """Test `__init__` behaviour for the dataclass including default and explicit value setting/getting"""
+        """Test `__init__` behaviour for the dataclass including default and explicit value setting/getting
+
+        Todo:
+            - Test invalid model names and paths (i.e. ".", " ")
+            - Test providing optional values to the constructor.
+        """
         # Construct an instance, only providing compulsory ctor arguments
         m = Model("foo", tmp_path / "foo")
         assert m.name == "foo"
