@@ -328,10 +328,15 @@ def phase_relabel(graph: nx.DiGraph) -> nx.DiGraph:
     return graph
 
 
-def alp_beta_node_add(x: Any, graph: nx.DiGraph) -> None:
-    """adds an alpha and beta node to node x"""
-    graph.add_node("a_" + str(x), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
-    graph.add_node("b_" + str(x), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
+def alp_beta_node_add(group: str, graph: nx.DiGraph) -> None:
+    """Adds an alpha and beta node for the named group to the graph
+
+    Parameters:
+        group: The group label to add alpha and beta nodes for
+        graph: The graph to be mutated
+    """
+    graph.add_node("a_" + str(group), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
+    graph.add_node("b_" + str(group), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
 
 
 def phase_labels(phi_ref, POST_PHASE, phi_accept, all_samps_phi) -> Tuple[List[str], Dict[str, Any], Dict[str, Any]]:
