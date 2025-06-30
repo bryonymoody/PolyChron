@@ -1,0 +1,349 @@
+from __future__ import annotations
+
+import os
+import pathlib
+from unittest.mock import patch
+
+import networkx as nx
+import pandas as pd
+import pytest
+
+from polychron.models.MCMCData import MCMCData
+from polychron.models.Model import Model
+
+
+class TestModel:
+    """Unit Tests for the `models.Model` class which represents a polychron Model"""
+
+    def test_init(self, tmp_path: pathlib.Path):
+        """Test `__init__` behaviour for the dataclass including default and explicit value setting/getting"""
+        # Construct an instance, only providing compulsory ctor arguments
+        m = Model("foo", tmp_path / "foo")
+        assert m.name == "foo"
+        assert m.path == tmp_path / "foo"
+        assert m.stratigraphic_graphviz_file is None
+        assert m.stratigraphic_df is None
+        assert m.stratigraphic_dag is None
+        assert m.stratigraphic_image is None
+        assert m.radiocarbon_df is None
+        assert m.context_no_unordered is None
+        assert m.group_df is None
+        assert m.group_relationship_df is None
+        assert m.group_relationships is None
+        assert m.context_equality_df is None
+        assert not m.load_check
+        assert m.chronological_dag is None
+        assert m.chronological_image is None
+        assert m.mcmc_check is False
+        assert m.deleted_nodes == []
+        assert m.deleted_edges == []
+        assert m.resid_or_intru_dag is None
+        assert m.resid_or_intru_image is None
+        assert m.intrusive_contexts == []
+        assert m.residual_contexts == []
+        assert m.intrusive_context_types == {}
+        assert m.residual_context_types == {}
+        assert not m.grouped_rendering
+        assert m.context_types == []
+        assert m.prev_group == []
+        assert m.post_group == []
+        assert m.phi_ref == []
+        assert m.removed_nodes_tracker == []
+        assert m.mcmc_data == MCMCData()
+        assert m.node_coords_and_scale is None
+        # Check private members are initialised correctly, although not part of the public interface
+        assert m._Model__calibration is None
+
+    def test_get_working_directory(self, tmp_path: pathlib.Path):
+        """Test the get_working_directory method returns the expected path
+
+        Todo:
+            - Should workdir be a child of python_only?
+        """
+        m = Model("foo", tmp_path / "foo")
+        assert m.get_working_directory() == tmp_path / "foo" / "workdir"
+
+    def test_get_chronological_graph_directory(self, tmp_path: pathlib.Path):
+        """Test the get_chronological_graph_directory method returns the expected path"""
+        m = Model("foo", tmp_path / "foo")
+        assert m.get_chronological_graph_directory() == tmp_path / "foo" / "chronological_graph"
+
+    def test_get_stratigraphic_graph_directory(self, tmp_path: pathlib.Path):
+        """Test the get_stratigraphic_graph_directory method returns the expected path"""
+        m = Model("foo", tmp_path / "foo")
+        assert m.get_stratigraphic_graph_directory() == tmp_path / "foo" / "stratigraphic_graph"
+
+    def test_get_mcmc_results_directory(self, tmp_path: pathlib.Path):
+        """Test the get_mcmc_results_directory method returns the expected path"""
+        m = Model("foo", tmp_path / "foo")
+        assert m.get_mcmc_results_directory() == tmp_path / "foo" / "mcmc_results"
+
+    def test_get_python_only_directory(self, tmp_path: pathlib.Path):
+        """Test the get_python_only_directory method returns the expected path"""
+        m = Model("foo", tmp_path / "foo")
+        assert m.get_python_only_directory() == tmp_path / "foo" / "python_only"
+
+    @pytest.mark.skip(reason="test_to_json not implemented")
+    def test_to_json(self, tmp_path: pathlib.Path):
+        """Test the to_json method behaves as expected for a range of Models"""
+        m = Model("foo", tmp_path / "foo")
+        json_str = m.to_json()
+        assert len(json_str) > 0
+        # ...
+
+        json_str = m.to_json(pretty=False)
+        assert len(json_str) > 0
+        # ...
+
+        json_str = m.to_json(pretty=True)
+        assert len(json_str) > 0
+        # ...
+
+    @pytest.mark.skip(reason="test_save not implemented")
+    def test_save(self, tmp_path: pathlib.Path):
+        """Test the save method behaves as expected for a range of Models"""
+        m = Model("foo", tmp_path / "foo")
+        m.save()
+
+    @pytest.mark.skip(reason="test_load_from_disk not implemented")
+    def test_load_from_disk(self, tmp_path: pathlib.Path):
+        """Test the load_from_disk method behaves as expected for a range of json files"""
+        m = Model.load_from_disk(tmp_path / "polychron_model.json")
+        assert m.name == "@todo"
+        # ...
+
+    def test_create_dirs(self, tmp_path: pathlib.Path):
+        """Test the create_dirs method behaves as expected for a range of Models"""
+        model_path = tmp_path / "foo"
+        m = Model("foo", model_path)
+        # Assert that the model dir does not exist right now
+        assert not model_path.exists()
+        # Call the create directories method
+        m.create_dirs()
+        # Assert the expected paths now exist
+        assert model_path.exists()
+        assert model_path.is_dir()
+        assert m.get_working_directory().is_dir()
+        assert m.get_stratigraphic_graph_directory().is_dir()
+        assert m.get_chronological_graph_directory().is_dir()
+        assert m.get_mcmc_results_directory().is_dir()
+        assert m.get_python_only_directory().is_dir()
+
+        # Assert the current dir has been updated.
+        assert pathlib.Path(os.getcwd()) == model_path
+
+        # Assert that calling it again does not error
+        m.create_dirs()
+
+        # Check that a model path with a missing parent directory would behave
+        model_path = tmp_path / "missing" / "parent" / "dirs" / "foo"
+        m = Model("foo", model_path)
+        assert not model_path.exists()
+        m.create_dirs()
+        assert model_path.exists()
+
+        # Tests expected errors would be raised in case of disk errors through mocking
+        model_path = tmp_path / "mock_mkdir"
+        m = Model("mock_mkdir", model_path)
+        with patch("pathlib.Path.mkdir", side_effect=OSError("Mock OSError")):
+            with pytest.raises(OSError, match="Mock OSError"):
+                m.create_dirs()
+
+        model_path = tmp_path / "mock_chdir"
+        m = Model("mock_chdir", model_path)
+        with patch("os.chdir", side_effect=OSError("Mock OSError")):
+            with pytest.raises(OSError, match="Mock OSError"):
+                m.create_dirs()
+
+    def test_save_deleted_contexts(self, tmp_path: pathlib.Path):
+        """Test save_deleted_contexts behaves as expected for a range of models, and that it may raise on attempts to write the csv if disk state is invalid"""
+        # Test saving a model with no deleted nodes creates a csv with no data rows
+        m = Model("foo", tmp_path / "foo")
+        expected_csv_path = m.get_working_directory() / "deleted_contexts_meta"
+        assert not expected_csv_path.exists()
+        m.save_deleted_contexts()
+        assert expected_csv_path.is_file()
+        df = pd.read_csv(expected_csv_path, dtype=str, keep_default_na=False)
+        assert list(df.columns) == ["Unnamed: 0", "context", "Reason for deleting"]
+        assert len(df) == 0
+
+        # With some deleted contexts, expect the correct data to be included. Includes an edge case with an empry reason.
+        deletions = [("foo", "test"), ("bar", "")]
+        m.deleted_nodes = deletions
+        m.save_deleted_contexts()
+        assert expected_csv_path.is_file()
+        df = pd.read_csv(expected_csv_path, dtype=str, keep_default_na=False)
+        assert list(df.columns) == ["Unnamed: 0", "context", "Reason for deleting"]
+        assert len(df) == 2
+        for idx, (ctx, reason) in enumerate(deletions):
+            assert df["context"].iloc[idx] == ctx
+            assert df["Reason for deleting"].iloc[idx] == reason
+
+        # Test that reasons containing new line characters are handeld by pandas in a way that allows them to be read back in (by quoting the value but including true newline characters).
+        deletions = [("foo", "test\nwith\nmultiple\nlines")]
+        m.deleted_nodes = deletions
+        m.save_deleted_contexts()
+        assert expected_csv_path.is_file()
+        df = pd.read_csv(expected_csv_path, dtype=str, keep_default_na=False)
+        assert list(df.columns) == ["Unnamed: 0", "context", "Reason for deleting"]
+        assert len(df) == 1
+        for idx, (ctx, reason) in enumerate(deletions):
+            assert df["context"].iloc[idx] == ctx
+            assert df["Reason for deleting"].iloc[idx] == reason
+
+        # Mock an OSError on file opening, which should be propagated up from pandas
+        with patch("builtins.open", autospec=True, spec_set=True) as mock_open:
+            mock_open.side_effect = OSError(28, "No space left on device")
+            with pytest.raises(OSError, match="No space left on device"):
+                m.save_deleted_contexts()
+
+    def test_set_stratigraphic_graphviz_file(self, tmp_path: pathlib.Path):
+        """Test set_stratigraphic_graphviz_file behaves as intended with different inputs"""
+        m = Model("foo", tmp_path / "foo")
+        assert m.stratigraphic_graphviz_file is None
+
+        # test with a pathlib object
+        m.set_stratigraphic_graphviz_file(tmp_path / "input.gv")
+        assert m.stratigraphic_graphviz_file == tmp_path / "input.gv"
+
+        # Test with a string, which should become a pathlib.Path
+        m.set_stratigraphic_graphviz_file(str(tmp_path / "input.dot"))
+        assert m.stratigraphic_graphviz_file == tmp_path / "input.dot"
+
+    @pytest.mark.parametrize(
+        ("data_or_path", "expected_nodes", "expected_edges"),
+        [
+            # `data/demo/1-strat.csv`` from the data dirctory
+            (
+                "demo/1-strat.csv",
+                ["a", "b", "c", "d", "e", "f", "g"],
+                [("a", "b"), ("b", "c"), ("b", "d"), ("b", "e"), ("d", "f"), ("e", "g")],
+            ),
+            # data/strat-csv/unconnected-context.csv which includes an unconnected context c, so 3 nodes, 1 edge expected
+            (
+                "strat-csv/unconnected.csv",
+                ["a", "b", "c"],
+                [("a", "b")],
+            ),
+            # A custom df which includes an unconnected context c, so 3 nodes, 1 edge expected. This does not currently pass as an emptry string is included as a context
+            # (
+            #     {"above": ["a", "c"], "below": ["b", ""]},
+            #     ["a", "b", "c"],
+            #     [("a", "b")],
+            # ),
+            # A dataframe with expected columns, but no rows of data
+            (
+                {"above": [], "below": []},
+                [],
+                [],
+            ),
+            # An empty dataframe. Currently fails as atleast 2 cols required.
+            # (
+            #     {},
+            #     [],
+            #     [],
+            # ),
+        ],
+    )
+    def test_set_stratigraphic_df(
+        self,
+        data_or_path: dict[str, list] | str,
+        expected_nodes: list[str],
+        expected_edges: list[tuple[str, str]],
+        tmp_path: pathlib.Path,
+        test_data_path: pathlib.Path,
+    ):
+        """Test set_stratigraphic_df behaves as expected.
+
+        Todo:
+            - Expand the number of input files which are tested, to cover a wider range of edge cases (empty dataframe, invalid context labels, duplicated edges, bi-directional edges, self-edges, alternate column titles, no column titles, reveresd column titles, only one columns / no above below, extra columns)"""
+
+        # Use a dataframe read from disk in the test datasets, which is parsed the same as in ModelPresenter.open_strat_csv_file.
+        if isinstance(data_or_path, str):
+            input_df = pd.read_csv(test_data_path / data_or_path, dtype=str)
+        else:
+            input_df = pd.DataFrame(data_or_path, dtype=str)
+
+        # Construct the model instance
+        m = Model("foo", tmp_path / "foo")
+
+        # Call the set_stratigraphic_df method
+        m.set_stratigraphic_df(input_df)
+
+        # Assert that the stored df is a copy of the provided df
+        assert id(m.stratigraphic_df) != id(input_df)
+        pd.testing.assert_frame_equal(m.stratigraphic_df, input_df)
+
+        # Assert that a stratigraphic graph has been created, with the expected nodes and edges.
+        assert m.stratigraphic_dag is not None
+        assert isinstance(m.stratigraphic_dag, nx.DiGraph)
+        assert m.stratigraphic_dag.number_of_nodes() == len(expected_nodes)
+
+        # Assert that each expected context exists and is box shaped width an empty determiniation and group
+        for node, attribs in m.stratigraphic_dag.nodes(True):
+            assert node in expected_nodes
+            assert attribs["shape"] == "box"
+            assert attribs["Determination"] == [None, None]
+            assert attribs["Group"] is None
+
+        # Assert the correct number of edges and correct edges (number of unique rows in the input dataframe with non empty columns 0 and 1)
+        assert m.stratigraphic_dag.number_of_edges() == len(expected_edges)
+        for u, v, attribs in m.stratigraphic_dag.edges(data=True):
+            assert (u, v) in expected_edges
+            assert attribs["arrowhead"] == "none"
+
+    @pytest.mark.skip("test_set_group_relationship_df not implemented")
+    def test_set_group_relationship_df(self):
+        pass
+
+    @pytest.mark.skip("test_set_context_equality_df not implemented")
+    def test_set_context_equality_df(self):
+        pass
+
+    @pytest.mark.skip("test_render_strat_graph not implemented")
+    def test_render_strat_graph(self):
+        pass
+
+    @pytest.mark.skip("test_render_resid_or_intru_dag not implemented")
+    def test_render_resid_or_intru_dag(self):
+        pass
+
+    @pytest.mark.skip("test___render_strat_graph not implemented")
+    def test___render_strat_graph(self):
+        pass
+
+    @pytest.mark.skip("test___render_strat_graph_phase not implemented")
+    def test___render_strat_graph_phase(self):
+        pass
+
+    @pytest.mark.skip("test___render_resid_or_intru_dag not implemented")
+    def test___render_resid_or_intru_dag(self):
+        pass
+
+    @pytest.mark.skip("test___render_resid_or_intru_dag_phase not implemented")
+    def test___render_resid_or_intru_dag_phase(self):
+        pass
+
+    @pytest.mark.skip("test_render_chrono_graph not implemented")
+    def test_render_chrono_graph(self):
+        pass
+
+    @pytest.mark.skip("test_reopen_stratigraphic_image not implemented")
+    def test_reopen_stratigraphic_image(self):
+        pass
+
+    @pytest.mark.skip("test_reopen_chronological_image not implemented")
+    def test_reopen_chronological_image(self):
+        pass
+
+    @pytest.mark.skip("test_record_deleted_node not implemented")
+    def test_record_deleted_node(self):
+        pass
+
+    @pytest.mark.skip("test_record_deleted_edge not implemented")
+    def test_record_deleted_edge(self):
+        pass
+
+    @pytest.mark.skip("test_MCMC_func not implemented")
+    def test_MCMC_func(self):
+        pass
