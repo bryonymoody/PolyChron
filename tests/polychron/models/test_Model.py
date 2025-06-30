@@ -7,6 +7,7 @@ from unittest.mock import patch
 import networkx as nx
 import pandas as pd
 import pytest
+from PIL import Image
 
 from polychron.models.MCMCData import MCMCData
 from polychron.models.Model import Model
@@ -298,57 +299,193 @@ class TestModel:
             assert attribs["arrowhead"] == "none"
 
     @pytest.mark.skip("test_set_group_relationship_df not implemented")
-    def test_set_group_relationship_df(self):
+    def test_set_group_relationship_df(self, tmp_path: pathlib.Path):
+        """Test set_group_relationship_df behaves as expected for a range of inputs"""
+        # m = Model("foo", tmp_path / "foo")
         pass
 
     @pytest.mark.skip("test_set_context_equality_df not implemented")
-    def test_set_context_equality_df(self):
+    def test_set_context_equality_df(self, tmp_path: pathlib.Path):
+        """Test set_context_equality_df behaves as expected for a range of inputs"""
+        # m = Model("foo", tmp_path / "foo")
         pass
 
     @pytest.mark.skip("test_render_strat_graph not implemented")
-    def test_render_strat_graph(self):
+    def test_render_strat_graph(self, tmp_path: pathlib.Path):
+        """Test render_strat_graph behaves as expected for a range of inputs"""
+        # m = Model("foo", tmp_path / "foo")
         pass
 
     @pytest.mark.skip("test_render_resid_or_intru_dag not implemented")
-    def test_render_resid_or_intru_dag(self):
+    def test_render_resid_or_intru_dag(self, tmp_path: pathlib.Path):
+        """Test render_resid_or_intru_dag behaves as expected for a range of inputs"""
+        # m = Model("foo", tmp_path / "foo")
         pass
 
     @pytest.mark.skip("test___render_strat_graph not implemented")
-    def test___render_strat_graph(self):
+    def test___render_strat_graph(self, tmp_path: pathlib.Path):
+        """Test __render_strat_graph behaves as expected for a range of inputs"""
+        # m = Model("foo", tmp_path / "foo")
         pass
 
     @pytest.mark.skip("test___render_strat_graph_phase not implemented")
-    def test___render_strat_graph_phase(self):
+    def test___render_strat_graph_phase(self, tmp_path: pathlib.Path):
+        """Test __render_strat_graph_phase behaves as expected for a range of inputs"""
+        # m = Model("foo", tmp_path / "foo")
         pass
 
     @pytest.mark.skip("test___render_resid_or_intru_dag not implemented")
-    def test___render_resid_or_intru_dag(self):
+    def test___render_resid_or_intru_dag(self, tmp_path: pathlib.Path):
+        """Test __render_resid_or_intru_dag behaves as expected for a range of inputs"""
+        # m = Model("foo", tmp_path / "foo")
         pass
 
     @pytest.mark.skip("test___render_resid_or_intru_dag_phase not implemented")
-    def test___render_resid_or_intru_dag_phase(self):
-        pass
+    def test___render_resid_or_intru_dag_phase(self, tmp_path: pathlib.Path):
+        """Test __render_resid_or_intru_dag_phase behaves as expected for a range of inputs"""
+        # m = Mod
+        # passel("foo", tmp_path / "foo")
 
     @pytest.mark.skip("test_render_chrono_graph not implemented")
-    def test_render_chrono_graph(self):
+    def test_render_chrono_graph(self, tmp_path: pathlib.Path):
+        """Test render_chrono_graph behaves as expected for a range of inputs"""
+        # m = Model("foo", tmp_path / "foo")
         pass
 
-    @pytest.mark.skip("test_reopen_stratigraphic_image not implemented")
-    def test_reopen_stratigraphic_image(self):
-        pass
+    def test_reopen_stratigraphic_image(self, tmp_path: pathlib.Path, capsys: pytest.CaptureFixture):
+        """Test that reopening the stratigraphic image correctly mutates Model state, without the file existing, with a valid image file at the correct locaiton, and an invalid file (i.e. corrupted)"""
+        m = Model("foo", tmp_path / "foo")
+        expected_png_path = m.get_working_directory() / "testdag.png"
+        assert m.stratigraphic_image is None
 
-    @pytest.mark.skip("test_reopen_chronological_image not implemented")
-    def test_reopen_chronological_image(self):
-        pass
+        # When the file does not exist in the working directory, the instance value should not be mutated
+        assert not expected_png_path.is_file()
+        m.reopen_stratigraphic_image()
+        assert m.stratigraphic_image is None
 
-    @pytest.mark.skip("test_record_deleted_node not implemented")
-    def test_record_deleted_node(self):
-        pass
+        # Create an image at the expected location
+        m.create_dirs()
+        img = Image.new("RGB", (10, 10), (255, 0, 0))
+        img.save(expected_png_path)
+        # Test that if a valid png exists at the expected location, an Image instance is stored
+        assert expected_png_path.is_file()
+        m.reopen_stratigraphic_image()
+        assert isinstance(m.stratigraphic_image, Image.Image)
+        assert m.stratigraphic_image.size == img.size
+        assert m.stratigraphic_image.mode == img.mode
+        for x in range(img.width):
+            for y in range(img.height):
+                assert m.stratigraphic_image.getpixel((x, y)) == img.getpixel((x, y))
 
-    @pytest.mark.skip("test_record_deleted_edge not implemented")
-    def test_record_deleted_edge(self):
-        pass
+        # Reset the image instance to None
+        m.stratigraphic_image = None
+        # Create a temporary .png file which is not a valid png
+        with open(expected_png_path, "w") as fp:
+            fp.write("invalid_png")
+        assert expected_png_path.is_file()
+        # Attempt to reopen the invalid file (simulating a corrupted png on disk). reopen_stratigraphic_image should emit a warning to stderr and set the value to None
+        capsys.readouterr()
+        m.reopen_stratigraphic_image()
+        assert m.stratigraphic_image is None
+        captured = capsys.readouterr()
+        assert len(captured.out) == 0
+        assert len(captured.err) > 0
+        assert captured.err.startswith("Warning: unable to open Image")
+
+    def test_reopen_chronological_image(self, tmp_path: pathlib.Path, capsys: pytest.CaptureFixture):
+        """Test that reopening the chronological image correctly mutates Model state, without the file existing, with a valid image file at the correct locaiton, and an invalid file (i.e. corrupted)"""
+        m = Model("foo", tmp_path / "foo")
+        expected_png_path = m.get_working_directory() / "testdag_chrono.png"
+        assert m.chronological_image is None
+
+        # When the file does not exist in the working directory, the instance value should not be mutated
+        assert not expected_png_path.is_file()
+        m.reopen_chronological_image()
+        assert m.chronological_image is None
+
+        # Create an image at the expected location
+        m.create_dirs()
+        img = Image.new("RGB", (10, 10), (255, 0, 0))
+        img.save(expected_png_path)
+        # Test that if a valid png exists at the expected location, an Image instance is stored
+        assert expected_png_path.is_file()
+        m.reopen_chronological_image()
+        assert isinstance(m.chronological_image, Image.Image)
+        assert m.chronological_image.size == img.size
+        assert m.chronological_image.mode == img.mode
+        for x in range(img.width):
+            for y in range(img.height):
+                assert m.chronological_image.getpixel((x, y)) == img.getpixel((x, y))
+
+        # Reset the image instance to None
+        m.chronological_image = None
+        # Create a temporary .png file which is not a valid png
+        with open(expected_png_path, "w") as fp:
+            fp.write("invalid_png")
+        assert expected_png_path.is_file()
+        # Attempt to reopen the invalid file (simulating a corrupted png on disk). reopen_chronological_image should emit a warning to stderr and set the value to None
+        capsys.readouterr()
+        m.reopen_chronological_image()
+        assert m.chronological_image is None
+        captured = capsys.readouterr()
+        assert len(captured.out) == 0
+        assert len(captured.err) > 0
+        assert captured.err.startswith("Warning: unable to open Image")
+
+    def test_record_deleted_node(self, tmp_path: pathlib.Path):
+        """Test that recording deleted nodes correctly mutates the model state"""
+        m = Model("foo", tmp_path / "foo")
+        # Check that there are no deleted nodes yet
+        assert m.deleted_nodes == []
+
+        # Add a deleted node, with a context but no reason.
+        m.record_deleted_node("foo")
+        assert len(m.deleted_nodes) == 1
+        assert m.deleted_nodes[0] == ("foo", None)
+
+        # Add another entry with an empty string for the reason
+        m.record_deleted_node("bar", "")
+        assert len(m.deleted_nodes) == 2
+        assert m.deleted_nodes[1] == ("bar", "")
+
+        # Add another entry with a non empty string
+        m.record_deleted_node("baz", "reason")
+        assert len(m.deleted_nodes) == 3
+        assert m.deleted_nodes[2] == ("baz", "reason")
+
+        # Add another entry for a node which is already present. This is allowed as a node can be created, deleted, then created again.
+        m.record_deleted_node("bar", "duplicate")
+        assert len(m.deleted_nodes) == 4
+        assert m.deleted_nodes[3] == ("bar", "duplicate")
+
+    def test_record_deleted_edge(self, tmp_path: pathlib.Path):
+        """Test that recording delted edges correctly mutates the model state"""
+        m = Model("foo", tmp_path / "foo")
+        # Check that there are no deleted edges yet
+        assert m.deleted_edges == []
+
+        # Add a deleted edge, with contexts but no reason.
+        m.record_deleted_edge("foo", "bar")
+        assert len(m.deleted_edges) == 1
+        assert m.deleted_edges[0] == ("foo", "bar", None)
+
+        # Add another entry with an empty string for the reason
+        m.record_deleted_edge("foo", "baz", "")
+        assert len(m.deleted_edges) == 2
+        assert m.deleted_edges[1] == ("foo", "baz", "")
+
+        # Add another entry with a non empty string
+        m.record_deleted_edge("bar", "baz", "reason")
+        assert len(m.deleted_edges) == 3
+        assert m.deleted_edges[2] == ("bar", "baz", "reason")
+
+        # Add another entry for a edge which is already present. This is allowed as a edge can be created, deleted, then created again.
+        m.record_deleted_edge("bar", "baz", "duplicate")
+        assert len(m.deleted_edges) == 4
+        assert m.deleted_edges[3] == ("bar", "baz", "duplicate")
 
     @pytest.mark.skip("test_MCMC_func not implemented")
-    def test_MCMC_func(self):
+    def test_MCMC_func(self, tmp_path: pathlib.Path):
+        """Test MCMC_func behaves as expected for a range of inputs / Models"""
+        # m = Model("foo", tmp_path / "foo")
         pass
