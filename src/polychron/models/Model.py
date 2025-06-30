@@ -19,7 +19,7 @@ import pydot
 from graphviz import render
 from networkx.drawing.nx_pydot import write_dot
 from packaging.version import Version
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 from ..automated_mcmc_ordering_coupling_copy import run_MCMC
 from ..Config import get_config
@@ -822,7 +822,11 @@ class Model:
         workdir = self.get_working_directory()
         png_path = workdir / "testdag_chrono.png"
         if png_path.is_file():
-            self.chronological_image = Image.open(png_path)
+            try:
+                self.chronological_image = Image.open(png_path)
+            except (FileNotFoundError, UnidentifiedImageError):
+                print("Warning: unable to open Image '{png_path}'\n  {e}", file=sys.stderr)
+                self.chronological_image = None
 
     def record_deleted_node(self, context: str, reason: Optional[str] = None) -> None:
         """Method to add a node to the list of deleted nodes
