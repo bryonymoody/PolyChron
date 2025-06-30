@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import pathlib
 import time
 from textwrap import dedent
@@ -393,10 +394,45 @@ class TestUtil:
         """Test phase_relabel behaves as expected for a range of inputs"""
         pass
 
-    @pytest.mark.skip(reason="test_alp_beta_node_add not yet implemented")
     def test_alp_beta_node_add(self):
         """Test alp_beta_node_add behaves as expected for a range of inputs"""
-        pass
+        # Start with a graph
+        g = nx.DiGraph([("a", "b"), ("a", "c"), ("b", "d"), ("c", "d")])
+
+        # Test that adding alpha and beta nodes to a copy of the graph behaves as intended.
+        g_copy = copy.deepcopy(g)
+        util.alp_beta_node_add("1", g_copy)
+        # the alpha and beta nodes should not be in g, but should be in g_copy
+        assert not g.has_node("a_1")
+        assert not g.has_node("b_1")
+        assert g_copy.has_node("a_1")
+        assert g_copy.has_node("b_1")
+        # Assert they are diamond shaped
+        assert g_copy.nodes("shape")["a_1"] == "diamond"
+        assert g_copy.nodes("shape")["b_1"] == "diamond"
+
+        # Check with another label
+        g_copy = copy.deepcopy(g)
+        util.alp_beta_node_add("2", g_copy)
+        # the alpha and beta nodes should not be in g, but should be in g_copy
+        assert not g.has_node("a_2")
+        assert not g.has_node("b_2")
+        assert g_copy.has_node("a_2")
+        assert g_copy.has_node("b_2")
+        # Assert they are diamond shaped
+        assert g_copy.nodes("shape")["a_2"] == "diamond"
+        assert g_copy.nodes("shape")["b_2"] == "diamond"
+
+        # Check adding the same label again, to the same graph. This suceeds because networkx.Graph.add_node can be used to update properties for an existing node
+        util.alp_beta_node_add("2", g_copy)
+        # the alpha and beta nodes should not be in g, but should be in g_copy
+        assert not g.has_node("a_2")
+        assert not g.has_node("b_2")
+        assert g_copy.has_node("a_2")
+        assert g_copy.has_node("b_2")
+        # Assert they are diamond shaped
+        assert g_copy.nodes("shape")["a_2"] == "diamond"
+        assert g_copy.nodes("shape")["b_2"] == "diamond"
 
     @pytest.mark.skip(reason="test_phase_labels not yet implemented")
     def test_phase_labels(self):
