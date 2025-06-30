@@ -230,7 +230,21 @@ def edge_of_phase(test1, pset, node_list, node_info):
 
 
 def node_del_fixed(graph: nx.DiGraph, node: str) -> nx.DiGraph:
-    """Remove a node from the graph, replacing edges where possible"""
+    """Remove a node from the graph, replacing edges where possible
+
+    Parameters:
+        graph: The graph to modify
+        node: the name of the node to be removed
+
+    Returns:
+        The mutated graph
+
+    Raises:
+        NetworkXError: If the provided node is not a member of the graph
+
+    Todo:
+        - The input parameter is mutated, and returned by the function. This should probably either return a mutated copy or not return the graph.
+    """
     in_nodes = [i[0] for i in list(graph.in_edges(node))]
     out_nodes = [i[1] for i in list(graph.out_edges(node))]
     graph.remove_node(node)
