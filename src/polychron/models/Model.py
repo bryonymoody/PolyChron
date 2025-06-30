@@ -810,7 +810,11 @@ class Model:
         workdir.mkdir(parents=True, exist_ok=True)
         png_path = workdir / "testdag.png"
         if png_path.is_file():
-            self.stratigraphic_image = Image.open(png_path)
+            try:
+                self.stratigraphic_image = Image.open(png_path)
+            except (FileNotFoundError, UnidentifiedImageError):
+                print("Warning: unable to open Image '{png_path}'\n  {e}", file=sys.stderr)
+                self.stratigraphic_image = None
 
     def reopen_chronological_image(self) -> None:
         """Re-open the chrono image from disk
