@@ -389,10 +389,61 @@ class TestUtil:
         """Test imagefunc behaves as expected for a range of inputs"""
         pass
 
-    @pytest.mark.skip(reason="test_phase_relabel not yet implemented")
     def test_phase_relabel(self):
         """Test phase_relabel behaves as expected for a range of inputs"""
-        pass
+        # Test mutating a graph with no alpha or beta nodes (starts with a_ or b_) is not mutated
+        g_original = nx.DiGraph([("a", "b"), ("b", "c")])
+        g_in = copy.deepcopy(g_original)
+        g_out = util.phase_relabel(g_in)
+        # phase_relabel currently mutates and returns the provided graph - i.e. they are the same object.
+        assert id(g_in) == id(g_out)
+        # Assert that the labels are the same
+        assert g_out.nodes("label") == g_original.nodes("label")
+
+        # Test mutating a graph with alpha and beta nodes, i.e. node labels which start with a_ and b_.
+        g_original = nx.DiGraph([("a_1", "a"), ("a", "b"), ("b", "b_1")])
+        g_in = copy.deepcopy(g_original)
+        g_out = util.phase_relabel(g_in)
+        # Assert that the labels are no longer the same
+        assert g_out.nodes("label") != g_original.nodes("label")
+        # Assert the labels for a_1 and b_1 are as expected
+        node_labels = g_out.nodes("label")
+        assert node_labels["a_1"] == "<&alpha;<SUB> 1</SUB>>"
+        assert node_labels["b_1"] == "<&beta;<SUB>1</SUB>>"
+
+        # Check an a_1 = b_1 type label.
+        g_original = nx.DiGraph([("a_1 = b_1", "a")])
+        g_in = copy.deepcopy(g_original)
+        g_out = util.phase_relabel(g_in)
+        # Assert that the labels are no longer the same
+        assert g_out.nodes("label") != g_original.nodes("label")
+        # Assert the labels for a_1 = b_1 is as expected
+        node_labels = g_out.nodes("label")
+        assert node_labels["a_1 = b_1"] == "<&alpha;<SUB>1</SUB> = &beta;<SUB>1</SUB>>"
+
+        # Check nodes which contain a_ or b_, but are not at the start of the node name.
+        # Ideally these should not be mutated, but currently are.
+        g_original = nx.DiGraph([("foo_a_bar", "foo_b_bar")])
+        g_in = copy.deepcopy(g_original)
+        g_out = util.phase_relabel(g_in)
+        node_labels = g_out.nodes("label")
+        # Assert the labels are mutated (current behaviour)
+        assert node_labels["foo_a_bar"] == "foo_<&alpha;<SUB> bar</SUB>>"
+        assert node_labels["foo_b_bar"] == "foo_<&beta;<SUB>bar</SUB>>"
+        # Ideally instead we should Assert the labels were not specified
+        # assert "foo_a_bar" not in node_labels
+        # assert "foo_b_bar" not in node_labels
+
+        # Check a node which is not a polychron-generate group node, i.e. a user provided context with a_ and/or b_ in the context label.
+        # This will be mutates as if it was an alpha/beta node currently, but ideally should not be
+        g_original = nx.DiGraph([("a_b_c", "foo")])
+        g_in = copy.deepcopy(g_original)
+        g_out = util.phase_relabel(g_in)
+        # Assert the labels for a_b_c has been changed, although ideally it wouldn't be. This would require a dynamic label prefix, or the method would need to be provided a list of group labels to mutate, rather than checking all nodes for matching patterns.
+        node_labels = g_out.nodes("label")
+        assert node_labels["a_b_c"] == "<&alpha;<SUB>b_c</SUB>>"
+        # ideally this should not be mutated
+        # assert "a_b_c" not in node_labels
 
     def test_alp_beta_node_add(self):
         """Test alp_beta_node_add behaves as expected for a range of inputs"""
