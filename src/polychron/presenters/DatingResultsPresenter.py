@@ -73,7 +73,10 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         self.chronograph_render_post()
 
     def get_window_title_suffix(self) -> str | None:
-        return f"{self.model.current_project_name} - {self.model.current_model_name}"
+        if self.model.current_project_name and self.model.current_model_name:
+            return f"{self.model.current_project_name} - {self.model.current_model_name}"
+        else:
+            return None
 
     def on_file_save(self) -> None:
         """Callback for the File > Save project progress menu command
