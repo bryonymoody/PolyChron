@@ -42,7 +42,7 @@ def polygonfunc(i: str) -> list[float]:
         i: substring from an svg string, which shouuld include 'points='
 
     Returns:
-        [x0, x1, y0, y1] - A list of 4 floating point numbers, which are the bounding box of the shape
+        [x0, x1, y0, y1] - A list of 4 floating point numbers, which are the bounding box of the shape. The origin used is the bottom left, rather than top left in the svg.
 
     Todo:
         - Instead of using regular expressions, use a SVG (or just xml parsing, which is stdlib but defusedxml should probably be used instead.) library
@@ -65,7 +65,7 @@ def ellipsefunc(i: str) -> list[float]:
         i: substring from an svg string, which shouuld include 'cx='
 
     Returns:
-        [x0, x1, y0, y1] - A list of 4 floating point numbers, which are the bounding box of the shape
+        [x0, x1, y0, y1] - A list of 4 floating point numbers, which are the bounding box of the shape. The origin used is the bottom left, rather than top left in the svg.
 
     Todo:
         - Instead of using regular expressions, use a SVG (or just xml parsing, which is stdlib but defusedxml should probably be used instead.) library
@@ -125,7 +125,7 @@ def node_coords_fromjson(graph: nx.DiGraph | pydot.Dot) -> Tuple[pd.DataFrame, L
         graph: The graph to extract coordinates from
 
     Returns:
-        A dataframe of coordinates, and svg scale information.
+        A dataframe of coordinates, and svg scale information. Y coordinates are inverted, so the origin of coordinates is at the bottom left.
     """
     if "pydot" in str(type(graph)):
         graphs = graph
