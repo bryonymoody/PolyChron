@@ -9,5 +9,13 @@ In addition, it allows the user to obtain graph theoretic representations of the
 
 PolyChron is available from [github.com/bryonymoody/PolyChron](https://github.com/bryonymoody/PolyChron)
 
+
+## License
+
+PolyChron is released under the [GPLv3 license](https://github.com/bryonymoody/PolyChron/blob/main/LICSENSE)
+
+
+## Documentation
+
 > [!CAUTION]
 > PolyChron's documentation is under development and not yet complete.
