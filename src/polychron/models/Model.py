@@ -782,6 +782,9 @@ class Model:
         """Render the chronological graph as a PNG and an SVG, mutating the Model state
 
         Formerly `imgrender2`
+
+        Todo:
+            - This should not require fi_new_chrono to exist on disk, but instead should create it from the chronological_dag if it exists?
         """
         workdir = self.get_working_directory()
         workdir.mkdir(parents=True, exist_ok=True)
