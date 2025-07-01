@@ -218,3 +218,22 @@ class ProjectSelection:
         self.next_model_name = None
         self.using_save_as = False
         self.using_new_project_process = False
+
+    def switch_to(self, project_name: str, model_name: str, load_ok: bool = True, create_ok: bool = True) -> None:
+        """Switch to the specified project & model, loading a project if it already exists, or creating it if not (unless load_only). potentially copying the current model.
+
+        This is essentially an overload of switch_to_next_project_model
+
+        Parameters:
+            project_name: Name of the next project
+            model_name: Name of the next model
+            load_ok: If loading existing models is allowed
+            create_ok: If creating new models is allowed
+
+        Raises:
+            RuntimeError: if the next_project_name or next_model_name are not specified or invalid; or if load_ok is False and the next_project_name and next_model_name specify an existing project; or if create_ok is False and the next_project_name and next_model_name specify a model which does not yet exist.
+            ValueError: if both load_ok and create_ok are False, atleast one must be truthy.
+        """
+        self.next_project_name = project_name
+        self.next_model_name = model_name
+        self.switch_to_next_project_model(load_ok, create_ok)
