@@ -359,10 +359,12 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
                 "Get time elapsed between " + str(self.phase_len_nodes[0]) + " and another context"
             )
             self.phase_len_nodes = []
-        self.phase_len_nodes = np.append(self.phase_len_nodes, self.node)
-        self.view.append_testmenu2_entry(
-            "Get time elapsed between " + str(self.phase_len_nodes[0]) + " and another context"
-        )
+
+        if self.node != "no node":
+            self.phase_len_nodes = np.append(self.phase_len_nodes, self.node)
+            self.view.append_testmenu2_entry(
+                "Get time elapsed between " + str(self.phase_len_nodes[0]) + " and another context"
+            )
 
     def mcmc_output(self) -> None:
         """loads posterior density plots into the graph
