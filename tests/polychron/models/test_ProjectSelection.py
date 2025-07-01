@@ -372,3 +372,19 @@ class TestProjectSelection:
 
         # Check that the new model is a copy of the old model, i.e. the non default Model members have been updated.
         assert ps.current_model.load_check
+
+    def test_switch_to(self):
+        """Test switch_to behaves as intended, as an overload of switch_to_next_project_model.
+
+        This is less thorough than test_switch_to_next_project_model, as it can rely on those tests"""
+
+        ps = ProjectSelection(self.tmp_projects_dir)
+        # Lazy load the mock projects
+        ps.projects_directory.lazy_load()
+
+        # Switch to an existing model
+        assert ps.current_project_name is None
+        assert ps.current_model_name is None
+        ps.switch_to("foo", "bar")
+        assert ps.current_project_name == "foo"
+        assert ps.current_model_name == "bar"
