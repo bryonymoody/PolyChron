@@ -190,6 +190,11 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         """Returns the node that corresponds to the mouse coordinates
 
         Formerly `PageOne.nodecheck`
+
+        Todo:
+            - Should this also reset the outline attribtues for non-selected nodes?. It also would need to triggere a re-render for this to be visibly shown to users.
+            - "no node" is potentially a valid context name that could have been provided by a user. Use None instead.
+            - Should probably do an epsilon (approximate) floating point comparisons
         """
         node_inside = "no node"
 
@@ -346,7 +351,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
 
     def testmenu_get_time_elapsed(self) -> None:
         """When the "get time elasped" option has been selected in the right click menu:
-        - Remove any existing elabsed_between options
+        - Remove any existing elased_between options
         - Add a new get time elapsed option.
         """
         if len(self.phase_len_nodes) == 1:
