@@ -66,6 +66,8 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         Context equality only?"""
 
+        self.display_data_var = "hidden"
+
         # Bind callback functions for switching between the main view tabs
         view.bind_sasd_tab_button(lambda: self.mediator.switch_presenter("Model"))
         view.bind_dr_tab_button(lambda: self.mediator.switch_presenter("DatingResults"))
@@ -103,9 +105,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             ]
         )
 
-        # Bind button clicks
         # Bind the "Data loaded" button callback
-        self.display_data_var = "hidden"
         self.view.bind_data_button(lambda: self.on_data_button())
 
         # Bind the callback for activating the testmenu
@@ -172,7 +172,10 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             )
 
     def get_window_title_suffix(self) -> str | None:
-        return f"{self.model.current_project_name} - {self.model.current_model_name}"
+        if self.model.current_project_name and self.model.current_model_name:
+            return f"{self.model.current_project_name} - {self.model.current_model_name}"
+        else:
+            return None
 
     def popup_calibrate_model(self) -> None:
         """Callback function for when Tools -> Calibrate model is selected
