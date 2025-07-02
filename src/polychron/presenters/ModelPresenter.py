@@ -905,6 +905,9 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         Switches to the "new" model for any future changes.
 
         Formerly `StartPage.refresh_4_new_model`
+
+        Todo:
+            - Handle the edge case wehre a user selects the current model name by going back, and selecting the existing model. This currently does not save (as a save only occurs if the project/model name was changed). This needs to be separate to the path where the popup window is closed by closing the window, not pressing create.
         """
 
         # Store the old project and model names, to check if the model was changed or not.
