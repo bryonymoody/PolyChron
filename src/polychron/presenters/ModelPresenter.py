@@ -801,11 +801,13 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         if model_model is None:
             return
 
-        if len(self.edge_nodes) == 1:
+        if len(self.edge_nodes) >= 1:
             self.view.remove_testmenu_entry("Place " + str(self.edge_nodes[0]) + " Above")
             self.edge_nodes = []
-        self.edge_nodes = np.append(self.edge_nodes, self.node)
-        self.view.append_testmenu_entry("Place " + str(self.edge_nodes[0]) + " Above")
+
+        if self.node != "no node":
+            self.edge_nodes = np.append(self.edge_nodes, self.node)
+            self.view.append_testmenu_entry("Place " + str(self.edge_nodes[0]) + " Above")
 
     def pre_click(self, *args) -> None:
         """makes test menu appear and removes any previous test menu
