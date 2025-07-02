@@ -837,10 +837,10 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         self.view.bind_littlecanvas_callback("<Button-1>", self.on_left)
         # Show the right click menu
         model_model = self.model.current_model
-        has_image = model_model.stratigraphic_image is not None
+        has_image = model_model is not None and model_model.stratigraphic_image is not None
         x_scal, y_scal = self.view.show_testmenu(has_image)
         # If the model has a stratigraphic image presented, check if a node has been right clicked on and store in a member variable
-        if model_model.stratigraphic_image is not None and x_scal is not None and y_scal is not None:
+        if has_image and x_scal is not None and y_scal is not None:
             self.node = self.nodecheck(x_scal, y_scal)
 
     def check_list_gen(self) -> None:
