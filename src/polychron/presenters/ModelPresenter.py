@@ -1054,14 +1054,29 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         model_model.render_strat_graph()
         self.view.update_littlecanvas(model_model.stratigraphic_image)
 
-    def stratfunc(self, node: str) -> None:
+    def stratfunc(self, node: str) -> list[str] | None:
         """obtains strat relationships for node
 
         Formerly `StartPage.stratfunc`
+
+        Parameters:
+            node: the context label to extract stratigraphic relationsips for
+
+        Returns:
+            A list contianing 2 strings, the comma separated list of context above, and comma separated list of contexts below; Or None if the provided node/context label is not valid.
         """
         model_model = self.model.current_model
         if model_model is None:
-            return
+            return None
+
+        # Return if the Model does not include a stratigraphic graph
+        if model_model.stratigraphic_dag is None:
+            return None
+
+        # Return None if the stratigraphic_dag does not include the requested node
+        if node not in model_model.stratigraphic_dag.nodes():
+            return None
+
         rellist = list(nx.line_graph(model_model.stratigraphic_dag))
         above = ()
         below = ()
