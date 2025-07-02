@@ -770,7 +770,15 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         if self.node == "no node":
             return
 
+        # If there is no stratigraphic_dag, do nothing.
+        if model_model.stratigraphic_dag is None:
+            return
+
         stratinfo = self.stratfunc(self.node)
+        # If no strat info could be retrieved for the selected node, return.
+        if stratinfo is None:
+            return
+
         metadict2 = {}
         metadict = model_model.stratigraphic_dag.nodes()[str(self.node)]
         metadict2["Contexts above"] = [stratinfo[0]]
