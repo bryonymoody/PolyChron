@@ -295,8 +295,15 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 popup_presenter.view.lift()
                 self.view.wait_window(popup_presenter.view)
 
-    def file_popup(self, df: Any) -> str:
-        """For a gien dataframe, preview the data to the user. Returns the users decision"""
+    def file_popup(self, df: pd.DataFrame) -> str:
+        """For a gien dataframe, preview the data to the user. Returns the users decision
+
+        Parameters:
+            df: The dataframe to preview
+
+        Returns:
+            The string result value, which should be "cancel" or "load"
+        """
         temp_model = {"df": df, "result": "cancel"}
         popup_presenter = DatafilePreviewPresenter(self.mediator, DatafilePreviewView(self.view), temp_model)
         popup_presenter.view.lift()
