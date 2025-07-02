@@ -637,7 +637,7 @@ def remove_invalid_attributes_networkx_lt_3_4(graph: nx.DiGraph) -> nx.DiGraph:
         The graph with invalid contraction attribtues removed
     """
     # Check the version of networkx requires this
-    if packaging.version.parse(nx.__version__) < packaging.version.parse("3.4.0"):
+    if packaging.version.parse(nx.__version__) < packaging.version.parse("3.4.0") and isinstance(graph, nx.DiGraph):
         # Copy the graph, to avoid mutating the original
         mutated_graph = copy.deepcopy(graph)
         # For each node in the graph, pop the contraction attribute
