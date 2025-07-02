@@ -710,7 +710,7 @@ class Model:
     def __render_strat_graph_phase(self) -> None:
         """Render the stratigraphic graph, with phasing mutating the Model state
 
-        Formerly imgrender_phase
+        Formerly `imgrender_phase`
         """
         workdir = self.get_working_directory()
         workdir.mkdir(parents=True, exist_ok=True)
@@ -724,14 +724,15 @@ class Model:
         textfile = open(workdir / "fi_new.txt", "w")
         textfile.write(new_string)
         textfile.close()
-        (self.stratigraphic_dag,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")
-        self.stratigraphic_dag.write_png(workdir / "test.png")
+        # Note: This previously set self.stratigraphic_dag to a pydot.Dot, rather than an nx.DiGraph which is expected elsewhere. This may need further testing.
+        (grouped_stratigraphic_dag,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")
+        grouped_stratigraphic_dag.write_png(workdir / "test.png")
         inp = Image.open(workdir / "test.png")
         inp = trim(inp)
         # Call the real .tkraise
         inp.save(workdir / "testdag.png")
         self.stratigraphic_image = Image.open(workdir / "testdag.png")
-        self.node_coords_and_scale = node_coords_fromjson(self.stratigraphic_dag)
+        self.node_coords_and_scale = node_coords_fromjson(grouped_stratigraphic_dag)
 
     def __render_resid_or_intru_dag(self) -> None:
         """Render the stratigraphic graph mutating the Model state
