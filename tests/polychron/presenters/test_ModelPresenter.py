@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import networkx as nx
 import pandas as pd
 import pytest
+from networkx.drawing.nx_pydot import write_dot
 
 from polychron.interfaces import Mediator
 from polychron.models.Model import Model
@@ -17,6 +18,7 @@ from polychron.presenters.ModelPresenter import ModelPresenter
 from polychron.presenters.ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresenter
 from polychron.presenters.RemoveContextPresenter import RemoveContextPresenter
 from polychron.presenters.RemoveStratigraphicRelationshipPresenter import RemoveStratigraphicRelationshipPresenter
+from polychron.util import remove_invalid_attributes_networkx_lt_3_4
 from polychron.views.DatafilePreviewView import DatafilePreviewView
 from polychron.views.MCMCProgressView import MCMCProgressView
 from polychron.views.ModelView import ModelView
@@ -32,7 +34,7 @@ class TestModelPresenter:
     """
 
     @pytest.fixture(autouse=True)
-    def setup_tmp_projects_directory(self, tmp_path: pathlib.Path):
+    def setup_tmp_projects_directory(self, tmp_path: pathlib.Path, test_data_model_demo: Model):
         """Fixture to create a mock ProjectsSelection object in a temporary projects_directory
 
         This is scoped per test to ensure the mock projects directory is reset between tests"""
@@ -46,6 +48,9 @@ class TestModelPresenter:
         foo = self.project_selection.projects_directory.get_or_create_project("foo")
         foo.create_model("bar")
         foo.create_model("baz")
+
+        demo = self.project_selection.projects_directory.get_or_create_project("demo")
+        demo.models["demo"] = test_data_model_demo
 
         # Yeild control to the tests
         yield
@@ -309,9 +314,69 @@ class TestModelPresenter:
     def test_chronograph_render_wrap(self):
         pass
 
-    @pytest.mark.skip(reason="test_chronograph_render not implemented")
     def test_chronograph_render(self):
-        pass
+        """Test chronograph_render would call resid_check, render the graph and update the view if there is a current model
+
+        resid_check is patched out as it uses a popup presenter to allow users to specify residual/intrusive contexts and group relationships before rendering the graph.
+
+        Todo:
+            - Test a case which would trigger an exception during view updating
+            - Remove manual fi_new_chrono rendering, call a Model method instead (which does some of ManageGroupRelationshipsPresenter.full_chronograph_func)
+        """
+        # Setup the mock mediator, mock view and fixture-provided ProjectSelection
+        mock_mediator = MagicMock(spec=Mediator)
+        mock_view = MagicMock(spec=ModelView)
+        model = self.project_selection
+
+        # Construct the Model Presenter
+        presenter = ModelPresenter(mock_mediator, mock_view, model)
+        mock_view.reset_mock()
+
+        # Do not select a model, which should not result in other methods being called
+        with patch("polychron.presenters.ModelPresenter.ModelPresenter.resid_check") as mock_resid_check:
+            dag = presenter.chronograph_render()
+            assert presenter.model.current_model is None
+            mock_resid_check.assert_not_called()
+            mock_view.update_littlecanvas2.assert_not_called()
+            mock_view.bind_littlecanvas2_callback.assert_not_called()
+            mock_view.show_image2.assert_not_called()
+            assert dag is None
+        mock_view.reset_mock()
+
+        # select a model, and call chronograph render, checking expected state changes and mocked method calls
+        presenter.model.switch_to("demo", "demo")
+        # Make sure the chronograph exists. Todo: this should be handled by a method on the Model instance. Currently in ManageGroupRelationshipsPresenter.full_chronograph_func
+        presenter.model.current_model.create_dirs()
+        presenter.model.current_model.chronological_dag = remove_invalid_attributes_networkx_lt_3_4(
+            presenter.model.current_model.stratigraphic_dag
+        )
+        write_dot(
+            presenter.model.current_model.chronological_dag,
+            presenter.model.current_model.get_working_directory() / "fi_new_chrono",
+        )
+
+        assert not presenter.model.current_model.load_check
+        with patch("polychron.presenters.ModelPresenter.ModelPresenter.resid_check") as mock_resid_check:
+            dag = presenter.chronograph_render()
+            assert presenter.model.current_model is not None
+            assert presenter.model.current_model.load_check
+            mock_resid_check.assert_called()
+            mock_view.update_littlecanvas2.assert_called()
+            mock_view.bind_littlecanvas2_callback.assert_called()
+            mock_view.show_image2.assert_called()
+            assert dag == presenter.model.current_model.chronological_dag
+        mock_view.reset_mock()
+
+        # Call the method once again, which should not trigger a re-render due to load_check
+        with patch("polychron.presenters.ModelPresenter.ModelPresenter.resid_check") as mock_resid_check:
+            dag = presenter.chronograph_render()
+            assert presenter.model.current_model is not None
+            assert presenter.model.current_model.load_check
+            mock_resid_check.assert_not_called()
+            mock_view.update_littlecanvas2.assert_not_called()
+            mock_view.bind_littlecanvas2_callback.assert_not_called()
+            mock_view.show_image2.assert_not_called()
+            assert dag == presenter.model.current_model.chronological_dag
 
     @pytest.mark.skip(reason="test_resid_check not implemented, includes tkinter")
     def test_resid_check(self):
