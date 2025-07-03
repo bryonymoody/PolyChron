@@ -139,9 +139,12 @@ def node_coords_fromjson(graph: nx.DiGraph | pydot.Dot) -> Tuple[pd.DataFrame, L
     scale = [float(scale_info[4]), -1 * float(scale_info[3])]
     coords_x = re.findall(r'id="node(.*?)</text>', svg_string)
     coords_temp = [polygonfunc(i) if "points" in i else ellipsefunc(i) for i in coords_x]
-    node_test = re.findall(r'node">\\n<title>(.*?)</title>', svg_string)
+    if platform.system() == "Windows":
+        node_test_pattern = r'node">\\r\\n<title>(.*?)</title>'
+    else:
+        node_test_pattern = r'node">\\n<title>(.*?)</title>'
+    node_test = re.findall(node_test_pattern, svg_string)
     node_list = [i.replace("&#45;", "-") for i in node_test]
-
     new_pos = dict(zip(node_list, coords_temp))
     df = pd.DataFrame.from_dict(new_pos, orient="index", columns=["x_lower", "x_upper", "y_lower", "y_upper"])
     return df, scale
