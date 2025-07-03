@@ -265,10 +265,6 @@ class TestModelPresenter:
         model.switch_to("foo", "bar", load_ok=True, create_ok=False)
         assert presenter.get_window_title_suffix() == "foo - bar"
 
-    @pytest.mark.skip(reason="test_Model incomplete.")
-    def test_Model(self):
-        pass
-
     @patch("polychron.presenters.ModelPresenter.MCMCProgressPresenter")
     @patch("polychron.presenters.ModelPresenter.MCMCProgressView")
     def test_popup_calibrate_model(self, MockMCMCProgressView, MockMCMCProgressPresenter):
