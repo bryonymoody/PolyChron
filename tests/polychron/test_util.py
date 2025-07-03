@@ -203,6 +203,7 @@ class TestUtil:
 
         Todo:
             - Split node_coords_fromjson into a method which takes a graph and returns the coordinates, and an internally used method which takes a string containing an svg. svg extraction can then accurately be tested, while graphviz .svg generation cannot. This also means that we should ensure .png and .svg are regenerated on polychron launch, in case graphviz has changed.
+            - Ensure that the new tests with platform specific line endings, if multi-line matching is still present.
             - rectangular bounding boxes are always used for click detection, even for diamonds and elipses. This may be problematic if graphviz does not ensure that the rectangular bounding box of a diamond/kite is free from other nodes.
             - Consider returning a dict instead of a dataframe.
         """
