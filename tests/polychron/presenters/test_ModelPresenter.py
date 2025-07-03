@@ -572,7 +572,7 @@ class TestModelPresenter:
         assert presenter.display_data_var == "hidden"
         mock_view.reset_mock()
 
-    @pytest.mark.skip(reason="test_on_testmenu not yet implemented")
+    @pytest.mark.skip(reason="test_on_testmenu not yet implemented, calls tkinter")
     def test_on_testmenu(self):
         pass
 
@@ -592,17 +592,109 @@ class TestModelPresenter:
     def test_testmenu_place_above(self):
         pass
 
-    @pytest.mark.skip(reason="test_testmenu_delete_stratigraphic_prep not implemented")
     def test_testmenu_delete_stratigraphic_prep(self):
-        pass
+        """Test that testmenu_delete_stratigraphic_prep manipulates the edge_nodes list as expected and adds/removes entries in the right click menu as expected
+
+        Todo:
+            - Add a test for selecting the same node twice in a row
+        """
+        # Setup the mock mediator, mock view and fixture-provided ProjectSelection
+        mock_mediator = MagicMock(spec=Mediator)
+        mock_view = MagicMock(spec=ModelView)
+        model = self.project_selection
+
+        # Instantiate the ModelPresenter
+        presenter = ModelPresenter(mock_mediator, mock_view, model)
+
+        # call testmenu_delete_stratigraphic_prep, as there is no current model, edge_nodes should no tbe changed and the view should not be updated
+        presenter.testmenu_delete_stratigraphic_prep()
+        assert presenter.edge_nodes == []
+        mock_view.remove_testmenu_entry.assert_not_called()
+        mock_view.append_testmenu_entry.assert_not_called()
+        mock_view.reset_mock()
+
+        # Select a current model
+        presenter.model.switch_to("foo", "bar")
+        # call testmenu_delete_stratigraphic_prep, as there is no selected node, it should not be added to the list
+        assert presenter.node == "no node"
+        presenter.testmenu_delete_stratigraphic_prep()
+        assert presenter.edge_nodes == []
+        mock_view.remove_testmenu_entry.assert_not_called()
+        mock_view.append_testmenu_entry.assert_not_called()
+        mock_view.reset_mock()
+
+        # Set a current node
+        presenter.node = "a"
+        # call testmenu_delete_stratigraphic_prep, as there is a selected node, the list should be updated and view.append_testmenu_entry called
+        presenter.testmenu_delete_stratigraphic_prep()
+        assert presenter.edge_nodes == ["a"]
+        mock_view.remove_testmenu_entry.assert_not_called()
+        mock_view.append_testmenu_entry.assert_called_with("Delete stratigraphic relationship with a")
+        mock_view.reset_mock()
+
+        # Change the current node
+        presenter.node = "b"
+        # call testmenu_delete_stratigraphic_prep, as there is a node in edge_nodes already, there should be a remove call, followed by an append
+        assert presenter.edge_nodes == ["a"]
+        presenter.testmenu_delete_stratigraphic_prep()
+        assert presenter.edge_nodes == ["b"]
+        mock_view.remove_testmenu_entry.assert_called_with("Delete stratigraphic relationship with a")
+        mock_view.append_testmenu_entry.assert_called_with("Delete stratigraphic relationship with b")
+        mock_view.reset_mock()
 
     @pytest.mark.skip(reason="test_testmenu_equate_context_with not implemented, calls tkinter")
     def test_testmenu_equate_context_with(self):
         pass
 
-    @pytest.mark.skip(reason="test_testmenu_equate_context_prep not implemented")
     def test_testmenu_equate_context_prep(self):
-        pass
+        """Test that testmenu_equate_context_prep manipulates the comb_nodes list as expected and adds/removes entries in the right click menu as expected
+
+        Todo:
+            - Add a test for selecting the same node twice in a row
+        """
+        # Setup the mock mediator, mock view and fixture-provided ProjectSelection
+        mock_mediator = MagicMock(spec=Mediator)
+        mock_view = MagicMock(spec=ModelView)
+        model = self.project_selection
+
+        # Instantiate the ModelPresenter
+        presenter = ModelPresenter(mock_mediator, mock_view, model)
+
+        # call testmenu_equate_context_prep, as there is no current model, comb_nodes should no tbe changed and the view should not be updated
+        presenter.testmenu_equate_context_prep()
+        assert presenter.comb_nodes == []
+        mock_view.remove_testmenu_entry.assert_not_called()
+        mock_view.append_testmenu_entry.assert_not_called()
+        mock_view.reset_mock()
+
+        # Select a current model
+        presenter.model.switch_to("foo", "bar")
+        # call testmenu_equate_context_prep, as there is no selected node, it should not be added to the list
+        assert presenter.node == "no node"
+        presenter.testmenu_equate_context_prep()
+        assert presenter.comb_nodes == []
+        mock_view.remove_testmenu_entry.assert_not_called()
+        mock_view.append_testmenu_entry.assert_not_called()
+        mock_view.reset_mock()
+
+        # Set a current node
+        presenter.node = "a"
+        # call testmenu_equate_context_prep, as there is a selected node, the list should be updated and view.append_testmenu_entry called
+        presenter.testmenu_equate_context_prep()
+        assert presenter.comb_nodes == ["a"]
+        mock_view.remove_testmenu_entry.assert_not_called()
+        mock_view.append_testmenu_entry.assert_called_with("Equate context with a")
+        mock_view.reset_mock()
+
+        # Change the current node
+        presenter.node = "b"
+        # call testmenu_equate_context_prep, as there is a node in comb_nodes already, there should be a remove call, followed by an append
+        assert presenter.comb_nodes == ["a"]
+        presenter.testmenu_equate_context_prep()
+        assert presenter.comb_nodes == ["b"]
+        mock_view.remove_testmenu_entry.assert_called_with("Equate context with a")
+        mock_view.append_testmenu_entry.assert_called_with("Equate context with b")
+        mock_view.reset_mock()
 
     @pytest.mark.xfail(reason="testmenu_supplementary_menu not currently implemented")
     def test_testmenu_supplementary_menu(self):
