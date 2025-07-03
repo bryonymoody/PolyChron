@@ -106,7 +106,7 @@ class TestConfig:
         # - environment variables to override.
         with (
             patch("polychron.Config.platform.system", return_value=platform_name),
-            patch.dict(os.environ, env_vars, clear=True),
+            patch.dict(os.environ, env_vars),
         ):
             config_dir = Config._get_config_dir()
             # It should be a path
