@@ -744,10 +744,14 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         model_model = self.model.current_model
         if model_model is None:
             return
-        if len(self.comb_nodes) == 1:
+
+        if len(self.comb_nodes) >= 1:
             self.view.remove_testmenu_entry("Equate context with " + str(self.comb_nodes[0]))
-        self.comb_nodes = np.append(self.comb_nodes, self.node)
-        self.view.append_testmenu_entry("Equate context with " + str(self.comb_nodes[0]))
+            self.comb_nodes = []
+
+        if self.node != "no node":
+            self.comb_nodes = np.append(self.comb_nodes, self.node)
+            self.view.append_testmenu_entry("Equate context with " + str(self.comb_nodes[0]))
 
     def testmenu_supplementary_menu(self) -> None:
         """Callback function from the testmenu for users to provide additional supplementary data
