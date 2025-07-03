@@ -90,11 +90,11 @@ class TestProject:
             with pytest.raises(OSError, match="Mock OSError"):
                 p.create_dir()
 
-        # Test that if an NotADirectoryError were to occur during directory creation it would be propagated. This can relaibly be tested without patching/mocking
+        # Test that if an NotADirectoryError (linux) or FileExistsError (windows) is raised occur during directory creation it would be propagated. This can reliably be tested without patching/mocking
         not_a_dir_path = self.tmp_projects_dir / "file"
         not_a_dir_path.touch()
         p = Project("baz", not_a_dir_path / "baz")
-        with pytest.raises(NotADirectoryError):
+        with pytest.raises((NotADirectoryError, FileExistsError)):
             p.create_dir()
 
     def test_has_model(self):
@@ -166,11 +166,11 @@ class TestProject:
             with pytest.raises(OSError, match="Mock OSError"):
                 p.create_model("exception_expected")
 
-        # Test that if an NotADirectoryError were to occur during directory creation it would be propagated. This can relaibly be tested without patching/mocking
+        # Test that if an NotADirectoryError (linux) or FileExistsError (windows) is raised occur during directory creation it would be propagated. This can reliably be tested without patching/mocking
         not_a_dir_path = self.tmp_projects_dir / "file"
         not_a_dir_path.touch()
         p = Project("baz", not_a_dir_path / "baz")
-        with pytest.raises(NotADirectoryError):
+        with pytest.raises((NotADirectoryError, FileExistsError)):
             p.create_model("exception_expected")
 
     def test_get_or_create_model(self):
