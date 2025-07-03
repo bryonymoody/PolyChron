@@ -18,7 +18,7 @@ class TestProject:
 
         # Store and crete a temporary projects directory
         self.tmp_projects_dir = tmp_path / "projects"
-        self.tmp_projects_dir.mkdir(parents=True)
+        self.tmp_projects_dir.mkdir(exist_ok=True, parents=True)
 
         # Populate the temp project directory with some fake model directories. This should be enought for Projects.lazy_load etc to allow testing of Project
         # Populate the temp projects directory with a fake project directory and fake models directoeries.

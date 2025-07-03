@@ -39,7 +39,7 @@ class TestModelPresenter:
 
         # Store and crete a temporary projects directory
         self.tmp_projects_dir = tmp_path / "projects"
-        self.tmp_projects_dir.mkdir()
+        self.tmp_projects_dir.mkdir(exist_ok=True, parents=True)
 
         # Create a ProjectSelection object with 1 project foo, containing 1 model bar
         self.project_selection = ProjectSelection(tmp_path / "projects")
