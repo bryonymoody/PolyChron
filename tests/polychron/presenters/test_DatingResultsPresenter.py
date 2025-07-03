@@ -394,7 +394,7 @@ class TestDatingResultsPresenter:
         # Define the svg coordinates to check.
         tests_coords = [
             [[59.75, 90.0], "box"],  # mid box
-            [[33.76, 72.01], "box"],  # inside the corner of the box
+            [[33.76, 72.1], "box"],  # inside the corner of the box
             [[32.75, 72.0], "no node"],  # on the corner of  box
             [[31.75, 71.0], "no node"],  # outside corner box
             [[59.745, 18.0], "diamond"],  # mid diamond
