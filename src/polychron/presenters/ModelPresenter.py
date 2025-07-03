@@ -208,7 +208,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         popup_presenter.view.lift()
 
     def chronograph_render_wrap(self) -> None:
-        """wraps chronograph render so we can assign a variable when runing the func using a button"""
+        """wraps chronograph render so we can assign a variable when running the func using a button"""
         model_model = self.model.current_model
         if model_model is None:
             return
@@ -244,12 +244,12 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         model_model = self.model.current_model
         if model_model is None:
-            return
+            return None
 
         # If the chronograph has not already been rendered/loaded for the current state of the model, render it.
         if not model_model.load_check:
             model_model.load_check = True
-            # Check for residuals & update model state when aproved
+            # Check for residuals & update model state when approved
             self.resid_check()
             # Render the chronological graph, mutating the model
             model_model.render_chrono_graph()
