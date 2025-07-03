@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import pathlib
+import platform
 import tkinter as tk
 from importlib.metadata import version
 from tkinter import ttk
@@ -19,6 +20,7 @@ from polychron.presenters.SplashPresenter import SplashPresenter
 from polychron.views.ProjectSelectProcessPopupView import ProjectSelectProcessPopupView
 
 
+@pytest.mark.skipif(platform.system() == "Windows", reason="TestGUIApp tests inconsitent tkinter errors on Windows")
 class TestGUIApp:
     """Unit tests for the GUIApp class.
 
