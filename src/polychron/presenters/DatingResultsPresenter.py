@@ -323,11 +323,11 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
 
         self.fig = Figure()
         # self.fig.rc('font', **font)
-        LENGTHS = phase_length_finder(
+        lengths = phase_length_finder(
             self.phase_len_nodes[0], self.phase_len_nodes[1], model_model.mcmc_data.all_group_limits
         )
         plot1 = self.fig.add_subplot(111)
-        plot1.hist(LENGTHS, bins="auto", color="#0504aa", rwidth=1, density=True)
+        plot1.hist(lengths, bins="auto", color="#0504aa", rwidth=1, density=True)
         # plot1.xlabel('Time elapsed in calibrated years (cal BP)')
         # plot1.ylabel('Probability density')
         plot1.spines["right"].set_visible(False)
@@ -340,7 +340,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         # self.fig.set_tight_layout(True)
         self.view.show_canvas_plot(self.fig)
         # show hpd intervals
-        interval = list(HPD_interval(np.array(LENGTHS[1000:])))
+        interval = list(HPD_interval(np.array(lengths[1000:])))
         intervals = []
         hpd_str = ""
         refs = [k for k in range(len(interval)) if k % 2]
