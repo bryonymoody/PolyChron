@@ -1186,9 +1186,45 @@ class TestModelPresenter:
     def test_addedge(self):
         pass
 
-    @pytest.mark.skip(reason="test_stratfunc not implemented")
-    def test_stratfunc(self):
-        pass
+    @pytest.mark.parametrize(
+        ("project_name", "model_name", "context", "expected_result"),
+        [
+            # No project/model, any node value, no output expected
+            (None, None, "no node", None),
+            # With a current model, but it does not have a stratigraphic_dag, None should be returned
+            ("foo", "bar", "no node", None),
+            # With a model with a DAG, but a context which is not in the dag, return None
+            ("demo", "demo", "no node", None),
+            # With a model with a DAG, and a valid node, expect the correct result (for multiple nodes)
+            ("demo", "demo", "a", ["", "b"]),
+            ("demo", "demo", "b", ["a", "c = d, e"]),
+            ("demo", "demo", "c = d", ["b", "f"]),
+            ("demo", "demo", "e", ["b", "g"]),
+            ("demo", "demo", "f", ["c = d", ""]),
+            ("demo", "demo", "g", ["e", ""]),
+        ],
+    )
+    def test_stratfunc(
+        self, project_name: str | None, model_name: str | None, context: str, expected_result: list[str] | None
+    ):
+        """Test that stratfunc returns the expected list of strings or None depending on the state of the current Model"""
+        mock_mediator = MagicMock(spec=Mediator)
+        mock_view = MagicMock(spec=ModelView)
+        model = self.project_selection
+
+        # Instantiate the Presenter
+        presenter = ModelPresenter(mock_mediator, mock_view, model)
+
+        # Switch to the parameterised project/model
+        if project_name is not None and model_name is not None:
+            presenter.model.switch_to(project_name, model_name)
+            assert presenter.model.current_model is not None
+
+        # Call the method being tested
+        retval = presenter.stratfunc(context)
+
+        # Check that the output was as expected
+        assert retval == expected_result
 
     def test_nodecheck(self):
         """Test nodecheck behaves as expected.
