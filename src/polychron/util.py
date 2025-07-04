@@ -233,7 +233,27 @@ def edge_of_phase(test1, pset, node_list, node_info):
 
 
 def node_del_fixed(graph: nx.DiGraph, node: str) -> nx.DiGraph:
-    """Remove a node from the graph, replacing edges where possible
+    """Remove a node from the graph, replacing edges where possible.
+
+    A new edge will not be created if the relative relationship between two nodes is already provided through another context.
+
+    I.e. given the following graph of 4 nodes
+
+    ```mermaid
+       flowchart LR
+           a --> b0
+           a --> b1
+           b0 --> c
+           b1 --> c
+    ```
+
+    Deleting `b0` will produce the following, without a direct edge from `a --> c`
+
+    ```mermaid
+       flowchart LR
+           a --> b1
+           b1 --> c
+    ```
 
     Parameters:
         graph: The graph to modify
