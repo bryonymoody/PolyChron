@@ -304,17 +304,32 @@ def all_node_info(node_list: List[Any], x_image: List[str], node_info: List[Any]
     return node_info
 
 
-def phase_length_finder(con_1: Any, con_2: Any, accept_group_limits: Dict[Any, Any]) -> List[Any]:
-    """finding the phase length between any two contexts or phase boundaries"""
-    phase_lengths = []
-    x_3 = accept_group_limits[con_1]
-    x_4 = accept_group_limits[con_2]
-    for i in range(len(x_3)):
-        phase_lengths.append(np.abs(x_3[i] - x_4[i]))
-    un_phase_lens = []
-    for i in range(len(phase_lengths) - 1):
-        if phase_lengths[i] != phase_lengths[i + 1]:
-            un_phase_lens.append(phase_lengths[i])
+def phase_length_finder(con_1: str, con_2: str, group_limits: dict[str, list[float]]) -> List[Any]:
+    """Find the group/phase length between any two contexts or phase boundaries
+
+    Parameters:
+        con_1: Context or phase boundary node id to find the phase length between
+        con_2: Context or phase boundary node id to find the phase length between
+        group_limits: Dictionary containing a list of group limits from MCMC calibration per context/phase_boundary label in the chronological_dag
+
+    Returns:
+        List of potential phase durations in years.
+        An empty list is returned if either context label is not present in the mcmc calibration data.
+        If the length of samples is not the same for the provided contexts, the shorter value is used. This should not occur in regular usage.
+
+    Todo:
+        - Special case handling when con_1 == con_2?
+
+    """
+    if con_1 not in group_limits or con_2 not in group_limits:
+        return []
+    phase_lengths = [np.abs(a - b) for a, b in zip(group_limits[con_1], group_limits[con_2])]
+
+    # unused code building a version of phase_lengths with sequential elements of the same value removed
+    # un_phase_lens = []
+    # for i in range(len(phase_lengths) - 1):
+    #     if phase_lengths[i] != phase_lengths[i + 1]:
+    #         un_phase_lens.append(phase_lengths[i])
     return phase_lengths
 
 
