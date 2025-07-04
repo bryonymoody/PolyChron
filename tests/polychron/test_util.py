@@ -431,17 +431,57 @@ class TestUtil:
         with pytest.raises(nx.NetworkXError):
             g_out = util.node_del_fixed(g_in, "foo")
 
-    @pytest.mark.skip(reason="test_all_node_info not yet implemented")
+    @pytest.mark.skip(reason="test_all_node_info not yet implemented, requires .dot input file")
     def test_all_node_info(self):
         """Test all_node_info behaves as expected for a range of inputs"""
         pass
 
-    @pytest.mark.skip(reason="test_phase_length_finder not yet implemented")
-    def test_phase_length_finder(self):
+    @pytest.mark.parametrize(
+        ("con_1", "con_2", "expected_lengths"),
+        [
+            # "normal" usage with valid context/group_boundaries
+            ("ctx_a", "ctx_b", [500.0, 500.0, 500.0, 500.0]),
+            ("ctx_c", "a_1", [2999.5, 2998.5, 2997.5, 2996.5]),
+            ("a_1", "ctx_c", [2999.5, 2998.5, 2997.5, 2996.5]),
+            ("b_1", "a_1 = b_1", [1000.0, 1002.0, 1004.0, 1006.0]),
+            # duration between a context and itself
+            ("ctx_a", "ctx_a", [0.0, 0.0, 0.0, 0.0]),
+            # invalid context/group_boundary checks
+            ("", "ctx_b", []),
+            ("ctx_a", "", []),
+            ("missing", "other", []),
+        ],
+    )
+    def test_phase_length_finder(self, con_1: str, con_2: str, expected_lengths: list[str]):
         """Test phase_length_finder behaves as expected for a range of inputs"""
-        pass
 
-    @pytest.mark.skip(reason="test_imagefunc not yet implemented")
+        # Prepare a dictionary, mirroring the structure of MCMCData.accept_group_limits / all_group_limits, including negative values
+        group_limits = {
+            "ctx_a": [3000.0, 3001.0, 3002.0, 3003.0],
+            "ctx_b": [2500.0, 2501.0, 2502.0, 2503.0],
+            "ctx_c": [1000.5, 1001.5, 1002.5, 1003.5],
+            "a_1": [4000.0, 4000.0, 4000.0, 4000.0],
+            "b_1": [0000.0, 0001.0, 0002.0, 0003.0],
+            "a_1 = b_1": [-1000.0, -1001.0, -1002.0, -1003.0],
+        }
+
+        # Check the result when phase_length_finder is provided the parametrised con_1/con_2
+        lengths = util.phase_length_finder(con_1, con_2, group_limits)
+        assert isinstance(lengths, list)
+        assert len(lengths) == len(expected_lengths)
+        assert lengths == pytest.approx(expected_lengths)
+
+    def test_phase_length_finder_invalid_group_limits(self):
+        """Test that phase_length finder behaves with an invalid group_limits data structure"""
+        # Define an invalid group_limits with a mismatching number of entries for 2 contexts
+
+        group_limits = {"ctx_a": [1, 2, 3, 4, 5], "ctx_b": [10, 20]}
+        # Assert graceful failure?
+        lengths = util.phase_length_finder("ctx_a", "ctx_b", group_limits)
+        assert isinstance(lengths, list)
+        assert lengths == [9, 18]
+
+    @pytest.mark.skip(reason="test_imagefunc not yet implemented, requires .dot input file")
     def test_imagefunc(self):
         """Test imagefunc behaves as expected for a range of inputs"""
         pass
