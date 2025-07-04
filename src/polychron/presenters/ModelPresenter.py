@@ -39,7 +39,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
     """Presenter for the main model tab"""
 
     def __init__(self, mediator: Mediator, view: ModelView, model: ProjectSelection) -> None:
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         # Properties
@@ -65,6 +65,8 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         """Used during testmenu (right click menu) options similar to self.node
 
         Context equality only?"""
+
+        self.display_data_var = "hidden"
 
         # Bind callback functions for switching between the main view tabs
         view.bind_sasd_tab_button(lambda: self.mediator.switch_presenter("Model"))
@@ -103,9 +105,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             ]
         )
 
-        # Bind button clicks
         # Bind the "Data loaded" button callback
-        self.display_data_var = "hidden"
         self.view.bind_data_button(lambda: self.on_data_button())
 
         # Bind the callback for activating the testmenu
@@ -172,7 +172,10 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             )
 
     def get_window_title_suffix(self) -> str | None:
-        return f"{self.model.current_project_name} - {self.model.current_model_name}"
+        if self.model.current_project_name and self.model.current_model_name:
+            return f"{self.model.current_project_name} - {self.model.current_model_name}"
+        else:
+            return None
 
     def popup_calibrate_model(self) -> None:
         """Callback function for when Tools -> Calibrate model is selected
@@ -205,7 +208,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         popup_presenter.view.lift()
 
     def chronograph_render_wrap(self) -> None:
-        """wraps chronograph render so we can assign a variable when runing the func using a button"""
+        """wraps chronograph render so we can assign a variable when running the func using a button"""
         model_model = self.model.current_model
         if model_model is None:
             return
@@ -241,12 +244,12 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         model_model = self.model.current_model
         if model_model is None:
-            return
+            return None
 
         # If the chronograph has not already been rendered/loaded for the current state of the model, render it.
         if not model_model.load_check:
             model_model.load_check = True
-            # Check for residuals & update model state when aproved
+            # Check for residuals & update model state when approved
             self.resid_check()
             # Render the chronological graph, mutating the model
             model_model.render_chrono_graph()
@@ -292,8 +295,15 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 popup_presenter.view.lift()
                 self.view.wait_window(popup_presenter.view)
 
-    def file_popup(self, df: Any) -> str:
-        """For a gien dataframe, preview the data to the user. Returns the users decision"""
+    def file_popup(self, df: pd.DataFrame) -> str:
+        """For a gien dataframe, preview the data to the user. Returns the users decision
+
+        Parameters:
+            df: The dataframe to preview
+
+        Returns:
+            The string result value, which should be "cancel" or "load"
+        """
         temp_model = {"df": df, "result": "cancel"}
         popup_presenter = DatafilePreviewPresenter(self.mediator, DatafilePreviewView(self.view), temp_model)
         popup_presenter.view.lift()
@@ -682,11 +692,13 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         if model_model is None:
             return
 
-        if len(self.edge_nodes) == 1:
+        if len(self.edge_nodes) >= 1:
             self.view.remove_testmenu_entry("Delete stratigraphic relationship with " + str(self.edge_nodes[0]))
             self.edge_nodes = []
-        self.edge_nodes = np.append(self.edge_nodes, self.node)
-        self.view.append_testmenu_entry("Delete stratigraphic relationship with " + str(self.edge_nodes[0]))
+
+        if self.node != "no node":
+            self.edge_nodes = np.append(self.edge_nodes, self.node)
+            self.view.append_testmenu_entry("Delete stratigraphic relationship with " + str(self.edge_nodes[0]))
 
     def testmenu_equate_context_with(self) -> None:
         """Callback function from the testmenu to equate two contexts (when one has already been selected)"""
@@ -726,10 +738,14 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         model_model = self.model.current_model
         if model_model is None:
             return
-        if len(self.comb_nodes) == 1:
+
+        if len(self.comb_nodes) >= 1:
             self.view.remove_testmenu_entry("Equate context with " + str(self.comb_nodes[0]))
-        self.comb_nodes = np.append(self.comb_nodes, self.node)
-        self.view.append_testmenu_entry("Equate context with " + str(self.comb_nodes[0]))
+            self.comb_nodes = []
+
+        if self.node != "no node":
+            self.comb_nodes = np.append(self.comb_nodes, self.node)
+            self.view.append_testmenu_entry("Equate context with " + str(self.comb_nodes[0]))
 
     def testmenu_supplementary_menu(self) -> None:
         """Callback function from the testmenu for users to provide additional supplementary data
@@ -754,7 +770,15 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         if self.node == "no node":
             return
 
+        # If there is no stratigraphic_dag, do nothing.
+        if model_model.stratigraphic_dag is None:
+            return
+
         stratinfo = self.stratfunc(self.node)
+        # If no strat info could be retrieved for the selected node, return.
+        if stratinfo is None:
+            return
+
         metadict2 = {}
         metadict = model_model.stratigraphic_dag.nodes()[str(self.node)]
         metadict2["Contexts above"] = [stratinfo[0]]
@@ -777,11 +801,13 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         if model_model is None:
             return
 
-        if len(self.edge_nodes) == 1:
+        if len(self.edge_nodes) >= 1:
             self.view.remove_testmenu_entry("Place " + str(self.edge_nodes[0]) + " Above")
             self.edge_nodes = []
-        self.edge_nodes = np.append(self.edge_nodes, self.node)
-        self.view.append_testmenu_entry("Place " + str(self.edge_nodes[0]) + " Above")
+
+        if self.node != "no node":
+            self.edge_nodes = np.append(self.edge_nodes, self.node)
+            self.view.append_testmenu_entry("Place " + str(self.edge_nodes[0]) + " Above")
 
     def pre_click(self, *args) -> None:
         """makes test menu appear and removes any previous test menu
@@ -811,10 +837,10 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         self.view.bind_littlecanvas_callback("<Button-1>", self.on_left)
         # Show the right click menu
         model_model = self.model.current_model
-        has_image = model_model.stratigraphic_image is not None
+        has_image = model_model is not None and model_model.stratigraphic_image is not None
         x_scal, y_scal = self.view.show_testmenu(has_image)
         # If the model has a stratigraphic image presented, check if a node has been right clicked on and store in a member variable
-        if model_model.stratigraphic_image is not None and x_scal is not None and y_scal is not None:
+        if has_image and x_scal is not None and y_scal is not None:
             self.node = self.nodecheck(x_scal, y_scal)
 
     def check_list_gen(self) -> None:
@@ -879,6 +905,9 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         Switches to the "new" model for any future changes.
 
         Formerly `StartPage.refresh_4_new_model`
+
+        Todo:
+            - Handle the edge case wehre a user selects the current model name by going back, and selecting the existing model. This currently does not save (as a save only occurs if the project/model name was changed). This needs to be separate to the path where the popup window is closed by closing the window, not pressing create.
         """
 
         # Store the old project and model names, to check if the model was changed or not.
@@ -1025,14 +1054,29 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         model_model.render_strat_graph()
         self.view.update_littlecanvas(model_model.stratigraphic_image)
 
-    def stratfunc(self, node: str) -> None:
+    def stratfunc(self, node: str) -> list[str] | None:
         """obtains strat relationships for node
 
         Formerly `StartPage.stratfunc`
+
+        Parameters:
+            node: the context label to extract stratigraphic relationsips for
+
+        Returns:
+            A list containing 2 strings, the comma separated list of context above, and comma separated list of contexts below; Or None if the provided node/context label is not valid.
         """
         model_model = self.model.current_model
         if model_model is None:
-            return
+            return None
+
+        # Return if the Model does not include a stratigraphic graph
+        if model_model.stratigraphic_dag is None:
+            return None
+
+        # Return None if the stratigraphic_dag does not include the requested node
+        if node not in model_model.stratigraphic_dag.nodes():
+            return None
+
         rellist = list(nx.line_graph(model_model.stratigraphic_dag))
         above = ()
         below = ()

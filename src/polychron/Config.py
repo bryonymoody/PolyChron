@@ -92,9 +92,13 @@ class Config:
         """
         system = platform.system()
         if system == "Windows":
-            return pathlib.Path(os.environ.get("LOCALAPPDATA", pathlib.Path.home() / "AppData" / "Local")) / "polychron"
+            from_env = os.environ.get("LOCALAPPDATA")
+            user_config_dir = pathlib.Path(from_env) if from_env else pathlib.Path.home() / "AppData" / "Local"
+            return user_config_dir / "polychron"
         else:
-            return pathlib.Path(os.environ.get("XDG_CONFIG_HOME", pathlib.Path.home() / ".config")) / "polychron"
+            from_env = os.environ.get("XDG_CONFIG_HOME")
+            user_config_dir = pathlib.Path(from_env) if from_env else pathlib.Path.home() / ".config"
+            return user_config_dir / "polychron"
 
     @classmethod
     def _get_config_filepath(cls) -> pathlib.Path:

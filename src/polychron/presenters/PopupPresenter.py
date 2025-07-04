@@ -57,7 +57,7 @@ class PopupPresenter(ABC, Generic[ViewT, ModelT]):
         self.view.withdraw()
 
     def close_view(self, event: Any = None) -> None:
-        """Close the popup aftger performing any actions.
+        """Close the popup after performing any actions.
 
         This method should be overridden by presenters which require graceful destruction or wish to disable window closing."""
         self.view.destroy()

@@ -3,6 +3,7 @@ import sys
 import tkinter as tk
 from tkinter import ttk
 
+from ..Config import get_config
 from ..interfaces import Mediator
 from ..models.Model import Model
 from ..views.MCMCProgressView import MCMCProgressView
@@ -18,7 +19,7 @@ class StdoutRedirector(object):
 
     def write(self, text: str) -> None:
         """writes to canvas"""
-        self.pb1.update_idletasks
+        self.pb1.update_idletasks()
         str1 = re.findall(r"\d+", text)
         if len(str1) != 0:
             self.text_area["text"] = f"{str1[0]}% complete"
@@ -36,11 +37,14 @@ class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
     """
 
     def __init__(self, mediator: Mediator, view: MCMCProgressView, model: Model) -> None:
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         # Update view information to reflect the current state of the model
         self.update_view()
+
+    def update_view(self) -> None:
+        pass
 
     def run(self) -> None:
         """Runs model calibration for the current model"""
@@ -71,7 +75,4 @@ class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
         # Update the model state to show it as having been calibrated
         self.model.mcmc_check = True
         # Save the mcmc data to disk
-        self.model.mcmc_data.save(self.model.get_working_directory(), self.model.group_df)
-
-    def update_view(self) -> None:
-        pass
+        self.model.mcmc_data.save(self.model.get_working_directory(), self.model.group_df, get_config().verbose)
