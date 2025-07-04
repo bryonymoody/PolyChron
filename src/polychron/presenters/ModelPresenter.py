@@ -1069,7 +1069,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             node: the context label to extract stratigraphic relationsips for
 
         Returns:
-            A list contianing 2 strings, the comma separated list of context above, and comma separated list of contexts below; Or None if the provided node/context label is not valid.
+            A list containing 2 strings, the comma separated list of context above, and comma separated list of contexts below; Or None if the provided node/context label is not valid.
         """
         model_model = self.model.current_model
         if model_model is None:
