@@ -1051,13 +1051,88 @@ class TestModelPresenter:
             mock_update_view.assert_not_called()
             mock_save.assert_not_called()
 
-    @pytest.mark.skip(reason="test_on_resize not implemented")
     def test_on_resize(self):
-        pass
+        """Test that on_resize reopens the stratigraphic graph and updates the appropriate canvas if a current model is selected"""
+        mock_mediator = MagicMock(spec=Mediator)
+        mock_view = MagicMock(spec=ModelView)
+        model = self.project_selection
 
-    @pytest.mark.skip(reason="test_on_resize_2 not implemented")
+        # Ensure the mock ModelView has required directly accessed properties
+        mock_view.canvas = MagicMock()
+
+        # Instantiate the Presenter
+        presenter = ModelPresenter(mock_mediator, mock_view, model)
+
+        # There is no current model, so up update_littlecanvas_image_only should not have been called
+        assert presenter.model.current_model is None
+        presenter.on_resize(None)
+        mock_view.update_littlecanvas_image_only.assert_not_called()
+
+        # Switch to a model which exists but does not have a stratigraphic_image.
+        presenter.model.switch_to("foo", "bar")
+        # This should not trigger a view update
+        assert presenter.model.current_model is not None
+        presenter.on_resize(None)
+        assert presenter.model.current_model.stratigraphic_image is None
+        mock_view.update_littlecanvas_image_only.assert_not_called()
+
+        # Switch to a model which exists and has a stratigraphic_image
+        presenter.model.switch_to("demo", "demo")
+        model.current_model.load_check = True
+        model.current_model.render_strat_graph()
+
+        # This should have triggered a view update
+        assert presenter.model.current_model.stratigraphic_image is not None
+        presenter.on_resize(None)
+        mock_view.update_littlecanvas_image_only.assert_called()
+
     def test_on_resize_2(self):
-        pass
+        """Test that on_resize_2 reopens the chronological graph and updates the appropriate canvas if a current model is selected
+
+        Todo:
+            - Remove manual fi_new_chrono rendering, call a Model method instead (which does some of ManageGroupRelationshipsPresenter.full_chronograph_func)
+        """
+        mock_mediator = MagicMock(spec=Mediator)
+        mock_view = MagicMock(spec=ModelView)
+        model = self.project_selection
+
+        # Ensure the mock ModelView has required directly accessed properties
+        mock_view.canvas = MagicMock()
+
+        # Instantiate the Presenter
+        presenter = ModelPresenter(mock_mediator, mock_view, model)
+
+        # There is no current model, so up update_littlecanvas2_image_only should not have been called
+        assert presenter.model.current_model is None
+        presenter.on_resize_2(None)
+        mock_view.update_littlecanvas2_image_only.assert_not_called()
+
+        # Switch to a model which exists but does not have a chronological_image.
+        presenter.model.switch_to("foo", "bar")
+        # This should not trigger a view update
+        assert presenter.model.current_model is not None
+        presenter.on_resize_2(None)
+        assert presenter.model.current_model.chronological_image is None
+        mock_view.update_littlecanvas2_image_only.assert_not_called()
+
+        # Switch to a model which exists and has a chronological_image
+        presenter.model.switch_to("demo", "demo")
+        # Make sure the chronograph exists. Todo: this should be handled by a method on the Model instance. Currently in ManageGroupRelationshipsPresenter.full_chronograph_func
+        presenter.model.current_model.create_dirs()
+        presenter.model.current_model.chronological_dag = remove_invalid_attributes_networkx_lt_3_4(
+            presenter.model.current_model.stratigraphic_dag
+        )
+        write_dot(
+            presenter.model.current_model.chronological_dag,
+            presenter.model.current_model.get_working_directory() / "fi_new_chrono",
+        )
+        presenter.model.current_model.load_check = True
+        presenter.model.current_model.render_chrono_graph()
+
+        # This should have triggered a view update
+        presenter.on_resize_2(None)
+        assert presenter.model.current_model.chronological_image is not None
+        mock_view.update_littlecanvas2_image_only.assert_called()
 
     @pytest.mark.skip(reason="test_move_from not implemented, calls tkinter")
     def test_move_from(self):
@@ -1156,11 +1231,11 @@ class TestModelPresenter:
         g.add_node("ellipse", shape="ellipse")
         g.add_edge("box", "diamond")
 
-        # Set the fake chronological DAG. This Model will be techincally invalid.
+        # Set the fake stratigraphic DAG. This Model will be techincally invalid.
         model.current_model.stratigraphic_dag = g
-        # Make sure chrono new image is created. Ideally this should be tested just by Model methods, rather than manually creating this here
+        # Make sure strat new image is created. Ideally this should be tested just by Model methods, rather than manually creating this here
         write_dot(model.current_model.stratigraphic_dag, model.current_model.get_working_directory() / "fi_new.txt")
-        # Fake the load_check so the chrono dag will get rendered, which is a bit evil.
+        # Fake the load_check so the strat dag will get rendered, which is a bit evil.
         model.current_model.load_check = True
         model.current_model.render_strat_graph()
 
