@@ -401,7 +401,9 @@ def alp_beta_node_add(group: str, graph: nx.DiGraph) -> None:
     graph.add_node("b_" + str(group), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
 
 
-def phase_labels(phi_ref, POST_PHASE, phi_accept, all_samps_phi) -> Tuple[List[str], Dict[str, Any], Dict[str, Any]]:
+def phase_labels(
+    phi_ref: list[str], POST_PHASE, phi_accept: list[list[float]], all_samps_phi: list[list[float]]
+) -> tuple[list[str], dict[str, list[float]], dict[str, list[float]]]:
     """provides phase limits for a phase"""
     labels = ["a_" + str(phi_ref[0])]
     i = 0
