@@ -88,7 +88,7 @@ def rank_func(tes: dict[str, list[str]], dot_str: str) -> str:
 
     Parameters:
         tes: a dictionary
-        svg_str: The original svg string
+        dot_str: The original dot/gv string
 
     Returns:
         The mutated dot/gv string
