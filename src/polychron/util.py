@@ -5,7 +5,7 @@ import copy
 import platform
 import re
 import time
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, Tuple
 
 import networkx as nx
 import numpy as np
@@ -440,7 +440,7 @@ def phase_labels(
     return labels, results_dict, all_results_dict
 
 
-def del_empty_phases(phi_ref: List[Any], del_phase: Set[Any], phasedict: Dict[str, Any]) -> List[List[Any]]:
+def del_empty_phases(phi_ref: list[str], del_phase: set[str], phasedict: dict[tuple[str, str], str]) -> list[list[str]]:
     """checks for any phase rels that need changing due to missing dates"""
     del_phase = [i for i in phi_ref if i in del_phase]
     del_phase_dict_1 = {}
@@ -528,7 +528,7 @@ def chrono_edge_add(
     file_graph: nx.DiGraph,
     graph_data,
     xs_ys,
-    phasedict,
+    phasedict: dict[tuple[str, str], str],
     phase_trck,
     post_dict: Dict[Any, Any],
     prev_dict: Dict[Any, Any],
