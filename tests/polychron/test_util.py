@@ -371,11 +371,7 @@ class TestUtil:
         pass
 
     def test_node_del_fixed(self):
-        """Test node_del_fixed behaves as expected for a range of inputs
-
-        Todo:
-            - how should this behave when removing interior nodes>?
-        """
+        """Test node_del_fixed behaves as expected for a range of inputs"""
         # Using the graph
         #   a
         #  / \
@@ -405,7 +401,7 @@ class TestUtil:
         assert len(g_out.out_edges("b0")) == 0
         assert len(g_out.out_edges("b1")) == 0
 
-        # Test removing a node which has incoming and outgoing edges, replacing with a new edge. i.e. b0. The graph should now be a -> b1 -> c and a -> c
+        # Test removing a node which has incoming and outgoing edges, while there is another node providing the same implicit relationships i.e. b0. The graph should now be a -> b1 -> c
         g_in = copy.deepcopy(g_original)
         g_out = util.node_del_fixed(g_in, "b0")
         # Assert that b is no longer in the graph
@@ -414,8 +410,6 @@ class TestUtil:
         assert len(g_out.out_edges("a")) == len(g_original.out_edges("a")) - 1
         # Assert that d has one less in edge
         assert len(g_out.in_edges("c")) == len(g_original.in_edges("c")) - 1
-        # Todo: Should there now be an edge from a->c, along with the path from a->b1->c?
-        # assert g_out.has_edge("a", "c")
         # Assert the original path from a->b1->c remains
         assert g_out.has_edge("a", "b1")
         assert g_out.has_edge("b1", "c")
@@ -427,7 +421,7 @@ class TestUtil:
         # Assert that b0 and b1 are no longer in the graph
         assert not g_out.has_node("b0")
         assert not g_out.has_node("b1")
-        # There should now be a path from a->c, with a single edge? (potentially 2, but not a multigraph?)
+        # There should now be a path from a->c, with a single edge
         assert len(g_out.edges) == 1
         assert g_out.has_edge("a", "c")
 
