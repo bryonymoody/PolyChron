@@ -5,6 +5,7 @@ import pathlib
 import time
 from textwrap import dedent
 from typing import Literal
+from unittest.mock import patch
 
 import networkx as nx
 import packaging.version
@@ -937,3 +938,22 @@ class TestUtil:
 
             # Also check that the elapsed seconds is equal to the ns version
             assert timer.elapsed() == pytest.approx(timer.elapsed_ns() / 1e9)
+
+    @pytest.mark.parametrize(
+        ("platform_name", "double", "expected"),
+        [
+            ("Linux", False, "<Button-3>"),
+            ("Windows", False, "<Button-3>"),
+            ("Darwin", False, "<Button-2>"),
+            ("Linux", True, "<Double-Button-3>"),
+            ("Windows", True, "<Double-Button-3>"),
+            ("Darwin", True, "<Double-Button-2>"),
+        ],
+    )
+    def test_get_right_click_binding(self, platform_name: str, double: bool, expected: str):
+        """Ensure that get_right_click_binding returns the correct platform-specific value.
+
+        This patches out platform.system to enable cross-platform testing
+        """
+        with patch("polychron.util.platform.system", return_value=platform_name):
+            assert util.get_right_click_binding(double) == expected
