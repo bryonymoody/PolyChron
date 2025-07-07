@@ -5,7 +5,7 @@ import copy
 import platform
 import re
 import time
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, Literal, Tuple
 
 import networkx as nx
 import numpy as np
@@ -402,14 +402,31 @@ def alp_beta_node_add(group: str, graph: nx.DiGraph) -> None:
 
 
 def phase_labels(
-    phi_ref: list[str], POST_PHASE, phi_accept: list[list[float]], all_samps_phi: list[list[float]]
+    phi_ref: list[str],
+    post_group: list[Literal["abutting", "gap", "overlap", "end"]],
+    phi_accept: list[list[float]],
+    all_samps_phi: list[list[float]],
 ) -> tuple[list[str], dict[str, list[float]], dict[str, list[float]]]:
-    """provides phase limits for a phase"""
+    """Provides group/phase limits for a group/phase
+
+    Parameters:
+        phi_ref: Ordered list of group/phase labels
+        post_group: Ordered list containing the relation ship between the nth group, and the n+1th group
+        phi_accept: Accepted group boundaries from MCMC simulation. The length of the outer list depends on the values of post_group
+        all_samps_phi: all samples for group boundaries from MCMC, including rejected samples. The length of the outer list depends on the values of post_group
+
+    Returns:
+        A 3-element tuple of:
+
+        - The list of labels for group boundary nodes
+        - A dictionary of group limits from accepted phi samples
+        - A dictionary of group limits from all phi samples
+    """
     labels = ["a_" + str(phi_ref[0])]
     i = 0
     results_dict = {labels[0]: phi_accept[i]}
     all_results_dict = {labels[0]: all_samps_phi[i]}
-    for a_val in enumerate(POST_PHASE):
+    for a_val in enumerate(post_group):
         i = i + 1
         if a_val[1] == "abutting":
             labels.append("b_" + str(phi_ref[a_val[0]]) + " = a_" + str(phi_ref[a_val[0] + 1]))
@@ -428,7 +445,7 @@ def phase_labels(
             i = i + 1
             results_dict["a_" + str(phi_ref[a_val[0] + 1])] = phi_accept[i]
             all_results_dict["a_" + str(phi_ref[a_val[0] + 1])] = all_samps_phi[i]
-        else:
+        else:  # "overlap"
             labels.append("a_" + str(phi_ref[a_val[0] + 1]))
             labels.append("b_" + str(phi_ref[a_val[0]]))
             results_dict["a_" + str(phi_ref[a_val[0] + 1])] = phi_accept[i]
