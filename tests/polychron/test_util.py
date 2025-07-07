@@ -153,7 +153,6 @@ class TestUtil:
         Todo:
             - Expand the range of inputs which are tested
         """
-        print()
         # Prepare input parameters for rank_func:
         # - A Dict containing the
         # Manually prepare a dictionary which is equivalent to the 0th return value from phase_info_func for the below stratigraphic dag. This is based on an actual value used
@@ -738,7 +737,6 @@ class TestUtil:
         """
         # call del_empty_phases with parametrised inputs
         result = util.del_empty_phases(phi_ref, del_phase, phasedict)
-        print(result)
         # assert the output is as expected shape / types
         assert isinstance(result, list)
         # Assert the output values match the parametrised expected result
