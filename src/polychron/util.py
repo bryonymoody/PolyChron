@@ -5,7 +5,7 @@ import copy
 import platform
 import re
 import time
-from typing import Any, Dict, List, Literal, Tuple
+from typing import Any, Dict, Iterable, List, Literal, Tuple
 
 import networkx as nx
 import numpy as np
@@ -150,8 +150,19 @@ def node_coords_fromjson(graph: nx.DiGraph | pydot.Dot) -> Tuple[pd.DataFrame, L
     return df, scale
 
 
-def phase_info_func(file_graph: nx.DiGraph) -> Tuple[Dict[Any, Any], List[Any], List[Any], Any]:
-    """returns a dictionary of phases and nodes in each phase
+def phase_info_func(file_graph: nx.DiGraph) -> Tuple[dict[Any, Any], list[Any], list[Any], list[dict[Any, Any]]]:
+    """Returns a dictionary of phases and nodes in each phase
+
+    Parameters:
+        file_graph: A networkx graph to extract phase information from
+
+    Returns:
+        A tuple of results:
+
+        - A Dictionary of phases
+        - A list of
+        - A list of node labels from the graph (should be strings but not guaranteed)
+        - A list of node attribute dictionaries, in the order of node_list
 
     Todo:
         This has not been fully-reimplemented for cases where stratigraphic data was provided via .dot/.gv file, see FILE_INPUT
@@ -192,11 +203,29 @@ def phase_info_func(file_graph: nx.DiGraph) -> Tuple[Dict[Any, Any], List[Any], 
     return reversed_dict, [phase_norm, node_list, phase_list, phase_trck], [x_l, y_l], phase_dic
 
 
-def edge_of_phase(test1, pset, node_list, node_info):
-    """find nodes on edge of each phase
+def edge_of_phase(
+    test1: list[Any], pset: list[str], node_list: list[Any], node_info: list[dict[str[Any]]]
+) -> tuple[list[str], list[str], Iterable[str], list[tuple[Any, str]], dict[str, list[str]]]:
+    """Find nodes on edge of each phase
+
+    Parameters:
+        test1: a list of graph nodes (contexts and phases boundary nodes) ordered as a line_graph
+        pset: a list of (unique) groups/phases
+        node_list: a list of node labels
+        node_info: a list of node attribute dictionaries, in the same order as node_list
+
+    Returns:
+        A tuple of:
+
+        - a list of ???
+        - a list of ???
+        - An iterable (dict_keys) of groups/phases
+        - a list of phases being tracked?
+        - a dictionary containing a list of nodes per group/phase
 
     Todo:
-        This has not been fully-reimplemented for cases where stratigraphic data was provided via .dot/.gv file, see FILE_INPUT
+        - This has not been fully-reimplemented for cases where stratigraphic data was provided via .dot/.gv file, see FILE_INPUT
+        - Returning the keys and dictionary is redundant - only need to return the dict.
     """
     FILE_INPUT = None  # model.stratigraphic_graphviz_file ?
     x_l = []
@@ -558,10 +587,10 @@ def chrono_edge_add(
     file_graph: nx.DiGraph,
     graph_data,
     xs_ys,
-    phasedict,
-    phase_trck,
-    post_dict: Dict[Any, Any],
-    prev_dict: Dict[Any, Any],
+    phasedict: dict[tuple[str, str], str],
+    phase_trck: list[tuple[str, str]],
+    post_dict: dict[str, Literal["abutting", "gap", "overlap"]],
+    prev_dict: dict[str, Literal["abutting", "gap", "overlap"]],
 ) -> Tuple[nx.DiGraph, List[Any], List[str]]:
     """chrono_edge_add"""
     xs = xs_ys[0]
@@ -614,8 +643,25 @@ def chrono_edge_add(
     return (file_graph, phi_ref, null_phases)
 
 
-def chrono_edge_remov(file_graph: nx.DiGraph) -> Tuple[nx.DiGraph, List[List[Any]], List[Any], List[Any]]:
-    """removes any excess edges so we can render the chronograph"""
+def chrono_edge_remov(file_graph: nx.DiGraph) -> tuple[nx.DiGraph, list[list[Any]], list[Any], list[Any]]:
+    """Removes any excess edges so we can render the chronograph
+
+    Parameters:
+        file_graph: The input graph
+
+    Returns:
+        A tuple containing:
+
+        - A tuple of Graph data, containing:
+            - phases in a dict and nodes at the edge of that phase
+            - phases for each context
+            - contexts
+            - phases in "below form"
+            - dictionary of phases and contexts in them
+        - A list containing 2 elements `[xs, ys]` which  gives any edges removed becuase phase boundaries need to go in
+        - A list of phases
+
+    """
     xs, ys = [], []
     # gets a list of all the edges and splits into above and below
     for x, y in list(file_graph.edges):
@@ -668,11 +714,6 @@ def chrono_edge_remov(file_graph: nx.DiGraph) -> Tuple[nx.DiGraph, List[List[Any
 
         for m in oddlist:
             file_graph.add_edge(m, "a_" + str(phase_lab), arrowhead="none")
-    # graph data gives 1) phases in a dict and nodes at the edge of that phase,
-    # 2) phases for each context, 3) contexts, 4) phases in "below form",
-    # 5)dictionary of phases and contexts in them
-    # xs, ys gives any edges removed becuase phase boundaries need to go in
-    # list of phases
     return graph_data, [xs, ys], phase_list
 
 
