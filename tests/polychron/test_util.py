@@ -363,12 +363,20 @@ class TestUtil:
 
     @pytest.mark.skip(reason="test_phase_info_func not yet implemented")
     def test_phase_info_func(self):
-        """Test phase_info_func behaves as expected for a range of inputs"""
+        """Test phase_info_func behaves as expected for a range of inputs
+
+        Todo:
+            - Test with a .gv/.dot provided graph
+        """
         pass
 
     @pytest.mark.skip(reason="test_edge_of_phase not yet implemented")
     def test_edge_of_phase(self):
-        """Test edge_of_phase behaves as expected for a range of inputs"""
+        """Test edge_of_phase behaves as expected for a range of inputs
+
+        Todo:
+            - Test with a .gv/.dot provided graph
+        """
         pass
 
     def test_node_del_fixed(self):
@@ -749,10 +757,12 @@ class TestUtil:
 
     @pytest.mark.skip(reason="test_chrono_edge_add not yet implemented")
     def test_chrono_edge_add(self):
+        """Test chrono_edge_add behaves as expected for a range of inputs"""
         pass
 
     @pytest.mark.skip(reason="test_chrono_edge_remov not yet implemented")
     def test_chrono_edge_remov(self):
+        """Test chrono_edge_remov behaves as expected for a range of input graphs"""
         pass
 
     @pytest.mark.parametrize(("src", "dst", "expected"), [("a", "b", "a above b"), ("1", "2", "1 above 2")])
