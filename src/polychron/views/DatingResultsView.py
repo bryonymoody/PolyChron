@@ -8,6 +8,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 from PIL import ImageTk
 
+from ..util import get_right_click_binding
 from .FrameView import FrameView
 
 
@@ -264,7 +265,7 @@ class DatingResultsView(FrameView):
         self.littlecanvas2.bind("<MouseWheel>", callback_wheel)
         self.littlecanvas2.bind("<Button-4>", callback_wheel)  # only with Linux, wheel scroll down
         self.littlecanvas2.bind("<Button-5>", callback_wheel)
-        self.littlecanvas2.bind("<Button-3>", callback_rightclick)
+        self.littlecanvas2.bind(get_right_click_binding(), callback_rightclick)
         self.littlecanvas2.bind("<Button-1>", callback_move_from)
         self.littlecanvas2.bind("<B1-Motion>", callback_move_to)
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import copy
+import platform
 import re
 import time
 from typing import Any, Dict, List, Set, Tuple
@@ -633,3 +634,18 @@ class MonotonicTimer:
             RunmtimeError: start() and stop() must have been called before elapsed_ns
         """
         return self.elapsed_ns() / 1e9
+
+
+def get_right_click_binding(double: bool = False) -> str:
+    """Get the platform-specific tkinter binding for right-clicking.
+
+    This is different on a Mac than everywhere else
+
+    Parameters:
+        double: if the bind should be for double clicking
+
+    Returns:
+        the bind string for right click
+    """
+    number = "2" if platform.system() == "Darwin" else "3"
+    return f"<Button-{number}>" if not double else f"<Double-Button-{number}>"

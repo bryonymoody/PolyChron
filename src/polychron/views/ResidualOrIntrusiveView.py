@@ -6,6 +6,7 @@ from typing import Any, Callable, List
 
 from PIL import Image, ImageTk
 
+from ..util import get_right_click_binding
 from .PopupView import PopupView
 
 
@@ -122,7 +123,7 @@ class ResidualOrIntrusiveView(PopupView):
         self.graphcanvas.bind("<MouseWheel>", callback_wheel)
         self.graphcanvas.bind("<Button-4>", callback_wheel)  # only with Linux, wheel scroll down
         self.graphcanvas.bind("<Button-5>", callback_wheel)
-        self.graphcanvas.bind("<Double-Button-3>", callback_node_click)
+        self.graphcanvas.bind(get_right_click_binding(True), callback_node_click)
         self.graphcanvas.bind("<Button-1>", callback_move_from)
         self.graphcanvas.bind("<B1-Motion>", callback_move_to)
 
