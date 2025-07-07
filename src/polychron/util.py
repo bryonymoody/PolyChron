@@ -457,8 +457,21 @@ def phase_labels(
     return labels, results_dict, all_results_dict
 
 
-def del_empty_phases(phi_ref: List[Any], del_phase: Set[Any], phasedict: Dict[str, Any]) -> List[List[Any]]:
-    """checks for any phase rels that need changing due to missing dates"""
+def del_empty_phases(phi_ref: list[str], del_phase: set[str], phasedict: dict[tuple[str, str], str]) -> list[list[str]]:
+    """Checks for any phase rels that need changing due to missing dates
+
+    Parameters:
+        phi_ref: Ordered list of group/phase labels
+        del_phase: Groups/Phases which should be removed
+        phasedict: Dictionary of directed relationships between groups
+
+    Returns:
+        List of pairs of group labels which a new 'gap' relationship should be created for
+
+    Todo:
+        Should duplicates be removed from the retuned list?
+
+    """
     del_phase = [i for i in phi_ref if i in del_phase]
     del_phase_dict_1 = {}
     for j in del_phase:
@@ -474,7 +487,7 @@ def del_empty_phases(phi_ref: List[Any], del_phase: Set[Any], phasedict: Dict[st
         del_phase_dict_1[phi_ref[-1]]["upper"] = "end"
     if phi_ref[0] in del_phase_dict_1.keys():
         del_phase_dict_1[phi_ref[0]]["lower"] = "start"
-    # We then have to run the loop again in case any phases are next to eachother, this checks that
+    # We then have to run the loop again in case any phases are next to each other, this checks that
     for j in del_phase:
         rels_list = [i for i in phasedict.keys() if j in i]
         for rels in rels_list:
