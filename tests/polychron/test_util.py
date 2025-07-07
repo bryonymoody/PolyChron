@@ -4,6 +4,7 @@ import copy
 import pathlib
 import time
 from textwrap import dedent
+from typing import Literal
 
 import networkx as nx
 import packaging.version
@@ -582,10 +583,103 @@ class TestUtil:
         assert g_copy.nodes("shape")["a_2"] == "diamond"
         assert g_copy.nodes("shape")["b_2"] == "diamond"
 
-    @pytest.mark.skip(reason="test_phase_labels not yet implemented")
-    def test_phase_labels(self):
-        """Test phase_labels behaves as expected for a range of inputs"""
-        pass
+    @pytest.mark.parametrize(
+        ("phi_ref", "post_group", "phi_accept", "all_samps_phi", "expected"),
+        [
+            # 2 groups abutting one another. Made up dates (including different lengths of accept)
+            (
+                ["1", "2"],
+                ["abutting", "end"],
+                [[5000.0], [4000.0, 4000.0], [3000.0]],
+                [[5000.0, 9000.0, 9000.0], [4000.0, 4000.0, 9000.0], [3000.0, 9000.0, 9000.0]],
+                (
+                    ["a_1", "b_1 = a_2", "b_2"],
+                    {"a_1": [5000.0], "a_2 = b_1": [4000.0, 4000.0], "b_2": [3000.0]},
+                    {
+                        "a_1": [5000.0, 9000.0, 9000.0],
+                        "a_2 = b_1": [4000.0, 4000.0, 9000.0],
+                        "b_2": [3000.0, 9000.0, 9000.0],
+                    },
+                ),
+            ),
+            # 2 groups with a gap one another. Made up dates.
+            (
+                ["1", "2"],
+                ["gap", "end"],
+                [[5000.0], [4000.0], [3000.0], [2000.0]],
+                [[5000.0, 9000.0], [4000.0, 9000.0], [3000.0, 9000.0], [2000.0, 9000.0]],
+                (
+                    ["a_1", "a_2", "b_1", "b_2"],
+                    {"a_1": [5000.0], "a_2": [4000.0], "b_1": [3000.0], "b_2": [2000.0]},
+                    {
+                        "a_1": [5000.0, 9000.0],
+                        "a_2": [4000.0, 9000.0],
+                        "b_1": [3000.0, 9000.0],
+                        "b_2": [2000.0, 9000.0],
+                    },
+                ),
+            ),
+            # 2 groups with an overlap one another. Made up dates.
+            (
+                ["1", "2"],
+                ["overlap", "end"],
+                [[5000.0], [4000.0], [3000.0], [2000.0]],
+                [[5000.0, 9000.0], [4000.0, 9000.0], [3000.0, 9000.0], [2000.0, 9000.0]],
+                (
+                    ["a_1", "a_2", "b_1", "b_2"],
+                    {"a_1": [5000.0], "a_2": [4000.0], "b_1": [3000.0], "b_2": [2000.0]},
+                    {
+                        "a_1": [5000.0, 9000.0],
+                        "a_2": [4000.0, 9000.0],
+                        "b_1": [3000.0, 9000.0],
+                        "b_2": [2000.0, 9000.0],
+                    },
+                ),
+            ),
+            # Single group
+            (
+                ["1"],
+                ["end"],
+                [[5000.0], [4000.0]],
+                [[5000.0, 9000.0], [4000.0, 9000.0]],
+                (
+                    ["a_1", "b_1"],
+                    {"a_1": [5000.0], "b_1": [4000.0]},
+                    {"a_1": [5000.0, 9000.0], "b_1": [4000.0, 9000.0]},
+                ),
+            ),
+        ],
+    )
+    def test_phase_labels(
+        self,
+        phi_ref: list[str],
+        post_group: list[Literal["abutting", "gap", "overlap", "end"]],
+        phi_accept: list[list[float]],
+        all_samps_phi: list[list[float]],
+        expected: tuple[list[str], dict[str, list[float]], dict[str, list[float]]],
+    ):
+        """Test phase_labels behaves as expected for a range of inputs
+
+        Todo:
+            - Test how errors (missing keys etc) are handled.
+            - Test with more than 2 groups concurrently
+        """
+        # call phase_labels with parametrised inputs
+        result = util.phase_labels(phi_ref, post_group, phi_accept, all_samps_phi)
+
+        # assert the output is as expected shape / types
+        assert isinstance(result, tuple)
+        assert len(result) == 3
+        labels, accept_group_limits, all_group_limits = result
+        assert isinstance(labels, list)
+        assert isinstance(accept_group_limits, dict)
+        assert isinstance(all_group_limits, dict)
+
+        # Assert the output values match the parametrised expected result
+        expected_labels, expected_accept, expected_all = expected
+        assert labels == expected_labels
+        assert accept_group_limits == expected_accept
+        assert all_group_limits == expected_all
 
     @pytest.mark.skip(reason="test_del_empty_phases not yet implemented")
     def test_del_empty_phases(self):
