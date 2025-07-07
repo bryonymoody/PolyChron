@@ -601,9 +601,10 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         popup_presenter.view.lift()
         self.view.wait_window(popup_presenter.view)
         self.node = popup_data["value"]
-        model_model.stratigraphic_dag.add_node(
-            self.node, shape="box", fontsize="30.0", fontname="helvetica", penwidth="1.0"
-        )
+        if popup_data["value"] is not None:
+            model_model.stratigraphic_dag.add_node(
+                self.node, shape="box", fontsize="30.0", fontname="helvetica", penwidth="1.0"
+            )
 
     def testmenu_delete_strat_with(self) -> None:
         """Callback function from the testmenu for deleting stratigrahic relationship edges"""

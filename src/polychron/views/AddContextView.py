@@ -36,10 +36,19 @@ class AddContextView(PopupView):
         self.ok_button = ttk.Button(self, text="Ok")
         self.ok_button.pack()
 
+        # Cancel Button
+        self.cancel_button = ttk.Button(self, text="Cancel", command=self.destroy)
+        self.cancel_button.pack()
+
     def bind_ok_button(self, callback: Callable[[], Any | None]) -> None:
         """Bind the callback for when the ok_button is pressed"""
         if callback is not None:
             self.ok_button.config(command=callback)
+
+    def bind_cancel_button(self, callback: Callable[[], Any | None]) -> None:
+        """Bind the callback for when the cancel_button is pressed"""
+        if callback is not None:
+            self.cancel_button.config(command=callback)
 
     def get_input(self) -> str:
         """Get the string provided by the user
