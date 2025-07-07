@@ -681,10 +681,67 @@ class TestUtil:
         assert accept_group_limits == expected_accept
         assert all_group_limits == expected_all
 
-    @pytest.mark.skip(reason="test_del_empty_phases not yet implemented")
-    def test_del_empty_phases(self):
-        """Test del_empty_phases behaves as expected for a range of inputs"""
-        pass
+    @pytest.mark.parametrize(
+        ("phi_ref", "del_phase", "phasedict", "expected"),
+        [
+            # No groups/phases to remove
+            (["1", "2"], set([]), {("2", "1"): "abutting"}, []),
+            # Invalid phase in del_phase, nothing to remove
+            (["1", "2"], set(["3"]), {("2", "1"): "gap"}, []),
+            # Delete the middle group of 3.
+            (["1", "2", "3"], set(["2"]), {("2", "1"): "abutting", ("3", "2"): "abutting"}, [["3", "1"]]),
+            # Delete the first and last group of 4, no changes (no new gap relationships)
+            (
+                ["1", "2", "3", "4"],
+                set(["1", "4"]),
+                {("2", "1"): "abutting", ("3", "2"): "gap", ("4", "3"): "abutting"},
+                [],
+            ),
+            # Delete 2, creating a gap between 1 and 3
+            (
+                ["1", "2", "3", "4"],
+                set(["2"]),
+                {("2", "1"): "abutting", ("3", "2"): "gap", ("4", "3"): "abutting"},
+                [["3", "1"]],
+            ),
+            # Delete 3, creating a gap between 2 and 4
+            (
+                ["1", "2", "3", "4"],
+                set(["3"]),
+                {("2", "1"): "abutting", ("3", "2"): "gap", ("4", "3"): "abutting"},
+                [["4", "2"]],
+            ),
+            # Delete 2 and 3, creating a gap between 4 and 1. This is included in the list twice
+            (
+                ["1", "2", "3", "4"],
+                set(["2", "3"]),
+                {("2", "1"): "abutting", ("3", "2"): "gap", ("4", "3"): "abutting"},
+                [["4", "1"], ["4", "1"]],
+            ),
+            # 5 groups, deleted 2 groups which are not connected to each other
+            (
+                ["1", "2", "3", "4", "5"],
+                set(["2", "4"]),
+                {("2", "1"): "abutting", ("3", "2"): "gap", ("4", "3"): "abutting", ("5", "4"): "abutting"},
+                [["3", "1"], ["5", "3"]],
+            ),
+        ],
+    )
+    def test_del_empty_phases(
+        self, phi_ref: list[str], del_phase: set[str], phasedict: dict[tuple[str, str], str], expected: list[list[str]]
+    ):
+        """Test del_empty_phases behaves as expected for a range of inputs
+
+        Todo:
+            - Test with (and handle) missing keys from phasedict. This should not occur in normal polychron usage
+        """
+        # call del_empty_phases with parametrised inputs
+        result = util.del_empty_phases(phi_ref, del_phase, phasedict)
+        print(result)
+        # assert the output is as expected shape / types
+        assert isinstance(result, list)
+        # Assert the output values match the parametrised expected result
+        assert result == expected
 
     @pytest.mark.skip(reason="test_group_rels_delete_empty not yet implemented")
     def test_group_rels_delete_empty(self):
