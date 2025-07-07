@@ -19,7 +19,7 @@ from ..presenters.MCMCProgressPresenter import MCMCProgressPresenter
 from ..presenters.RemoveContextPresenter import RemoveContextPresenter
 from ..presenters.RemoveStratigraphicRelationshipPresenter import RemoveStratigraphicRelationshipPresenter
 from ..presenters.ResidualOrIntrusivePresenter import ResidualOrIntrusivePresenter
-from ..util import edge_label, imagefunc, node_coords_fromjson, node_del_fixed
+from ..util import edge_label, get_right_click_binding, imagefunc, node_coords_fromjson, node_del_fixed
 from ..views.AddContextView import AddContextView
 from ..views.CalibrateModelSelectView import CalibrateModelSelectView
 from ..views.DatafilePreviewView import DatafilePreviewView
@@ -112,7 +112,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         self.view.bind_testmenu_commands(lambda event: self.on_testmenu(event))
 
         # Bind mouse & keyboard events
-        self.view.bind_littlecanvas_callback("<Button-3>", lambda event: self.pre_click(event))
+        self.view.bind_littlecanvas_callback(get_right_click_binding(), lambda event: self.pre_click(event))
         self.view.bind_littlecanvas_events(
             lambda event: self.on_wheel(event), lambda event: self.move_from(event), lambda event: self.move_to(event)
         )
@@ -139,7 +139,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             self.view.update_littlecanvas(model_model.stratigraphic_image)
             # self.bind("<Configure>", self.resize)
             self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
-            self.view.bind_littlecanvas_callback("<Button-3>", self.pre_click)
+            self.view.bind_littlecanvas_callback(get_right_click_binding(), self.pre_click)
 
         # Render the chronological graph if possible
         if model_model.chronological_dag is not None:
@@ -337,7 +337,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             self.view.update_littlecanvas(model_model.stratigraphic_image)
             # self.bind("<Configure>", self.resize)
             self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
-            self.view.bind_littlecanvas_callback("<Button-3>", self.pre_click)
+            self.view.bind_littlecanvas_callback(get_right_click_binding(), self.pre_click)
             self.show_image()
 
     def open_strat_csv_file(self) -> None:
@@ -372,7 +372,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                     self.view.update_littlecanvas(model_model.stratigraphic_image)
                     # self.bind("<Configure>", self.resize)
                     self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
-                    self.view.bind_littlecanvas_callback("<Button-3>", self.pre_click)
+                    self.view.bind_littlecanvas_callback(get_right_click_binding(), self.pre_click)
 
                 else:
                     pass
@@ -465,7 +465,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 self.view.update_littlecanvas(model_model.stratigraphic_image)
                 # self.bind("<Configure>", self.resize)
                 self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
-                self.view.bind_littlecanvas_callback("<Button-3>", self.pre_click)
+                self.view.bind_littlecanvas_callback(get_right_click_binding(), self.pre_click)
                 tk.messagebox.showinfo("Success", "Equal contexts data loaded")
             except ValueError:
                 tk.messagebox.showerror("showerror", "Data not loaded, please try again")
@@ -494,7 +494,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 self.view.update_littlecanvas(model_model.stratigraphic_image)
                 # self.bind("<Configure>", self.resize)
                 self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
-                self.view.bind_littlecanvas_callback("<Button-3>", self.pre_click)
+                self.view.bind_littlecanvas_callback(get_right_click_binding(), self.pre_click)
 
     def on_data_button(self) -> None:
         """Callback for when the "Data Loaded" button is pressed, which toggles the visibility of which required input files have been parsed or not
