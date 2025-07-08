@@ -920,7 +920,7 @@ class TestModelPresenter:
     ):
         """Test that open_group_relationship_file behaves as intended for a range of csv files.
 
-        Stratigraphic data must first be loaded, as each node in the scientific dating file must exist in the stratigraphic_dag
+        Stratigraphic data and context grouping data must first be loaded, which matches data in the incoming group relationship file
 
         Parameters:
             stratigrapic_csv: The (partial) path to a stratigraphic csv file to open
@@ -1000,9 +1000,210 @@ class TestModelPresenter:
                 assert not presenter.phase_check
                 mock_view.messagebox_info.assert_not_called()
 
-    @pytest.mark.skip(reason="test_open_context_equalities_file not implemented, includes tkinter")
-    def test_open_context_equalities_file(self):
-        pass
+    @pytest.mark.parametrize(
+        (
+            "stratigrapic_csv",
+            "input_path",
+            "file_popup_result",
+            "expect_model_change",
+            "expect_error",
+            "expect_node_count",
+            "expect_edge_count",
+        ),
+        [
+            # No input, silently do nothing (i.e. if the popup was closed.)
+            pytest.param(None, None, "cancel", False, False, 0, 0),
+            # A valid csv file, but it the user did not select "load"
+            pytest.param(
+                "demo/1-strat.csv",
+                "demo/5-context-equality.csv",
+                "cancel",
+                False,
+                False,
+                0,
+                0,
+                marks=pytest.mark.xfail(reason="set_context_equality_df does not have a preview step"),
+            ),
+            # Valid csv files, which are loaded
+            ("demo/1-strat.csv", "demo/5-context-equality.csv", "load", True, False, 6, 5),
+            ("strat-csv/simple.csv", "context-equality-csv/simple.csv", "load", True, False, 3, 2),
+            # A completely empty csv
+            (
+                "strat-csv/simple.csv",
+                "context-equality-csv/empty.csv",
+                "load",
+                False,
+                True,
+                0,
+                0,
+            ),
+            # A csv file with no rows. This is currently accepted but should not be.
+            (
+                "strat-csv/simple.csv",
+                "context-equality-csv/header-only.csv",
+                "load",
+                True,
+                False,
+                4,
+                4,
+            ),
+            # # A csv with the incorrect column names. This currently does not matter.
+            pytest.param(
+                "strat-csv/simple.csv",
+                "context-equality-csv/bad-column-names.csv",
+                "load",
+                False,
+                True,
+                0,
+                0,
+                marks=pytest.mark.skip(reason="Column names are not checked in open_group_relationship_file"),
+            ),
+            # A csv with extra columns, which are not used
+            (
+                "strat-csv/simple.csv",
+                "context-equality-csv/extra-columns.csv",
+                "load",
+                True,
+                False,
+                3,
+                2,
+            ),
+            # A csv file which includes the same context twice. This raises an uncaught exception and mutates state.
+            pytest.param(
+                "strat-csv/simple.csv",
+                "context-equality-csv/duplicate-row.csv",
+                "load",
+                True,
+                False,
+                3,
+                2,
+                marks=pytest.mark.xfail(reason="open_context_equalities_file does not gracefully handle duplcate rows"),
+            ),
+            # A csv file which includes the same context equality, but in both directions This raises an uncaught exception and mutates state. This could be allowed, or could be an error
+            pytest.param(
+                "strat-csv/simple.csv",
+                "context-equality-csv/reversed.csv",
+                "load",
+                True,
+                False,
+                3,
+                2,
+                marks=pytest.mark.xfail(
+                    reason="open_context_equalities_file does not gracefully handle duplcate (reversed) rows"
+                ),
+            ),
+            # A csv file which combines the same node with atleast 2 others, using the pre-combined names is not handled gracefully
+            pytest.param(
+                "strat-csv/simple.csv",
+                "context-equality-csv/multiple-combinations-original-name.csv",
+                "load",
+                True,
+                False,
+                2,
+                1,
+                marks=pytest.mark.xfail(
+                    reason="open_context_equalities_file does not handle combining multiple context using their original labels gracefully"
+                ),
+            ),
+            # A csv file which combines the same node with atleast 2 others, using the combined names
+            pytest.param(
+                "strat-csv/simple.csv",
+                "context-equality-csv/multiple-combinations-combined-name.csv",
+                "load",
+                True,
+                False,
+                2,
+                1,
+                marks=pytest.mark.xfail(
+                    reason="open_context_equalities_file combining a context with 2 others via the combined name results in a loop"
+                ),
+            ),
+        ],
+    )
+    def test_open_context_equalities_file(
+        self,
+        stratigrapic_csv: str | None,
+        input_path: str | None,
+        file_popup_result: str,
+        expect_model_change: bool,
+        expect_error: bool,
+        expect_node_count: int,
+        expect_edge_count: int,
+        test_data_path: pathlib.Path,
+    ):
+        """Test that open_context_equalities_file behaves as intended for a range of csv files.
+
+        Stratigraphic data must be present for context to be equated to one another
+
+        Parameters:
+            stratigrapic_csv: The (partial) path to a stratigraphic csv file to open
+            input_path: The (partial) path to a context eqality csv file to open
+            file_popup_result: the value returned by the mocked out file_popup (i.e. did the user press load?)
+            expect_model_change: If we expect the model to have been updated for these inputs
+            expect_error: If we expect an error messagebox to have occurred
+            expect_node_count: The expected number of nodes after contexts are combined
+            expect_edge_count: The expected number of edges after contexts are combined
+
+        Todo:
+            - open_context_equalities_file does not currently respect if users press load or cancel.
+            - Tests with invalid data values
+            - Correct column names, but in a different order
+            - Test how node attributes are handled when equating context which belong to different groups, or if they have different dates
+            - Select the "real" column names. context_one, context_two?
+            - The messagebox_error should be specialised with a reason and asserted against (via call_args).
+        """
+        # Setup the mock mediator, mock view and fixture-provided ProjectSelection
+        mock_mediator = MagicMock(spec=Mediator)
+        mock_view = MagicMock(spec=ModelView)
+        model = self.project_selection
+
+        # Instantiate the ModelPresenter
+        presenter = ModelPresenter(mock_mediator, mock_view, model)
+
+        # Reset the mock to ensure methods which were triggered by the ctor are not re-triggered.
+        mock_view.reset_mock()
+
+        # Switch to a newly created model
+        presenter.model.switch_to("test", "test")
+
+        # Ensure the strat csv file has been loaded (through the presenter for now, but just on the Model would be preferable)
+        mock_view.askopenfile.return_value = (
+            open(test_data_path / stratigrapic_csv, "r") if stratigrapic_csv is not None else None
+        )
+        with patch("polychron.presenters.ModelPresenter.ModelPresenter.file_popup") as mock_file_popup:
+            mock_file_popup.return_value = file_popup_result
+            presenter.open_strat_csv_file()
+
+        # Mock out the value returened by view.askopenfile to be either a valid file descriptor or None, depending on the model parameter
+        mock_view.askopenfile.return_value = open(test_data_path / input_path, "r") if input_path is not None else None
+
+        # Patch out file_popup to return the parametrised value
+        with patch("polychron.presenters.ModelPresenter.ModelPresenter.file_popup") as mock_file_popup:
+            mock_file_popup.return_value = file_popup_result
+
+            # Call open_context_equalities_file
+            presenter.open_context_equalities_file()
+
+            # If we expect an error message, check one should have been called
+            if expect_error:
+                mock_view.messagebox_error.assert_called_once()
+            # Otherwise, if we expcted a change to the Model instance, check the values
+            elif expect_model_change:
+                assert model.current_model is not None
+                assert model.current_model.context_equality_df is not None
+                pd.testing.assert_frame_equal(
+                    model.current_model.context_equality_df, pd.read_csv(test_data_path / input_path)
+                )
+                assert model.current_model.stratigraphic_dag is not None
+                # Check the number of contexts and edges in the graph matches the expected values after combination
+                assert model.current_model.stratigraphic_dag.number_of_nodes() == expect_node_count
+                assert model.current_model.stratigraphic_dag.number_of_edges() == expect_edge_count
+                mock_view.messagebox_info.assert_called()
+            # Otherwise, the model should not have group_relationship set or view methods called.
+            else:
+                assert model.current_model is not None
+                assert model.current_model.context_equality_df is None
+                mock_view.messagebox_info.assert_not_called()
 
     def test_close_application(self):
         """Assert that close_application behaves as expected"""
