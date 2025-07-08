@@ -607,7 +607,7 @@ class Model:
         for i in range(len(self.stratigraphic_df)):
             a = tuple(self.stratigraphic_df.iloc[i, :])
             if not pd.isna(a[1]):
-                edges.append(a)
+                edges.append(a[:2])
         G.add_edges_from(edges, arrowhead="none")
         self.stratigraphic_dag = G
 
