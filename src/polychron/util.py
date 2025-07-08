@@ -540,9 +540,33 @@ def del_empty_phases(phi_ref: list[str], del_phase: set[str], phasedict: dict[tu
 
 
 def group_rels_delete_empty(
-    file_graph: nx.DiGraph, new_group_rels, p_list, phasedict, phase_nodes, graph_data
+    file_graph: nx.DiGraph,
+    new_group_rels: list[list[str]],
+    p_list: list[tuple[str, str]],
+    phasedict: dict[tuple[str, str], str],
+    phase_nodes: list[str],
+    graph_data: tuple[nx.DiGraph, list[list[Any]], list[Any], list[Any]],
 ) -> Tuple[nx.DiGraph, List[str], Dict[str, str]]:
-    """adds edges between phases that had gaps due to no contexts being left in them"""
+    """Adds edges between phases that had gaps due to no contexts being left in them
+
+    Parameters:
+        file_graph: The input graph
+        new_group_rels: list of new edges to create. Each element must be a list/tuple of 2 group labels.
+        p_list: a list of (unique) groups/phases, each contianing 2 elements.
+        phasedict: A dictionary containing the type of relationship between two phases
+        phase_nodes: a list of group/phase node labels, which is modified to include newly created nodes
+        graph_data: A collection of graph_data information
+
+    Returns:
+        A tuple of:
+
+        - The modified DiGraph
+        - A list of groups/phases which need to be remove
+        - A dictionary of newly combined group/phase boundary nodes (i.e. `a_x = b_y`) and the associated label
+
+    Todo:
+        - phase_nodes is only written to, never read from. Can it be removed?
+    """
     phase_relabel(file_graph)
     # adds edges between phases that had gaps due to no contexts being left in them
     label_dict = {}
