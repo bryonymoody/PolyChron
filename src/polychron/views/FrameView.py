@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import tkinter as tk
 from tkinter import messagebox as messagebox
-from typing import Any, Dict
+from tkinter.filedialog import askopenfile
+from typing import IO, Any, Dict, Literal
 
 
 class FrameView(tk.Frame):
@@ -79,3 +80,121 @@ class FrameView(tk.Frame):
         options.pop("parent", None)
         # Launch the tkinter messagebox
         messagebox.showerror(title=title, message=message, parent=self.parent, **options)
+
+    def messagebox_askquestion(
+        self,
+        title: str | None = None,
+        message: str | None = None,
+        *args: tuple[Any, ...],
+        icon: Literal["error", "info", "question", "warning"] = "question",
+        **options: dict[str, Any],
+    ) -> str:
+        """Ask the user a (yes/no by default) question, with automatic parent setting:
+
+        Parameters:
+            title: The message box title
+            message: The error message
+            args*: Other positional arugments forwarded to the underlyin tkinter call
+            icon: The icon to display in the dialog
+            **options: other arguments forwarded to `tkinter.messagebox.askquestion`, excluding `parent`
+
+        Returns:
+            The selected value from the question box
+        """
+        # Prevent parents being passed as a kwarg
+        options.pop("parent", None)
+        # Launch the tkinter messagebox
+        return messagebox.askquestion(title, message, *args, icon=icon, parent=self.parent, **options)
+
+    def messagebox_askokcancel(
+        self,
+        title: str | None = None,
+        message: str | None = None,
+        *args: tuple[Any, ...],
+        icon: Literal["error", "info", "question", "warning"] = "question",
+        **options: dict[str, Any],
+    ) -> str | None:
+        """Ask the user an ok/cancel question, with automatic parent setting:
+
+        Parameters:
+            title: The message box title
+            message: The error message
+            args*: Other positional arugments forwarded to the underlyin tkinter call
+            icon: The icon to display in the dialog
+            **options: other arguments forwarded to `tkinter.messagebox.askokcancel`, excluding `parent`
+
+        Returns:
+            True if OK was selected
+        """
+        # Prevent parents being passed as a kwarg
+        options.pop("parent", None)
+        # Launch the tkinter messagebox
+        return messagebox.askokcancel(title, message, *args, icon=icon, parent=self.parent, **options)
+
+    def messagebox_askyesno(
+        self,
+        title: str | None = None,
+        message: str | None = None,
+        *args: tuple[Any, ...],
+        icon: Literal["error", "info", "question", "warning"] = "question",
+        **options: dict[str, Any],
+    ) -> bool:
+        """Ask the user a yes/no question, with automatic parent setting:
+
+        Parameters:
+            title: The message box title
+            message: The error message
+            args*: Other positional arugments forwarded to the underlyin tkinter call
+            icon: The icon to display in the dialog
+            **options: other arguments forwarded to `tkinter.messagebox.askyesno`, excluding `parent`
+
+        Returns:
+            True if yes was selected
+        """
+        # Prevent parents being passed as a kwarg
+        options.pop("parent", None)
+        # Launch the tkinter messagebox
+        return messagebox.askyesno(title, message, *args, icon=icon, parent=self.parent, **options)
+
+    def messagebox_askyesnocancel(
+        self,
+        title: str | None = None,
+        message: str | None = None,
+        *args: tuple[Any, ...],
+        icon: Literal["error", "info", "question", "warning"] = "question",
+        **options: dict[str, Any],
+    ) -> bool | None:
+        """Ask the user a yes/no/cancel question, with automatic parent setting:
+
+        Parameters:
+            title: The message box title
+            message: The error message
+            args*: Other positional arugments forwarded to the underlyin tkinter call
+            icon: The icon to display in the dialog
+            **options: other arguments forwarded to `tkinter.messagebox.askyesnocancel`, excluding `parent`
+
+        Returns:
+            True if yes, False if No, None if cancelled
+        """
+        # Prevent parents being passed as a kwarg
+        options.pop("parent", None)
+        # Launch the tkinter messagebox
+        return messagebox.askyesnocancel(title, message, *args, icon=icon, parent=self.parent, **options)
+
+    def askopenfile(self, mode: str = "r", *args: tuple[Any, ...], **options: dict[str, Any]) -> IO | None:
+        """Opens a tkinter file dialogue with the specified mode, forwarding arguments and keyword arugments to the underlying tkinter.filedialog.askopenfile call.
+
+        This abstracts tkinter out of Presenters, simplifying unit testing of non-GUI code.
+
+        Parameters:
+            mode: The mode of the file to open
+            *args: other positional args, forwarded to askopenfile
+            **options: keyword arguments which are forwarded to askopenfile. parent will be overridden to be relative to the FrameView
+
+        Returns:
+            The opened file (or None)
+        """
+        # Prevent parents being passed as a kwarg
+        options.pop("parent", None)
+        # Launch the tkinter filedialog
+        return askopenfile(mode, *args, parent=self.parent, **options)
