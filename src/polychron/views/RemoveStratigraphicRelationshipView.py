@@ -41,7 +41,9 @@ class RemoveStratigraphicRelationshipView(PopupView):
         self.ok_button.place(relx=0.3, rely=0.7)
 
         # Place a Cancel Button
-        self.cancel_button = tk.Button(self, text="Cancel", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6", command=self.destroy)
+        self.cancel_button = tk.Button(
+            self, text="Cancel", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6", command=self.destroy
+        )
         self.cancel_button.place(relx=0.72625, rely=0.7)
 
     def bind_ok_button(self, callback: Callable[[], Any]) -> None:
@@ -53,7 +55,7 @@ class RemoveStratigraphicRelationshipView(PopupView):
         """Bind the callback for when the cancel_button is pressed"""
         if callback is not None:
             self.cancel_button.config(command=callback)
-    
+
     def update_label(self, edge_label: str | None = None) -> None:
         """Update the label text to include the edge being removed."""
         edge_label = "these contexts" if edge_label is None else f"{edge_label}"
