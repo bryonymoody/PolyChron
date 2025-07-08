@@ -6,6 +6,7 @@ import platform
 from unittest.mock import MagicMock, patch
 
 import networkx as nx
+import packaging
 import pandas as pd
 import pytest
 from networkx.drawing.nx_pydot import write_dot
@@ -468,9 +469,124 @@ class TestModelPresenter:
         presenter = ModelPresenter(mock_mediator, mock_view, model)
         presenter.open_strat_dot_file()
 
-    @pytest.mark.skip(reason="test_open_strat_csv_file not implemented, includes tkinter")
-    def test_open_strat_csv_file(self):
-        pass
+    @pytest.mark.parametrize(
+        (
+            "input_path",
+            "file_popup_result",
+            "expect_model_change",
+            "expect_error",
+            "expect_node_count",
+            "expect_edge_count",
+        ),
+        [
+            # No input, silently do nothing (i.e. if the popup was closed.)
+            (None, "cancel", False, False, 0, 0),
+            # A valid csv file, but it the user did not select "load"
+            ("demo/1-strat.csv", "cancel", False, False, 0, 0),
+            # Valid csv files, which are loaded
+            ("demo/1-strat.csv", "load", True, False, 7, 6),
+            ("thesis/thesis-b1-strat.csv", "load", True, False, 10, 9),
+            ("strat-csv/unconnected.csv", "load", True, False, 3, 1),
+            ("strat-csv/simple.csv", "load", True, False, 4, 4),
+            # A completely empty csv
+            ("strat-csv/empty.csv", "load", False, True, 0, 0),
+            # A csv with an invalid context label
+            pytest.param(
+                "strat-csv/invalid-context-label.csv",
+                "load",
+                False,
+                True,
+                0,
+                0,
+                marks=pytest.mark.xfail(
+                    packaging.version.parse(nx.__version__) >= packaging.version.parse("3.4.0"),
+                    reason=": is only currently detected as an invalid context label by networkx < 3.4.",
+                ),
+            ),
+            # A csv file with no rows. This is currently accepted but should not be.
+            ("strat-csv/header-only.csv", "load", True, False, 0, 0),
+            # A csv with the incorrect column names. This is currently accepted but column names should be validated and used accordingly
+            ("strat-csv/bad-column-names.csv", "load", True, False, 4, 2),
+            # A csv with extra columns. Should the extra data be kept as node attributes?
+            ("strat-csv/extra-columns.csv", "load", True, False, 7, 6),
+        ],
+    )
+    def test_open_strat_csv_file(
+        self,
+        input_path: str | None,
+        file_popup_result: str,
+        expect_model_change: bool,
+        expect_error: bool,
+        expect_node_count: int,
+        expect_edge_count: int,
+        test_data_path: pathlib.Path,
+    ):
+        """Test that open_strat_dot_file behaves as intended for a range of csv files.
+
+        Parameters:
+            input_path: The (partial) path to a csv file to open
+            file_popup_result: the value returned by the mocked out file_popup (i.e. did the user press load?)
+            expect_model_change: If we expect the model to have been updated for these inputs
+            expect_error: If we expect an error messagebox to have occurred
+            expect_node_count: the expected number of nodes in the stratigraphic graph
+            expect_edge_count: the expected number of edges in the stratigraphic graph
+
+        Todo:
+            - A csv with no context relationships should be an error
+            - Correct column names, but in a different order
+            - The messagebox_error should be specialised with a reason and asserted against (via call_args).
+        """
+        # Setup the mock mediator, mock view and fixture-provided ProjectSelection
+        mock_mediator = MagicMock(spec=Mediator)
+        mock_view = MagicMock(spec=ModelView)
+        model = self.project_selection
+
+        # Instantiate the ModelPresenter
+        presenter = ModelPresenter(mock_mediator, mock_view, model)
+
+        # Reset the mock to ensure methods which were triggered by the ctor are not re-triggered.
+        mock_view.reset_mock()
+
+        # Switch to a newly created model
+        presenter.model.switch_to("test", "test")
+
+        # Mock out the value returened by view.askopenfile to be either a valid file descriptor or None, depending on the model parameter
+        mock_view.askopenfile.return_value = open(test_data_path / input_path, "r")  if input_path is not None else None
+
+        # Patch out file_popup to return the parametrised value
+        with patch("polychron.presenters.ModelPresenter.ModelPresenter.file_popup") as mock_file_popup:
+            mock_file_popup.return_value = file_popup_result
+
+            # Call open_strat_csv_file
+            presenter.open_strat_csv_file()
+
+            # If we expect an error message, check one should have been called
+            if expect_error:
+                mock_view.messagebox_error.assert_called_once()
+            # Otherwise, if we expcted a change to the Model instance, check the values
+            elif expect_model_change:
+                assert model.current_model is not None
+                assert model.current_model.stratigraphic_df is not None
+                assert model.current_model.stratigraphic_dag is not None
+                assert model.current_model.stratigraphic_dag.number_of_nodes() == expect_node_count
+                assert model.current_model.stratigraphic_dag.number_of_edges() == expect_edge_count
+                assert presenter.strat_check
+                assert model.current_model.deleted_nodes == []
+                assert model.current_model.deleted_edges == []
+                mock_view.messagebox_info.assert_called()
+                mock_view.update_littlecanvas.assert_called()
+                mock_view.bind_littlecanvas_callback.assert_called()
+                mock_view.bind_littlecanvas_callback.assert_called()
+            # Otherwise, the model should not have stratigraphic_data set or view methods called.
+            else:
+                assert model.current_model is not None
+                assert model.current_model.stratigraphic_df is None
+                assert model.current_model.stratigraphic_dag is None
+                assert not presenter.strat_check
+                mock_view.messagebox_info.assert_not_called()
+                mock_view.update_littlecanvas.assert_not_called()
+                mock_view.bind_littlecanvas_callback.assert_not_called()
+                mock_view.bind_littlecanvas_callback.assert_not_called()
 
     @pytest.mark.skip(reason="test_open_scientific_dating_file not implemented, includes tkinter")
     def test_open_scientific_dating_file(self):
