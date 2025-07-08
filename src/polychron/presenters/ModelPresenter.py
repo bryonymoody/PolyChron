@@ -443,12 +443,13 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 df = pd.read_csv(file)
                 group_rels = [(str(df["above"][i]), str(df["below"][i])) for i in range(len(df))]
                 load_it = self.file_popup(pd.DataFrame(group_rels, columns=["Younger group", "Older group"]))
-                model_model.set_group_relationship_df(df, group_rels)
-                if load_it:
-                    pass  # 0.1 doesn't check the result / handle the paths differently.
-                self.phase_rel_check = True
-                self.check_list_gen()
-                self.view.messagebox_info("Success", "Group relationships data loaded")
+                if load_it == "load":
+                    model_model.set_group_relationship_df(df, group_rels)
+                    self.phase_rel_check = True
+                    self.check_list_gen()
+                    self.view.messagebox_info("Success", "Group relationships data loaded")
+                else:
+                    pass
             except ValueError:
                 self.view.messagebox_error("showerror", "Data not loaded, please try again")
 
