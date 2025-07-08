@@ -18,6 +18,9 @@ class RemoveContextPresenter(PopupPresenter[RemoveContextView, Dict[str, Optiona
         # Bind buttons
         self.view.bind_ok_button(self.on_ok_button)
 
+        # Bind the cancel button
+        self.view.bind_cancel_button(self.on_cancel)
+
         # Update view information to reflect the current state of the model
         self.update_view()
 
@@ -30,4 +33,9 @@ class RemoveContextPresenter(PopupPresenter[RemoveContextView, Dict[str, Optiona
         # Store the provided reason in the model
         self.model["reason"] = self.view.get_reason()
         # Close the popup
+        self.close_view()
+
+    def on_cancel(self) -> None:
+        """When the Cancel button is pressed, close the popup without changing the model"""
+        self.model["reason"] = None
         self.close_view()
