@@ -551,7 +551,7 @@ class TestModelPresenter:
         presenter.model.switch_to("test", "test")
 
         # Mock out the value returened by view.askopenfile to be either a valid file descriptor or None, depending on the model parameter
-        mock_view.askopenfile.return_value = open(test_data_path / input_path, "r")  if input_path is not None else None
+        mock_view.askopenfile.return_value = open(test_data_path / input_path, "r") if input_path is not None else None
 
         # Patch out file_popup to return the parametrised value
         with patch("polychron.presenters.ModelPresenter.ModelPresenter.file_popup") as mock_file_popup:
@@ -588,9 +588,126 @@ class TestModelPresenter:
                 mock_view.bind_littlecanvas_callback.assert_not_called()
                 mock_view.bind_littlecanvas_callback.assert_not_called()
 
-    @pytest.mark.skip(reason="test_open_scientific_dating_file not implemented, includes tkinter")
-    def test_open_scientific_dating_file(self):
-        pass
+    @pytest.mark.parametrize(
+        (
+            "stratigrapic_csv",
+            "input_path",
+            "file_popup_result",
+            "expect_model_change",
+            "expect_error",
+            "expect_nodes_with_determiniation",
+        ),
+        [
+            # No input, silently do nothing (i.e. if the popup was closed.)
+            (None, None, "cancel", False, False, 0),
+            # A valid csv file, but it the user did not select "load"
+            ("demo/1-strat.csv", "demo/2-dates.csv", "cancel", False, False, 0),
+            # Valid csv files, which are loaded
+            ("demo/1-strat.csv", "demo/2-dates.csv", "load", True, False, 7),
+            ("thesis/thesis-b1-strat.csv", "thesis/thesis-b2-radiocarbon.csv", "load", True, False, 10),
+            ("strat-csv/simple.csv", "rcd-csv/simple.csv", "load", True, False, 4),
+            # A completely empty csv
+            ("strat-csv/simple.csv", "rcd-csv/empty.csv", "load", False, True, 0),
+            # A csv file with no rows. This is currently accepted but should not be.
+            ("strat-csv/simple.csv", "rcd-csv/header-only.csv", "load", True, False, 0),
+            # A csv with the incorrect column names. This currently raises an uncaught exception
+            pytest.param(
+                "strat-csv/simple.csv",
+                "rcd-csv/bad-column-names.csv",
+                "load",
+                False,
+                True,
+                0,
+                marks=pytest.mark.xfail(reason="bad column names are not handled gracefully in set_radiocarbon_df"),
+            ),
+            # A csv with extra columns, which are not used
+            ("strat-csv/simple.csv", "rcd-csv/extra-columns.csv", "load", True, False, 4),
+        ],
+    )
+    def test_open_scientific_dating_file(
+        self,
+        stratigrapic_csv: str | None,
+        input_path: str | None,
+        file_popup_result: str,
+        expect_model_change: bool,
+        expect_error: bool,
+        expect_nodes_with_determiniation: int,
+        test_data_path: pathlib.Path,
+    ):
+        """Test that open_scientific_dating_file behaves as intended for a range of csv files.
+
+        Stratigraphic data must first be loaded, as each node in the scientific dating file must exist in the stratigraphic_dag
+
+        Parameters:
+            stratigrapic_csv: The (partial) path to a stratigraphic csv file to open
+            input_path: The (partial) path to a radiocarbon dating csv file to open
+            file_popup_result: the value returned by the mocked out file_popup (i.e. did the user press load?)
+            expect_model_change: If we expect the model to have been updated for these inputs
+            expect_error: If we expect an error messagebox to have occurred
+            expect_nodes_with_determiniation: the number of nodes in the graph which should have been modified to include radiocarbon dating information.
+        Todo:
+            - Tests with invalid data values (i.e non numeric radiocarbon dates)
+            - Correct column names, but in a different order
+            - The messagebox_error should be specialised with a reason and asserted against (via call_args).
+        """
+        # Setup the mock mediator, mock view and fixture-provided ProjectSelection
+        mock_mediator = MagicMock(spec=Mediator)
+        mock_view = MagicMock(spec=ModelView)
+        model = self.project_selection
+
+        # Instantiate the ModelPresenter
+        presenter = ModelPresenter(mock_mediator, mock_view, model)
+
+        # Reset the mock to ensure methods which were triggered by the ctor are not re-triggered.
+        mock_view.reset_mock()
+
+        # Switch to a newly created model
+        presenter.model.switch_to("test", "test")
+
+        # Ensure the strat csv file has been parsed (through the presenter for now, but just on the Model would be preferable)
+        mock_view.askopenfile.return_value = (
+            open(test_data_path / stratigrapic_csv, "r") if stratigrapic_csv is not None else None
+        )
+        with patch("polychron.presenters.ModelPresenter.ModelPresenter.file_popup") as mock_file_popup:
+            mock_file_popup.return_value = file_popup_result
+            presenter.open_strat_csv_file()
+
+        # Mock out the value returened by view.askopenfile to be either a valid file descriptor or None, depending on the model parameter
+        mock_view.askopenfile.return_value = open(test_data_path / input_path, "r") if input_path is not None else None
+
+        # Patch out file_popup to return the parametrised value
+        with patch("polychron.presenters.ModelPresenter.ModelPresenter.file_popup") as mock_file_popup:
+            mock_file_popup.return_value = file_popup_result
+
+            # Call open_scientific_dating_file
+            presenter.open_scientific_dating_file()
+
+            # If we expect an error message, check one should have been called
+            if expect_error:
+                mock_view.messagebox_error.assert_called_once()
+            # Otherwise, if we expcted a change to the Model instance, check the values
+            elif expect_model_change:
+                assert model.current_model is not None
+                assert model.current_model.radiocarbon_df is not None
+                pd.testing.assert_frame_equal(
+                    model.current_model.radiocarbon_df, pd.read_csv(test_data_path / input_path, dtype="str")
+                )
+                assert model.current_model.stratigraphic_dag is not None
+                # Check the number of nodes with the Determination set is correct
+                node_determinations = [
+                    d
+                    for n, d in model.current_model.stratigraphic_dag.nodes("Determination")
+                    if d[0] is not None and d[1] is not None
+                ]
+                assert len(node_determinations) == expect_nodes_with_determiniation
+                assert presenter.date_check
+                mock_view.messagebox_info.assert_called()
+            # Otherwise, the model should not have radiocarbon_df set or view methods called.
+            else:
+                assert model.current_model is not None
+                assert model.current_model.radiocarbon_df is None
+                assert not presenter.date_check
+                mock_view.messagebox_info.assert_not_called()
 
     @pytest.mark.skip(reason="test_open_context_grouping_file not implemented, includes tkinter")
     def test_open_context_grouping_file(self):
