@@ -49,7 +49,7 @@ class ResidualOrIntrusiveView(PopupView):
 
         self.label = tk.Message(
             self,
-            text="Using this page: \n\n Please click on the buttons below to set into residual or intrusive mode. Then double right click on any context to set as residual/intrusive. \n\n Note that orange boxes denote intrusive contexts and blue boxes denote residual contexts. \n\n If you have clicked on a context by mistake, double right click to remove any label attributed to the context.",
+            text="Using this page: \n\n Please click on the buttons below to set into residual or intrusive mode. Then double right click on any context to set as residual/intrusive. \n\n Note that orange boxes denote residual contexts and blue boxes denote intrusive contexts. \n\n If you have clicked on a context by mistake, double right click to remove any label attributed to the context.",
         )
         self.label.place(relx=0.4, rely=0.05)
         self.resid_title_label = ttk.Label(self.canvas, text="Residual Contexts")

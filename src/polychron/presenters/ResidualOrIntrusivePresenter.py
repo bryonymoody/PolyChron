@@ -68,7 +68,7 @@ class ResidualOrIntrusivePresenter(PopupPresenter[ResidualOrIntrusiveView, Model
             self.view.set_intrusive_mode_button_background("light gray")
         elif self.mode == "intru":
             self.view.set_residual_mode_button_background("light gray")
-            self.view.set_intrusive_mode_button_background("lightgreen")
+            self.view.set_intrusive_mode_button_background("lightblue")
         else:
             self.view.set_residual_mode_button_background("light gray")
             self.view.set_intrusive_mode_button_background("light gray")
@@ -147,7 +147,7 @@ class ResidualOrIntrusivePresenter(PopupPresenter[ResidualOrIntrusiveView, Model
             outline[node] = "black"
         elif (node in self.model.residual_contexts) and (self.mode == "intru"):
             self.model.residual_contexts.remove(node)
-            outline[node] = "green"
+            outline[node] = "blue"
             self.model.intrusive_contexts.append(node)
         elif (node in self.model.intrusive_contexts) and (self.mode != "resid"):
             self.model.intrusive_contexts.remove(node)
@@ -161,7 +161,7 @@ class ResidualOrIntrusivePresenter(PopupPresenter[ResidualOrIntrusiveView, Model
             outline[node] = "orange"
         elif self.mode == "intru" and (node not in self.model.intrusive_contexts):
             self.model.intrusive_contexts.append(node)
-            outline[node] = "green"
+            outline[node] = "blue"
 
         # Update the list of intrusive and residual contexts in-place.
         self.view.set_intru_label_text(self.model.intrusive_contexts)
