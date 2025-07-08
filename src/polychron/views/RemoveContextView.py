@@ -41,7 +41,9 @@ class RemoveContextView(PopupView):
         self.ok_button.place(relx=0.3, rely=0.7)
 
         # Cancel Button
-        self.cancel_button = tk.Button(self, text="Cancel", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6" ,command=self.destroy)
+        self.cancel_button = tk.Button(
+            self, text="Cancel", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6", command=self.destroy
+        )
         self.cancel_button.place(relx=0.72625, rely=0.7)
 
     def bind_ok_button(self, callback: Callable[[], Any]) -> None:
