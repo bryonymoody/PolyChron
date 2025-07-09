@@ -650,6 +650,8 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         # Remove the edge, updating the model and the view.
         # This no longer needs to be attempted in either direction, or in a try catch really.
+        if reason is None:
+            return
         model_model.stratigraphic_dag.remove_edge(edge_src, edge_dst)
         model_model.record_deleted_edge(edge_src, edge_dst, reason)
         self.view.append_deleted_edge(edge_label(edge_src, edge_dst), reason)
