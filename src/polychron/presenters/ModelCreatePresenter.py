@@ -9,7 +9,7 @@ from .FramePresenter import FramePresenter
 
 class ModelCreatePresenter(FramePresenter[ModelCreateView, ProjectSelection]):
     def __init__(self, mediator: Mediator, view: ModelCreateView, model: ProjectSelection) -> None:
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         # Bind button callbacks to presenter methods
@@ -34,10 +34,10 @@ class ModelCreatePresenter(FramePresenter[ModelCreateView, ProjectSelection]):
                 self.model.switch_to_next_project_model(load_ok=False, create_ok=True)
             except RuntimeError as e:
                 # Runtime errors currently include existing directories (and missing values)
-                messagebox.showerror("Tips", f"An error occured while creating the model: {e}", parent=self.view)
+                messagebox.showerror("Tips", f"An error occurred while creating the model: {e}", parent=self.view)
             except Exception as e:
                 # Other exceptions may occur, i.e. permission errors. Forward the message to the user.
-                messagebox.showerror("Tips", f"An error occured while creating the model: {e}", parent=self.view)
+                messagebox.showerror("Tips", f"An error occurred while creating the model: {e}", parent=self.view)
             else:
                 # If no exceptions occurred, and the model has been created (and it's folders) present a succes message and close the popup.
                 messagebox.showinfo("Tips:", "model created successfully!", parent=self.view)
@@ -49,7 +49,7 @@ class ModelCreatePresenter(FramePresenter[ModelCreateView, ProjectSelection]):
     def on_back_button(self) -> None:
         """When the back button is pressed, return to the previous view
 
-        This behaves differntly than polychron 0.1, by returning to the previous view rather than always new project creation"""
+        This behaves differently than polychron 0.1, by returning to the previous view rather than always new project creation"""
         # Clear any value from the the models new_model property
         self.model.next_model_name = None
         # If we came from project_create, return to it. Otherwise return to model_select
