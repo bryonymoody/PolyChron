@@ -575,8 +575,11 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 if answer == "yes":
                     self.save_as_new_model()
                 # self.littlecanvas2.delete("all")
-            model_model.stratigraphic_dag = node_del_fixed(model_model.stratigraphic_dag, self.node)
             nodedel_reason = self.node_del_popup(self.node)
+            if nodedel_reason is None:
+                return
+
+            model_model.stratigraphic_dag = node_del_fixed(model_model.stratigraphic_dag, self.node)
             model_model.record_deleted_node(self.node, nodedel_reason)
             self.view.append_deleted_node(self.node, nodedel_reason)
 

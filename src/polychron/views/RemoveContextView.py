@@ -40,10 +40,21 @@ class RemoveContextView(PopupView):
         self.ok_button = tk.Button(self, text="OK", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6")
         self.ok_button.place(relx=0.3, rely=0.7)
 
+        # Cancel Button
+        self.cancel_button = tk.Button(
+            self, text="Cancel", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6", command=self.destroy
+        )
+        self.cancel_button.place(relx=0.72625, rely=0.7)
+
     def bind_ok_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the ok_button is pressed"""
         if callback is not None:
             self.ok_button.config(command=callback)
+
+    def bind_cancel_button(self, callback: Callable[[], Any | None]) -> None:
+        """Bind the callback for when the cancel_button is pressed"""
+        if callback is not None:
+            self.cancel_button.config(command=callback)
 
     def update_label(self, context: str | None = None) -> None:
         """Update the label text to include the context being removed."""
