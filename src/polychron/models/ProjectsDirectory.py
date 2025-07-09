@@ -11,7 +11,7 @@ class ProjectsDirectory:
     """MVP Model representing the projects directory"""
 
     path: pathlib.Path
-    """path to the projects direcotry this objet reprsents"""
+    """path to the projects directory this objet represents"""
 
     projects: dict[str, Project] = field(default_factory=dict)
     """projects within the projects directory"""

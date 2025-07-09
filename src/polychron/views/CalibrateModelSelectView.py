@@ -9,7 +9,7 @@ from .PopupView import PopupView
 class CalibrateModelSelectView(PopupView):
     """View for selecting which models to calibrate, when multiple models are to be calibrated at once
 
-    Formerly `popupWindow8`, used from menu option "Calibrate multiple projects from project"
+    Formerly `popupWindow8`, used from menu option "Calibrate multiple models from project"
     """
 
     def __init__(self, parent: tk.Frame) -> None:

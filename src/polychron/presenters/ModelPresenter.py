@@ -97,7 +97,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             [
                 ("Render chronological graph", lambda: self.chronograph_render_wrap()),
                 ("Calibrate model", lambda: self.popup_calibrate_model()),
-                ("Calibrate multiple projects from project", lambda: self.popup_calibrate_multiple()),
+                ("Calibrate multiple models from project", lambda: self.popup_calibrate_multiple()),
                 # ("Calibrate node delete variations (alpha)",  lambda: self.calibrate_node_delete_variations()), # see https://github.com/bryonymoody/PolyChron/issues/71
                 # ("Calibrate important variations (alpha)",  lambda: self.calibrate_important_variations()), # see https://github.com/bryonymoody/PolyChron/issues/72
             ]
@@ -194,7 +194,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         self.mediator.switch_presenter("DatingResults")
 
     def popup_calibrate_multiple(self) -> None:
-        """Callback function for when Tools -> Calibrate multiple projects from project is selected
+        """Callback function for when Tools -> Calibrate multiple models from project is selected
 
         Opens a new popup box allowing the user to select which models from a list to calibrate as a batch.
 
