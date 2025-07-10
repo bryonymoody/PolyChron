@@ -21,7 +21,7 @@ class Config:
     """The initial window geometry"""
 
     def __post_init__(self) -> None:
-        """Fixup member variabels post initialisation
+        """Fixup member variables post initialisation
 
         This ensures that environment variables and ~ have been expanded in the projects_directory
         """
@@ -76,7 +76,7 @@ class Config:
         # Ensure the parent exists before saving the file
         path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Attempt to save the yaml represenation to disk at the specified path
+        # Attempt to save the yaml representation to disk at the specified path
         try:
             with open(path, "w") as f:
                 yaml.dump(data, f, sort_keys=False)
@@ -101,7 +101,7 @@ class Config:
         """Get the default/expected file path for the config file on disk
 
         Returns:
-            The platform speicfic path to the expected configuration file location on disk
+            The platform specific path to the expected configuration file location on disk
         """
         return cls._get_config_dir() / "config.yaml"
 
@@ -120,17 +120,17 @@ class Config:
         return c
 
 
-# Module-scoped variable to hold a single instance of a configuration object, which can be accessed (and initialied) by calls to get_config
+# Module-scoped variable to hold a single instance of a configuration object, which can be accessed (and initialised) by calls to get_config
 __config_instance: Config = None
 
 
 def get_config() -> Config:
-    """Get the single 'global' Configuraiton object instance.
+    """Get the single 'global' Configuration object instance.
 
     On first call, the instance will be initialised to a value from disk, based on the platform-specific default location.
 
     Returns:
-        The single application wide Configuraiton object.
+        The single application wide Configuration object.
 
     Note:
         This is not thread-safe.
