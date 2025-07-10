@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 from polychron.interfaces import Mediator
+from polychron.models.AddContextModel import AddContextModel
 from polychron.presenters.AddContextPresenter import AddContextPresenter
 from polychron.views.AddContextView import AddContextView
 
@@ -21,7 +22,7 @@ class TestAddContextPresenter:
         mock_view = MagicMock(spec=AddContextView)
 
         # Create an actual model instance of the correct type
-        model = {"value": None}
+        model = AddContextModel
 
         # Instantiate the Presenter
         presenter = AddContextPresenter(mock_mediator, mock_view, model)
@@ -51,7 +52,7 @@ class TestAddContextPresenter:
         mock_view = MagicMock(spec=AddContextView)
 
         # Create an actual model instance of the correct type
-        model = {"value": None}
+        model = AddContextModel
 
         # Instantiate the Presenter
         presenter = AddContextPresenter(mock_mediator, mock_view, model)
@@ -71,7 +72,7 @@ class TestAddContextPresenter:
         mock_view = MagicMock(spec=AddContextView)
 
         # Create an actual model instance of the correct type
-        model = {"value": None}
+        model = AddContextModel
 
         # Instantiate the Presenter
         presenter = AddContextPresenter(mock_mediator, mock_view, model)
@@ -89,7 +90,7 @@ class TestAddContextPresenter:
             mock_view.get_input.assert_called_once()
 
             # Assert that the model has been updated with the mocked get_input value
-            assert presenter.model["value"] == context_value
+            assert presenter.model.label == context_value
 
             # Assert that close_view was called.
             mock_close_view.assert_called_once()

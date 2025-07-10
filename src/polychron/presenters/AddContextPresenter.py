@@ -1,17 +1,16 @@
-from typing import Dict, Optional
-
 from ..interfaces import Mediator
+from ..models.AddContextModel import AddContextModel
 from ..views.AddContextView import AddContextView
 from .PopupPresenter import PopupPresenter
 
 
-class AddContextPresenter(PopupPresenter[AddContextView, Dict[str, Optional[str]]]):
+class AddContextPresenter(PopupPresenter[AddContextView, AddContextModel]):
     """Presenter for adding an additional context to the current model
 
     Formerly `popupWindow`
     """
 
-    def __init__(self, mediator: Mediator, view: AddContextView, model: Dict[str, Optional[str]]) -> None:
+    def __init__(self, mediator: Mediator, view: AddContextView, model: AddContextModel) -> None:
         # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
@@ -29,7 +28,7 @@ class AddContextPresenter(PopupPresenter[AddContextView, Dict[str, Optional[str]
 
     def on_ok(self) -> None:
         """When the OK button is pressed, validate user in put, update the model and close the popup"""
-        self.model["value"] = self.view.get_input()
+        self.model.label = self.view.get_input()
         # Close the popup
         self.close_view()
 
