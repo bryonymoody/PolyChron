@@ -8,6 +8,7 @@ import pandas as pd
 import pydot
 
 from ..interfaces import Mediator
+from ..models.AddContextModel import AddContextModel
 from ..models.ProjectSelection import ProjectSelection
 from ..presenters.AddContextPresenter import AddContextPresenter
 from ..presenters.CalibrateModelSelectPresenter import CalibrateModelSelectPresenter
@@ -607,14 +608,14 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             # self.littlecanvas2.delete("all")
             model_model.load_check = "not_loaded"
 
-        popup_data = {"value": None}
-        popup_presenter = AddContextPresenter(self.mediator, AddContextView(self.view), popup_data)
+        addContextModel = AddContextModel()
+        popup_presenter = AddContextPresenter(self.mediator, AddContextView(self.view), addContextModel)
         popup_presenter.view.lift()
         self.view.wait_window(popup_presenter.view)
-        self.node = popup_data["value"]
-        if popup_data["value"] is not None:
+        self.node = addContextModel.label
+        if addContextModel.label is not None:
             model_model.stratigraphic_dag.add_node(
-                self.node, shape="box", fontsize="30.0", fontname="helvetica", penwidth="1.0"
+                addContextModel.label, shape="box", fontsize="30.0", fontname="helvetica", penwidth="1.0"
             )
 
     def testmenu_delete_strat_with(self) -> None:
