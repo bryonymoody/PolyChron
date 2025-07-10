@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 from polychron.interfaces import Mediator
+from polychron.models.RemoveContextModel import RemoveContextModel
 from polychron.presenters.RemoveContextPresenter import RemoveContextPresenter
 from polychron.views.RemoveContextView import RemoveContextView
 
@@ -21,7 +22,7 @@ class TestRemoveContextPresenter:
         mock_view = MagicMock(spec=RemoveContextView)
 
         # Create an actual model instance of the correct type
-        model = {"context": "foo", "reason": None}
+        model = RemoveContextModel("foo")
 
         # Instantiate the Presenter
         presenter = RemoveContextPresenter(mock_mediator, mock_view, model)
@@ -40,7 +41,7 @@ class TestRemoveContextPresenter:
         assert callable(mock_view.bind_ok_button.call_args.args[0])
 
         # Assert that the view.update_label should have been called with the model's "context" value (via the update_view method)
-        mock_view.update_label.assert_called_with(model["context"])
+        mock_view.update_label.assert_called_with(model.context)
 
     def test_update_view(self):
         """Test the update view method can be called"""
@@ -49,7 +50,7 @@ class TestRemoveContextPresenter:
         mock_view = MagicMock(spec=RemoveContextView)
 
         # Create an actual model instance of the correct type
-        model = {"context": "foo", "reason": None}
+        model = RemoveContextModel("foo")
 
         # Instantiate the Presenter
         presenter = RemoveContextPresenter(mock_mediator, mock_view, model)
@@ -58,7 +59,7 @@ class TestRemoveContextPresenter:
         presenter.update_view()
 
         # Assert that the view.update_label should have been called with the model's "context" value
-        mock_view.update_label.assert_called_with(model["context"])
+        mock_view.update_label.assert_called_with(model.context)
 
     def test_on_ok_button(self):
         """Test the on_ok_button callback function
@@ -71,7 +72,7 @@ class TestRemoveContextPresenter:
         mock_view = MagicMock(spec=RemoveContextView)
 
         # Create an actual model instance of the correct type
-        model = {"context": "foo", "reason": None}
+        model = RemoveContextModel("foo")
 
         # Instantiate the Presenter
         presenter = RemoveContextPresenter(mock_mediator, mock_view, model)
@@ -89,7 +90,7 @@ class TestRemoveContextPresenter:
             mock_view.get_reason.assert_called_once()
 
             # Assert that the model has been updated with the mocked get_reason value
-            assert presenter.model["reason"] == reason_value
+            assert presenter.model.reason == reason_value
 
             # Assert that close_view was called.
             mock_close_view.assert_called_once()

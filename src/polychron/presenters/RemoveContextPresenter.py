@@ -1,11 +1,12 @@
 from typing import Dict, Optional
 
 from ..interfaces import Mediator
+from ..models.RemoveContextModel import RemoveContextModel
 from ..views.RemoveContextView import RemoveContextView
 from .PopupPresenter import PopupPresenter
 
 
-class RemoveContextPresenter(PopupPresenter[RemoveContextView, Dict[str, Optional[str]]]):
+class RemoveContextPresenter(PopupPresenter[RemoveContextView, RemoveContextModel]):
     """Presenter for a popup window to input the reason for the removal of a node/context
 
     Formerly `popupWindow5`, called by StartPage.`node_del_popup`, triggered when "Delete context" is selected on a node
@@ -26,17 +27,16 @@ class RemoveContextPresenter(PopupPresenter[RemoveContextView, Dict[str, Optiona
 
     def update_view(self) -> None:
         """Update data displayed in the RemoveContextView to include the name of the context being removed"""
-        if "context" in self.model:
-            self.view.update_label(self.model["context"])
+        self.view.update_label(self.model.context)
 
     def on_ok_button(self) -> None:
         """When the ok button is pressed, store the dataframe in the model and close the popup"""
         # Store the provided reason in the model
-        self.model["reason"] = self.view.get_reason()
+        self.model.reason = self.view.get_reason()
         # Close the popup
         self.close_view()
 
     def on_cancel(self) -> None:
         """When the Cancel button is pressed, close the popup without changing the model"""
-        self.model["reason"] = None
+        self.model.reason = None
         self.close_view()

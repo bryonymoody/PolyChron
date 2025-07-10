@@ -10,6 +10,7 @@ import pydot
 from ..interfaces import Mediator
 from ..models.AddContextModel import AddContextModel
 from ..models.ProjectSelection import ProjectSelection
+from ..models.RemoveContextModel import RemoveContextModel
 from ..presenters.AddContextPresenter import AddContextPresenter
 from ..presenters.CalibrateModelSelectPresenter import CalibrateModelSelectPresenter
 from ..presenters.DatafilePreviewPresenter import DatafilePreviewPresenter
@@ -1148,17 +1149,14 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         Formerly `StartPage.node_del_popup`
         """
 
-        data = {
-            "context": context_name,
-            "reason": None,
-        }
+        data = RemoveContextModel(context=context_name, reason=None)
         # Create the popup window, formerly popupWindow5
         popup_presenter = RemoveContextPresenter(self.mediator, RemoveContextView(self.view), data)
         self.view.canvas["state"] = "disabled"
         popup_presenter.view.lift()
         self.view.wait_window(popup_presenter.view)
         self.view.canvas["state"] = "normal"
-        return data["reason"]
+        return data.reason
 
     def edge_del_popup(self, context_a: str, context_b: str) -> str | None:
         """Open a popup window for the user to provide input on deleting an edge, returning the reason provided
