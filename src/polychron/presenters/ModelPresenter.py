@@ -11,6 +11,7 @@ from ..interfaces import Mediator
 from ..models.AddContextModel import AddContextModel
 from ..models.ProjectSelection import ProjectSelection
 from ..models.RemoveContextModel import RemoveContextModel
+from ..models.RemoveStratigraphicRelationshipModel import RemoveStratigraphicRelationshipModel
 from ..presenters.AddContextPresenter import AddContextPresenter
 from ..presenters.CalibrateModelSelectPresenter import CalibrateModelSelectPresenter
 from ..presenters.DatafilePreviewPresenter import DatafilePreviewPresenter
@@ -1158,19 +1159,23 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         self.view.canvas["state"] = "normal"
         return data.reason
 
-    def edge_del_popup(self, context_a: str, context_b: str) -> str | None:
+    def edge_del_popup(self, context_u: str, context_v: str) -> str | None:
         """Open a popup window for the user to provide input on deleting an edge, returning the reason provided
 
         This blocks users interacting with the main window until the popup is closed
 
         Formerly `StartPage.edge_del_popup`
+
+        Parameters:
+            context_u: the source of the relationship to be removed
+            contxt_v: the destination of the context to be removed
+
+        Returns:
+            An optional string of the reason the context was removed
         """
 
-        data = {
-            "context_a": context_a,
-            "context_b": context_b,
-            "reason": None,
-        }
+        data = RemoveStratigraphicRelationshipModel(context_u, context_v)
+
         # Create the popup window, formerly popupWindow6
         popup_presenter = RemoveStratigraphicRelationshipPresenter(
             self.mediator, RemoveStratigraphicRelationshipView(self.view), data
@@ -1179,4 +1184,4 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         popup_presenter.view.lift()
         self.view.wait_window(popup_presenter.view)
         self.view.canvas["state"] = "normal"
-        return data["reason"]
+        return data.reason

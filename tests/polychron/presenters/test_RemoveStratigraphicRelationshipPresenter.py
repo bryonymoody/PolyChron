@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock, patch
 
 from polychron.interfaces import Mediator
+from polychron.models.RemoveStratigraphicRelationshipModel import RemoveStratigraphicRelationshipModel
 from polychron.presenters.RemoveStratigraphicRelationshipPresenter import RemoveStratigraphicRelationshipPresenter
 from polychron.views.RemoveStratigraphicRelationshipView import RemoveStratigraphicRelationshipView
 
@@ -21,7 +22,7 @@ class TestRemoveStratigraphicRelationshipPresenter:
         mock_view = MagicMock(spec=RemoveStratigraphicRelationshipView)
 
         # Create an actual model instance of the correct type
-        model = {"context_a": "foo", "context_b": "bar", "reason": None}
+        model = RemoveStratigraphicRelationshipModel("foo", "bar")
 
         # Instantiate the Presenter
         presenter = RemoveStratigraphicRelationshipPresenter(mock_mediator, mock_view, model)
@@ -40,9 +41,7 @@ class TestRemoveStratigraphicRelationshipPresenter:
         assert callable(mock_view.bind_ok_button.call_args.args[0])
 
         # Assert that the view.update_label should have been called with the model's context values (via the update_view method)
-        mock_view.update_label.assert_called_with(
-            f"'{presenter.model['context_a']}' and '{presenter.model['context_b']}'"
-        )
+        mock_view.update_label.assert_called_with(f"'{presenter.model.context_u}' and '{presenter.model.context_v}'")
 
     def test_update_view(self):
         """Test the update view method can be called"""
@@ -51,7 +50,7 @@ class TestRemoveStratigraphicRelationshipPresenter:
         mock_view = MagicMock(spec=RemoveStratigraphicRelationshipView)
 
         # Create an actual model instance of the correct type
-        model = {"context_a": "foo", "context_b": "bar", "reason": None}
+        model = RemoveStratigraphicRelationshipModel("foo", "bar")
 
         # Instantiate the Presenter
         presenter = RemoveStratigraphicRelationshipPresenter(mock_mediator, mock_view, model)
@@ -60,9 +59,7 @@ class TestRemoveStratigraphicRelationshipPresenter:
         presenter.update_view()
 
         # Assert that the view.update_label should have been called with the model's context values (via the update_view method)
-        mock_view.update_label.assert_called_with(
-            f"'{presenter.model['context_a']}' and '{presenter.model['context_b']}'"
-        )
+        mock_view.update_label.assert_called_with(f"'{presenter.model.context_u}' and '{presenter.model.context_v}'")
 
     def test_on_ok_button(self):
         """Test the on_ok_button callback function
@@ -75,7 +72,7 @@ class TestRemoveStratigraphicRelationshipPresenter:
         mock_view = MagicMock(spec=RemoveStratigraphicRelationshipView)
 
         # Create an actual model instance of the correct type
-        model = {"context_a": "foo", "context_b": "bar", "reason": None}
+        model = RemoveStratigraphicRelationshipModel("foo", "bar")
 
         # Instantiate the Presenter
         presenter = RemoveStratigraphicRelationshipPresenter(mock_mediator, mock_view, model)
@@ -93,7 +90,7 @@ class TestRemoveStratigraphicRelationshipPresenter:
             mock_view.get_reason.assert_called_once()
 
             # Assert that the model has been updated with the mocked get_reason value
-            assert presenter.model["reason"] == reason_value
+            assert presenter.model.reason == reason_value
 
             # Assert that close_view was called.
             mock_close_view.assert_called_once()
