@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 
 from polychron.interfaces import Mediator
+from polychron.models.DatafilePreviewModel import DatafilePreviewModel
 from polychron.presenters.DatafilePreviewPresenter import DatafilePreviewPresenter
 from polychron.views.DatafilePreviewView import DatafilePreviewView
 
@@ -23,7 +24,7 @@ class TestDatafilePreviewPresenter:
         mock_view = MagicMock(spec=DatafilePreviewView)
 
         # Construct a model instance with test data
-        model = {"df": pd.DataFrame({"one": ["a", "b", "c"], "two": ["A", "B", "C"]})}
+        model = DatafilePreviewModel(pd.DataFrame({"one": ["a", "b", "c"], "two": ["A", "B", "C"]}))
 
         # Instantiate the Presenter
         presenter = DatafilePreviewPresenter(mock_mediator, mock_view, model)
@@ -53,7 +54,7 @@ class TestDatafilePreviewPresenter:
         mock_view = MagicMock(spec=DatafilePreviewView)
 
         # Construct a model instance with test data
-        model = {"df": pd.DataFrame({"one": ["a", "b", "c"], "two": ["A", "B", "C"]}), "result": None}
+        model = DatafilePreviewModel(pd.DataFrame({"one": ["a", "b", "c"], "two": ["A", "B", "C"]}))
 
         # Instantiate the Presenter
         presenter = DatafilePreviewPresenter(mock_mediator, mock_view, model)
@@ -66,20 +67,14 @@ class TestDatafilePreviewPresenter:
 
         # If the model df is empty, assert set_tree_data was called with appropriate values
         mock_view.reset_mock()
-        presenter.model = {"df": pd.DataFrame(), "result": None}
+        presenter.model = DatafilePreviewModel(pd.DataFrame())
         presenter.update_view()
         mock_view.set_tree_data.assert_called_with([], [])
 
         # If the model has a "df" which is not a dataframe, set_tree_data should not be called.
         # This check can be removed when a specialised Model class is implemented.
         mock_view.reset_mock()
-        presenter.model = {"df": {"one": ["a", "b", "c"], "two": ["A", "B", "C"]}, "result": None}
-        presenter.update_view()
-        mock_view.set_tree_data.assert_not_called()
-
-        # If the model does not include a df, the method should not be called
-        mock_view.reset_mock()
-        presenter.model = {"result": None}
+        presenter.model = DatafilePreviewModel({"one": ["a", "b", "c"], "two": ["A", "B", "C"]})
         presenter.update_view()
         mock_view.set_tree_data.assert_not_called()
 
@@ -91,19 +86,18 @@ class TestDatafilePreviewPresenter:
         mock_view = MagicMock(spec=DatafilePreviewView)
 
         # Construct a model instance with test data
-        model = {"df": pd.DataFrame({"one": ["a", "b", "c"], "two": ["A", "B", "C"]}), "result": None}
+        model = DatafilePreviewModel(pd.DataFrame({"one": ["a", "b", "c"], "two": ["A", "B", "C"]}))
 
         # Instantiate the Presenter
         presenter = DatafilePreviewPresenter(mock_mediator, mock_view, model)
 
-        # Call on_load_button, which should set the model["result"] to "load" and close the view
+        # Call on_load_button, which should set the model.result to "load" and close the view
         with patch(
             "polychron.presenters.DatafilePreviewPresenter.DatafilePreviewPresenter.close_view"
         ) as mock_close_view:
             presenter.on_load_button()
             mock_close_view.assert_called_once()
-            assert "result" in presenter.model
-            assert presenter.model["result"] == "load"
+            assert presenter.model.result == "load"
 
     def test_on_cancel_button(self):
         """Test that the on_cancel button callback sets the correct result value in the model and closes the view."""
@@ -113,16 +107,15 @@ class TestDatafilePreviewPresenter:
         mock_view = MagicMock(spec=DatafilePreviewView)
 
         # Construct a model instance with test data
-        model = {"df": pd.DataFrame({"one": ["a", "b", "c"], "two": ["A", "B", "C"]}), "result": None}
+        model = DatafilePreviewModel(pd.DataFrame({"one": ["a", "b", "c"], "two": ["A", "B", "C"]}))
 
         # Instantiate the Presenter
         presenter = DatafilePreviewPresenter(mock_mediator, mock_view, model)
 
-        # Call on_cancel_button, which should set the model["result"] to "cancel" and close the view
+        # Call on_cancel_button, which should set the model.result to "cancel" and close the view
         with patch(
             "polychron.presenters.DatafilePreviewPresenter.DatafilePreviewPresenter.close_view"
         ) as mock_close_view:
             presenter.on_cancel_button()
             mock_close_view.assert_called_once()
-            assert "result" in presenter.model
-            assert presenter.model["result"] == "cancel"
+            assert presenter.model.result == "cancel"

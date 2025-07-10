@@ -416,7 +416,7 @@ class TestModelPresenter:
         MockDatafilePreviewPresenter.assert_called_once()
         MockDatafilePreviewView.assert_called_once()
         # Assert the df was provided in the temp_model.
-        pd.testing.assert_frame_equal(MockDatafilePreviewPresenter.call_args.args[2]["df"], df)
+        pd.testing.assert_frame_equal(MockDatafilePreviewPresenter.call_args.args[2].df, df)
         # Assert the child view had expected methods called
         mock_child_presenter_instance.view.lift.assert_called_once()
         # Assert the ModelView had expected calls made
@@ -440,7 +440,7 @@ class TestModelPresenter:
         MockDatafilePreviewPresenter.assert_called_once()
         MockDatafilePreviewView.assert_called_once()
         # Assert the df was provided in the temp_model.
-        pd.testing.assert_frame_equal(MockDatafilePreviewPresenter.call_args.args[2]["df"], df)
+        pd.testing.assert_frame_equal(MockDatafilePreviewPresenter.call_args.args[2].df, df)
         # Assert the child view had expected methods called
         mock_child_presenter_instance.view.lift.assert_called_once()
         # Assert the ModelView had expected calls made

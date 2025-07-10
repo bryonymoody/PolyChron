@@ -9,6 +9,7 @@ import pydot
 
 from ..interfaces import Mediator
 from ..models.AddContextModel import AddContextModel
+from ..models.DatafilePreviewModel import DatafilePreviewModel
 from ..models.ProjectSelection import ProjectSelection
 from ..models.RemoveContextModel import RemoveContextModel
 from ..models.RemoveStratigraphicRelationshipModel import RemoveStratigraphicRelationshipModel
@@ -304,15 +305,15 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         Returns:
             The string result value, which should be "cancel" or "load"
         """
-        temp_model = {"df": df, "result": "cancel"}
-        popup_presenter = DatafilePreviewPresenter(self.mediator, DatafilePreviewView(self.view), temp_model)
+        datafile_model = DatafilePreviewModel(df)
+        popup_presenter = DatafilePreviewPresenter(self.mediator, DatafilePreviewView(self.view), datafile_model)
         popup_presenter.view.lift()
 
         # Prevent the view's canvas element from being interacted with?
         self.view.canvas["state"] = "disabled"
         self.view.parent.wait_window(popup_presenter.view)
         self.view.canvas["state"] = "normal"
-        return temp_model["result"]
+        return datafile_model.result
 
     def open_strat_dot_file(self) -> None:
         """Callback function when File > Load stratigraphic diagram file (.dot) (.csv) is selected, opening a .dot / graphviz file representing the stratigraphic relationships
