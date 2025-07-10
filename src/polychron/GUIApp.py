@@ -34,7 +34,7 @@ class GUIApp(Mediator):
     """
 
     def __init__(self) -> None:
-        # Initialse the application config object
+        # Initialise the application config object
         self.config: Config = get_config()
 
         # Construct the root tkinter window, as a themed TK app
