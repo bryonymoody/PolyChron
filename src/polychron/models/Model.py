@@ -631,7 +631,7 @@ class Model:
         # Store a copy of the dataframe
         self.radiocarbon_df = df.copy()
         # Post process
-        self.radiocarbon_df = self.radiocarbon_df.applymap(str)
+        self.radiocarbon_df = self.radiocarbon_df.astype(str)
 
         if self.stratigraphic_dag:
             for i, j in enumerate(self.radiocarbon_df["context"]):
@@ -668,7 +668,7 @@ class Model:
         self.context_equality_df = df.copy()
 
         # Post processing of the dataframe
-        self.context_equality_df = self.context_equality_df.applymap(str)
+        self.context_equality_df = self.context_equality_df.astype(str)
         context_1 = list(self.context_equality_df.iloc[:, 0])
         context_2 = list(self.context_equality_df.iloc[:, 1])
         for k, j in enumerate(context_1):

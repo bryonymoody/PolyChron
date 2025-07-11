@@ -401,7 +401,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             try:
                 model_model = self.model.current_model
                 df = pd.read_csv(file)
-                df = df.applymap(str)
+                df = df.astype(str)
                 load_it = self.file_popup(df)
                 if load_it == "load":
                     model_model.set_radiocarbon_df(df)
@@ -423,7 +423,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             try:
                 model_model = self.model.current_model
                 df = pd.read_csv(file)
-                df = df.applymap(str)
+                df = df.astype(str)
                 load_it = self.file_popup(df)
                 if load_it == "load":
                     model_model.set_group_df(df)
@@ -467,7 +467,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             try:
                 model_model = self.model.current_model
                 df = pd.read_csv(file)
-                df = df.applymap(str)
+                df = df.astype(str)
                 # Update the model & post process, updating the graph
                 model_model.set_context_equality_df(df)
 

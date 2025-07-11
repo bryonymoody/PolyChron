@@ -22,7 +22,7 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
-          # - "3.13"
+          - "3.13"
     env:
       # DISPLAY env variable for xvfb / tkinter to open in GUI
       DISPLAY: ":99.0"
