@@ -5,12 +5,13 @@ import copy
 import platform
 import re
 import time
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, Iterable, List, Literal, Tuple
 
 import networkx as nx
 import numpy as np
 import packaging.version
 import pandas as pd
+import pydot
 from networkx.drawing.nx_pydot import read_dot
 from PIL import Image, ImageChops
 
@@ -18,8 +19,15 @@ from PIL import Image, ImageChops
 """
 
 
-def trim(im_trim: Image.Image):
-    """Trims images down"""
+def trim(im_trim: Image.Image) -> Image.Image:
+    """Trims images down, cropping out dark background (<= 100/255 in all channels) unless the whole image is considerd dark (<= 100/255 in all channels)
+
+    Parameters:
+        im_trim: Input image to trim
+
+    Returns:
+        Potentially cropped version on im_trim
+    """
     bg_trim = Image.new(im_trim.mode, im_trim.size)
     diff = ImageChops.difference(im_trim, bg_trim)
     diff = ImageChops.add(diff, diff, 2.0, -100)
@@ -27,11 +35,22 @@ def trim(im_trim: Image.Image):
     return im_trim.crop(bbox)
 
 
-def polygonfunc(i):
-    """finds node coords of a kite"""
+def polygonfunc(i: str) -> list[float]:
+    """finds node coords of a polygon, from a string extracted from a svg
+
+    Parameters:
+        i: substring from an svg string, which shouuld include 'points='
+
+    Returns:
+        [x0, x1, y0, y1] - A list of 4 floating point numbers, which are the bounding box of the shape. The origin used is the bottom left, rather than top left in the svg.
+
+    Todo:
+        - Instead of using regular expressions, use a SVG (or just xml parsing, which is stdlib but defusedxml should probably be used instead.) library
+        - Handle being provided invalid inputs (strings without points)
+    """
     x = re.findall(r'points="(.*?)"', i)[0].replace(" ", ",")
     a = x.split(",")
-    # if loop checks if it's a rectangle or a kite then gets the right coords
+    # if statement checks if it's a rectangle or a kite then gets the right coords
     if -1 * float(a[7]) == -1 * float(a[3]):
         coords_converted = [float(a[2]), float(a[6]), -1 * float(a[5]), -1 * float(a[1])]
     else:
@@ -39,8 +58,19 @@ def polygonfunc(i):
     return coords_converted
 
 
-def ellipsefunc(i):
-    """finds coords from dot file for ellipse nodes"""
+def ellipsefunc(i: str) -> list[float]:
+    """finds coords from dot file for ellipse nodes, from a string extracted from a svg
+
+    Parameters:
+        i: substring from an svg string, which shouuld include 'cx='
+
+    Returns:
+        [x0, x1, y0, y1] - A list of 4 floating point numbers, which are the bounding box of the shape. The origin used is the bottom left, rather than top left in the svg.
+
+    Todo:
+        - Instead of using regular expressions, use a SVG (or just xml parsing, which is stdlib but defusedxml should probably be used instead.) library
+        - Handle being provided invalid inputs (strings without cx=)
+    """
     x = re.findall(r"cx=(.*?)/>", i)[0].replace(" ", ",")
     x = x.replace("cy=", "").replace("rx=", "").replace("ry=", "").replace('"', "")
     a = x.split(",")
@@ -53,9 +83,26 @@ def ellipsefunc(i):
     return coords_converted
 
 
-def rank_func(tes, file_content):
-    #  t0 = time.time()
-    """adds strings into dot string to make nodes of the same phase the same rank"""
+def rank_func(tes: dict[str, list[str]], dot_str: str) -> str:
+    """adds strings into dot string to make nodes of the same group the same rank
+
+    Parameters:
+        tes: a dictionary
+        dot_str: The original dot/gv string
+
+    Returns:
+        The mutated dot/gv string
+
+    Todo:
+        - Rename parameters and variables
+        - Use for key, x_rank in tes.items()
+        - find the closing } of the digraph instead of always getting rid of the final 2 chars
+        - use ",".join(x_rank) and an fstring
+        - Close the digraph on it's own line (i.e. add a newline at the end / don't include the [:-1])
+
+    """
+    if len(tes) == 0:
+        return dot_str
     rank_same = []
     for key in tes.keys():
         x_rank = tes[key]
@@ -67,20 +114,19 @@ def rank_func(tes, file_content):
         x_2 = "{rank = same; " + y_5 + ";}\n"
         rank_same.append(x_2)
     rank_string = "".join(rank_same)[:-1]
-    new_string = file_content[:-2] + rank_string + file_content[-2]
+    new_string = dot_str[:-2] + rank_string + dot_str[-2]
     return new_string
 
 
-def node_coords_fromjson(graph) -> Tuple[pd.DataFrame, List[float]]:
+def node_coords_fromjson(graph: nx.DiGraph | pydot.Dot) -> Tuple[pd.DataFrame, List[float]]:
     """Gets coordinates of each node
 
     Parameters:
         graph: The graph to extract coordinates from
 
     Returns:
-        A dataframe of coordinates, and svg scale information.
+        A dataframe of coordinates, and svg scale information. Y coordinates are inverted, so the origin of coordinates is at the bottom left.
     """
-
     if "pydot" in str(type(graph)):
         graphs = graph
     else:
@@ -93,16 +139,30 @@ def node_coords_fromjson(graph) -> Tuple[pd.DataFrame, List[float]]:
     scale = [float(scale_info[4]), -1 * float(scale_info[3])]
     coords_x = re.findall(r'id="node(.*?)</text>', svg_string)
     coords_temp = [polygonfunc(i) if "points" in i else ellipsefunc(i) for i in coords_x]
-    node_test = re.findall(r'node">\\n<title>(.*?)</title>', svg_string)
+    if platform.system() == "Windows":
+        node_test_pattern = r'node">\\r\\n<title>(.*?)</title>'
+    else:
+        node_test_pattern = r'node">\\n<title>(.*?)</title>'
+    node_test = re.findall(node_test_pattern, svg_string)
     node_list = [i.replace("&#45;", "-") for i in node_test]
-
     new_pos = dict(zip(node_list, coords_temp))
     df = pd.DataFrame.from_dict(new_pos, orient="index", columns=["x_lower", "x_upper", "y_lower", "y_upper"])
     return df, scale
 
 
-def phase_info_func(file_graph: nx.DiGraph) -> Tuple[Dict[Any, Any], List[Any], List[Any], Any]:
-    """returns a dictionary of phases and nodes in each phase
+def phase_info_func(file_graph: nx.DiGraph) -> Tuple[dict[Any, Any], list[Any], list[Any], list[dict[Any, Any]]]:
+    """Returns a dictionary of phases and nodes in each phase
+
+    Parameters:
+        file_graph: A networkx graph to extract phase information from
+
+    Returns:
+        A tuple of results:
+
+        - A Dictionary of phases
+        - A list of
+        - A list of node labels from the graph (should be strings but not guaranteed)
+        - A list of node attribute dictionaries, in the order of node_list
 
     Todo:
         This has not been fully-reimplemented for cases where stratigraphic data was provided via .dot/.gv file, see FILE_INPUT
@@ -143,11 +203,29 @@ def phase_info_func(file_graph: nx.DiGraph) -> Tuple[Dict[Any, Any], List[Any], 
     return reversed_dict, [phase_norm, node_list, phase_list, phase_trck], [x_l, y_l], phase_dic
 
 
-def edge_of_phase(test1, pset, node_list, node_info):
-    """find nodes on edge of each phase
+def edge_of_phase(
+    test1: list[Any], pset: list[str], node_list: list[Any], node_info: list[dict[str[Any]]]
+) -> tuple[list[str], list[str], Iterable[str], list[tuple[Any, str]], dict[str, list[str]]]:
+    """Find nodes on edge of each phase
+
+    Parameters:
+        test1: a list of graph nodes (contexts and phases boundary nodes) ordered as a line_graph
+        pset: a list of (unique) groups/phases
+        node_list: a list of node labels
+        node_info: a list of node attribute dictionaries, in the same order as node_list
+
+    Returns:
+        A tuple of:
+
+        - a list of ???
+        - a list of ???
+        - An iterable (dict_keys) of groups/phases
+        - a list of phases being tracked?
+        - a dictionary containing a list of nodes per group/phase
 
     Todo:
-        This has not been fully-reimplemented for cases where stratigraphic data was provided via .dot/.gv file, see FILE_INPUT
+        - This has not been fully-reimplemented for cases where stratigraphic data was provided via .dot/.gv file, see FILE_INPUT
+        - Returning the keys and dictionary is redundant - only need to return the dict.
     """
     FILE_INPUT = None  # model.stratigraphic_graphviz_file ?
     x_l = []
@@ -184,7 +262,41 @@ def edge_of_phase(test1, pset, node_list, node_info):
 
 
 def node_del_fixed(graph: nx.DiGraph, node: str) -> nx.DiGraph:
-    """Remove a node from the graph, replacing edges where possible"""
+    """Remove a node from the graph, replacing edges where possible.
+
+    A new edge will not be created if the relative relationship between two nodes is already provided through another context.
+
+    I.e. given the following graph of 4 nodes
+
+    ```mermaid
+       flowchart LR
+           a --> b0
+           a --> b1
+           b0 --> c
+           b1 --> c
+    ```
+
+    Deleting `b0` will produce the following, without a direct edge from `a --> c`
+
+    ```mermaid
+       flowchart LR
+           a --> b1
+           b1 --> c
+    ```
+
+    Parameters:
+        graph: The graph to modify
+        node: the name of the node to be removed
+
+    Returns:
+        The mutated graph
+
+    Raises:
+        NetworkXError: If the provided node is not a member of the graph
+
+    Todo:
+        - The input parameter is mutated, and returned by the function. This should probably either return a mutated copy or not return the graph.
+    """
     in_nodes = [i[0] for i in list(graph.in_edges(node))]
     out_nodes = [i[1] for i in list(graph.out_edges(node))]
     graph.remove_node(node)
@@ -221,17 +333,32 @@ def all_node_info(node_list: List[Any], x_image: List[str], node_info: List[Any]
     return node_info
 
 
-def phase_length_finder(con_1: Any, con_2: Any, accept_group_limits: Dict[Any, Any]) -> List[Any]:
-    """finding the phase length between any two contexts or phase boundaries"""
-    phase_lengths = []
-    x_3 = accept_group_limits[con_1]
-    x_4 = accept_group_limits[con_2]
-    for i in range(len(x_3)):
-        phase_lengths.append(np.abs(x_3[i] - x_4[i]))
-    un_phase_lens = []
-    for i in range(len(phase_lengths) - 1):
-        if phase_lengths[i] != phase_lengths[i + 1]:
-            un_phase_lens.append(phase_lengths[i])
+def phase_length_finder(con_1: str, con_2: str, group_limits: dict[str, list[float]]) -> List[Any]:
+    """Find the group/phase length between any two contexts or phase boundaries
+
+    Parameters:
+        con_1: Context or phase boundary node id to find the phase length between
+        con_2: Context or phase boundary node id to find the phase length between
+        group_limits: Dictionary containing a list of group limits from MCMC calibration per context/phase_boundary label in the chronological_dag
+
+    Returns:
+        List of potential phase durations in years.
+        An empty list is returned if either context label is not present in the mcmc calibration data.
+        If the length of samples is not the same for the provided contexts, the shorter value is used. This should not occur in regular usage.
+
+    Todo:
+        - Special case handling when con_1 == con_2?
+
+    """
+    if con_1 not in group_limits or con_2 not in group_limits:
+        return []
+    phase_lengths = [np.abs(a - b) for a, b in zip(group_limits[con_1], group_limits[con_2])]
+
+    # unused code building a version of phase_lengths with sequential elements of the same value removed
+    # un_phase_lens = []
+    # for i in range(len(phase_lengths) - 1):
+    #     if phase_lengths[i] != phase_lengths[i + 1]:
+    #         un_phase_lens.append(phase_lengths[i])
     return phase_lengths
 
 
@@ -261,8 +388,18 @@ def imagefunc(dotfile: Any) -> Any:
 
 
 def phase_relabel(graph: nx.DiGraph) -> nx.DiGraph:
-    """relabels the phase labels to be alphas and betas, for display only,
+    """Relabels the phase labels to be alphas and betas, for display only,
     still refer to them with a's and b's
+
+    Parameters:
+        graph: The graph to modify
+
+    Returns:
+        The mutated graph
+
+    Todo:
+        - The input parameter is mutated, and returned by the function. This should probably either return a mutated copy or not return the graph.
+        - Ideally this should not create labels for nodes which do not start with a_/b_ but contain them, and ideally should only mutate for valid groups, in case user provided context labels include a_ (not currently prevented, although it may be as a workaround)
     """
     label_dict = {}
     for i in graph.nodes():
@@ -282,19 +419,43 @@ def phase_relabel(graph: nx.DiGraph) -> nx.DiGraph:
     return graph
 
 
-def alp_beta_node_add(x: Any, graph: nx.DiGraph) -> None:
-    """adds an alpha and beta node to node x"""
-    graph.add_node("a_" + str(x), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
-    graph.add_node("b_" + str(x), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
+def alp_beta_node_add(group: str, graph: nx.DiGraph) -> None:
+    """Adds an alpha and beta node for the named group to the graph
+
+    Parameters:
+        group: The group label to add alpha and beta nodes for
+        graph: The graph to be mutated
+    """
+    graph.add_node("a_" + str(group), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
+    graph.add_node("b_" + str(group), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
 
 
-def phase_labels(phi_ref, POST_PHASE, phi_accept, all_samps_phi) -> Tuple[List[str], Dict[str, Any], Dict[str, Any]]:
-    """provides phase limits for a phase"""
+def phase_labels(
+    phi_ref: list[str],
+    post_group: list[Literal["abutting", "gap", "overlap", "end"]],
+    phi_accept: list[list[float]],
+    all_samps_phi: list[list[float]],
+) -> tuple[list[str], dict[str, list[float]], dict[str, list[float]]]:
+    """Provides group/phase limits for a group/phase
+
+    Parameters:
+        phi_ref: Ordered list of group/phase labels
+        post_group: Ordered list containing the relation ship between the nth group, and the n+1th group
+        phi_accept: Accepted group boundaries from MCMC simulation. The length of the outer list depends on the values of post_group
+        all_samps_phi: all samples for group boundaries from MCMC, including rejected samples. The length of the outer list depends on the values of post_group
+
+    Returns:
+        A 3-element tuple of:
+
+        - The list of labels for group boundary nodes
+        - A dictionary of group limits from accepted phi samples
+        - A dictionary of group limits from all phi samples
+    """
     labels = ["a_" + str(phi_ref[0])]
     i = 0
     results_dict = {labels[0]: phi_accept[i]}
     all_results_dict = {labels[0]: all_samps_phi[i]}
-    for a_val in enumerate(POST_PHASE):
+    for a_val in enumerate(post_group):
         i = i + 1
         if a_val[1] == "abutting":
             labels.append("b_" + str(phi_ref[a_val[0]]) + " = a_" + str(phi_ref[a_val[0] + 1]))
@@ -313,7 +474,7 @@ def phase_labels(phi_ref, POST_PHASE, phi_accept, all_samps_phi) -> Tuple[List[s
             i = i + 1
             results_dict["a_" + str(phi_ref[a_val[0] + 1])] = phi_accept[i]
             all_results_dict["a_" + str(phi_ref[a_val[0] + 1])] = all_samps_phi[i]
-        else:
+        else:  # "overlap"
             labels.append("a_" + str(phi_ref[a_val[0] + 1]))
             labels.append("b_" + str(phi_ref[a_val[0]]))
             results_dict["a_" + str(phi_ref[a_val[0] + 1])] = phi_accept[i]
@@ -325,8 +486,21 @@ def phase_labels(phi_ref, POST_PHASE, phi_accept, all_samps_phi) -> Tuple[List[s
     return labels, results_dict, all_results_dict
 
 
-def del_empty_phases(phi_ref: List[Any], del_phase: Set[Any], phasedict: Dict[str, Any]) -> List[List[Any]]:
-    """checks for any phase rels that need changing due to missing dates"""
+def del_empty_phases(phi_ref: list[str], del_phase: set[str], phasedict: dict[tuple[str, str], str]) -> list[list[str]]:
+    """Checks for any phase rels that need changing due to missing dates
+
+    Parameters:
+        phi_ref: Ordered list of group/phase labels
+        del_phase: Groups/Phases which should be removed
+        phasedict: Dictionary of directed relationships between groups
+
+    Returns:
+        List of pairs of group labels which a new 'gap' relationship should be created for
+
+    Todo:
+        Should duplicates be removed from the retuned list?
+
+    """
     del_phase = [i for i in phi_ref if i in del_phase]
     del_phase_dict_1 = {}
     for j in del_phase:
@@ -342,7 +516,7 @@ def del_empty_phases(phi_ref: List[Any], del_phase: Set[Any], phasedict: Dict[st
         del_phase_dict_1[phi_ref[-1]]["upper"] = "end"
     if phi_ref[0] in del_phase_dict_1.keys():
         del_phase_dict_1[phi_ref[0]]["lower"] = "start"
-    # We then have to run the loop again in case any phases are next to eachother, this checks that
+    # We then have to run the loop again in case any phases are next to each other, this checks that
     for j in del_phase:
         rels_list = [i for i in phasedict.keys() if j in i]
         for rels in rels_list:
@@ -366,9 +540,33 @@ def del_empty_phases(phi_ref: List[Any], del_phase: Set[Any], phasedict: Dict[st
 
 
 def group_rels_delete_empty(
-    file_graph: nx.DiGraph, new_group_rels, p_list, phasedict, phase_nodes, graph_data
+    file_graph: nx.DiGraph,
+    new_group_rels: list[list[str]],
+    p_list: list[tuple[str, str]],
+    phasedict: dict[tuple[str, str], str],
+    phase_nodes: list[str],
+    graph_data: tuple[nx.DiGraph, list[list[Any]], list[Any], list[Any]],
 ) -> Tuple[nx.DiGraph, List[str], Dict[str, str]]:
-    """adds edges between phases that had gaps due to no contexts being left in them"""
+    """Adds edges between phases that had gaps due to no contexts being left in them
+
+    Parameters:
+        file_graph: The input graph
+        new_group_rels: list of new edges to create. Each element must be a list/tuple of 2 group labels.
+        p_list: a list of (unique) groups/phases, each contianing 2 elements.
+        phasedict: A dictionary containing the type of relationship between two phases
+        phase_nodes: a list of group/phase node labels, which is modified to include newly created nodes
+        graph_data: A collection of graph_data information
+
+    Returns:
+        A tuple of:
+
+        - The modified DiGraph
+        - A list of groups/phases which need to be remove
+        - A dictionary of newly combined group/phase boundary nodes (i.e. `a_x = b_y`) and the associated label
+
+    Todo:
+        - phase_nodes is only written to, never read from. Can it be removed?
+    """
     phase_relabel(file_graph)
     # adds edges between phases that had gaps due to no contexts being left in them
     label_dict = {}
@@ -413,10 +611,10 @@ def chrono_edge_add(
     file_graph: nx.DiGraph,
     graph_data,
     xs_ys,
-    phasedict,
-    phase_trck,
-    post_dict: Dict[Any, Any],
-    prev_dict: Dict[Any, Any],
+    phasedict: dict[tuple[str, str], str],
+    phase_trck: list[tuple[str, str]],
+    post_dict: dict[str, Literal["abutting", "gap", "overlap"]],
+    prev_dict: dict[str, Literal["abutting", "gap", "overlap"]],
 ) -> Tuple[nx.DiGraph, List[Any], List[str]]:
     """chrono_edge_add"""
     xs = xs_ys[0]
@@ -469,8 +667,25 @@ def chrono_edge_add(
     return (file_graph, phi_ref, null_phases)
 
 
-def chrono_edge_remov(file_graph: nx.DiGraph) -> Tuple[nx.DiGraph, List[List[Any]], List[Any], List[Any]]:
-    """removes any excess edges so we can render the chronograph"""
+def chrono_edge_remov(file_graph: nx.DiGraph) -> tuple[nx.DiGraph, list[list[Any]], list[Any], list[Any]]:
+    """Removes any excess edges so we can render the chronograph
+
+    Parameters:
+        file_graph: The input graph
+
+    Returns:
+        A tuple containing:
+
+        - A tuple of Graph data, containing:
+            - phases in a dict and nodes at the edge of that phase
+            - phases for each context
+            - contexts
+            - phases in "below form"
+            - dictionary of phases and contexts in them
+        - A list containing 2 elements `[xs, ys]` which  gives any edges removed becuase phase boundaries need to go in
+        - A list of phases
+
+    """
     xs, ys = [], []
     # gets a list of all the edges and splits into above and below
     for x, y in list(file_graph.edges):
@@ -523,11 +738,6 @@ def chrono_edge_remov(file_graph: nx.DiGraph) -> Tuple[nx.DiGraph, List[List[Any
 
         for m in oddlist:
             file_graph.add_edge(m, "a_" + str(phase_lab), arrowhead="none")
-    # graph data gives 1) phases in a dict and nodes at the edge of that phase,
-    # 2) phases for each context, 3) contexts, 4) phases in "below form",
-    # 5)dictionary of phases and contexts in them
-    # xs, ys gives any edges removed becuase phase boundaries need to go in
-    # list of phases
     return graph_data, [xs, ys], phase_list
 
 
@@ -562,7 +772,7 @@ def remove_invalid_attributes_networkx_lt_3_4(graph: nx.DiGraph) -> nx.DiGraph:
         The graph with invalid contraction attribtues removed
     """
     # Check the version of networkx requires this
-    if packaging.version.parse(nx.__version__) < packaging.version.parse("3.4.0"):
+    if packaging.version.parse(nx.__version__) < packaging.version.parse("3.4.0") and isinstance(graph, nx.DiGraph):
         # Copy the graph, to avoid mutating the original
         mutated_graph = copy.deepcopy(graph)
         # For each node in the graph, pop the contraction attribute

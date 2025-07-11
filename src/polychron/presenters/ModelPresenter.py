@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-import tkinter as tk
-import tkinter.messagebox
-from tkinter.filedialog import askopenfile
 from typing import Any, List
 
 import networkx as nx
@@ -39,7 +36,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
     """Presenter for the main model tab"""
 
     def __init__(self, mediator: Mediator, view: ModelView, model: ProjectSelection) -> None:
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         # Properties
@@ -65,6 +62,8 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         """Used during testmenu (right click menu) options similar to self.node
 
         Context equality only?"""
+
+        self.display_data_var = "hidden"
 
         # Bind callback functions for switching between the main view tabs
         view.bind_sasd_tab_button(lambda: self.mediator.switch_presenter("Model"))
@@ -103,9 +102,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             ]
         )
 
-        # Bind button clicks
         # Bind the "Data loaded" button callback
-        self.display_data_var = "hidden"
         self.view.bind_data_button(lambda: self.on_data_button())
 
         # Bind the callback for activating the testmenu
@@ -172,7 +169,10 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             )
 
     def get_window_title_suffix(self) -> str | None:
-        return f"{self.model.current_project_name} - {self.model.current_model_name}"
+        if self.model.current_project_name and self.model.current_model_name:
+            return f"{self.model.current_project_name} - {self.model.current_model_name}"
+        else:
+            return None
 
     def popup_calibrate_model(self) -> None:
         """Callback function for when Tools -> Calibrate model is selected
@@ -205,7 +205,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         popup_presenter.view.lift()
 
     def chronograph_render_wrap(self) -> None:
-        """wraps chronograph render so we can assign a variable when runing the func using a button"""
+        """wraps chronograph render so we can assign a variable when running the func using a button"""
         model_model = self.model.current_model
         if model_model is None:
             return
@@ -215,10 +215,10 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             or model_model.group_df is None
             or model_model.radiocarbon_df is None
         ):
-            tk.messagebox.showinfo("Error", "You haven't loaded in all the data required for a chronological graph")
+            self.view.messagebox_info("Error", "You haven't loaded in all the data required for a chronological graph")
             return
         if model_model.load_check:
-            answer = tk.messagebox.askquestion(
+            answer = self.view.messagebox_askquestion(
                 "Warning!",
                 "Chronological DAG already loaded, are you sure you want to write over it? You can copy this model in the file menu if you want to consider multiple models",
             )
@@ -241,12 +241,12 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         model_model = self.model.current_model
         if model_model is None:
-            return
+            return None
 
         # If the chronograph has not already been rendered/loaded for the current state of the model, render it.
         if not model_model.load_check:
             model_model.load_check = True
-            # Check for residuals & update model state when aproved
+            # Check for residuals & update model state when approved
             self.resid_check()
             # Render the chronological graph, mutating the model
             model_model.render_chrono_graph()
@@ -271,12 +271,12 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         When the popupwindows have been closed (correctly) the model will have been updated accordingly.
         """
         if self.model.current_model is not None:
-            MsgBox = tk.messagebox.askquestion(
+            answer = self.view.messagebox_askquestion(
                 "Residual and Intrusive Contexts",
                 "Do you suspect any of your samples are residual or intrusive?",
                 icon="warning",
             )
-            if MsgBox == "yes":
+            if answer == "yes":
                 # Create and show the residual or intrusive presenter
                 popup_presenter = ResidualOrIntrusivePresenter(
                     self.mediator, ResidualOrIntrusiveView(self.view), self.model.current_model
@@ -292,8 +292,15 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 popup_presenter.view.lift()
                 self.view.wait_window(popup_presenter.view)
 
-    def file_popup(self, df: Any) -> str:
-        """For a gien dataframe, preview the data to the user. Returns the users decision"""
+    def file_popup(self, df: pd.DataFrame) -> str:
+        """For a gien dataframe, preview the data to the user. Returns the users decision
+
+        Parameters:
+            df: The dataframe to preview
+
+        Returns:
+            The string result value, which should be "cancel" or "load"
+        """
         temp_model = {"df": df, "result": "cancel"}
         popup_presenter = DatafilePreviewPresenter(self.mediator, DatafilePreviewView(self.view), temp_model)
         popup_presenter.view.lift()
@@ -312,7 +319,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         raise NotImplementedError(
             "open_strat_dot_file is not implemented due to lack of a compaitble GraphViz input file"
         )
-        file = askopenfile(mode="r", filetypes=[("DOT Files", "*.dot"), ("Graphviz Files", "*.gv")])
+        file = self.view.askopenfile(mode="r", filetypes=[("DOT Files", "*.dot"), ("Graphviz Files", "*.gv")])
         if file is not None:
             model_model = self.model.current_model
 
@@ -345,7 +352,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         Formerly StartPage.open_file2
         """
-        file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
+        file = self.view.askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
 
         if file is not None:
             try:
@@ -355,7 +362,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 if load_it == "load":
                     # update the model with the dataframe, perofrming post processing, producing the graph
                     model_model.set_stratigraphic_df(df)
-                    tk.messagebox.showinfo("Success", "Stratigraphic data loaded")
+                    self.view.messagebox_info("Success", "Stratigraphic data loaded")
                     # Mark the strat file as loaded
                     self.strat_check = True
                     # Update the check list
@@ -377,14 +384,14 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 else:
                     pass
             except ValueError:
-                tk.messagebox.showerror("showerror", "Data not loaded, please try again")
+                self.view.messagebox_error("showerror", "Data not loaded, please try again")
 
     def open_scientific_dating_file(self) -> None:
         """Callback function when File > Load scientific dating file (.csv) is selected, opening a scientific dating file
 
         Formerly StartPage.open_file3
         """
-        file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
+        file = self.view.askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
 
         if file is not None:
             try:
@@ -396,18 +403,18 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                     model_model.set_radiocarbon_df(df)
                     self.date_check = True
                     self.check_list_gen()
-                    tk.messagebox.showinfo("Success", "Scientific dating data loaded")
+                    self.view.messagebox_info("Success", "Scientific dating data loaded")
                 else:
                     pass
             except ValueError:
-                tk.messagebox.showerror("showerror", "Data not loaded, please try again")
+                self.view.messagebox_error("showerror", "Data not loaded, please try again")
 
     def open_context_grouping_file(self) -> None:
         """Callback function when File > Load context grouping file (.csv) is selected, opening context grouping / phase file
 
         Formerly `StartPage.open_file4`
         """
-        file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
+        file = self.view.askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
         if file is not None:
             try:
                 model_model = self.model.current_model
@@ -418,39 +425,40 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                     model_model.set_group_df(df)
                     self.phase_check = True
                     self.check_list_gen()
-                    tk.messagebox.showinfo("Success", "Grouping data loaded")
+                    self.view.messagebox_info("Success", "Grouping data loaded")
                 else:
                     pass
             except ValueError:
-                tk.messagebox.showerror("showerror", "Data not loaded, please try again")
+                self.view.messagebox_error("showerror", "Data not loaded, please try again")
 
     def open_group_relationship_file(self) -> None:
         """Callback function when File > Load group relationship file (.csv) is selected, opening a group relationship / phase relationship file
 
         Formerly StartPage.open_file5
         """
-        file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
+        file = self.view.askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
         if file is not None:
             try:
                 model_model = self.model.current_model
                 df = pd.read_csv(file)
                 group_rels = [(str(df["above"][i]), str(df["below"][i])) for i in range(len(df))]
                 load_it = self.file_popup(pd.DataFrame(group_rels, columns=["Younger group", "Older group"]))
-                model_model.set_group_relationship_df(df, group_rels)
-                if load_it:
-                    pass  # 0.1 doesn't check the result / handle the paths differently.
-                self.phase_rel_check = True
-                self.check_list_gen()
-                tk.messagebox.showinfo("Success", "Group relationships data loaded")
+                if load_it == "load":
+                    model_model.set_group_relationship_df(df, group_rels)
+                    self.phase_rel_check = True
+                    self.check_list_gen()
+                    self.view.messagebox_info("Success", "Group relationships data loaded")
+                else:
+                    pass
             except ValueError:
-                tk.messagebox.showerror("showerror", "Data not loaded, please try again")
+                self.view.messagebox_error("showerror", "Data not loaded, please try again")
 
     def open_context_equalities_file(self) -> None:
         """Callback function when File > Load context equalities file (.csv) is selected, opening a file providing context equalities (in time)
 
         Formerly `StartPage.open_file6`
         """
-        file = askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
+        file = self.view.askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
         if file is not None:
             try:
                 model_model = self.model.current_model
@@ -466,9 +474,9 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 # self.bind("<Configure>", self.resize)
                 self.view.bind_littlecanvas_callback("<Configure>", self.on_resize)
                 self.view.bind_littlecanvas_callback(get_right_click_binding(), self.pre_click)
-                tk.messagebox.showinfo("Success", "Equal contexts data loaded")
+                self.view.messagebox_info("Success", "Equal contexts data loaded")
             except ValueError:
-                tk.messagebox.showerror("showerror", "Data not loaded, please try again")
+                self.view.messagebox_error("showerror", "Data not loaded, please try again")
 
     def close_application(self) -> None:
         """Close polychron gracefully via File > Exit"""
@@ -568,7 +576,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         if self.node != "no node":
             if model_model.load_check:
                 model_model.load_check = False
-                answer = tk.messagebox.askquestion(
+                answer = self.view.messagebox_askquestion(
                     "Warning!",
                     "Chronological DAG already loaded, do you want to save this as a new model first? \n\n Click Yes to save as new model and No to overwrite existing model",
                 )
@@ -590,7 +598,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         if model_model is None:
             return
         if model_model.load_check:
-            answer = tk.messagebox.askquestion(
+            answer = self.view.messagebox_askquestion(
                 "Warning!",
                 "Chronological DAG already loaded, do you want to save this as a new model first? \n Click YES to save as new model and NO to overwrite existing model",
             )
@@ -618,7 +626,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         self.edge_nodes = np.append(self.edge_nodes, self.node)
         if model_model.load_check:
-            answer = tk.messagebox.askquestion(
+            answer = self.view.messagebox_askquestion(
                 "Warning!",
                 "Chronological DAG already loaded, do you want to save this as a new model first? \n Click YES to save as new model and NO to overwrite existing model",
             )
@@ -637,7 +645,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 edge_src, edge_dst = edge_dst, edge_src  # swap the variables via a tuple swap
             else:
                 # If the edge does not exist in either direction, report the error and return.
-                tk.messagebox.showinfo(
+                self.view.messagebox_info(
                     "Error", f"An edge doesnt exist between '{self.edge_nodes[0]}' and '{self.edge_nodes[1]}' nodes"
                 )
                 # Remove the deleted releationshipo with X entry from the right click menu and reset the edges which have been selected so far
@@ -668,7 +676,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             return
 
         if model_model.load_check:
-            answer = tk.messagebox.askquestion(
+            answer = self.view.messagebox_askquestion(
                 "Warning!",
                 "Chronological DAG already loaded, do you want to save this as a new model first? \n Click YES to save as new model and NO to overwrite existing model",
             )
@@ -688,11 +696,13 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         if model_model is None:
             return
 
-        if len(self.edge_nodes) == 1:
+        if len(self.edge_nodes) >= 1:
             self.view.remove_testmenu_entry("Delete stratigraphic relationship with " + str(self.edge_nodes[0]))
             self.edge_nodes = []
-        self.edge_nodes = np.append(self.edge_nodes, self.node)
-        self.view.append_testmenu_entry("Delete stratigraphic relationship with " + str(self.edge_nodes[0]))
+
+        if self.node != "no node":
+            self.edge_nodes = np.append(self.edge_nodes, self.node)
+            self.view.append_testmenu_entry("Delete stratigraphic relationship with " + str(self.edge_nodes[0]))
 
     def testmenu_equate_context_with(self) -> None:
         """Callback function from the testmenu to equate two contexts (when one has already been selected)"""
@@ -702,7 +712,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             return
 
         if model_model.load_check:
-            answer = tk.messagebox.askquestion(
+            answer = self.view.messagebox_askquestion(
                 "Warning!",
                 "Chronological DAG already loaded, do you want to save this as a new model first? \n Click YES to save as new model and NO to overwrite existing model",
             )
@@ -720,7 +730,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             nx.transitive_reduction(strat_graph_temp)
             model_model.stratigraphic_dag = strat_graph_temp
         except nx.NetworkXError:
-            tk.messagebox.showinfo("Error!", "This creates a cycle so you cannot equate these contexts")
+            self.view.messagebox_info("Error!", "This creates a cycle so you cannot equate these contexts")
         except Exception:
             pass
         self.view.remove_testmenu_entry("Equate context with " + str(self.comb_nodes[0]))
@@ -732,10 +742,14 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         model_model = self.model.current_model
         if model_model is None:
             return
-        if len(self.comb_nodes) == 1:
+
+        if len(self.comb_nodes) >= 1:
             self.view.remove_testmenu_entry("Equate context with " + str(self.comb_nodes[0]))
-        self.comb_nodes = np.append(self.comb_nodes, self.node)
-        self.view.append_testmenu_entry("Equate context with " + str(self.comb_nodes[0]))
+            self.comb_nodes = []
+
+        if self.node != "no node":
+            self.comb_nodes = np.append(self.comb_nodes, self.node)
+            self.view.append_testmenu_entry("Equate context with " + str(self.comb_nodes[0]))
 
     def testmenu_supplementary_menu(self) -> None:
         """Callback function from the testmenu for users to provide additional supplementary data
@@ -760,7 +774,15 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         if self.node == "no node":
             return
 
+        # If there is no stratigraphic_dag, do nothing.
+        if model_model.stratigraphic_dag is None:
+            return
+
         stratinfo = self.stratfunc(self.node)
+        # If no strat info could be retrieved for the selected node, return.
+        if stratinfo is None:
+            return
+
         metadict2 = {}
         metadict = model_model.stratigraphic_dag.nodes()[str(self.node)]
         metadict2["Contexts above"] = [stratinfo[0]]
@@ -783,11 +805,13 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         if model_model is None:
             return
 
-        if len(self.edge_nodes) == 1:
+        if len(self.edge_nodes) >= 1:
             self.view.remove_testmenu_entry("Place " + str(self.edge_nodes[0]) + " Above")
             self.edge_nodes = []
-        self.edge_nodes = np.append(self.edge_nodes, self.node)
-        self.view.append_testmenu_entry("Place " + str(self.edge_nodes[0]) + " Above")
+
+        if self.node != "no node":
+            self.edge_nodes = np.append(self.edge_nodes, self.node)
+            self.view.append_testmenu_entry("Place " + str(self.edge_nodes[0]) + " Above")
 
     def pre_click(self, *args) -> None:
         """makes test menu appear and removes any previous test menu
@@ -817,10 +841,10 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         self.view.bind_littlecanvas_callback("<Button-1>", self.on_left)
         # Show the right click menu
         model_model = self.model.current_model
-        has_image = model_model.stratigraphic_image is not None
+        has_image = model_model is not None and model_model.stratigraphic_image is not None
         x_scal, y_scal = self.view.show_testmenu(has_image)
         # If the model has a stratigraphic image presented, check if a node has been right clicked on and store in a member variable
-        if model_model.stratigraphic_image is not None and x_scal is not None and y_scal is not None:
+        if has_image and x_scal is not None and y_scal is not None:
             self.node = self.nodecheck(x_scal, y_scal)
 
     def check_list_gen(self) -> None:
@@ -875,16 +899,19 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             try:
                 model.save()
             except Exception as e:
-                tk.messagebox.showerror("Error", f"File not saved: {e}")
+                self.view.messagebox_error("Error", f"File not saved: {e}")
             else:
                 # State saving success if no exceptions occurred
-                tk.messagebox.showinfo("Success", "Your model has been saved")
+                self.view.messagebox_info("Success", "Your model has been saved")
 
     def save_as_new_model(self) -> None:
         """Save the current state of the model, as a new model (with a new name) initially in the same project (although possible to put in a new project).
         Switches to the "new" model for any future changes.
 
         Formerly `StartPage.refresh_4_new_model`
+
+        Todo:
+            - Handle the edge case wehre a user selects the current model name by going back, and selecting the existing model. This currently does not save (as a save only occurs if the project/model name was changed). This needs to be separate to the path where the popup window is closed by closing the window, not pressing create.
         """
 
         # Store the old project and model names, to check if the model was changed or not.
@@ -1024,21 +1051,36 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         strat_graph_check = nx.transitive_reduction(model_model.stratigraphic_dag)
         if model_model.stratigraphic_dag.edges() != strat_graph_check.edges():
             model_model.stratigraphic_dag.remove_edge(x_1, x_2)
-            tk.messagebox.showerror(
+            self.view.messagebox_error(
                 "Redundant relationship",
                 "That stratigraphic relationship is already implied by other relationships in the graph",
             )
         model_model.render_strat_graph()
         self.view.update_littlecanvas(model_model.stratigraphic_image)
 
-    def stratfunc(self, node: str) -> None:
+    def stratfunc(self, node: str) -> list[str] | None:
         """obtains strat relationships for node
 
         Formerly `StartPage.stratfunc`
+
+        Parameters:
+            node: the context label to extract stratigraphic relationsips for
+
+        Returns:
+            A list containing 2 strings, the comma separated list of context above, and comma separated list of contexts below; Or None if the provided node/context label is not valid.
         """
         model_model = self.model.current_model
         if model_model is None:
-            return
+            return None
+
+        # Return if the Model does not include a stratigraphic graph
+        if model_model.stratigraphic_dag is None:
+            return None
+
+        # Return None if the stratigraphic_dag does not include the requested node
+        if node not in model_model.stratigraphic_dag.nodes():
+            return None
+
         rellist = list(nx.line_graph(model_model.stratigraphic_dag))
         above = ()
         below = ()

@@ -23,31 +23,46 @@ class Project:
     models: dict[str, Model | None] = field(default_factory=dict)
     """A dictionary of models within this project, with their name as the key"""
 
-    def create_dirs(self) -> bool:
-        """Create the project directory.
+    def create_dir(self) -> None:
+        """Create the project directory if it does not already exist.
 
-        Returns:
-            Boolean indicating success of directory creation
+        Raises:
+            OSError: Propagated from `pathlib.Path.mkdir` if an OSError occurred during directory creation
+            NotADirectoryError: Propagated from `pathlib.Path.mkdir` if any ancestors within the path are not a directory
         """
-        try:
-            # Ensure the model (and implictly project) directory exists
-            self.path.mkdir(parents=True, exist_ok=True)
-        except Exception as e:
-            print(e, file=sys.stderr)
-            return False
+        # Create the project directory if it does not already exist.
+        self.path.mkdir(parents=True, exist_ok=True)
 
     def has_model(self, name: str) -> bool:
-        """Cheeck if a model exists within the project."""
+        """Cheeck if a model exists within the project.
+
+        Parameters:
+            name: The name of the model to check for
+
+        Returns:
+            Boolean indicating if the model exist or not (i.e. the model directory exists as a minimum)
+        """
         return name in self.models
 
     def get_model(self, name: str) -> Model | None:
-        """Get a model from within the project, loading from disk if it has not yet been loaded"""
+        """Get a model from within the project, loading from disk if it has not yet been loaded
+
+        Parameters:
+            name: The name of the model to attempt to fetch
+
+        Returns:
+            The `models.Model` instance if one exists, otherwise None
+
+        Raises:
+            RuntimeWarning: when the model could not be loaded, but in a recoverable way. I.e. the directory exits but no files are contained (so allow the model to be "loaded")
+            RuntimeError: when the model could not be loaded, but use of this model directory should be prevented?
+        """
         if name in self.models:
             if self.models[name] is None:
                 self.load_model_from_disk(name)
         return self.models.get(name, None)
 
-    def get_or_create_model(self, name: str, other: Model | None) -> Model:
+    def get_or_create_model(self, name: str, other: Model | None = None) -> Model:
         """Get or create a model within this Project, copying a reference model if provided
 
         Parameters:
@@ -56,6 +71,13 @@ class Project:
 
         Returns:
             The existing or new model with the specified model name
+
+        Raises:
+            RuntimeWarning: when the model could not be loaded, but in a recoverable way. I.e. the directory exits but no files are contained (so allow the model to be "loaded")
+            RuntimeError: when the model could not be loaded, but use of this model directory should be prevented?
+            RuntimeError: if the model already exists or an invalid name is provided.
+            OSError: if the model directories could not be created, e.g. due to permissions or avialable space.
+            NotADirectoryError: Propagated from `pathlib.Path.mkdir` if any model directory ancestors are not directories
         """
         if self.has_model(name):
             model = self.get_model(name)
@@ -65,7 +87,7 @@ class Project:
         # If no model was returned, create one and return it.
         return self.create_model(name, other)
 
-    def create_model(self, name: str, other: Model | None) -> Model:
+    def create_model(self, name: str, other: Model | None = None) -> Model:
         """Create a new model within the project with the provided name , copying a reference model if provided
 
         Parameters:
@@ -78,6 +100,7 @@ class Project:
         Raises:
             RuntimeError: if the model already exists or an invalid name is provided.
             OSError: if the model directories could not be created, e.g. due to permissions or available space.
+            NotADirectoryError: Propagated from `pathlib.Path.mkdir` if any model directory ancestors are not directories
         """
 
         # Attempt to load the model with the provided name.
@@ -97,33 +120,31 @@ class Project:
         # Detect some invalid path errors, by checking that the model name matches the model path (i.e. name="/" or ".")
         if new_model.name != new_model.path.name:
             raise RuntimeError(
-                f"Model name '{name}' was converted to a non-matching directory name '{new_model.path.name}'. Please use an alternate model name"
+                f"Model name '{name}' was converted to an invalid directory name '{new_model.path.name}'."
             )
-        # Attempt to create the directories, reporting an error if an invalid model name was used. Ideally this would be on first-save, but we need the temporary directory to exist.
-        try:
-            new_model.create_dirs()
-        except OSError as e:
-            raise e
-        except Exception as e:
-            raise e
-        else:
-            # If no exceptions were raised potentially copy working files, store the new model and return it
-            if other is not None and other.get_working_directory().is_dir():
-                shutil.copytree(other.get_working_directory(), new_model.get_working_directory(), dirs_exist_ok=True)
-            self.models[name] = new_model
-            return self.models[name]
 
-    def lazy_load_model_from_disk(self) -> None:
-        if self.path.is_dir():
-            for p in self.path.iterdir():
-                if p.is_dir():
-                    self.models[p.name] = None
+        # Attempt to create the models's directories, to ensure the working directory exists and any designation directories when copying
+        # Ideally this would be on first-save, but we need the temporary directory to exist.
+        # This will raise and propagate OSError and NotADirectoryError if any errors occurred
+        new_model.create_dirs()
+
+        # If no exceptions were raised potentially copy working files, store the new model and return it
+        if other is not None and other.get_working_directory().is_dir():
+            shutil.copytree(other.get_working_directory(), new_model.get_working_directory(), dirs_exist_ok=True)
+
+        # Store and return the new Model instance
+        self.models[name] = new_model
+        return self.models[name]
 
     def load_model_from_disk(self, name: str) -> None:
         """Load a single model from disk by it's name
 
         Parameters:
             name: The name of the model to load.
+
+        Raises:
+            RuntimeWarning: when the model could not be loaded, but in a recoverable way. I.e. the directory exits but no files are contained (so allow the model to be "loaded")
+            RuntimeError: when the model could not be loaded, but use of this model directory should be prevented?
         """
         try:
             # Try and load the model from disk
@@ -149,11 +170,13 @@ class Project:
                     self.models[p.name] = None
 
     def load(self) -> None:
-        """Load all models within this project from disk."""
+        """Load all models within this project from disk.
+
+        Raises:
+            RuntimeWarning: when the model could not be loaded, but in a recoverable way. I.e. the directory exits but no files are contained (so allow the model to be "loaded")
+            RuntimeError: when the model could not be loaded, but use of this model directory should be prevented?
+        """
         if self.path.is_dir():
             for p in self.path.iterdir():
                 if p.is_dir():
-                    try:
-                        self.load_model_from_disk(p.name)
-                    except Exception as e:
-                        raise e
+                    self.load_model_from_disk(p.name)

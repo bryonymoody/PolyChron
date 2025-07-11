@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
 from ..views.ProjectSelectProcessPopupView import ProjectSelectProcessPopupView
@@ -17,8 +15,6 @@ class SplashPresenter(FramePresenter[SplashView, ProjectSelection]):
     def __init__(self, mediator: Mediator, view: SplashView, model: ProjectSelection) -> None:
         # Call the parent class' constructor
         super().__init__(mediator, view, model)
-
-        self.child_presenter: ProjectSelectProcessPopupPresenter | None = None
 
         # Build file/view/tool menus with callbacks
         self.view.build_file_menu(

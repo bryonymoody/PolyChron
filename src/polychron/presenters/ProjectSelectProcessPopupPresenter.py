@@ -23,7 +23,7 @@ class ProjectSelectProcessPopupPresenter(PopupPresenter[ProjectSelectProcessPopu
     """Presenter for the project new or select process, which is a mult-frame presenter, much like the main window."""
 
     def __init__(self, mediator: Mediator, view: ProjectSelectProcessPopupView, model: ProjectSelection) -> None:
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         # Build a dictionary of child presenter-view pairings
@@ -37,14 +37,24 @@ class ProjectSelectProcessPopupPresenter(PopupPresenter[ProjectSelectProcessPopu
         }
         # Intiialse all the views within the parent view
         for presenter in self.presenters.values():
-            presenter.view.grid(row=0, column=0, sticky="nsew")
-            presenter.view.grid_remove()
+            presenter.view.place_in_container()
 
         # Set the initial sub-presenter
         self.switch_presenter("project_welcome")
 
     def update_view(self) -> None:
         pass
+
+    def set_window_title(self, suffix: str | None = None) -> None:
+        """Update the popup window title to reflect the current state of the project selection process
+
+        Parameters:
+            suffix: an optional suffix which will be appended to the default window title
+        """
+        title = "PolyChron loading page"
+        if suffix is not None and len(str(suffix)) > 0:
+            title += f" | {suffix}"
+        self.view.title(title)
 
     def get_presenter(self, key: str | None) -> FramePresenter | None:
         if key is not None and key in self.presenters:
@@ -53,26 +63,44 @@ class ProjectSelectProcessPopupPresenter(PopupPresenter[ProjectSelectProcessPopu
             return None
 
     def switch_presenter(self, key: str | None) -> None:
+        """Switch the current presenter using the provided key
+
+        Parameters:
+            key: The key for the presenter to switch to (if not None)"""
+        # Get the current presenter
+        current_presenter = self.get_presenter(self.current_presenter_key)
+        # If the key is None, clear the current presenter
+        if key is None and current_presenter is not None:
+            current_presenter.view.grid_remove()
+            self.current_presenter_key = None
+            return
+
+        # If the new presenter key is valid, replace the current presenter with the new one
         if new_presenter := self.get_presenter(key):
             # Hide the current presenter if set
-            if current_presenter := self.get_presenter(self.current_presenter_key):
-                current_presenter.view.grid_remove()
+            if current_presenter is not None:
+                current_presenter.view.not_visible_in_container()
                 self.current_presenter_key = None
-
-            # Update the now-current view
+            # Update the now-current presenter & view
             self.current_presenter_key = key
             # Apply any view updates in case the model has been changed since last rendered
             new_presenter.update_view()
-            # Re-place the frame using grid, with settings remembered from before
-            new_presenter.view.grid()
-            # Give it focus for any keybind events
-            new_presenter.view.focus_set()
+            # Make the new presenter's view visible
+            new_presenter.view.visible_in_container()
+
+            # Update the window title to potentially include a suffix.
+            self.set_window_title(new_presenter.get_window_title_suffix())
         else:
             raise RuntimeError(
                 f"Invalid presenter key '{key}' for ProjectSelectProcessPopupPresenter.switch_presenter. Valid values: {list(self.presenters.keys())}"
             )
 
     def close_window(self, reason: str = None) -> None:
+        """Close the process popup window, changing the main window presenter/view as required
+
+        Todo:
+            close_view and close_window should be combined.
+        """
         # 3.10 required for match, so using elif
         if reason is None:
             pass

@@ -468,7 +468,6 @@ class DatingResultsView(FrameView):
         if has_image:
             x_scal = cursor_x2 + self.transx2
             y_scal = cursor_y2 + self.transy2
-            # self.node = self.nodecheck(x_scal, y_scal)
             return x_scal, y_scal
         else:
             return None, None

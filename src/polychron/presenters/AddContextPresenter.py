@@ -12,7 +12,7 @@ class AddContextPresenter(PopupPresenter[AddContextView, Dict[str, Optional[str]
     """
 
     def __init__(self, mediator: Mediator, view: AddContextView, model: Dict[str, Optional[str]]) -> None:
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         # Bind the OK button

@@ -20,7 +20,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
     """Presenter for the Dating Results page/tab."""
 
     def __init__(self, mediator: Mediator, view: DatingResultsView, model: ProjectSelection):
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         self.results_list: List[str] = []
@@ -73,7 +73,10 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         self.chronograph_render_post()
 
     def get_window_title_suffix(self) -> str | None:
-        return f"{self.model.current_project_name} - {self.model.current_model_name}"
+        if self.model.current_project_name and self.model.current_model_name:
+            return f"{self.model.current_project_name} - {self.model.current_model_name}"
+        else:
+            return None
 
     def on_file_save(self) -> None:
         """Callback for the File > Save project progress menu command
@@ -131,12 +134,12 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         self.view.bind_littlecanvas2_callback("<Button-1>", self.on_left)
         # Show the right click menu
         model_model = self.model.current_model
-        has_image = model_model.chronological_image is not None
+        has_image = model_model is not None and model_model.chronological_image is not None
         # Show the test menu, returning the coords it was place at?
         x_scal, y_scal = self.view.show_testmenu(has_image)
         # If the model has a chronographic image presented, check if a node has been right clicked on and store in a member variable
         # this was part of `PageOne.chrono_nodes``, but standardised to match the other tab a bit more.
-        if model_model.chronological_image is not None and x_scal is not None and y_scal is not None:
+        if has_image and x_scal is not None and y_scal is not None:
             self.node = self.nodecheck(x_scal, y_scal)
 
     def on_canvas_wheel2(self, event: Any) -> None:
@@ -187,6 +190,11 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         """Returns the node that corresponds to the mouse coordinates
 
         Formerly `PageOne.nodecheck`
+
+        Todo:
+            - Should this also reset the outline attribtues for non-selected nodes?. It also would need to triggere a re-render for this to be visibly shown to users.
+            - "no node" is potentially a valid context name that could have been provided by a user. Use None instead.
+            - Should probably do an epsilon (approximate) floating point comparisons
         """
         node_inside = "no node"
 
@@ -315,11 +323,11 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
 
         self.fig = Figure()
         # self.fig.rc('font', **font)
-        LENGTHS = phase_length_finder(
+        lengths = phase_length_finder(
             self.phase_len_nodes[0], self.phase_len_nodes[1], model_model.mcmc_data.all_group_limits
         )
         plot1 = self.fig.add_subplot(111)
-        plot1.hist(LENGTHS, bins="auto", color="#0504aa", rwidth=1, density=True)
+        plot1.hist(lengths, bins="auto", color="#0504aa", rwidth=1, density=True)
         # plot1.xlabel('Time elapsed in calibrated years (cal BP)')
         # plot1.ylabel('Probability density')
         plot1.spines["right"].set_visible(False)
@@ -332,7 +340,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         # self.fig.set_tight_layout(True)
         self.view.show_canvas_plot(self.fig)
         # show hpd intervals
-        interval = list(HPD_interval(np.array(LENGTHS[1000:])))
+        interval = list(HPD_interval(np.array(lengths[1000:])))
         intervals = []
         hpd_str = ""
         refs = [k for k in range(len(interval)) if k % 2]
@@ -343,7 +351,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
 
     def testmenu_get_time_elapsed(self) -> None:
         """When the "get time elasped" option has been selected in the right click menu:
-        - Remove any existing elabsed_between options
+        - Remove any existing elased_between options
         - Add a new get time elapsed option.
         """
         if len(self.phase_len_nodes) == 1:
@@ -351,10 +359,12 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
                 "Get time elapsed between " + str(self.phase_len_nodes[0]) + " and another context"
             )
             self.phase_len_nodes = []
-        self.phase_len_nodes = np.append(self.phase_len_nodes, self.node)
-        self.view.append_testmenu2_entry(
-            "Get time elapsed between " + str(self.phase_len_nodes[0]) + " and another context"
-        )
+
+        if self.node != "no node":
+            self.phase_len_nodes = np.append(self.phase_len_nodes, self.node)
+            self.view.append_testmenu2_entry(
+                "Get time elapsed between " + str(self.phase_len_nodes[0]) + " and another context"
+            )
 
     def mcmc_output(self) -> None:
         """loads posterior density plots into the graph

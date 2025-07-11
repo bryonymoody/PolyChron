@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import sys
 import tkinter as tk
 import tkinter.font as tkFont
 from importlib.metadata import version
@@ -79,9 +80,10 @@ class GUIApp(Mediator):
 
         # Place each main window within the container
         for presenter in self.presenters.values():
-            presenter.view.grid(row=0, column=0, sticky="nsew")
-            # Immediately hide the frame, but remember it's settings.
-            presenter.view.grid_remove()
+            presenter.view.place_in_container()
+
+        # Set the initial presenter
+        self.switch_presenter("Splash")
 
     def set_window_title(self, suffix: str | None = None) -> None:
         """Update the window title to include Polychron, the version of polychron, and the optional suffix
@@ -112,11 +114,19 @@ class GUIApp(Mediator):
         """Switch the current presenter using the provided key
 
         Parameters:
-            key (str): The key for the presenter to switch to."""
+            key: The key for the presenter to switch to (if not None)"""
+        # Get the current presenter
+        current_presenter = self.get_presenter(self.current_presenter_key)
+        # If the key is None, clear the current presenter
+        if key is None and current_presenter is not None:
+            current_presenter.view.grid_remove()
+            self.current_presenter_key = None
+            return
+
         if (new_presenter := self.get_presenter(key)) is not None:
             # Hide the current presenter if set
             if current_presenter := self.get_presenter(self.current_presenter_key):
-                current_presenter.view.grid_remove()
+                current_presenter.view.not_visible_in_container()
                 self.current_presenter_key = None
 
             # Update the now-current view
@@ -124,9 +134,7 @@ class GUIApp(Mediator):
             # Apply any view updates in case the model has been changed since last rendered
             new_presenter.update_view()
             # Re-place the frame using grid, with settings remembered from before
-            new_presenter.view.grid()
-            # Give it focus for any keybind events
-            new_presenter.view.focus_set()
+            new_presenter.view.visible_in_container()
 
             # Update the window title to potentially include a suffix.
             self.set_window_title(new_presenter.get_window_title_suffix())
@@ -151,14 +159,8 @@ class GUIApp(Mediator):
 
     def save_current_model(self, event: Any | None = None) -> None:
         """If a model is currently open, save it"""
-        if (
-            self.current_presenter_key == "Model"
-            or self.current_presenter_key == "DatingResults"
-            and self.project_selector_obj.current_project_name is not None
-            and self.project_selector_obj.current_model_name is not None
-        ):
-            model = self.project_selector_obj.current_model
-            if model is not None:
+        if self.current_presenter_key in ["Model", "DatingResults"]:
+            if model := self.project_selector_obj.current_model:
                 model.save()
 
     def exit_application(self, event: Any | None = None) -> None:
@@ -170,13 +172,11 @@ class GUIApp(Mediator):
         """resize the root window geometry to be the maximum of the configured size and the screen size reported by tkinter.
 
         Note for multi-monitor setups this may/will be incorrect."""
-
-        match = re.match("^([0-9]+)x([0-9]+)", geometry)
-        if match:
+        if match := re.match("^([0-9]+)x([0-9]+)$", geometry):
             # Extract the groups
             target_width = int(match.group(1))
             target_height = int(match.group(2))
-            # Query the screen infor
+            # Query the screen info
             screen_width = self.root.winfo_screenwidth()
             screen_height = self.root.winfo_screenheight()
             # Build the new geometry string
@@ -186,6 +186,8 @@ class GUIApp(Mediator):
 
     def launch(self, project_name: str | None = None, model_name: str | None = None) -> None:
         """Method to launch the GUIApp, i.e. start the render loop
+
+        If an invalid project or model name is provided (i.e '.'), a warning is printed to console and the model selector is started.
 
         Parameters:
             project_name: An optional project to start with
@@ -229,11 +231,18 @@ class GUIApp(Mediator):
                 # Get the reason that the presenter is being closed.
                 reason = "load_model" if self.project_selector_obj.next_model is not None else "new_model"
 
-                # Update the model to the "next" project & model.
-                self.project_selector_obj.switch_to_next_project_model(load_ok=True, create_ok=True)
-
-                # Close the popup window with the appropriate reason (load or new model)
-                popup_presenter.close_window(reason)
+                try:
+                    # Try to update the model to the "next" project & model.
+                    self.project_selector_obj.switch_to_next_project_model(load_ok=True, create_ok=True)
+                except RuntimeError as e:
+                    # Invalid project/model names should raise an exception, for which the message should be presented to the user.
+                    print(f"{e}", file=sys.stderr)
+                    # Clear the project selector next state
+                    self.project_selector_obj.next_project_name = None
+                    self.project_selector_obj.next_model_name = None
+                else:
+                    # Close the popup window with the appropriate reason (load or new model)
+                    popup_presenter.close_window(reason)
 
         # Start the render loop
         self.root.mainloop()

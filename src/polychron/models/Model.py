@@ -10,7 +10,7 @@ import sys
 from dataclasses import dataclass, field
 from importlib.metadata import version
 from inspect import signature
-from typing import Any, Dict, List, Literal, Optional, Tuple, get_type_hints
+from typing import Dict, List, Literal, Optional, Tuple, get_type_hints
 
 import networkx as nx
 import packaging.version
@@ -19,7 +19,7 @@ import pydot
 from graphviz import render
 from networkx.drawing.nx_pydot import write_dot
 from packaging.version import Version
-from PIL import Image
+from PIL import Image, UnidentifiedImageError
 
 from ..automated_mcmc_ordering_coupling_copy import run_MCMC
 from ..Config import get_config
@@ -343,74 +343,78 @@ class Model:
         """Save the current state of this model to disk at self.path
 
         Raises:
-            Exception: raised when any error occurred during saving, with a message to present to the user
+            RuntimeError: raised when any error occurred during saving, with a message to present to the user
         """
 
         # Ensure directories required exist
-        if self.create_dirs():
-            try:
-                timer_save = MonotonicTimer().start()
-
-                # create the representation of the Model to be saved to disk
-                timer_to_json = MonotonicTimer().start()
-                json_s = self.to_json(pretty=True)
-                timer_to_json.stop()
-
-                # Save the json representation of this object to disk
-                timer_json_write = MonotonicTimer().start()
-                json_path = self.get_python_only_directory() / "polychron_model.json"
-                with open(json_path, "w") as f:
-                    f.write(json_s)
-                timer_json_write.stop()
-
-                # Create / Copy other files to the correct location
-                timer_files = MonotonicTimer().start()
-                # Save the delete contexts metadata to the working directory (superfluos)
-                self.save_deleted_contexts()
-
-                # Ensure the "saved" versions of files are up to date.
-                # Prepare a dictionary of per-output location files to copy form the working dir.
-                files_to_copy = {
-                    self.get_chronological_graph_directory(): [
-                        "fi_new_chrono.png",
-                        "fi_new_chrono.svg",
-                        "fi_new_chrono",
-                        "testdag_chrono.png",
-                    ],
-                    self.get_stratigraphic_graph_directory(): [
-                        "fi_new.png",
-                        "fi_new.svg",
-                        "fi_new",
-                        "testdag.png",
-                        "deleted_contexts_meta",
-                    ],
-                    self.get_mcmc_results_directory(): ["full_results_df", "key_ref.csv", "context_no.csv"],
-                    self.get_python_only_directory(): ["polychron_mcmc_data.json"],
-                }
-                # Iterate the per output directory files, copying files if they exist and copying is required
-                for dst_dir, filenames in files_to_copy.items():
-                    for filename in filenames:
-                        src = self.get_working_directory() / filename
-                        dst = dst_dir / filename
-                        # Only copy the file, if the src exists and is not the same as the dst file
-                        if src.is_file() and (not dst.is_file() or not filecmp.cmp(src, dst, shallow=True)):
-                            shutil.copy2(src, dst)
-                timer_files.stop()
-
-                # Stop the timer and report timing if verbose
-                timer_save.stop()
-                if get_config().verbose:
-                    print("Timing - Model.save:")
-                    print(f"  total:      {timer_save.elapsed(): .6f}s")
-                    print(f"  to_json:    {timer_to_json.elapsed(): .6f}s")
-                    print(f"  json_write: {timer_json_write.elapsed(): .6f}s")
-                    print(f"  files:      {timer_files.elapsed(): .6f}s")
-
-            except Exception as e:
-                raise e
-        else:
+        try:
+            self.create_dirs()
+        except (OSError, NotADirectoryError) as e:
             raise RuntimeError(
-                'An error occurred while creating Model directories, unable to save "polychron_model.json"'
+                f'Unable to save "polychron_model.json", an error occurred while creating Model directories: {e}'
+            )
+
+        try:
+            timer_save = MonotonicTimer().start()
+
+            # create the representation of the Model to be saved to disk
+            timer_to_json = MonotonicTimer().start()
+            json_s = self.to_json(pretty=True)
+            timer_to_json.stop()
+
+            # Save the json representation of this object to disk
+            timer_json_write = MonotonicTimer().start()
+            json_path = self.get_python_only_directory() / "polychron_model.json"
+            with open(json_path, "w") as f:
+                f.write(json_s)
+            timer_json_write.stop()
+
+            # Create / Copy other files to the correct location
+            timer_files = MonotonicTimer().start()
+            # Save the delete contexts metadata to the working directory (superfluos)
+            self.save_deleted_contexts()
+
+            # Ensure the "saved" versions of files are up to date.
+            # Prepare a dictionary of per-output location files to copy form the working dir.
+            files_to_copy = {
+                self.get_chronological_graph_directory(): [
+                    "fi_new_chrono.png",
+                    "fi_new_chrono.svg",
+                    "fi_new_chrono",
+                    "testdag_chrono.png",
+                ],
+                self.get_stratigraphic_graph_directory(): [
+                    "fi_new.png",
+                    "fi_new.svg",
+                    "fi_new",
+                    "testdag.png",
+                    "deleted_contexts_meta",
+                ],
+                self.get_mcmc_results_directory(): ["full_results_df", "key_ref.csv", "context_no.csv"],
+                self.get_python_only_directory(): ["polychron_mcmc_data.json"],
+            }
+            # Iterate the per output directory files, copying files if they exist and copying is required
+            for dst_dir, filenames in files_to_copy.items():
+                for filename in filenames:
+                    src = self.get_working_directory() / filename
+                    dst = dst_dir / filename
+                    # Only copy the file, if the src exists and is not the same as the dst file
+                    if src.is_file() and (not dst.is_file() or not filecmp.cmp(src, dst, shallow=True)):
+                        shutil.copy2(src, dst)
+            timer_files.stop()
+
+            # Stop the timer and report timing if verbose
+            timer_save.stop()
+            if get_config().verbose:
+                print("Timing - Model.save:")
+                print(f"  total:      {timer_save.elapsed(): .6f}s")
+                print(f"  to_json:    {timer_to_json.elapsed(): .6f}s")
+                print(f"  json_write: {timer_json_write.elapsed(): .6f}s")
+                print(f"  files:      {timer_files.elapsed(): .6f}s")
+
+        except Exception as e:
+            raise RuntimeError(
+                f'Unable to save "polychron_model.json", an error occurred while creating Model directories: {e}'
             )
 
     @classmethod
@@ -422,7 +426,7 @@ class Model:
 
         Raises:
             RuntimeWarning: when the model could not be loaded, but in a recoverable way. I.e. the directory exits but no files are contained (so allow the model to be "loaded")
-            RuntimeError: when the model could not be loaded, but use of this model directory should be prevented?
+            RuntimeError: when the model could not be loaded, and the error cannot be recovered from within PolyChron. I.e. the json file is invalid/corrupt
         """
 
         # Ensure required files/folders are present
@@ -441,21 +445,30 @@ class Model:
         # Attempt to open the Model json file, building an instance of Model
         with open(model_json_path, "r") as f:
             timer_load_json = MonotonicTimer().start()
-            data = json.load(f)
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError as e:
+                raise RuntimeError(f"Invalid JSON file '{model_json_path}': {e}")
             timer_load_json.stop()
 
             timer_process = MonotonicTimer().start()
 
             # Raise an excpetion if required keys are missing
             if "polychron_version" not in data:
-                raise RuntimeError("Required key 'polychron_version' missing from '{json_path}'")
+                raise RuntimeError(f"Required key 'polychron_version' missing from '{model_json_path}'")
             if "model" not in data:
-                raise RuntimeError("Required key 'model' missing from '{json_path}'")
+                raise RuntimeError(f"Required key 'model' missing from '{model_json_path}'")
 
             model_data = data["model"]
 
-            # Handle version specific loading requiremetns. I.e. renaming members, or changing types.
-            file_version = Version(data["polychron_version"])
+            # Raise an exception if the polychron_version is not a string, or is not a valid python version number
+            if not isinstance(data["polychron_version"], str):
+                raise RuntimeError(f"'polychron_version' must be a string, not {type(data['polychron_version'])}")
+            try:
+                file_version = Version(data["polychron_version"])
+            except Exception:
+                raise RuntimeError(f"'polychron_version': '{data['polychron_version']}' is not a valid version number")
+            # Handle version specific loading requirements. I.e. renaming members, or changing types.
             if file_version >= Version("0.2.0") and file_version < Version("0.3.0"):
                 pass
 
@@ -500,6 +513,8 @@ class Model:
                 del model_data[k]
 
             # Overwrite certain elements, i.e the path (in case the model fields have been copied), but the path was included in the save file
+            if "name" not in model_data:
+                model_data["name"] = str(path.name)
             model_data["path"] = path
 
             # Ensure that some elements are not stored, if they are explicitly handled otherwise
@@ -538,45 +553,47 @@ class Model:
         # If this point is reached, an error occurred and should have be propagated
         return None
 
-    def create_dirs(self) -> bool:
-        """Create the expected directories for this model, including wokring directories.
+    def create_dirs(self) -> None:
+        """Create the expected directories for this model, including working directories.
 
-        Returns:
-            Boolean indicating success of directory creation
+        Formerly part of `load_Window.create_file`, `popupWindow9.make_directories` & `popupWindow10.make_directories`
 
-        Formerly part of load_Window.create_file, popupWindow9.make_directories & popupWindow10.make_directories"""
+        Raises:
+            OSError: Propagated from `pathlib.Path.mkdir` if an OSError occurred during directory creation
+            NotADirectoryError: Propagated from `pathlib.Path.mkdir` if any ancestors within the path are not a directory
+        """
 
-        try:
-            # Ensure the model (and implicitly project) directory exists
-            self.path.mkdir(parents=True, exist_ok=True)
-            # Create each expected child directory.
-            expected_model_dirs = [
-                self.get_stratigraphic_graph_directory(),
-                self.get_chronological_graph_directory(),
-                self.get_mcmc_results_directory(),
-                self.get_python_only_directory(),
-                self.get_working_directory(),
-            ]
-            for path in expected_model_dirs:
-                path.mkdir(parents=True, exist_ok=True)
+        # Ensure the model (and implicitly project) directory exists
+        self.path.mkdir(parents=True, exist_ok=True)
+        # Create each expected child directory.
+        expected_model_dirs = [
+            self.get_stratigraphic_graph_directory(),
+            self.get_chronological_graph_directory(),
+            self.get_mcmc_results_directory(),
+            self.get_python_only_directory(),
+            self.get_working_directory(),
+        ]
+        for path in expected_model_dirs:
+            path.mkdir(parents=True, exist_ok=True)
 
-            # Change the working dir to the model directory.
-            os.chdir(self.path)
-
-        except Exception as e:
-            print(e, file=sys.stderr)
-            return False
-        return True
+        # Change the working dir to the model directory.
+        os.chdir(self.path)
 
     def save_deleted_contexts(self) -> None:
         """Save the delete contexts metadata to disk
 
-        Formerly StartPage.tree2, in save_state_1
-        """
+        Formerly `StartPage.tree2`, in `save_state_1`
 
+        Raises:
+            OSError: if any OS errors occur during csv writing (e.g. if the disk is full)
+        """
+        # Prepare the CSV
         cols = ("context", "Reason for deleting")
         rows = [[x[0], x[1]] for x in self.deleted_nodes]
         df = pd.DataFrame(rows, columns=cols)
+        # Ensure output directory exists
+        self.create_dirs()
+        # Write csv to disk, which may raise OSError (e.g. if disk is full)
         path = self.get_working_directory() / "deleted_contexts_meta"
         df.to_csv(path)
 
@@ -601,7 +618,7 @@ class Model:
         for i in range(len(self.stratigraphic_df)):
             a = tuple(self.stratigraphic_df.iloc[i, :])
             if not pd.isna(a[1]):
-                edges.append(a)
+                edges.append(a[:2])
         G.add_edges_from(edges, arrowhead="none")
         self.stratigraphic_dag = G
 
@@ -704,7 +721,7 @@ class Model:
     def __render_strat_graph_phase(self) -> None:
         """Render the stratigraphic graph, with phasing mutating the Model state
 
-        Formerly imgrender_phase
+        Formerly `imgrender_phase`
         """
         workdir = self.get_working_directory()
         workdir.mkdir(parents=True, exist_ok=True)
@@ -718,14 +735,15 @@ class Model:
         textfile = open(workdir / "fi_new.txt", "w")
         textfile.write(new_string)
         textfile.close()
-        (self.stratigraphic_dag,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")
-        self.stratigraphic_dag.write_png(workdir / "test.png")
+        # Note: This previously set self.stratigraphic_dag to a pydot.Dot, rather than an nx.DiGraph which is expected elsewhere. This may need further testing.
+        (grouped_stratigraphic_dag,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")
+        grouped_stratigraphic_dag.write_png(workdir / "test.png")
         inp = Image.open(workdir / "test.png")
         inp = trim(inp)
         # Call the real .tkraise
         inp.save(workdir / "testdag.png")
         self.stratigraphic_image = Image.open(workdir / "testdag.png")
-        self.node_coords_and_scale = node_coords_fromjson(self.stratigraphic_dag)
+        self.node_coords_and_scale = node_coords_fromjson(grouped_stratigraphic_dag)
 
     def __render_resid_or_intru_dag(self) -> None:
         """Render the stratigraphic graph mutating the Model state
@@ -733,7 +751,7 @@ class Model:
         Formerly `imgrender`
         """
         workdir = self.get_working_directory() / "resid_or_intru"
-        workdir.mkdir(exist_ok=True)
+        workdir.mkdir(exist_ok=True, parents=True)
 
         self.resid_or_intru_dag.graph["graph"] = {"splines": "ortho"}
         # Ensure the graph is compatible with networkx < 3.4 nx_pydot
@@ -753,7 +771,7 @@ class Model:
         Formerly `imgrender_phase`
         """
         workdir = self.get_working_directory() / "resid_or_intru"
-        workdir.mkdir(exist_ok=True)
+        workdir.mkdir(exist_ok=True, parents=True)
         # Ensure the graph is compatible with networkx < 3.4 nx_pydot
         self.resid_or_intru_dag = remove_invalid_attributes_networkx_lt_3_4(self.resid_or_intru_dag)
         write_dot(self.resid_or_intru_dag, workdir / "fi_new.txt")
@@ -776,6 +794,9 @@ class Model:
         """Render the chronological graph as a PNG and an SVG, mutating the Model state
 
         Formerly `imgrender2`
+
+        Todo:
+            - This should not require fi_new_chrono to exist on disk, but instead should create it from the chronological_dag if it exists?
         """
         workdir = self.get_working_directory()
         workdir.mkdir(parents=True, exist_ok=True)
@@ -804,7 +825,11 @@ class Model:
         workdir.mkdir(parents=True, exist_ok=True)
         png_path = workdir / "testdag.png"
         if png_path.is_file():
-            self.stratigraphic_image = Image.open(png_path)
+            try:
+                self.stratigraphic_image = Image.open(png_path)
+            except (FileNotFoundError, UnidentifiedImageError):
+                print("Warning: unable to open Image '{png_path}'\n  {e}", file=sys.stderr)
+                self.stratigraphic_image = None
 
     def reopen_chronological_image(self) -> None:
         """Re-open the chrono image from disk
@@ -816,7 +841,11 @@ class Model:
         workdir = self.get_working_directory()
         png_path = workdir / "testdag_chrono.png"
         if png_path.is_file():
-            self.chronological_image = Image.open(png_path)
+            try:
+                self.chronological_image = Image.open(png_path)
+            except (FileNotFoundError, UnidentifiedImageError):
+                print("Warning: unable to open Image '{png_path}'\n  {e}", file=sys.stderr)
+                self.chronological_image = None
 
     def record_deleted_node(self, context: str, reason: Optional[str] = None) -> None:
         """Method to add a node to the list of deleted nodes
@@ -837,7 +866,20 @@ class Model:
         """
         self.deleted_edges.append((context_a, context_b, reason))
 
-    def MCMC_func(self) -> Tuple[Any, Any, Any, Any, Any, Any, Any, Any, Any, Any]:
+    def MCMC_func(
+        self,
+    ) -> Tuple[
+        List[str],
+        List[List[float]],
+        List[List[float]],
+        List[str],
+        int,
+        int,
+        List[List[float]],
+        List[List[float]],
+        Dict[str[List[float]]],
+        Dict[str[List[float]]],
+    ]:
         """run the mcmc calibration on the current model, returning output values without (significantly) mutating state
 
         gathers all the inputs for the mcmc module and then runs it and returns resuslts dictionaries
