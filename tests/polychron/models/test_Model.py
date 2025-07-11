@@ -335,11 +335,30 @@ class TestModel:
             mock_render.assert_not_called()
             mock_render_phase.assert_called_once()
 
-    @pytest.mark.skip("test_render_resid_or_intru_dag not implemented")
     def test_render_resid_or_intru_dag(self, tmp_path: pathlib.Path):
-        """Test render_resid_or_intru_dag behaves as expected for a range of inputs"""
-        # m = Model("foo", tmp_path / "foo")
-        pass
+        """Test test_render_resid_or_intru_dag calls __render_resid_or_intru_dag_phase or __render_resid_or_intru_dag, using mocking/patching to just ensure the correct branch is taken."""
+        # Create a model
+        m = Model("foo", tmp_path / "foo")
+        # The model is not in grouped/phased rendering mode, so render_strat_graph should have been called
+        assert not m.grouped_rendering
+        with (
+            patch("polychron.models.Model.Model._Model__render_resid_or_intru_dag_phase") as mock_render_phase,
+            patch("polychron.models.Model.Model._Model__render_resid_or_intru_dag") as mock_render,
+        ):
+            m.render_resid_or_intru_dag()
+            mock_render.assert_called_once()
+            mock_render_phase.assert_not_called()
+
+        # Switch to grouped/phased rendering, and the phased version should be called
+        m.grouped_rendering = True
+        assert m.grouped_rendering
+        with (
+            patch("polychron.models.Model.Model._Model__render_resid_or_intru_dag_phase") as mock_render_phase,
+            patch("polychron.models.Model.Model._Model__render_resid_or_intru_dag") as mock_render,
+        ):
+            m.render_resid_or_intru_dag()
+            mock_render.assert_not_called()
+            mock_render_phase.assert_called_once()
 
     @pytest.mark.skip("test___render_strat_graph not implemented")
     def test___render_strat_graph(self, tmp_path: pathlib.Path):
