@@ -2,10 +2,17 @@
 
 ![PolyChron Logo](./src/polychron/resources/logo.png)
 
+[![Tests](https://github.com/bryonymoody/PolyChron/actions/workflows/tests.yml/badge.svg)](https://github.com/bryonymoody/PolyChron/actions/workflows/tests.yml)
+[![Docs](https://github.com/bryonymoody/PolyChron/actions/workflows/docs.yml/badge.svg)](https://github.com/bryonymoody/PolyChron/actions/workflows/docs.yml)
+[![Lint](https://github.com/bryonymoody/PolyChron/actions/workflows/lint.yml/badge.svg)](https://github.com/bryonymoody/PolyChron/actions/workflows/lint.yml)
+[![Format](https://github.com/bryonymoody/PolyChron/actions/workflows/format.yml/badge.svg)](https://github.com/bryonymoody/PolyChron/actions/workflows/format.yml)
+
+
 PolyChron is prototype software required to be installed locally on a user’s machine, allowing users to produce multiple chronological models.
 
 In addition, it allows the user to obtain graph theoretic representations
 of their stratigraphic sequences and prior knowledge within a given hierarchical Bayesian chronological model and save the raw digital data (as collected on-site) along with graph theoretic representations of their models, resulting outputs and supplementary notes produced during such modelling on their machine, thus facilitating future archiving of a complete site archive.
+
 
 ## Installation
 

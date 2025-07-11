@@ -1,9 +1,13 @@
 name: Docs
 
 on:
-  # on push to any branch
+  # Run on push events for the main branch
   push:
-  # On workflow dispatch events (i.e. can manually run)
+    branches:
+      - main
+  # Run on pull request events
+  pull_request:
+  # Run when manually invoked
   workflow_dispatch:
 
 jobs:
