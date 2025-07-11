@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import pathlib
+from typing import Type
 from unittest.mock import patch
 
 import networkx as nx
@@ -383,17 +384,252 @@ class TestModel:
             assert (u, v) in expected_edges
             assert attribs["arrowhead"] == "none"
 
-    @pytest.mark.skip("test_set_group_relationship_df not implemented")
-    def test_set_group_relationship_df(self, tmp_path: pathlib.Path):
-        """Test set_group_relationship_df behaves as expected for a range of inputs"""
-        # m = Model("foo", tmp_path / "foo")
-        pass
+    @pytest.mark.parametrize(
+        ("data_or_path", "num_with_attrib", "exception_t"),
+        [
+            # Empty dataframe, triggers an exception (missing columns)
+            ({}, 0, KeyError),
+            # Valid dataframe, with changes
+            ("rcd-csv/simple.csv", 4, None),
+            # Dataframe with partial information
+            ({"context": ["a", "b"], "date": [3400, 3300], "error": [80, 75]}, 2, None),
+            # Dataframe with unknown context
+            pytest.param(
+                {
+                    "context": ["a", "b", "c", "d", "e"],
+                    "date": [3400, 3300, 3250, 3225, 3333],
+                    "error": [80, 75, 80, 75, 50],
+                },
+                4,
+                None,
+                marks=pytest.mark.xfail(reason="see https://github.com/bryonymoody/PolyChron/issues/211"),
+            ),
+        ],
+    )
+    def test_set_radiocarbon_df(
+        self,
+        data_or_path: dict[str, list] | str,
+        num_with_attrib: int,
+        exception_t: Type[Exception] | None,
+        tmp_path: pathlib.Path,
+        test_data_path: pathlib.Path,
+    ):
+        """Test set_radiocarbon_df mutates Model instances as expected.
 
-    @pytest.mark.skip("test_set_context_equality_df not implemented")
-    def test_set_context_equality_df(self, tmp_path: pathlib.Path):
-        """Test set_context_equality_df behaves as expected for a range of inputs"""
-        # m = Model("foo", tmp_path / "foo")
-        pass
+        This is also indirectly covered by TestModelPresenter.test_open_scientific_dating_file
+
+        Todo:
+            - Expand the range of inputs covered by this test, including rows which are for contexts not in the strat_df, which should silently pass.
+        """
+        # Construct the model instance
+        m = Model("foo", tmp_path / "foo")
+
+        # Add a simple stratigraphic graph to the model
+        strat_df = pd.read_csv(test_data_path / "strat-csv" / "simple.csv", dtype=str)
+        m.set_stratigraphic_df(strat_df)
+
+        # Build the parametrised dataframe
+        if isinstance(data_or_path, str):
+            input_df = pd.read_csv(test_data_path / data_or_path, dtype=str)
+        else:
+            input_df = pd.DataFrame(data_or_path, dtype=str)
+
+        # call set_radiocarbon_df potentially expecting an exception
+        if exception_t is None:
+            m.set_radiocarbon_df(input_df)
+            # Check how many nodes have a determination attribute set
+            determinations = [
+                det
+                for _, det in m.stratigraphic_dag.nodes("Determination")
+                if det[0] is not None and det[1] is not None
+            ]
+            assert len(determinations) == num_with_attrib
+        else:
+            with pytest.raises(exception_t, match=None):
+                m.set_radiocarbon_df(input_df)
+
+    @pytest.mark.parametrize(
+        ("data_or_path", "num_with_attrib", "exception_t"),
+        [
+            # Empty dataframe, triggers an exception (missing columns)
+            ({}, 0, KeyError),
+            # Valid dataframe, with changes
+            ("context-grouping-csv/simple.csv", 4, None),
+            # Dataframe with partial information
+            ({"context": ["a", "b"], "Group": [1, 2]}, 2, None),
+            # Dataframe with unknown context
+            pytest.param(
+                {
+                    "context": ["a", "b", "c", "d", "e"],
+                    "Group": [1, 2, 1, 2, 1],
+                },
+                4,
+                None,
+                marks=pytest.mark.xfail(reason="see https://github.com/bryonymoody/PolyChron/issues/211"),
+            ),
+        ],
+    )
+    def test_set_group_df(
+        self,
+        data_or_path: dict[str, list] | str,
+        num_with_attrib: int,
+        exception_t: Type[Exception] | None,
+        tmp_path: pathlib.Path,
+        test_data_path: pathlib.Path,
+    ):
+        """Test set_group_df mutates Model instances as expected.
+
+        This is also indirectly covered by TestModelPresenter.test_open_context_grouping_file
+
+        Todo:
+            - Expand the range of inputs covered by this test, including group dataframes which include unknown contexts
+        """
+        # Construct the model instance
+        m = Model("foo", tmp_path / "foo")
+
+        # Add a simple stratigraphic graph to the model
+        strat_df = pd.read_csv(test_data_path / "strat-csv" / "simple.csv", dtype=str)
+        m.set_stratigraphic_df(strat_df)
+
+        # Build the parametrised dataframe
+        if isinstance(data_or_path, str):
+            input_df = pd.read_csv(test_data_path / data_or_path, dtype=str)
+        else:
+            input_df = pd.DataFrame(data_or_path, dtype=str)
+
+        # call set_group_df potentially expecting an exception
+        if exception_t is None:
+            m.set_group_df(input_df)
+            # Check how many nodes have a determination attribute set
+            groups = [g for _, g in m.stratigraphic_dag.nodes("Group") if g is not None]
+            assert len(groups) == num_with_attrib
+        else:
+            with pytest.raises(exception_t, match=None):
+                m.set_group_df(input_df)
+
+    @pytest.mark.parametrize(
+        ("data_or_path", "input_relationships", "exception_t"),
+        [
+            # Empty dataframe, this silently passes
+            ({}, [], None),
+            # Valid dataframe, with changes
+            ("group-relationships-csv/simple.csv", [("1", "2"), ("2", "3")], None),
+            # Dataframe with partial information
+            ({"above": ["1"], "below": ["2"]}, [("1", "2")], None),
+            # Dataframe with unknown group
+            (
+                {
+                    "above": ["1", "2", "3"],
+                    "below": ["2", "3", "4"],
+                },
+                [("1", "2"), ("2", "3"), ("3", "4")],
+                None,
+            ),
+        ],
+    )
+    def test_set_group_relationship_df(
+        self,
+        data_or_path: dict[str, list] | str,
+        input_relationships: list[tuple[str, str]],
+        exception_t: Type[Exception] | None,
+        tmp_path: pathlib.Path,
+        test_data_path: pathlib.Path,
+    ):
+        """Test set_group_relationship_df behaves as expected for a range of inputs.
+
+        This is also indirectly covered by TestModelPresenter.test_open_group_relationship_file
+
+        Todo:
+            - Expand the range of inputs covered by this test
+            - Ensure the provided dataframe has required columns
+            - Ensure the provided list of group relationships matches the values in the csv
+        """
+        # Construct the model instance
+        m = Model("foo", tmp_path / "foo")
+
+        # Add a simple stratigraphic graph to the model
+        strat_df = pd.read_csv(test_data_path / "strat-csv" / "simple.csv", dtype=str)
+        m.set_stratigraphic_df(strat_df)
+
+        # Build the parametrised dataframe
+        if isinstance(data_or_path, str):
+            input_df = pd.read_csv(test_data_path / data_or_path, dtype=str)
+        else:
+            input_df = pd.DataFrame(data_or_path, dtype=str)
+
+        input_relationships = []
+
+        # call set_group_relationship_df potentially expecting an exception
+        if exception_t is None:
+            m.set_group_relationship_df(input_df, input_relationships)
+            # Assert the stored dataframe matches the provided frame
+            pd.testing.assert_frame_equal(m.group_relationship_df, input_df)
+            # Assert that the stored list is as expected
+            assert m.group_relationships == input_relationships
+        else:
+            with pytest.raises(exception_t, match=None):
+                m.set_group_relationship_df(input_df, input_relationships)
+
+    @pytest.mark.parametrize(
+        ("data_or_path", "expect_num_nodes", "exception_t"),
+        [
+            # Empty dataframe, this currently fails with an IndexError.
+            ({}, 0, IndexError),
+            # Valid dataframe, with changes
+            ("context-equality-csv/simple.csv", 3, None),
+            # Dataframe with the same pair in both directions. This currently errors
+            ("context-equality-csv/reversed.csv", 3, KeyError),
+            # Multiple replacements, using the orignal context name. Currently an error, but ideally should work
+            pytest.param(
+                "context-equality-csv/multiple-combinations-original-name.csv",
+                2,
+                None,
+                marks=pytest.mark.xfail(reason="See https://github.com/bryonymoody/PolyChron/issues/118"),
+            ),
+            # Multiple replacements, using the new name
+            ("context-equality-csv/multiple-combinations-combined-name.csv", 2, None),
+        ],
+    )
+    def test_set_context_equality_df(
+        self,
+        data_or_path: dict[str, list] | str,
+        expect_num_nodes: int,
+        exception_t: Type[Exception] | None,
+        tmp_path: pathlib.Path,
+        test_data_path: pathlib.Path,
+    ):
+        """Test set_context_equality_df behaves as expected for a range of inputs
+
+
+        This has some coverage via `TestModelPresenter.test_open_context_equalities_file`
+
+        Todo:
+            - Expand the range of inputs this is tested over.
+        """
+        # Construct the model instance
+        m = Model("foo", tmp_path / "foo")
+
+        # Add a simple stratigraphic graph to the model
+        strat_df = pd.read_csv(test_data_path / "strat-csv" / "simple.csv", dtype=str)
+        m.set_stratigraphic_df(strat_df)
+
+        # Build the parametrised dataframe
+        if isinstance(data_or_path, str):
+            input_df = pd.read_csv(test_data_path / data_or_path, dtype=str)
+        else:
+            input_df = pd.DataFrame(data_or_path, dtype=str)
+
+        # call set_context_equality_df potentially expecting an exception
+        if exception_t is None:
+            m.set_context_equality_df(input_df)
+            # Ensure the stored dataframe matches
+            pd.testing.assert_frame_equal(m.context_equality_df, input_df)
+            # Ensure the number of nodes matches the new expectations
+            assert m.stratigraphic_dag.number_of_nodes() == expect_num_nodes
+
+        else:
+            with pytest.raises(exception_t, match=None):
+                m.set_context_equality_df(input_df)
 
     def test_render_strat_graph(self, tmp_path: pathlib.Path):
         """Test render_strat_graph calls __render_strat_graph_phase or __render_strat_graph, using mocking/patching to just ensure the correct branch is taken."""
