@@ -426,7 +426,7 @@ class Model:
 
         Raises:
             RuntimeWarning: when the model could not be loaded, but in a recoverable way. I.e. the directory exits but no files are contained (so allow the model to be "loaded")
-            RuntimeError: when the model could not be loaded, but use of this model directory should be prevented?
+            RuntimeError: when the model could not be loaded, and the error cannot be recovered from within PolyChron. I.e. the json file is invalid/corrupt
         """
 
         # Ensure required files/folders are present
@@ -445,21 +445,30 @@ class Model:
         # Attempt to open the Model json file, building an instance of Model
         with open(model_json_path, "r") as f:
             timer_load_json = MonotonicTimer().start()
-            data = json.load(f)
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError as e:
+                raise RuntimeError(f"Invalid JSON file '{model_json_path}': {e}")
             timer_load_json.stop()
 
             timer_process = MonotonicTimer().start()
 
             # Raise an excpetion if required keys are missing
             if "polychron_version" not in data:
-                raise RuntimeError("Required key 'polychron_version' missing from '{json_path}'")
+                raise RuntimeError(f"Required key 'polychron_version' missing from '{model_json_path}'")
             if "model" not in data:
-                raise RuntimeError("Required key 'model' missing from '{json_path}'")
+                raise RuntimeError(f"Required key 'model' missing from '{model_json_path}'")
 
             model_data = data["model"]
 
+            # Raise an exception if the polychron_version is not a string, or is not a valid python version number
+            if not isinstance(data["polychron_version"], str):
+                raise RuntimeError(f"'polychron_version' must be a string, not {type(data['polychron_version'])}")
+            try:
+                file_version = Version(data["polychron_version"])
+            except Exception:
+                raise RuntimeError(f"'polychron_version': '{data['polychron_version']}' is not a valid version number")
             # Handle version specific loading requirements. I.e. renaming members, or changing types.
-            file_version = Version(data["polychron_version"])
             if file_version >= Version("0.2.0") and file_version < Version("0.3.0"):
                 pass
 
@@ -504,6 +513,8 @@ class Model:
                 del model_data[k]
 
             # Overwrite certain elements, i.e the path (in case the model fields have been copied), but the path was included in the save file
+            if "name" not in model_data:
+                model_data["name"] = str(path.name)
             model_data["path"] = path
 
             # Ensure that some elements are not stored, if they are explicitly handled otherwise
