@@ -1,0 +1,93 @@
+name: Tests
+# CI Workflow which installs and tests polychron on a range of operating systems and python versions
+
+on:
+  # Run on push events for the main branch
+  push:
+    branches:
+      - main
+  # Run on pull request events
+  pull_request:
+  # Run when manually invoked
+  workflow_dispatch:
+
+jobs:
+  # install and test polychron, using the dynamic matrix
+  install-and-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Run on a multiplicative matrix of OS and python versions
+        os:
+          - ubuntu-24.04
+          - macos-15
+          - windows-2025
+        python:
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+        
+        include:
+          # Include a single python version on ARM linux
+          - os: ubuntu-24.04-arm
+            python: "3.12"
+
+    env:
+      # DISPLAY env variable for xvfb / tkinter on linux
+      DISPLAY: ":99.0"
+
+    # Prevent the job from running for 6 hours, in case a gui window was opened. This may need increasing in the future
+    timeout-minutes: 30
+
+    steps:
+      # Checkout this repository
+      - uses: actions/checkout@v4
+
+      # Select the appropriate python version
+      - name: Set up Python ${{ matrix.python }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: 'pip'
+
+      # Install and setup dependencies (Linux)
+      - name: Install non-python dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get -y install graphviz xvfb
+          sudo Xvfb $DISPLAY -screen 0 1920x1080x24 > /dev/null 2>&1 &
+
+      # Install and setup dependencies (macOS)
+      - name: Install non-python dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install graphviz
+
+      # Install and setup dependencies (Windows)
+      - name: Install non-python dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: choco install graphviz --no-progress -y
+
+      # Install the package into the current python environment
+      - name: Install polychron
+        run: |
+          python3 -m pip install -U pip
+          python3 -m pip install .
+
+      # Run the polychron module to ensure it is installed. use --help to prevent gui hanging
+      - name: Run polychron as a module
+        run: python3 -m polychron --help
+
+      # Run the polychron binary to ensure it is installed. use --version to prevent gui hanging
+      - name: Run polychron via the executable script
+        run: polychron --version
+
+      # Install the package into the current python environment with the test extras
+      - name: Install polychron with extras
+        run: python3 -m pip install .[test]
+
+      # Run the test suite
+      - name: Run pytest
+        run: python3 -m pytest
