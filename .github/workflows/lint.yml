@@ -1,9 +1,13 @@
 name: Lint
 
 on:
-  # on push to any branch
+  # Run when on push events to main
   push:
-  # On workflow dispatch events (i.e. can manually run)
+    branches:
+      - main
+  # Run for pull requests (open, sync)
+  pull_request:
+  # Run when manually invoked
   workflow_dispatch:
 
 jobs:
