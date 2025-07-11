@@ -136,12 +136,72 @@ class TestModel:
         m = Model("foo", tmp_path / "foo")
         m.save()
 
-    @pytest.mark.skip(reason="test_load_from_disk not implemented")
-    def test_load_from_disk(self, tmp_path: pathlib.Path):
-        """Test the load_from_disk method behaves as expected for a range of json files"""
-        m = Model.load_from_disk(tmp_path / "polychron_model.json")
-        assert m.name == "@todo"
-        # ...
+    def test_load_from_disk(self, test_data_path: pathlib.Path, capsys: pytest.CaptureFixture):
+        """Test the load_from_disk method behaves as expected for a range of json files
+
+        Todo:
+            - Add test files with more-complete json files
+            - Add a test which includes MCMCData json"""
+        test_json_dir = test_data_path / "json"
+        # Test that a minimal valid multi-line polychron_model.json is successfully loaded
+        m = Model.load_from_disk(test_json_dir / "minimal")
+        assert m.name == "foo"
+        assert m.path == test_json_dir / "minimal"
+
+        # Test that a minimal valid single-line polychron_model.json is successfully loaded
+        m = Model.load_from_disk(test_json_dir / "minimal-single-line")
+        assert m.name == "foo"
+        assert m.path == test_json_dir / "minimal-single-line"
+
+        # If the directory does not contain a polychron_model.json, return a (almost) default Model
+        m = Model.load_from_disk(test_json_dir / "empty")
+        assert m.name == "empty"
+
+        # If polychron_model.json is a json object, with required keys but the 'model' does not contain a 'name', the directory name should be used
+        m = Model.load_from_disk(test_json_dir / "empty-model")
+        assert m.name == "empty-model"
+
+        # if an unknown key is present, in the main json dict object, it should proceed silently
+        capsys.readouterr()
+        m = Model.load_from_disk(test_json_dir / "unknown-key")
+        captured = capsys.readouterr()
+        assert len(captured.err) == 0
+
+        # If the model object has unknown keys, a warning should be emitted to stderr
+        capsys.readouterr()
+        m = Model.load_from_disk(test_json_dir / "unknown-model-member")
+        captured = capsys.readouterr()
+        assert len(captured.err) > 0
+
+        # --- check a range of model directories which are expected to fail in some way.
+
+        # If polychron_model.json is an empty file, an invalid json file exception should be raised
+        with pytest.raises(RuntimeError, match="Invalid JSON file"):
+            m = Model.load_from_disk(test_json_dir / "empty-file")
+
+        # If polychron_model.json is an invalid JSON file an invalid json file exception should be raised
+        with pytest.raises(RuntimeError, match="Invalid JSON file"):
+            m = Model.load_from_disk(test_json_dir / "invalid-json")
+
+        # If polychron_model.json contain an empty dictionary, a missing key exception should be raised
+        with pytest.raises(RuntimeError, match="Required key 'polychron_version' missing from"):
+            Model.load_from_disk(test_json_dir / "empty-dict")
+
+        # If polychron_model.json is a json object but does not contain the 'polychron_version', a missing key exception should be raised
+        with pytest.raises(RuntimeError, match="Required key 'polychron_version' missing from"):
+            Model.load_from_disk(test_json_dir / "no-version")
+
+        # If polychron_model.json is a json object but does not contain the 'model', a missing key exception should be raised
+        with pytest.raises(RuntimeError, match="Required key 'model' missing from"):
+            Model.load_from_disk(test_json_dir / "no-model")
+
+        # If the polychron_version is not a string, an error should be raised
+        with pytest.raises(RuntimeError, match="'polychron_version' must be a string"):
+            m = Model.load_from_disk(test_json_dir / "invalid-version")
+
+        # If the polychron_version is not a valid version string, an error should be raised
+        with pytest.raises(RuntimeError, match="is not a valid version number"):
+            m = Model.load_from_disk(test_json_dir / "invalid-version-string")
 
     def test_create_dirs(self, tmp_path: pathlib.Path):
         """Test the create_dirs method behaves as expected for a range of Models"""

@@ -1,0 +1,7 @@
+{
+    "polychron_version": "0.2.0",
+    "model": {
+        "name": "foo"
+    },
+    "foo": "bar"
+}
