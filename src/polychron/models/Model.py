@@ -256,7 +256,7 @@ class Model:
     """
 
     __calibration: Optional[InterpolatedRCDCalibrationCurve] = field(default=None, init=False, repr=False)
-    """Interpolated RCD calibration curve object, which is storedin a member variable so it is loaded once and only once"""
+    """Interpolated RCD calibration curve object, which is stored in a member variable so it is loaded once and only once"""
 
     def get_working_directory(self) -> pathlib.Path:
         """Get the working directory to be used for dynamically created files
@@ -299,7 +299,7 @@ class Model:
 
     def to_json(self, pretty: bool = False):
         """Serialise this object to JSON, excluding ephemeral members"""
-        # Create a dictionary contianing a subset of this instance's member variables, converted to formats which can be json serialised.
+        # Create a dictionary containing a subset of this instance's member variables, converted to formats which can be json serialised.
         data = {}
         exclude_keys = [
             "path",  # Don't include the path, so models can be trivially copied on disk
@@ -343,15 +343,15 @@ class Model:
         """Save the current state of this model to disk at self.path
 
         Raises:
-            Exception: raised when any error occured during saving, with a message to present to the user
+            Exception: raised when any error occurred during saving, with a message to present to the user
         """
 
-        # Ensure directories requried exist
+        # Ensure directories required exist
         if self.create_dirs():
             try:
                 timer_save = MonotonicTimer().start()
 
-                # create the represenation of the Model to be saved to disk
+                # create the representation of the Model to be saved to disk
                 timer_to_json = MonotonicTimer().start()
                 json_s = self.to_json(pretty=True)
                 timer_to_json.stop()
@@ -369,7 +369,7 @@ class Model:
                 self.save_deleted_contexts()
 
                 # Ensure the "saved" versions of files are up to date.
-                # Prepare a dictionary of per-output location files to copy form the wokring dir.
+                # Prepare a dictionary of per-output location files to copy form the working dir.
                 files_to_copy = {
                     self.get_chronological_graph_directory(): [
                         "fi_new_chrono.png",
@@ -410,7 +410,7 @@ class Model:
                 raise e
         else:
             raise RuntimeError(
-                'An error occured while creating Model directories, unable to save "polychron_model.json"'
+                'An error occurred while creating Model directories, unable to save "polychron_model.json"'
             )
 
     @classmethod
@@ -461,7 +461,7 @@ class Model:
 
             # Convert certain values back based on the hint for the data type.
             cls_type_hints = get_type_hints(cls)
-            # Get the class initiaser parameters so non-init feilds can be discarded
+            # Get the class initialiser parameters so non-init fields can be discarded
             init_parameters = set(signature(cls.__init__).parameters.keys())
             init_parameters.remove("self")
             # Also build a list of keys to remove
@@ -499,10 +499,10 @@ class Model:
             for k in keys_to_remove:
                 del model_data[k]
 
-            # Overwrite certain elements, i.e the path (in case the model fiels have been copied), but the path was included in the save file
+            # Overwrite certain elements, i.e the path (in case the model fields have been copied), but the path was included in the save file
             model_data["path"] = path
 
-            # Ensure that some elements are not stored, if they are explictly handled otherwise
+            # Ensure that some elements are not stored, if they are explicitly handled otherwise
             if "mcmc_data" in model_data:
                 del model_data["mcmc_data"]
 
@@ -547,7 +547,7 @@ class Model:
         Formerly part of load_Window.create_file, popupWindow9.make_directories & popupWindow10.make_directories"""
 
         try:
-            # Ensure the model (and implictly project) directory exists
+            # Ensure the model (and implicitly project) directory exists
             self.path.mkdir(parents=True, exist_ok=True)
             # Create each expected child directory.
             expected_model_dirs = [
@@ -606,7 +606,7 @@ class Model:
         self.stratigraphic_dag = G
 
     def set_radiocarbon_df(self, df: pd.DataFrame) -> None:
-        """Prodivided a datframe containing radiocarbon dating infromation for contexts, store a copy of the dataframe and mutate the stratigraphic dag
+        """Provided a dataframe containing radiocarbon dating information for contexts, store a copy of the dataframe and mutate the stratigraphic dag
 
         Parameters:
             df (pd.Dataframe): dataframe containing radiocarbon dating information. Expected columns ["context", "date", "error"]
@@ -645,7 +645,7 @@ class Model:
         Columns names are not currently expected/used, but there must be atleast 2 columns.
 
         Parameters:
-            df (pd.DataFrame): A dataframe containinig context equality data.
+            df (pd.DataFrame): A dataframe containing context equality data.
         """
         # Store a copy of the dataframe
         self.context_equality_df = df.copy()
@@ -663,8 +663,8 @@ class Model:
             self.stratigraphic_dag = nx.relabel_nodes(self.stratigraphic_dag, mapping)
 
     def render_strat_graph(self) -> None:
-        """Render the sratigraphic graph as a png and svg, with or without phasing depending on model state. Also updates the locatison of each node via the svg"""
-        # Call the appropraite render_strat method, depending if the model is set up to render in phases or not.
+        """Render the stratigraphic graph as a png and svg, with or without phasing depending on model state. Also updates the location of each node via the svg"""
+        # Call the appropriate render_strat method, depending if the model is set up to render in phases or not.
         if self.grouped_rendering:
             self.__render_strat_graph_phase()
         else:

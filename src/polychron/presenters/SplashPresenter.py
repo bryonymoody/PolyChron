@@ -11,11 +11,11 @@ from .ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresent
 class SplashPresenter(FramePresenter[SplashView, ProjectSelection]):
     """Presenter for the Splash Frame, shown in the main view before a project has been loaded.
 
-    This exists soley to allow users who close the initial project selection page to re-open it.
+    This exists solely to allow users who close the initial project selection page to re-open it.
     """
 
     def __init__(self, mediator: Mediator, view: SplashView, model: ProjectSelection) -> None:
-        # Call the parent class' consturctor
+        # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
         self.child_presenter: ProjectSelectProcessPopupPresenter | None = None
@@ -33,7 +33,7 @@ class SplashPresenter(FramePresenter[SplashView, ProjectSelection]):
         pass
 
     def on_select_project(self) -> None:
-        """Function which is called when File > Select Project is selected. I.e. open the popup preesnter for selecting a project."""
+        """Function which is called when File > Select Project is selected. I.e. open the popup presenter for selecting a project."""
 
         # Instantiate the child presenter and view
         popup_presenter = ProjectSelectProcessPopupPresenter(

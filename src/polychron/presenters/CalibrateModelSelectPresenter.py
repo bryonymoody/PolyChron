@@ -7,7 +7,7 @@ from .PopupPresenter import PopupPresenter
 class CalibrateModelSelectPresenter(PopupPresenter[CalibrateModelSelectView, ProjectSelection]):
     """Presenter for selecting which models to calibrate, when multiple models are to be calibrated at once.
 
-    Formerly `popupWindow8`, used from "tool > Calibrate multiple projects from project"
+    Formerly `popupWindow8`, used from "tool > Calibrate multiple models from project"
     """
 
     def __init__(self, mediator: Mediator, view: CalibrateModelSelectView, model: ProjectSelection) -> None:

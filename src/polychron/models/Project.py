@@ -77,12 +77,12 @@ class Project:
 
         Raises:
             RuntimeError: if the model already exists or an invalid name is provided.
-            OSError: if the model directories could not be created, e.g. due to permissions or avialable space.
+            OSError: if the model directories could not be created, e.g. due to permissions or available space.
         """
 
         # Attempt to load the model with the provided name.
         existing_model = self.get_model(name)
-        # Raise an error if the model arlready exists
+        # Raise an error if the model already exists
         if existing_model is not None:
             raise RuntimeError(f"A model named '{name}' already exists at '{existing_model.path}'")
 
@@ -133,7 +133,7 @@ class Project:
             self.models[model.name] = model
 
         except Exception as e:
-            print(f"An exception occured when attempting to load {name}: {e}", file=sys.stderr)
+            print(f"An exception occurred when attempting to load {name}: {e}", file=sys.stderr)
             raise e
 
     def lazy_load(self) -> None:

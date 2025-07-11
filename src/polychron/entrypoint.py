@@ -45,7 +45,7 @@ def main() -> None:
     """Main method as the entry point for launching the GUI"""
     args = parse_cli()
 
-    # if the versbose flag was set, ensure it is reflected in the config object
+    # if the verbose flag was set, ensure it is reflected in the config object
     if args.verbose:
         config = get_config()
         config.verbose = True
@@ -56,7 +56,7 @@ def main() -> None:
         print_version()
         return
     else:
-        # Import and lauch the GUI via an instance of the GUIApp class
+        # Import and launch the GUI via an instance of the GUIApp class
         from .GUIApp import GUIApp
 
         GUIApp().launch(project_name=args.project, model_name=args.model)

@@ -12,7 +12,7 @@ class ProjectSelection:
     """A class containing a ProjectsDirectory object, and variables related to the currently selected project/model, and the next project/model to be slelected"""
 
     def __init__(self, projects_directory_path: pathlib.Path):
-        """Initailse an instance of the ProjectSelection class, using a projects directory from a specified path."""
+        """Initialise an instance of the ProjectSelection class, using a projects directory from a specified path."""
 
         # Expand ~ and any env vars in the provided path, in case they are in the config provided path
         projects_directory_path = pathlib.Path(os.path.expandvars(projects_directory_path.expanduser()))
@@ -45,7 +45,7 @@ class ProjectSelection:
         """
 
     @property
-    def projects_directiory(self) -> ProjectsDirectory:
+    def projects_directory(self) -> ProjectsDirectory:
         """Get (a ref to) the projects directory object
 
         No setter is provided.
@@ -137,7 +137,7 @@ class ProjectSelection:
 
     @property
     def using_save_as(self) -> bool:
-        """Flag indicating if the next model shoudl be copied from the current model or not."""
+        """Flag indicating if the next model should be copied from the current model or not."""
         return self.__using_save_as
 
     @using_save_as.setter
@@ -177,11 +177,11 @@ class ProjectSelection:
 
         # Get the existing or new project.
         # Any raised exceptions will be allowed to propagate upwards for presentation to the user
-        project = self.projects_directiory.get_or_create_project(self.next_project_name)
+        project = self.projects_directory.get_or_create_project(self.next_project_name)
 
         # Within that Project, get or create the model.
         # Any raised exceptions will be allowed to propagate upwards for presentation to the user
-        # Depedning on function parameters, try to load or create the model
+        # Depending on function parameters, try to load or create the model
         if load_ok and create_ok:
             project.get_or_create_model(self.next_model_name, copy_from)
         elif load_ok and not create_ok:
@@ -193,7 +193,7 @@ class ProjectSelection:
             function_name = inspect.currentframe().f_code.co_name
             raise ValueError(f"{function_name} requires at least one of 'load_ok' and 'create_ok' to be True")
 
-        # Update internal state, setting the current and next project/model variables, if no exceptions occured so far
+        # Update internal state, setting the current and next project/model variables, if no exceptions occurred so far
         self.current_project_name = self.next_project_name
         self.current_model_name = self.next_model_name
         self.next_project_name = None

@@ -34,7 +34,7 @@ class GUIApp(Mediator):
     """
 
     def __init__(self) -> None:
-        # Initialse the application config object
+        # Initialise the application config object
         self.config: Config = get_config()
 
         # Construct the root tkinter window, as a themed TK app
@@ -66,7 +66,7 @@ class GUIApp(Mediator):
         self.container.grid_rowconfigure(0, weight=1)
         self.container.grid_columnconfigure(0, weight=1)
 
-        # Instantiate the "global" applcation data object
+        # Instantiate the "global" application data object
         self.project_selector_obj: ProjectSelection = ProjectSelection(self.config.projects_directory)
 
         # Construct the views and presenters for main window views (i.e. not-popups)
@@ -80,7 +80,7 @@ class GUIApp(Mediator):
         # Place each main window within the container
         for presenter in self.presenters.values():
             presenter.view.grid(row=0, column=0, sticky="nsew")
-            # Immeditely hide the frame, but remember it's settings.
+            # Immediately hide the frame, but remember it's settings.
             presenter.view.grid_remove()
 
     def set_window_title(self, suffix: str | None = None) -> None:
@@ -197,7 +197,7 @@ class GUIApp(Mediator):
         splash_presenter = self.get_presenter("Splash")
 
         # Lazily load the projects directory, so (potential) existing models and projects are known.
-        self.project_selector_obj.projects_directiory.lazy_load()
+        self.project_selector_obj.projects_directory.lazy_load()
 
         # Instantiate the child presenter and view, which otherwise would be done by SplashPresenter.on_select_project. This does not start hidden
         popup_presenter = ProjectSelectProcessPopupPresenter(
@@ -223,7 +223,7 @@ class GUIApp(Mediator):
                     # Otherwise switch to the new model select popup
                     popup_presenter.switch_presenter("model_select")
             else:
-                # If we also have a model name, store it in the poject selection model
+                # If we also have a model name, store it in the project selection model
                 self.project_selector_obj.next_model_name = model_name
 
                 # Get the reason that the presenter is being closed.
@@ -232,7 +232,7 @@ class GUIApp(Mediator):
                 # Update the model to the "next" project & model.
                 self.project_selector_obj.switch_to_next_project_model(load_ok=True, create_ok=True)
 
-                # Close the popup window with the appropraite reason (load or new model)
+                # Close the popup window with the appropriate reason (load or new model)
                 popup_presenter.close_window(reason)
 
         # Start the render loop
