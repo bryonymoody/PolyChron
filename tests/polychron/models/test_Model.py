@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import pathlib
 from unittest.mock import patch
@@ -89,21 +90,45 @@ class TestModel:
         m = Model("foo", tmp_path / "foo")
         assert m.get_python_only_directory() == tmp_path / "foo" / "python_only"
 
-    @pytest.mark.skip(reason="test_to_json not implemented")
     def test_to_json(self, tmp_path: pathlib.Path):
-        """Test the to_json method behaves as expected for a range of Models"""
+        """Test the to_json method behaves as expected for a range of Models
+
+        Todo:
+            - Expand the tests to check the exported data is correct, rather than just present.
+        """
         m = Model("foo", tmp_path / "foo")
         json_str = m.to_json()
+        # Assert that a non empty string was returned
         assert len(json_str) > 0
-        # ...
+        # Assert that it was a single line, as pretty=False by default
+        assert len(json_str.splitlines()) == 1
+        # Parse the json string, which should ensure it was valid json
+        json_obj = json.loads(json_str)
+        # The json should have been mapped back to a dictionary
+        assert isinstance(json_obj, dict)
+        # The dict should contain a polychron_version element, which is a string and must be 3 versioned segments
+        assert "polychron_version" in json_obj
+        assert isinstance(json_obj["polychron_version"], str)
+        assert len(json_obj["polychron_version"].split(".")) >= 3
+        # The dict must also contain a "model" element, which is another dictionary
+        assert "model" in json_obj
+        assert isinstance(json_obj["model"], dict)
+        assert len(json_obj["model"]) > 0
+        # This model only has non-default name and path
+        assert "name" in json_obj["model"]
+        assert json_obj["model"]["name"] == "foo"
+        # but the path should not be in the json
+        assert "path" not in json_obj["model"]
 
+        # if explicitly called with pretty=False, the json string should be a non empty single line
         json_str = m.to_json(pretty=False)
         assert len(json_str) > 0
-        # ...
+        assert len(json_str.splitlines()) == 1
 
+        # if explicitly called with pretty=True, the json string should be a non empty string with more than 1 line (actually >= 4, but should be much higher)
         json_str = m.to_json(pretty=True)
         assert len(json_str) > 0
-        # ...
+        assert len(json_str.splitlines()) >= 4
 
     @pytest.mark.skip(reason="test_save not implemented")
     def test_save(self, tmp_path: pathlib.Path):
