@@ -7,6 +7,7 @@ from typing import Any, Callable
 
 from PIL import Image, ImageTk
 
+from ..GUIThemeManager import GUIThemeManager
 from .FrameView import FrameView
 
 
@@ -16,10 +17,10 @@ class ProjectWelcomeView(FrameView):
     This is implemented as a passive view, i.e. UI elements have no callbacks at constrution, and they must be explcitly bound afterwards
     """
 
-    def __init__(self, parent: tk.Frame) -> None:
+    def __init__(self, parent: tk.Frame, theme_manager: GUIThemeManager) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent)
+        super().__init__(parent, theme_manager)
 
         # Set this element's background to white
         self.config(background="white")
@@ -40,22 +41,27 @@ class ProjectWelcomeView(FrameView):
             self,
             text="Welcome to PolyChron, how would you like to proceed?",
             bg="white",
-            font=("helvetica 12 bold"),
-            fg="#2F4858",
+            fg=GUIThemeManager.colour("slate_grey"),
             anchor="w",
         )
         self.greeting.place(relx=0.22, rely=0.45)
 
         # Add the back button with no command set
         self.load_button = tk.Button(
-            self, text="Load existing project", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6"
+            self,
+            text="Load existing project",
+            bg=GUIThemeManager.colour("slate_grey"),
+            fg=GUIThemeManager.colour("offwhite2"),
         )
         self.load_button.place(relx=0.8, rely=0.9)
         self.load_button.bind("<Return>", lambda event: self.load_button.invoke())
 
         # Add the create button with no command set
         self.create_button = tk.Button(
-            self, text="Create new project", bg="#eff3f6", font=("Helvetica 12 bold"), fg="#2F4858"
+            self,
+            text="Create new project",
+            bg=GUIThemeManager.colour("offwhite2"),
+            fg=GUIThemeManager.colour("slate_grey"),
         )
         self.create_button.place(relx=0.62, rely=0.9)
         self.create_button.bind("<Return>", lambda event: self.create_button.invoke())

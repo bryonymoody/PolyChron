@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Protocol, Union
 
 # Avoid circular dependencies but provide type hints
 if TYPE_CHECKING:
+    from .GUIThemeManager import GUIThemeManager
     from .presenters.FramePresenter import FramePresenter
     from .presenters.PopupPresenter import PopupPresenter
 
@@ -36,5 +37,13 @@ class Mediator(Protocol):
 
         Parameters:
             reason (str): A string to pass to the presenter, enabling follow on actions.
+        """
+        ...
+
+    def get_theme_manager(self) -> "GUIThemeManager":
+        """Get a reference to the object which provides theme/styling which must be provided to Views on construction
+
+        Returns:
+            The GUIThemeManager instance
         """
         ...

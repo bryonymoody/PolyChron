@@ -3,6 +3,7 @@ from __future__ import annotations
 import tkinter as tk
 from typing import Any, Callable, List
 
+from ..GUIThemeManager import GUIThemeManager
 from .PopupView import PopupView
 
 
@@ -12,10 +13,10 @@ class CalibrateModelSelectView(PopupView):
     Formerly `popupWindow8`, used from menu option "Calibrate multiple models from project"
     """
 
-    def __init__(self, parent: tk.Frame) -> None:
+    def __init__(self, parent: tk.Frame, theme_manager: GUIThemeManager) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent)
+        super().__init__(parent, theme_manager)
 
         self.configure(bg="white")
         self.title("Model calibration")
@@ -24,21 +25,23 @@ class CalibrateModelSelectView(PopupView):
 
         # Add instruction text
         self.label = tk.Label(
-            self, text="Which model/s would you like calibrate?", bg="white", font="helvetica 12", fg="#2f4858"
+            self, text="Which model/s would you like calibrate?", bg="white", fg=self.theme_manager.colour("slate_grey")
         )
         self.label.place(relx=0.3, rely=0.1)
 
         # Add an (emtpy) list for selections to be made from.
-        self.list_box = tk.Listbox(self, font="helvetica 12", fg="#2f4858", selectmode="multiple")
+        self.list_box = tk.Listbox(self, fg=self.theme_manager.colour("slate_grey"), selectmode="multiple")
         self.list_box.place(relx=0.3, rely=0.2, relheight=0.5, relwidth=0.5)
 
         # Add an OK button
-        self.ok_button = tk.Button(self, text="OK", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6")
+        self.ok_button = tk.Button(
+            self, text="OK", bg=self.theme_manager.colour("slate_grey"), fg=GUIThemeManager.colour("offwhite2")
+        )
         self.ok_button.place(relx=0.3, rely=0.7)
 
         # Add a button for selecting all possible models
         self.select_all_button = tk.Button(
-            self, text="Select all", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6"
+            self, text="Select all", bg=self.theme_manager.colour("slate_grey"), fg=GUIThemeManager.colour("offwhite2")
         )
         self.select_all_button.place(relx=0.6, rely=0.7)
 

@@ -240,3 +240,19 @@ class TestProjectSelectProcessPopupPresenter:
         # An unknown reason should raise a ValueError
         with pytest.raises(ValueError, match="Unknown reason"):
             presenter.close_window("unknown")
+
+    def test_get_theme_manager(self):
+        """Test that the presenter implements the Mediator.get_theme_manager"""
+        # Create mocked objects
+        mock_mediator = MagicMock(spec=Mediator)
+        mock_view = MagicMock(spec=ProjectSelectProcessPopupView)
+        mock_view.container = MagicMock()  # the container property is accessed directly, so must also be mocked
+
+        # Get an actual model instance of the correct type
+        model = self.project_selection
+
+        # Instantiate the Presenter
+        presenter = ProjectSelectProcessPopupPresenter(mock_mediator, mock_view, model)
+
+        # The theme manager is provided from the mocked mediator, so it is not a real GUIThemeManager object. So we can only check it matches the internal object
+        assert presenter.get_theme_manager() == presenter.theme_manager

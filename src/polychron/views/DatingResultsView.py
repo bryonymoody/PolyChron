@@ -8,6 +8,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 from matplotlib.figure import Figure
 from PIL import ImageTk
 
+from ..GUIThemeManager import GUIThemeManager
 from ..util import get_right_click_binding
 from .FrameView import FrameView
 
@@ -20,10 +21,10 @@ class DatingResultsView(FrameView):
     Formerly part of `PageOne`
     """
 
-    def __init__(self, parent: tk.Frame) -> None:
+    def __init__(self, parent: tk.Frame, theme_manager: GUIThemeManager) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent)
+        super().__init__(parent, theme_manager)
 
         # Some class scoped variables for local state, set in one method but used by another.
         self.transx2: int = 0
@@ -46,88 +47,101 @@ class DatingResultsView(FrameView):
         self.toolbar: NavigationToolbar2Tk | None = None
         """Matplotlib toolkbar for the canvas_plt if it exists"""
 
-        self.configure(background="#fcfdfd")
+        self.configure(background=GUIThemeManager.colour("background_offwhite"))
 
         # Use a canvas to add a background colour below the menu bar
-        self.canvas = tk.Canvas(self, bd=0, highlightthickness=0, bg="#FFE9D6")
+        self.canvas = tk.Canvas(self, bd=0, highlightthickness=0, bg=GUIThemeManager.colour("secondary_light"))
         self.canvas.place(relx=0, rely=0.03, relwidth=1, relheight=0.97)
 
         # Add buttons to switch between the main windows.
         self.sasd_tab_button = tk.Button(
             self,
             text="Stratigraphy and supplementary data",
-            font="helvetica 12 bold",
-            fg="#2F4858",
+            fg=GUIThemeManager.colour("primary_dark"),
             bd=0,
             highlightthickness=0,
-            bg="#AEC7D6",
+            bg=GUIThemeManager.colour("primary_light"),
         )
         self.sasd_tab_button.place(relx=0.38, rely=0.0, relwidth=0.17, relheight=0.03)
         self.dr_tab_button = tk.Button(
             self,
             text="Dating Results",
-            font="helvetica 12 bold",
-            fg="#8F4300",
+            fg=GUIThemeManager.colour("secondary_dark"),
             bd=0,
             highlightthickness=0,
-            bg="#FFE9D6",
+            bg=GUIThemeManager.colour("secondary_light"),
         )
         self.dr_tab_button.place(relx=0.55, rely=0.0, relwidth=0.15, relheight=0.03)
 
         # Add the file menu button
         self.file_menubar = ttk.Menubutton(self, text="File", state=tk.DISABLED)
-        self.file_menubar["menu"] = tk.Menu(self.file_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
+        self.file_menubar["menu"] = tk.Menu(
+            self.file_menubar, tearoff=0, bg=GUIThemeManager.colour("background_offwhite")
+        )
         self.file_menubar.place(relx=0.0, rely=0, relwidth=0.1, relheight=0.03)
 
         # Adding View menu button
         self.view_menubar = ttk.Menubutton(self, text="View", state=tk.DISABLED)
-        self.view_menubar["menu"] = tk.Menu(self.view_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
+        self.view_menubar["menu"] = tk.Menu(
+            self.view_menubar, tearoff=0, bg=GUIThemeManager.colour("background_offwhite")
+        )
         self.view_menubar.place(relx=0.07, rely=0, relwidth=0.1, relheight=0.03)
 
         # Adding Tools menu button
         self.tool_menubar = ttk.Menubutton(self, text="Tools", state=tk.DISABLED)
-        self.tool_menubar["menu"] = tk.Menu(self.tool_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
+        self.tool_menubar["menu"] = tk.Menu(
+            self.tool_menubar, tearoff=0, bg=GUIThemeManager.colour("background_offwhite")
+        )
         self.tool_menubar.place(relx=0.15, rely=0, relwidth=0.1, relheight=0.03)
 
         # forming and placing canvas and little canvas
-        self.behindcanvas = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg="#CC5F00")
+        self.behindcanvas = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg=GUIThemeManager.colour("secondary"))
         self.behindcanvas.place(relx=0.6, rely=0.038, relwidth=0.39, relheight=0.96)
         self.littlecanvas2_label = tk.Canvas(
-            self.canvas, bd=0, bg="#CC5F00", selectborderwidth=0, highlightthickness=0, insertwidth=0
+            self.canvas,
+            bd=0,
+            bg=GUIThemeManager.colour("secondary"),
+            selectborderwidth=0,
+            highlightthickness=0,
+            insertwidth=0,
         )
         self.littlecanvas2_label.place(relx=0.003, rely=0.011, relwidth=0.18, relheight=0.027)
         self.littlecanvas2_label_id = self.littlecanvas2_label.create_text(10, 5, anchor="nw", fill="white")
-        self.littlecanvas2_label.itemconfig(
-            self.littlecanvas2_label_id, text="Chronological graph", font="helvetica 12 bold"
-        )
+        self.littlecanvas2_label.itemconfig(self.littlecanvas2_label_id, text="Chronological graph")
 
         self.littlecanvas = tk.Canvas(
             self.behindcanvas, bd=0, bg="white", selectborderwidth=0, highlightthickness=0, insertwidth=0
         )
         self.littlecanvas.place(relx=0.005, rely=0.005, relwidth=0.99, relheight=0.99)
 
-        self.behindcanvas2 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg="#CC5F00")
+        self.behindcanvas2 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg=GUIThemeManager.colour("secondary"))
         self.behindcanvas2.place(relx=0.003, rely=0.038, relwidth=0.37, relheight=0.96)
 
         self.littlecanvas_label = tk.Canvas(
-            self.canvas, bd=0, bg="#CC5F00", selectborderwidth=0, highlightthickness=0, insertwidth=0
+            self.canvas,
+            bd=0,
+            bg=GUIThemeManager.colour("secondary"),
+            selectborderwidth=0,
+            highlightthickness=0,
+            insertwidth=0,
         )
         self.littlecanvas_label.place(relx=0.6, rely=0.011, relwidth=0.18, relheight=0.027)
         self.littlecanvas_label_id = self.littlecanvas_label.create_text(10, 5, anchor="nw", fill="white")
-        self.littlecanvas_label.itemconfig(
-            self.littlecanvas_label_id, text="Posterior densities", font="helvetica 12 bold"
-        )
+        self.littlecanvas_label.itemconfig(self.littlecanvas_label_id, text="Posterior densities")
 
         self.littlecanvas_a_label = tk.Canvas(
-            self.canvas, bd=0, bg="#CC5F00", selectborderwidth=0, highlightthickness=0, insertwidth=0
+            self.canvas,
+            bd=0,
+            bg=GUIThemeManager.colour("secondary"),
+            selectborderwidth=0,
+            highlightthickness=0,
+            insertwidth=0,
         )
         self.littlecanvas_a_label.place(relx=0.375, rely=0.518, relwidth=0.08, relheight=0.027)
         self.littlecanvas_a_label_id = self.littlecanvas_a_label.create_text(10, 5, anchor="nw", fill="white")
-        self.littlecanvas_a_label.itemconfig(
-            self.littlecanvas_a_label_id, text="Context list", font="helvetica 12 bold"
-        )
+        self.littlecanvas_a_label.itemconfig(self.littlecanvas_a_label_id, text="Context list")
 
-        self.behindcanvas_a = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg="#CC5F00")
+        self.behindcanvas_a = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg=GUIThemeManager.colour("secondary"))
         self.behindcanvas_a.place(relx=0.375, rely=0.038, relwidth=0.223, relheight=0.45)
 
         self.littlecanvas_a = tk.Canvas(
@@ -135,7 +149,7 @@ class DatingResultsView(FrameView):
         )
         self.littlecanvas_a.place(relx=0.005, rely=0.005, relwidth=0.99, relheight=0.99)
 
-        self.behindcanvas_3 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg="#CC5F00")
+        self.behindcanvas_3 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg=GUIThemeManager.colour("secondary"))
         self.behindcanvas_3.place(relx=0.375, rely=0.545, relwidth=0.223, relheight=0.45)
         3
         self.littlecanvas2 = tk.Canvas(
@@ -147,21 +161,25 @@ class DatingResultsView(FrameView):
             self.behindcanvas_3, bd=0, bg="white", selectborderwidth=0, highlightthickness=0, insertwidth=0
         )
         self.littlecanvas3.place(relx=0.005, rely=0.005, relwidth=0.99, relheight=0.901)
-        self.littlecanvas3_id = self.littlecanvas3.create_text(10, 10, anchor="nw", fill="#0A3200")
+        self.littlecanvas3_id = self.littlecanvas3.create_text(
+            10, 10, anchor="nw", fill=GUIThemeManager.colour("slate_grey")
+        )
         self.littlecanvas3.itemconfig(
             self.littlecanvas3_id,
             text="No contexts chosen for results. \n\nTo add a context to the results list right click on \nthe context you want then select 'add to list'",
-            font="helvetica 12 bold",
         )
 
         self.littlecanvas3_label = tk.Canvas(
-            self.canvas, bd=0, bg="#CC5F00", selectborderwidth=0, highlightthickness=0, insertwidth=0
+            self.canvas,
+            bd=0,
+            bg=GUIThemeManager.colour("secondary"),
+            selectborderwidth=0,
+            highlightthickness=0,
+            insertwidth=0,
         )
         self.littlecanvas3_label.place(relx=0.375, rely=0.011, relwidth=0.14, relheight=0.027)
         self.littlecanvas3_label_id = self.littlecanvas3_label.create_text(10, 5, anchor="nw", fill="white")
-        self.littlecanvas3_label.itemconfig(
-            self.littlecanvas3_label_id, text="Calendar date range estimates", font="helvetica 12 bold"
-        )
+        self.littlecanvas3_label.itemconfig(self.littlecanvas3_label_id, text="Calendar date range estimates")
 
         # placing image on littlecanvas from graph
         self.littlecanvas2.rowconfigure(0, weight=1)
@@ -285,7 +303,7 @@ class DatingResultsView(FrameView):
             if item is not None:
                 # If the item is not None, it should be a Tuple contianing a string label and a callback function
                 label, callback = item
-                menu.add_command(font="helvetica 12 bold", label=label, command=callback)
+                menu.add_command(label=label, command=callback)
             else:
                 # Add a separator if the item is None
                 menu.add_separator()
@@ -309,7 +327,7 @@ class DatingResultsView(FrameView):
             if item is not None:
                 # If the item is not None, it should be a Tuple contianing a string label and a callback function
                 label, callback = item
-                menu.add_command(font="helvetica 12 bold", label=label, command=callback)
+                menu.add_command(label=label, command=callback)
             else:
                 # Add a separator if the item is None
                 menu.add_separator()
@@ -334,7 +352,7 @@ class DatingResultsView(FrameView):
             if item is not None:
                 # If the item is not None, it should be a Tuple contianing a string label and a callback function
                 label, callback = item
-                menu.add_command(font="helvetica 12 bold", label=label, command=callback)
+                menu.add_command(label=label, command=callback)
             else:
                 # Add a separator if the item is None
                 menu.add_separator()
@@ -490,7 +508,7 @@ class DatingResultsView(FrameView):
         scrollbar = ttk.Scrollbar(self.littlecanvas_a, orient=tk.VERTICAL, command=self.tree_phases.yview)
         self.tree_phases.configure(yscroll=scrollbar.set)
         scrollbar.grid(row=0, column=1, sticky="nsew")
-        self.littlecanvas_a.create_text(150, 80, text=hpd_str, fill="#0A3200")
+        self.littlecanvas_a.create_text(150, 80, text=hpd_str, fill=GUIThemeManager.colour("slate_grey"))
 
     def update_hpd_interval_3col(self, intervals: List[Tuple[str, str, str]]) -> None:
         """UI parts of loads hpd intervals into the results page, with 3 clumsn this time?
@@ -562,7 +580,12 @@ class DatingResultsView(FrameView):
         for i in set(results_list):
             cont_canvas_list = cont_canvas_list + str(i) + "\n"
         self.results_text = self.littlecanvas3.create_text(
-            5, 10, anchor="nw", text=cont_canvas_list, fill="#0A3200", font=("Helvetica 12 bold")
+            5,
+            10,
+            anchor="nw",
+            text=cont_canvas_list,
+            fill=GUIThemeManager.colour("slate_grey"),
+            font=GUIThemeManager.font(11, "bold"),
         )
 
     def show_canvas_plot(self, fig: Figure) -> None:
