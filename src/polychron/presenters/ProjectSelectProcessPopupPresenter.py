@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Dict
 
+from ..GUIThemeManager import GUIThemeManager
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
 from ..views.ModelCreateView import ModelCreateView
@@ -26,14 +27,27 @@ class ProjectSelectProcessPopupPresenter(PopupPresenter[ProjectSelectProcessPopu
         # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
+        # Store a refenrece to the GUIThemeManager object from the mediator internally, to be forwarded later if required (as this is also a Mediator)
+        self.theme_manager = mediator.get_theme_manager()
+
         # Build a dictionary of child presenter-view pairings
         self.current_presenter_key = None
         self.presenters: Dict[str, FramePresenter] = {
-            "project_welcome": ProjectWelcomePresenter(self, ProjectWelcomeView(self.view.container), self.model),
-            "project_select": ProjectSelectPresenter(self, ProjectSelectView(self.view.container), self.model),
-            "project_create": ProjectCreatePresenter(self, ProjectCreateView(self.view.container), self.model),
-            "model_select": ModelSelectPresenter(self, ModelSelectView(self.view.container), self.model),
-            "model_create": ModelCreatePresenter(self, ModelCreateView(self.view.container), self.model),
+            "project_welcome": ProjectWelcomePresenter(
+                self, ProjectWelcomeView(self.view.container, self.theme_manager), self.model
+            ),
+            "project_select": ProjectSelectPresenter(
+                self, ProjectSelectView(self.view.container, self.theme_manager), self.model
+            ),
+            "project_create": ProjectCreatePresenter(
+                self, ProjectCreateView(self.view.container, self.theme_manager), self.model
+            ),
+            "model_select": ModelSelectPresenter(
+                self, ModelSelectView(self.view.container, self.theme_manager), self.model
+            ),
+            "model_create": ModelCreatePresenter(
+                self, ModelCreateView(self.view.container, self.theme_manager), self.model
+            ),
         }
         # Intiialse all the views within the parent view
         for presenter in self.presenters.values():
@@ -112,3 +126,6 @@ class ProjectSelectProcessPopupPresenter(PopupPresenter[ProjectSelectProcessPopu
             raise ValueError(f"Unknown reason {reason} for `ProjectSelectProcessPopupPresenter.close_window")
         # Close the view
         self.view.destroy()
+
+    def get_theme_manager(self) -> GUIThemeManager:
+        return self.theme_manager

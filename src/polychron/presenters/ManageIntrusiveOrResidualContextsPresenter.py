@@ -44,7 +44,7 @@ class ManageIntrusiveOrResidualContextsPresenter(PopupPresenter[ManageIntrusiveO
         # Create the group relationship manager
         # show the residual check presenter, formerly popupWindow3
         popup_presenter = ManageGroupRelationshipsPresenter(
-            self.mediator, ManageGroupRelationshipsView(self.view), self.model
+            self.mediator, ManageGroupRelationshipsView(self.view, self.mediator.get_theme_manager()), self.model
         )
         popup_presenter.view.lift()
         self.view.wait_window(popup_presenter.view)

@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, List, Tuple
 
 import pandas as pd
 
+from ..GUIThemeManager import GUIThemeManager
 from .PopupView import PopupView
 
 
@@ -15,10 +16,10 @@ class ManageGroupRelationshipsView(PopupView):
     Formerly part of `popupWindow3`, Part of the Rendering chronological graph process
     """
 
-    def __init__(self, parent: tk.Frame) -> None:
+    def __init__(self, parent: tk.Frame, theme_manager: GUIThemeManager) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent)
+        super().__init__(parent, theme_manager)
 
         # Set the popup title
         self.title("Adding group relationships")
@@ -54,7 +55,11 @@ class ManageGroupRelationshipsView(PopupView):
         """
 
         self.maincanvas = tk.Canvas(
-            self, bg="#AEC7D6", highlightthickness=0, borderwidth=0, highlightbackground="white"
+            self,
+            bg=GUIThemeManager.colour("primary_light"),
+            highlightthickness=0,
+            borderwidth=0,
+            highlightbackground="white",
         )
         self.maincanvas.place(relx=0, rely=0, relwidth=1, relheight=1)
         self.maincanvas.update()
@@ -66,7 +71,7 @@ class ManageGroupRelationshipsView(PopupView):
         self.backcanvas.create_line(150, 30, 600, 30, arrow=tk.LAST, width=3)
 
         self.time_label = tk.Label(self.maincanvas, text="Time")
-        self.time_label.config(bg="white", font=("helvetica", 12, "bold"), fg="#2f4858", wraplength=130)
+        self.time_label.config(bg="white", fg=GUIThemeManager.colour("slate_grey"), wraplength=130)
         self.time_label.place(relx=0.32, rely=0.91, relwidth=0.12, relheight=0.05)
 
         self.canvas = tk.Canvas(self, bg="white")
@@ -77,19 +82,18 @@ class ManageGroupRelationshipsView(PopupView):
             self.maincanvas,
             text="Instructions: \n Place the oldest group in the bottom left corner then for each subseqent group, place it directly above and move it to be overlapping, abutting or to have a gap.",
         )
-        self.instruc_label.config(bg="white", font=("helvetica", 12, "bold"), fg="#2f4858", wraplength=130)
+        self.instruc_label.config(bg="white", fg=GUIThemeManager.colour("slate_grey"), wraplength=130)
         self.instruc_label.place(relx=0.01, rely=0.05, relwidth=0.12, relheight=0.85)
 
         self.instruc_label2 = tk.Label(self.maincanvas, text="User defined group relationships")
-        self.instruc_label2.config(bg="white", font=("helvetica", 12, "bold"), fg="#2f4858")
+        self.instruc_label2.config(bg="white", fg=GUIThemeManager.colour("slate_grey"))
         self.instruc_label2.place(relx=0.67, rely=0.17, relwidth=0.32, relheight=0.1)
 
         self.confirm_button = tk.Button(
             self.maincanvas,
             text="Confirm groups",
-            bg="#2F4858",
-            font=("Helvetica 12 bold"),
-            fg="#eff3f6",
+            bg=GUIThemeManager.colour("slate_grey"),
+            fg=GUIThemeManager.colour("offwhite2"),
             command=lambda: self.__confirm_callback(),
         )
         self.confirm_button.place(relx=0.8, rely=0.91)
@@ -493,7 +497,7 @@ class ManageGroupRelationshipsView(PopupView):
 
         for idx, phase_label in enumerate(phase_labels):
             label = tk.Label(self.canvas, text=str(phase_label))
-            label.config(bg=self.COLORS[idx], font=("helvetica", 14, "bold"))
+            label.config(bg=self.COLORS[idx], font=self.theme_manager.font(14, "bold"))
             label.bind("<B1-Motion>", lambda event: self.__phase_box_move_callback(event))
             label.place(
                 x=0.05 * w + (w / (2 * m)) * idx,
@@ -622,25 +626,23 @@ class ManageGroupRelationshipsView(PopupView):
             self.maincanvas,
             text="If you're happy with your group relationships, click the Render Chronological Graph button.",
         )
-        self.instruc_label.config(bg="white", font=("helvetica", 12, "bold"), wraplength=130)
+        self.instruc_label.config(bg="white", wraplength=130)
         self.instruc_label.place(relx=0.01, rely=0.05, relwidth=0.12, relheight=0.85)
 
         self.render_button = tk.Button(
             self.maincanvas,
             text="Render Chronological graph",
             command=lambda: self.__render_callback(),
-            bg="#2F4858",
-            font=("Helvetica 12 bold"),
-            fg="#eff3f6",
+            bg=GUIThemeManager.colour("slate_grey"),
+            fg=GUIThemeManager.colour("offwhite2"),
         )
         self.render_button.place(relx=0.75, rely=0.91)
         self.change_button = tk.Button(
             self.maincanvas,
             text="Change relationships",
             command=lambda: self.__change_callback(),
-            bg="#2F4858",
-            font=("Helvetica 12 bold"),
-            fg="#eff3f6",
+            bg=GUIThemeManager.colour("slate_grey"),
+            fg=GUIThemeManager.colour("offwhite2"),
         )
         self.change_button.place(relx=0.55, rely=0.91)
 
@@ -657,14 +659,13 @@ class ManageGroupRelationshipsView(PopupView):
             self.maincanvas,
             text="Confirm groups",
             command=lambda: self.__confirm_callback(),
-            bg="#2F4858",
-            font=("Helvetica 12 bold"),
-            fg="#eff3f6",
+            bg=GUIThemeManager.colour("slate_grey"),
+            fg=GUIThemeManager.colour("offwhite2"),
         )
         self.confirm_button.place(relx=0.8, rely=0.91)
         self.instruc_label = tk.Label(
             self.maincanvas,
             text="Instructions: \n Place the oldest group in the bottom left corner then for each subseqent group, place it directly above and move it to be overlapping, abutting or to have a gap.",
         )
-        self.instruc_label.config(bg="white", font=("helvetica", 12, "bold"), wraplength=130)
+        self.instruc_label.config(bg="white", wraplength=130)
         self.instruc_label.place(relx=0.01, rely=0.05, relwidth=0.18, relheight=0.85)
