@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable
 
+from ..GUIThemeManager import GUIThemeManager
 from .PopupView import PopupView
 
 
@@ -15,12 +16,12 @@ class AddContextView(PopupView):
     Formerly `popupWindow`
     """
 
-    def __init__(self, parent: tk.Frame) -> None:
+    def __init__(self, parent: tk.Frame, theme_manager: GUIThemeManager) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent)
+        super().__init__(parent, theme_manager)
 
-        self.configure(bg="#AEC7D6")
+        self.configure(bg=GUIThemeManager.colour("primary_light"))
         self.geometry("1000x400")
         self.attributes("-topmost", "true")
 

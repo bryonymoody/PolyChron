@@ -7,6 +7,7 @@ from typing import Any, Callable, List, Tuple
 import pandas as pd
 from PIL import Image, ImageTk
 
+from ..GUIThemeManager import GUIThemeManager
 from .FrameView import FrameView
 
 
@@ -17,92 +18,98 @@ class ModelView(FrameView):
     Formely part of `StartPage`
     """
 
-    def __init__(self, parent: tk.Frame) -> None:
+    def __init__(self, parent: tk.Frame, theme_manager: GUIThemeManager) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the base class constructor
-        super().__init__(parent)
+        super().__init__(parent, theme_manager)
 
         self.configure(background="white")
 
         # Use a canvas to add a background colour below the menu bar
-        self.canvas = tk.Canvas(self, bd=0, highlightthickness=0, bg="#AEC7D6")
+        self.canvas = tk.Canvas(self, bd=0, highlightthickness=0, bg=GUIThemeManager.colour("primary_light"))
         self.canvas.place(relx=0, rely=0.03, relwidth=1, relheight=0.97)
 
         # Add buttons to switch between the main windows.
         self.sasd_tab_button = tk.Button(
             self,
             text="Stratigraphy and supplementary data",
-            font="helvetica 12 bold",
-            fg="#2F4858",
+            fg=GUIThemeManager.colour("primary_dark"),
             bd=0,
             highlightthickness=0,
-            bg="#AEC7D6",
+            bg=GUIThemeManager.colour("primary_light"),
         )
         self.sasd_tab_button.place(relx=0.38, rely=0.0, relwidth=0.17, relheight=0.03)
         self.dr_tab_button = tk.Button(
             self,
             text="Dating Results",
-            font="helvetica 12 bold",
-            fg="#8F4300",
+            fg=GUIThemeManager.colour("secondary_dark"),
             bd=0,
             highlightthickness=0,
-            bg="#FFE9D6",
+            bg=GUIThemeManager.colour("secondary_light"),
         )
         self.dr_tab_button.place(relx=0.55, rely=0.0, relwidth=0.15, relheight=0.03)
 
         # Add the file menu button
         self.file_menubar = ttk.Menubutton(self, text="File", state=tk.DISABLED)
-        self.file_menubar["menu"] = tk.Menu(self.file_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
+        self.file_menubar["menu"] = tk.Menu(
+            self.file_menubar, tearoff=0, bg=GUIThemeManager.colour("background_offwhite")
+        )
         self.file_menubar.place(relx=0.0, rely=0, relwidth=0.1, relheight=0.03)
 
         # Adding View menu button
         self.view_menubar = ttk.Menubutton(self, text="View", state=tk.DISABLED)
-        self.view_menubar["menu"] = tk.Menu(self.view_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
+        self.view_menubar["menu"] = tk.Menu(
+            self.view_menubar, tearoff=0, bg=GUIThemeManager.colour("background_offwhite")
+        )
         self.view_menubar.place(relx=0.07, rely=0, relwidth=0.1, relheight=0.03)
 
         # Adding Tools menu button
         self.tool_menubar = ttk.Menubutton(self, text="Tools", state=tk.DISABLED)
-        self.tool_menubar["menu"] = tk.Menu(self.tool_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
+        self.tool_menubar["menu"] = tk.Menu(
+            self.tool_menubar, tearoff=0, bg=GUIThemeManager.colour("background_offwhite")
+        )
         self.tool_menubar.place(relx=0.15, rely=0, relwidth=0.1, relheight=0.03)
 
-        self.behindcanvas = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg="#33658a")
+        self.behindcanvas = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg=GUIThemeManager.colour("primary"))
         self.behindcanvas.place(relx=0.003, rely=0.038, relwidth=0.37, relheight=0.96)
 
-        self.behindcanvas2 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg="#33658a")
+        self.behindcanvas2 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg=GUIThemeManager.colour("primary"))
         self.behindcanvas2.place(relx=0.38, rely=0.038, relwidth=0.37, relheight=0.96)
 
-        self.labelcanvas = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg="#33658a")
+        self.labelcanvas = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg=GUIThemeManager.colour("primary"))
         self.labelcanvas.place(relx=0.003, rely=0.011, relwidth=0.18, relheight=0.027)
         self.labelcanvas1_id = self.labelcanvas.create_text(10, 3, anchor="nw", fill="white")
-        self.labelcanvas.itemconfig(self.labelcanvas1_id, text="Stratigraphic graph", font="helvetica 12 bold")
+        self.labelcanvas.itemconfig(self.labelcanvas1_id, text="Stratigraphic graph")
 
         self.littlecanvas = tk.Canvas(
             self.behindcanvas, bd=0, bg="white", selectborderwidth=0, highlightthickness=0, insertwidth=0
         )
-        self.littlecanvas_id = self.littlecanvas.create_text(10, 10, anchor="nw", fill="#2f4845")
+        self.littlecanvas_id = self.littlecanvas.create_text(
+            10, 10, anchor="nw", fill=GUIThemeManager.colour("slate_grey")
+        )
         self.littlecanvas.place(relx=0.005, rely=0.005, relwidth=0.99, relheight=0.99)
         self.littlecanvas.itemconfig(
             self.littlecanvas_id,
             text="No stratigraphic graph loaded. \n \n \nTo load, go to File > Load stratigraphic diagram",
-            font="helvetica 12 bold",
         )
         self.littlecanvas.update()
 
         self.littlecanvas2 = tk.Canvas(
             self.behindcanvas2, bd=0, bg="white", selectborderwidth=0, highlightthickness=0, insertwidth=0
         )
-        self.littlecanvas2_id = self.littlecanvas2.create_text(10, 10, anchor="nw", fill="#2f4845")
+        self.littlecanvas2_id = self.littlecanvas2.create_text(
+            10, 10, anchor="nw", fill=GUIThemeManager.colour("slate_grey")
+        )
         self.littlecanvas2.itemconfig(
             self.littlecanvas2_id,
             text="No chronological graph loaded. \n \n \nYou must load a stratigraphic graph first. \nTo load, go to File > Load stratigraphic diagram \nTo load your chronological graph, go to Tools > Render chronological graph",
-            font="helvetica 12 bold",
         )
         self.littlecanvas2.place(relx=0.005, rely=0.005, relwidth=0.99, relheight=0.99)
 
-        self.labelcanvas2 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg="#33658a")
+        self.labelcanvas2 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg=GUIThemeManager.colour("primary"))
         self.labelcanvas2.place(relx=0.38, rely=0.011, relwidth=0.18, relheight=0.027)
         self.labelcanvas2_id = self.labelcanvas2.create_text(10, 3, anchor="nw", fill="white")
-        self.labelcanvas2.itemconfig(self.labelcanvas2_id, text="Chronological graph", font="helvetica 12 bold")
+        self.labelcanvas2.itemconfig(self.labelcanvas2_id, text="Chronological graph")
 
         # placing image on littlecanvas from graph
         self.littlecanvas.rowconfigure(0, weight=1)
@@ -134,24 +141,24 @@ class ModelView(FrameView):
             command=lambda event: self.__testmenu_callback(event),
         )
         # meta data table
-        self.labelcanvas3 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg="#33658a")
+        self.labelcanvas3 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg=GUIThemeManager.colour("primary"))
         self.labelcanvas3.place(relx=0.755, rely=0.695, relwidth=0.17, relheight=0.029)
-        self.behindcanvas3 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg="#33658a")
+        self.behindcanvas3 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg=GUIThemeManager.colour("primary"))
         self.behindcanvas3.place(relx=0.755, rely=0.719, relwidth=0.23, relheight=0.278)
         self.metatext_id = self.labelcanvas3.create_text(10, 5, anchor="nw", fill="white")
-        self.labelcanvas3.itemconfig(self.metatext_id, text="Supplementary data", font="helvetica 12 bold")
+        self.labelcanvas3.itemconfig(self.metatext_id, text="Supplementary data")
         self.tree1 = ttk.Treeview(self.canvas)
         self.tree1["columns"] = ["Data"]
         self.tree1.place(relx=0.758, rely=0.725)
         self.tree1.column("Data", anchor="w")
         self.tree1.heading("Data", text="Data")
         # deleted contexts table
-        self.labelcanvas4 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg="#33658a")
+        self.labelcanvas4 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg=GUIThemeManager.colour("primary"))
         self.labelcanvas4.place(relx=0.755, rely=0.04, relwidth=0.17, relheight=0.029)
-        self.behindcanvas4 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg="#33658a")
+        self.behindcanvas4 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg=GUIThemeManager.colour("primary"))
         self.behindcanvas4.place(relx=0.755, rely=0.069, relwidth=0.23, relheight=0.278)
         self.delcontext_id = self.labelcanvas4.create_text(10, 5, anchor="nw", fill="white")
-        self.labelcanvas4.itemconfig(self.delcontext_id, text="Deleted Contexts", font="helvetica 12 bold")
+        self.labelcanvas4.itemconfig(self.delcontext_id, text="Deleted Contexts")
 
         # Table / treeview for deleted nodes with their reasons
         self.tree2 = ttk.Treeview(self.canvas)
@@ -162,14 +169,12 @@ class ModelView(FrameView):
         self.tree2.heading("Meta", text="Reason for deleting")
 
         # deleted edges table
-        self.labelcanvas5 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg="#33658a")
+        self.labelcanvas5 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg=GUIThemeManager.colour("primary"))
         self.labelcanvas5.place(relx=0.755, rely=0.371, relwidth=0.17, relheight=0.029)
-        self.behindcanvas5 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg="#33658a")
+        self.behindcanvas5 = tk.Canvas(self.canvas, bd=0, highlightthickness=0, bg=GUIThemeManager.colour("primary"))
         self.behindcanvas5.place(relx=0.755, rely=0.399, relwidth=0.23, relheight=0.278)
         self.deledge_id = self.labelcanvas5.create_text(10, 5, anchor="nw", fill="white")
-        self.labelcanvas5.itemconfig(
-            self.deledge_id, text="Deleted Stratigraphic Relationships", font="helvetica 12 bold"
-        )
+        self.labelcanvas5.itemconfig(self.deledge_id, text="Deleted Stratigraphic Relationships")
         self.tree3 = ttk.Treeview(self.canvas)
         self.tree3.heading("#0", text="Stratigraphic relationship")
         self.tree3["columns"] = ["Meta"]
@@ -178,13 +183,17 @@ class ModelView(FrameView):
 
         # Button and canvas for showing what data has been loaded so far.
         self.data_button = tk.Button(
-            self, text="Data loaded  ↙", font="helvetica 12 bold", fg="white", bd=0, highlightthickness=0, bg="#33658a"
+            self, text="Data loaded  ↙", fg="white", bd=0, highlightthickness=0, bg=GUIThemeManager.colour("primary")
         )  # command=lambda: self.display_data_func()
         self.data_button.place(relx=0.303, rely=0.04, relwidth=0.07, relheight=0.028)
-        self.datacanvas = tk.Canvas(self.behindcanvas, bd=0, highlightthickness=0, bg="#33658a")
+        self.datacanvas = tk.Canvas(self.behindcanvas, bd=0, highlightthickness=0, bg=GUIThemeManager.colour("primary"))
         self.datacanvas.place(relx=0.55, rely=0.0, relwidth=0.45, relheight=0.2)
         self.datalittlecanvas = tk.Canvas(
-            self.datacanvas, bd=8, bg="white", highlightbackground="#33658a", highlightthickness=5
+            self.datacanvas,
+            bd=8,
+            bg="white",
+            highlightbackground=GUIThemeManager.colour("primary"),
+            highlightthickness=5,
         )
         self.datalittlecanvas.place(relx=0.015, rely=0.015, relwidth=0.97, relheight=0.97)
         tk.Misc.lift(self.littlecanvas)
@@ -310,7 +319,7 @@ class ModelView(FrameView):
             if item is not None:
                 # If the item is not None, it should be a Tuple contianing a string label and a callback function
                 label, callback = item
-                menu.add_command(font="helvetica 12 bold", label=label, command=callback)
+                menu.add_command(label=label, command=callback)
             else:
                 # Add a separator if the item is None
                 menu.add_separator()
@@ -334,7 +343,7 @@ class ModelView(FrameView):
             if item is not None:
                 # If the item is not None, it should be a Tuple contianing a string label and a callback function
                 label, callback = item
-                menu.add_command(font="helvetica 12 bold", label=label, command=callback)
+                menu.add_command(label=label, command=callback)
             else:
                 # Add a separator if the item is None
                 menu.add_separator()
@@ -358,7 +367,7 @@ class ModelView(FrameView):
             if item is not None:
                 # If the item is not None, it should be a Tuple contianing a string label and a callback function
                 label, callback = item
-                menu.add_command(font="helvetica 12 bold", label=label, command=callback)
+                menu.add_command(label=label, command=callback)
             else:
                 # Add a separator if the item is None
                 menu.add_separator()
@@ -410,19 +419,13 @@ class ModelView(FrameView):
             col4 = "black"
 
         self.datalittlecanvas.delete("all")
-        self.datalittlecanvas.create_text(
-            10, 20, anchor="nw", text=strat + "\n\n", font=("Helvetica 12 bold"), fill=col1
-        )
+        self.datalittlecanvas.create_text(10, 20, anchor="nw", text=strat + "\n\n", fill=col1)
         self.datalittlecanvas.pack()
-        self.datalittlecanvas.create_text(
-            10, 50, anchor="nw", text=date + "\n\n", font=("Helvetica 12 bold"), fill=col2
-        )
+        self.datalittlecanvas.create_text(10, 50, anchor="nw", text=date + "\n\n", fill=col2)
         self.datalittlecanvas.pack()
-        self.datalittlecanvas.create_text(
-            10, 80, anchor="nw", text=phase + "\n\n", font=("Helvetica 12 bold"), fill=col3
-        )
+        self.datalittlecanvas.create_text(10, 80, anchor="nw", text=phase + "\n\n", fill=col3)
         self.datalittlecanvas.pack()
-        self.datalittlecanvas.create_text(10, 110, anchor="nw", text=rels, font=("Helvetica 12 bold"), fill=col4)
+        self.datalittlecanvas.create_text(10, 110, anchor="nw", text=rels, fill=col4)
         self.datalittlecanvas.pack()
 
     def update_littlecanvas(self, image) -> None:
@@ -676,9 +679,7 @@ class ModelView(FrameView):
     def update_supplementary_data_table(self, node: str, meta_df: pd.DataFrame) -> None:
         """Update the contents of the supplementary data table (tree 1)"""
         # @note fixed this to update the title
-        self.labelcanvas3.itemconfig(
-            self.metatext_id, text=f"Supplementary data of node {node}", font="helvetica 12 bold"
-        )
+        self.labelcanvas3.itemconfig(self.metatext_id, text=f"Supplementary data of node {node}")
         cols = list(meta_df.columns)
         # Clear the tree view
         self.tree1.delete(*self.tree1.get_children())

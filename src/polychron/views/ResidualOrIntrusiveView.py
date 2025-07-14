@@ -6,6 +6,7 @@ from typing import Any, Callable, List
 
 from PIL import Image, ImageTk
 
+from ..GUIThemeManager import GUIThemeManager
 from ..util import get_right_click_binding
 from .PopupView import PopupView
 
@@ -16,10 +17,10 @@ class ResidualOrIntrusiveView(PopupView):
     Formerly part of `PageTwo`
     """
 
-    def __init__(self, parent: tk.Frame) -> None:
+    def __init__(self, parent: tk.Frame, theme_manager: GUIThemeManager) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent)
+        super().__init__(parent, theme_manager)
 
         # View properties
         self.imscale2 = 1.0
@@ -32,7 +33,7 @@ class ResidualOrIntrusiveView(PopupView):
         self.image2: Image.Image | None = None  # in-memory rendered image.
 
         self.title("Identify Residual or Intrusive Contexts")
-        self.configure(bg="#AEC7D6")
+        self.configure(bg=GUIThemeManager.colour("primary_light"))
         self.geometry("2000x1000")
         self.attributes("-topmost", "true")
 

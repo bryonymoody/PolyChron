@@ -106,7 +106,9 @@ class ResidualOrIntrusivePresenter(PopupPresenter[ResidualOrIntrusiveView, Model
         Formerly PageTwo.popup4_wrapper"""
 
         popup_presenter = ManageIntrusiveOrResidualContextsPresenter(
-            self.mediator, ManageIntrusiveOrResidualContextsView(self.view), self.model
+            self.mediator,
+            ManageIntrusiveOrResidualContextsView(self.view, self.mediator.get_theme_manager()),
+            self.model,
         )
         popup_presenter.view.lift()
         self.view.wait_window(popup_presenter.view)
