@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from tkinter import simpledialog
-from typing import Any, List
+from typing import Any
 
 import matplotlib as plt
 import networkx as nx
@@ -23,8 +23,11 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
-        self.results_list: List[str] = []
-        """A list of results to be shown in this view?"""
+        self.results_list: dict[str, None] = {}
+        """Contexts and phase boundaries which have been selected via the right click option.
+
+        A dictionary of None values is used so that the "list" (keys) contains unique values, in insertion order. (set's do not maintain insertion order)
+        """
 
         self.node = "no node"
         """The currenly selected node for right click operations
@@ -226,7 +229,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
 
         Formerly `PageOne.clear_results_list`
         """
-        self.results_list = []
+        self.results_list = {}
         # Clear the right canvas
         self.view.clear_littlecanvas3(id=False)
         # Hide any plots
@@ -254,7 +257,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
                 # Compute new data to present
                 lim = np.float64(USER_INP) / 100
                 intervals = []
-                for i, j in enumerate(list(set(self.results_list))):
+                for i, j in enumerate(self.results_list.keys()):
                     node = str(j)
                     interval = list(
                         HPD_interval(np.array(model_model.mcmc_data.accept_group_limits[j][1000:]), lim=lim)
@@ -299,16 +302,16 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
             self.testmenu_get_time_elapsed()
 
         # Update littlecavas3
-        self.view.update_littlecanvas3(self.results_list)
+        self.view.update_littlecanvas3(list(self.results_list.keys()))
 
         # Reset the right testmenu selected option
         self.view.set_testmenu2_selection("Add to results list")
 
     def testmenu_add_to_results_list(self) -> None:
         self.view.clear_littlecanvas3(id=True)
-        # ref = np.where(np.array(model_model.mcmc_data.contexts) == self.node)[0][0]
         if self.node != "no node":
-            self.results_list.append(self.node)
+            # Ensure the node label is a key in the dictionary. Value does not matter.
+            self.results_list[self.node] = None
 
     def testmenu_get_time_elapsed_between(self) -> None:
         model_model = self.model.current_model
@@ -381,7 +384,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
                 self.view.toolbar.destroy()
 
             fig = Figure(figsize=(8, min(30, len(self.results_list) * 3)), dpi=100)
-            for i, j in enumerate(self.results_list):
+            for i, j in enumerate(self.results_list.keys()):
                 # must be single digit number.
                 n = min(len(self.results_list), 10)
                 plt.rcParams["text.usetex"]

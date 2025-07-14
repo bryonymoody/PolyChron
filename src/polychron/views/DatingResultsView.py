@@ -556,13 +556,14 @@ class DatingResultsView(FrameView):
         """Update the contents of littlecanvas3
 
         Formerly part of PageOne.chornograph_render_post
+
+        Parameters:
+            results_list: a ordered list of (unique) node labels
         """
         self.clear_littlecanvas3()
-        cont_canvas_list = ""
-        for i in set(results_list):
-            cont_canvas_list = cont_canvas_list + str(i) + "\n"
+        canvas_list = "\n".join(results_list)
         self.results_text = self.littlecanvas3.create_text(
-            5, 10, anchor="nw", text=cont_canvas_list, fill="#0A3200", font=("Helvetica 12 bold")
+            5, 10, anchor="nw", text=canvas_list, fill="#0A3200", font=("Helvetica 12 bold")
         )
 
     def show_canvas_plot(self, fig: Figure) -> None:
