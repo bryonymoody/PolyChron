@@ -624,7 +624,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         if model_model is None:
             return
 
-        self.edge_nodes = np.append(self.edge_nodes, self.node)
+        self.edge_nodes.append(self.node)
         if model_model.load_check:
             answer = self.view.messagebox_askquestion(
                 "Warning!",
@@ -684,7 +684,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 self.save_as_new_model()
         # self.littlecanvas2.delete("all")
         model_model.load_check = False
-        self.edge_nodes = np.append(self.edge_nodes, self.node)
+        self.edge_nodes.append(self.node)
         self.addedge(self.edge_nodes)
         self.view.remove_testmenu_entry("Place " + str(self.edge_nodes[0]) + " Above")
         self.edge_nodes = []
@@ -701,7 +701,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             self.edge_nodes = []
 
         if self.node != "no node":
-            self.edge_nodes = np.append(self.edge_nodes, self.node)
+            self.edge_nodes.append(self.node)
             self.view.append_testmenu_entry("Delete stratigraphic relationship with " + str(self.edge_nodes[0]))
 
     def testmenu_equate_context_with(self) -> None:
@@ -718,7 +718,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             )
             if answer == "yes":
                 pass
-        self.comb_nodes = np.append(self.comb_nodes, self.node)
+        self.comb_nodes.appen(self.node)
         strat_graph_temp = nx.contracted_nodes(model_model.stratigraphic_dag, self.comb_nodes[0], self.comb_nodes[1])
         x_nod = list(strat_graph_temp)
         newnode = str(self.comb_nodes[0]) + " = " + str(self.comb_nodes[1])
@@ -748,7 +748,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             self.comb_nodes = []
 
         if self.node != "no node":
-            self.comb_nodes = np.append(self.comb_nodes, self.node)
+            self.comb_nodes.append(self.node)
             self.view.append_testmenu_entry("Equate context with " + str(self.comb_nodes[0]))
 
     def testmenu_supplementary_menu(self) -> None:
@@ -813,7 +813,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             self.edge_nodes = []
 
         if self.node != "no node":
-            self.edge_nodes = np.append(self.edge_nodes, self.node)
+            self.edge_nodes.append(self.node)
             self.view.append_testmenu_entry("Place " + str(self.edge_nodes[0]) + " Above")
 
     def pre_click(self, *args) -> None:
