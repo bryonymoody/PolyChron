@@ -783,19 +783,22 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         if stratinfo is None:
             return
 
-        metadict2 = {}
+        # Prepare the supplementary data to preview
         metadict = model_model.stratigraphic_dag.nodes()[str(self.node)]
-        metadict2["Contexts above"] = [stratinfo[0]]
-        metadict2["Contexts below"] = [stratinfo[1]]
+        metadict2 = {"Contexts above": [stratinfo[0]], "Contexts below": [stratinfo[1]]}
         meta1 = pd.DataFrame.from_dict(metadict, orient="index")
         meta2 = pd.DataFrame.from_dict(metadict2, orient="index")
         meta = pd.concat([meta1, meta2])
         meta = meta.loc["Determination":"Contexts below"]
         meta.columns = ["Data"]
-        if meta.loc["Determination"][0] != "None":
-            meta.loc["Determination"][0] = (
-                str(meta.loc["Determination"][0][0]) + " +- " + str(meta.loc["Determination"][0][1]) + " Carbon BP"
-            )
+        # Prepare the string version of the context's determination attribute.
+        det = meta.loc["Determination", "Data"]
+        if det is not None and det[0] is not None and det[1] is not None:
+            meta.loc["Determination", "Data"] = f"{det[0]} +- {det[1]} Carbon BP"
+        else:
+            meta.loc["Determination", "Data"] = ""
+
+        # Update the table in the view
         self.view.update_supplementary_data_table(self.node, meta)
 
     def testmenu_place_above_prep(self) -> None:
