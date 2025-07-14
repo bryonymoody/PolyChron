@@ -315,7 +315,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         if model_model is None or not model_model.mcmc_check:
             return
 
-        self.phase_len_nodes = np.append(self.phase_len_nodes, self.node)
+        self.phase_len_nodes.append(self.node)
         if self.view.canvas_plt is not None:
             self.view.canvas_plt.get_tk_widget().pack_forget()
         # font = {'size': 11}
@@ -361,7 +361,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
             self.phase_len_nodes = []
 
         if self.node != "no node":
-            self.phase_len_nodes = np.append(self.phase_len_nodes, self.node)
+            self.phase_len_nodes.append(self.node)
             self.view.append_testmenu2_entry(
                 "Get time elapsed between " + str(self.phase_len_nodes[0]) + " and another context"
             )
