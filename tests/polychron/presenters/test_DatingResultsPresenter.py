@@ -372,7 +372,9 @@ class TestDatingResultsPresenter:
         # Set the fake chronological DAG. This Model will be techincally invalid.
         model.current_model.chronological_dag = g
         # Make sure chrono new image is created. Ideally this should be tested just by Model methods, rather than manually creating this here
-        write_dot(model.current_model.chronological_dag, model.current_model.get_working_directory() / "fi_new_chrono")
+        write_dot(
+            model.current_model.chronological_dag, model.current_model.get_working_directory() / "fi_new_chrono.gv"
+        )
         # Fake the load_check so the chrono dag will get rendered, which is a bit evil.
         model.current_model.load_check = True
         model.current_model.render_chrono_graph()

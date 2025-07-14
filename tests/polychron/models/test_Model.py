@@ -251,7 +251,7 @@ class TestModel:
         """Test save_deleted_contexts behaves as expected for a range of models, and that it may raise on attempts to write the csv if disk state is invalid"""
         # Test saving a model with no deleted nodes creates a csv with no data rows
         m = Model("foo", tmp_path / "foo")
-        expected_csv_path = m.get_working_directory() / "deleted_contexts_meta"
+        expected_csv_path = m.get_working_directory() / "deleted_contexts_meta.csv"
         assert not expected_csv_path.exists()
         m.save_deleted_contexts()
         assert expected_csv_path.is_file()

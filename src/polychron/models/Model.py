@@ -380,15 +380,15 @@ class Model:
                 self.get_chronological_graph_directory(): [
                     "fi_new_chrono.png",
                     "fi_new_chrono.svg",
-                    "fi_new_chrono",
+                    "fi_new_chrono.gv",
                     "testdag_chrono.png",
                 ],
                 self.get_stratigraphic_graph_directory(): [
                     "fi_new.png",
                     "fi_new.svg",
-                    "fi_new",
+                    "fi_new.gv",
                     "testdag.png",
-                    "deleted_contexts_meta",
+                    "deleted_contexts_meta.csv",
                 ],
                 self.get_mcmc_results_directory(): ["full_results_df", "key_ref.csv", "context_no.csv"],
                 self.get_python_only_directory(): ["polychron_mcmc_data.json"],
@@ -594,7 +594,7 @@ class Model:
         # Ensure output directory exists
         self.create_dirs()
         # Write csv to disk, which may raise OSError (e.g. if disk is full)
-        path = self.get_working_directory() / "deleted_contexts_meta"
+        path = self.get_working_directory() / "deleted_contexts_meta.csv"
         df.to_csv(path)
 
     def set_stratigraphic_graphviz_file(self, file_input: str | pathlib.Path) -> None:
@@ -709,9 +709,9 @@ class Model:
         self.stratigraphic_dag.graph["graph"] = {"splines": "ortho"}
         # Ensure the graph is compatible with networkx < 3.4 nx_pydot
         self.stratigraphic_dag = remove_invalid_attributes_networkx_lt_3_4(self.stratigraphic_dag)
-        write_dot(self.stratigraphic_dag, workdir / "fi_new")
-        render("dot", "png", workdir / "fi_new")
-        render("dot", "svg", workdir / "fi_new")
+        write_dot(self.stratigraphic_dag, workdir / "fi_new.gv")
+        render("dot", "png", workdir / "fi_new.gv")
+        render("dot", "svg", workdir / "fi_new.gv")
         inp = Image.open(workdir / "fi_new.png")
         inp_final = trim(inp)
         inp_final.save(workdir / "testdag.png")
@@ -756,9 +756,9 @@ class Model:
         self.resid_or_intru_dag.graph["graph"] = {"splines": "ortho"}
         # Ensure the graph is compatible with networkx < 3.4 nx_pydot
         self.resid_or_intru_dag = remove_invalid_attributes_networkx_lt_3_4(self.resid_or_intru_dag)
-        write_dot(self.resid_or_intru_dag, workdir / "fi_new")
-        render("dot", "png", workdir / "fi_new")
-        render("dot", "svg", workdir / "fi_new")
+        write_dot(self.resid_or_intru_dag, workdir / "fi_new.gv")
+        render("dot", "png", workdir / "fi_new.gv")
+        render("dot", "svg", workdir / "fi_new.gv")
         inp = Image.open(workdir / "fi_new.png")
         inp_final = trim(inp)
         inp_final.save(workdir / "testdag.png")
@@ -801,7 +801,7 @@ class Model:
         workdir = self.get_working_directory()
         workdir.mkdir(parents=True, exist_ok=True)
 
-        fi_new_chrono = workdir / "fi_new_chrono"
+        fi_new_chrono = workdir / "fi_new_chrono.gv"
         if self.load_check and fi_new_chrono.is_file():
             render("dot", "png", fi_new_chrono)
             render("dot", "svg", fi_new_chrono)
@@ -937,7 +937,7 @@ class Model:
         ]
         workdir = self.get_working_directory()
         workdir.mkdir(parents=True, exist_ok=True)
-        f = open(workdir / "input_file", "w")
+        f = open(workdir / "input_file.csv", "w")
         writer = csv.writer(f)
         writer.writerow(input_1)
         f.close()

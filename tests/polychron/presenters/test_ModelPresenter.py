@@ -354,7 +354,7 @@ class TestModelPresenter:
         )
         write_dot(
             presenter.model.current_model.chronological_dag,
-            presenter.model.current_model.get_working_directory() / "fi_new_chrono",
+            presenter.model.current_model.get_working_directory() / "fi_new_chrono.gv",
         )
 
         assert not presenter.model.current_model.load_check
@@ -1841,7 +1841,7 @@ class TestModelPresenter:
         )
         write_dot(
             presenter.model.current_model.chronological_dag,
-            presenter.model.current_model.get_working_directory() / "fi_new_chrono",
+            presenter.model.current_model.get_working_directory() / "fi_new_chrono.gv",
         )
         presenter.model.current_model.load_check = True
         presenter.model.current_model.render_chrono_graph()

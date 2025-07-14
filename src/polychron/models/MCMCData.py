@@ -94,7 +94,7 @@ class MCMCData:
         df = pd.DataFrame()
         for i in self.all_group_limits.keys():
             df[i] = self.all_group_limits[i][10000:]
-        full_results_df_path = path / "full_results_df"
+        full_results_df_path = path / "full_results_df.csv"
         df.to_csv(full_results_df_path)
 
         # List containing the the group for each context, in order of topologically sorted contexts.

@@ -267,7 +267,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
         # Ensure the graph is compatible with networkx < 3.4 nx_pydot
         self.graphcopy = remove_invalid_attributes_networkx_lt_3_4(self.graphcopy)
 
-        write_dot(self.graphcopy, workdir / "fi_new_chrono")
+        write_dot(self.graphcopy, workdir / "fi_new_chrono.gv")
 
         # write output variables into the Model once it is confirmed.
         self.model.context_types = self.context_types
