@@ -16,7 +16,7 @@ PolyChron is not yet available from [PyPI](https://pypi.org/) and must be instal
 Before installing PolyChron, the following non-python requirements must be installed:
 
 - [Python](https://www.python.org/)
-    - `3.9` / `3.10` / `3.11` / `3.12`
+    - `3.9` - `3.13`
 
 - [Graphviz](https://www.graphviz.org/)
     - which you can install manually or through your system package manager
