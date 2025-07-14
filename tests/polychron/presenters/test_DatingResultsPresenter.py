@@ -62,7 +62,7 @@ class TestDatingResultsPresenter:
         assert presenter.model == model
 
         # Assert that the presenter properties are initialsed as expected
-        assert presenter.results_list == []
+        assert presenter.results_list == {}
         assert presenter.node == "no node"
         assert presenter.phase_len_nodes == []
         assert presenter.fig is None
@@ -530,9 +530,19 @@ class TestDatingResultsPresenter:
 
         # The results list should not be empty
         assert len(presenter.results_list) != 0
+        assert list(presenter.results_list.keys()) == ["foo"]
 
         # view.clear_littlecanvas3 should have been called
         mock_view.clear_littlecanvas3.assert_called_once()
+
+        # ---
+        # The list should only contain unique elements, and as a dictionary is used the key order (in python 3.7+) is insertion order preserving.
+        # So add multiple elements, including duplicates and check the contents are as expected
+        insertions = ["foo", "foo", "bar", "foo", "baz", "bar", "bar", "bar"]
+        for i in insertions:
+            presenter.node = i
+            presenter.testmenu_add_to_results_list()
+        assert list(presenter.results_list.keys()) == ["foo", "bar", "baz"]
 
     @pytest.mark.skip(reason="test_testmenu_get_time_elapsed_between not implemented, includes tkinter")
     def test_testmenu_get_time_elapsed_between(self):
