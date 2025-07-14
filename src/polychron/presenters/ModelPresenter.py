@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any, List
 
 import networkx as nx
-import numpy as np
 import pandas as pd
 import pydot
 
@@ -1089,14 +1088,14 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             return None
 
         rellist = list(nx.line_graph(model_model.stratigraphic_dag))
-        above = ()
-        below = ()
+        above = []
+        below = []
         for i in enumerate(rellist):
             if str(node) in rellist[i[0]]:
                 if str(node) == rellist[i[0]][0]:
-                    below = np.append(below, rellist[i[0]][1])
+                    below.append(rellist[i[0]][1])
                 elif str(node) == rellist[i[0]][1]:
-                    above = np.append(above, rellist[i[0]][0])
+                    above.append(rellist[i[0]][0])
         if len(above) == 0:
             str1 = ""
         else:
