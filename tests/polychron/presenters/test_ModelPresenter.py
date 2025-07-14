@@ -1913,18 +1913,18 @@ class TestModelPresenter:
             # With a model with a DAG, but a context which is not in the dag, return None
             ("demo", "demo", "no node", None),
             # With a model with a DAG, and a valid node, expect the correct result (for multiple nodes)
-            ("demo", "demo", "a", ["", "b"]),
-            ("demo", "demo", "b", ["a", "c = d, e"]),
-            ("demo", "demo", "c = d", ["b", "f"]),
-            ("demo", "demo", "e", ["b", "g"]),
-            ("demo", "demo", "f", ["c = d", ""]),
-            ("demo", "demo", "g", ["e", ""]),
+            ("demo", "demo", "a", ("", "b")),
+            ("demo", "demo", "b", ("a", "c = d, e")),
+            ("demo", "demo", "c = d", ("b", "f")),
+            ("demo", "demo", "e", ("b", "g")),
+            ("demo", "demo", "f", ("c = d", "")),
+            ("demo", "demo", "g", ("e", "")),
         ],
     )
     def test_stratfunc(
-        self, project_name: str | None, model_name: str | None, context: str, expected_result: list[str] | None
+        self, project_name: str | None, model_name: str | None, context: str, expected_result: tuple[str] | None
     ):
-        """Test that stratfunc returns the expected list of strings or None depending on the state of the current Model"""
+        """Test that stratfunc returns the expected 2-tuple of strings or None depending on the state of the current Model"""
         mock_mediator = MagicMock(spec=Mediator)
         mock_view = MagicMock(spec=ModelView)
         model = self.project_selection
