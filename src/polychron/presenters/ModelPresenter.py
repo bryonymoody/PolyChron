@@ -1064,7 +1064,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         model_model.render_strat_graph()
         self.view.update_littlecanvas(model_model.stratigraphic_image)
 
-    def stratfunc(self, node: str) -> list[str] | None:
+    def stratfunc(self, node: str) -> tuple[str] | None:
         """obtains strat relationships for node
 
         Formerly `StartPage.stratfunc`
@@ -1073,7 +1073,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             node: the context label to extract stratigraphic relationsips for
 
         Returns:
-            A list containing 2 strings, the comma separated list of context above, and comma separated list of contexts below; Or None if the provided node/context label is not valid.
+            A 2-tuple of strings: the comma separated list of context above, and comma separated list of contexts below; Or None if the provided node/context label is not valid.
         """
         model_model = self.model.current_model
         if model_model is None:
@@ -1088,27 +1088,12 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             return None
 
         rellist = list(nx.line_graph(model_model.stratigraphic_dag))
-        above = []
-        below = []
-        for i in enumerate(rellist):
-            if str(node) in rellist[i[0]]:
-                if str(node) == rellist[i[0]][0]:
-                    below.append(rellist[i[0]][1])
-                elif str(node) == rellist[i[0]][1]:
-                    above.append(rellist[i[0]][0])
-        if len(above) == 0:
-            str1 = ""
-        else:
-            str1 = above[0]
-            for i in above[1:]:
-                str1 = str1 + ", " + i
-        if len(below) == 0:
-            str2 = ""
-        else:
-            str2 = below[0]
-            for j in below[1:]:
-                str2 = str2 + ", " + j
-        return [str1, str2]
+        node = str(node)
+        above = [u for u, v in rellist if node == v]
+        below = [v for u, v in rellist if node == u]
+        joined_above = ", ".join(above)
+        joined_below = ", ".join(below)
+        return joined_above, joined_below
 
     def nodecheck(self, x_current: int, y_current: int) -> str:
         """returns the node that corresponds to the mouse cooridinates
