@@ -89,6 +89,11 @@ class TestProjectSelectPresenter:
         # Assert the mocked view.update_project_list method was called with the expected value
         mock_view.update_project_list.assert_called_with(["foo"])
 
+        # Create a new project, which should be displayed before "foo" in a sorted list, and assert the order is sorted lexicographically
+        self.project_selection.projects_directory.get_or_create_project("1")
+        presenter.update_view()
+        mock_view.update_project_list.assert_called_with(["1", "foo"])
+
     def test_on_load_button(self, capsys: pytest.CaptureFixture):
         """Test the on_load_button callback function
 
