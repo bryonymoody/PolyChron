@@ -33,7 +33,7 @@ class SplashPresenter(FramePresenter[SplashView, ProjectSelection]):
 
         # Instantiate the child presenter and view
         popup_presenter = ProjectSelectProcessPopupPresenter(
-            self.mediator, ProjectSelectProcessPopupView(self.view), self.model
+            self.mediator, ProjectSelectProcessPopupView(self.view, self.mediator.get_theme_manager()), self.model
         )
         # Ensure it is visible and on top
         popup_presenter.view.lift()

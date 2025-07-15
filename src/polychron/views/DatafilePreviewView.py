@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, List, Tuple
 
+from ..GUIThemeManager import GUIThemeManager
 from .PopupView import PopupView
 
 
@@ -13,10 +14,10 @@ class DatafilePreviewView(PopupView):
     Formerly `popupWindow7`, called by numerous `open_fileX` methods in StartPage
     """
 
-    def __init__(self, parent: tk.Frame) -> None:
+    def __init__(self, parent: tk.Frame, theme_manager: GUIThemeManager) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent)
+        super().__init__(parent, theme_manager)
 
         self.title("Data preview")
         self.attributes("-topmost", "true")
@@ -29,9 +30,13 @@ class DatafilePreviewView(PopupView):
         self.tree = ttk.Treeview(self.canvas)
         self.tree.pack()
         self.tree["show"] = "headings"
-        self.load_button = tk.Button(self, text="Load data", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6")
+        self.load_button = tk.Button(
+            self, text="Load data", bg=GUIThemeManager.colour("slate_grey"), fg=GUIThemeManager.colour("offwhite2")
+        )
         self.load_button.pack()
-        self.cancel_button = tk.Button(self, text="Cancel", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6")
+        self.cancel_button = tk.Button(
+            self, text="Cancel", bg=GUIThemeManager.colour("slate_grey"), fg=GUIThemeManager.colour("offwhite2")
+        )
         self.cancel_button.pack()
 
     def bind_load_button(self, callback: Callable[[], Any]) -> None:

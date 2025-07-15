@@ -3,6 +3,7 @@ from __future__ import annotations
 import tkinter as tk
 from typing import Any, Callable
 
+from ..GUIThemeManager import GUIThemeManager
 from .PopupView import PopupView
 
 
@@ -12,10 +13,10 @@ class RemoveStratigraphicRelationshipView(PopupView):
     Formerly `popupWindow6`
     """
 
-    def __init__(self, parent: tk.Frame) -> None:
+    def __init__(self, parent: tk.Frame, theme_manager: GUIThemeManager) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent)
+        super().__init__(parent, theme_manager)
 
         self.configure(bg="white")
         self.geometry("1000x400")
@@ -26,23 +27,29 @@ class RemoveStratigraphicRelationshipView(PopupView):
         self.label = tk.Label(
             self,
             bg="white",
-            font="helvetica 12",
-            fg="#2f4858",
+            font=self.theme_manager.font(12),
+            fg=GUIThemeManager.colour("slate_grey"),
         )
         self.update_label()
         self.label.place(relx=0.3, rely=0.1)
 
         # Place a text entry box
-        self.text = tk.Text(self, font="helvetica 12", fg="#2f4858")
+        self.text = tk.Text(self, font=self.theme_manager.font(12), fg=GUIThemeManager.colour("slate_grey"))
         self.text.place(relx=0.3, rely=0.2, relheight=0.5, relwidth=0.5)
 
         # Place an OK button
-        self.ok_button = tk.Button(self, text="OK", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6")
+        self.ok_button = tk.Button(
+            self, text="OK", bg=GUIThemeManager.colour("slate_grey"), fg=GUIThemeManager.colour("offwhite2")
+        )
         self.ok_button.place(relx=0.3, rely=0.7)
 
         # Place a Cancel Button
         self.cancel_button = tk.Button(
-            self, text="Cancel", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6", command=self.destroy
+            self,
+            text="Cancel",
+            bg=GUIThemeManager.colour("slate_grey"),
+            fg=GUIThemeManager.colour("offwhite2"),
+            command=self.destroy,
         )
         self.cancel_button.place(relx=0.72625, rely=0.7)
 

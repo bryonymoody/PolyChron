@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, Dict, List
 
+from ..GUIThemeManager import GUIThemeManager
 from .PopupView import PopupView
 
 
@@ -13,10 +14,10 @@ class ManageIntrusiveOrResidualContextsView(PopupView):
     Formerly `popupWindow4`. This is a popup window triggered after ResidualOrIntrusive input
     """
 
-    def __init__(self, parent: tk.Frame) -> None:
+    def __init__(self, parent: tk.Frame, theme_manager: GUIThemeManager) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent)
+        super().__init__(parent, theme_manager)
 
         self.__intru_dropdown_labels = {}
         """Dict of tkinter label widgets for intrusive nodes"""
@@ -30,19 +31,20 @@ class ManageIntrusiveOrResidualContextsView(PopupView):
         self.__resid_dropdowns = {}
         """Dict of dropdown tkinter widgets for residual nodes"""
 
-        self.configure(bg="#AEC7D6")
+        self.configure(bg=GUIThemeManager.colour("primary_light"))
         self.geometry("1000x400")
         self.title("Managing intrusive and residual contexts")
         self.attributes("-topmost", "true")
 
-        self.back_button = tk.Button(self, text="Go back", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6")
+        self.back_button = tk.Button(
+            self, text="Go back", bg=GUIThemeManager.colour("slate_grey"), fg=GUIThemeManager.colour("offwhite2")
+        )
         self.back_button.grid(column=30, row=4)
         self.proceed_button = tk.Button(
             self,
             text="Proceed to render chronological graph",
-            bg="#2F4858",
-            font=("Helvetica 12 bold"),
-            fg="#eff3f6",
+            bg=GUIThemeManager.colour("slate_grey"),
+            fg=GUIThemeManager.colour("offwhite2"),
         )
         self.proceed_button.grid(column=30, row=6)
 
@@ -76,7 +78,6 @@ class ManageIntrusiveOrResidualContextsView(PopupView):
             # Adding combobox drop down list
             self.__resid_dropdowns[node] = ttk.Combobox(self, width=27, state="readonly")
             self.__resid_dropdowns[node]["values"] = ("Exclude from modelling", "Treat as TPQ")
-            self.__resid_dropdowns[node]["background"] = "#ff0000"
             self.__resid_dropdowns[node].grid(column=1, row=idx)
 
         # Create a label and combobox for each intrusive node provided

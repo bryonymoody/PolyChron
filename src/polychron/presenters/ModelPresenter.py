@@ -187,7 +187,9 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         if model_model is None:
             return
         # Create the popup presenter and view
-        popup_presenter = MCMCProgressPresenter(self.mediator, MCMCProgressView(self.view), model_model)
+        popup_presenter = MCMCProgressPresenter(
+            self.mediator, MCMCProgressView(self.view, self.mediator.get_theme_manager()), model_model
+        )
         # Ensure it is visible and on top
         popup_presenter.view.lift()
         # Run the calibration
@@ -204,7 +206,9 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         Formerly `popupWindow8`
         """
-        popup_presenter = CalibrateModelSelectPresenter(self.mediator, CalibrateModelSelectView(self.view), self.model)
+        popup_presenter = CalibrateModelSelectPresenter(
+            self.mediator, CalibrateModelSelectView(self.view, self.mediator.get_theme_manager()), self.model
+        )
         # Ensure it is visible and on top
         popup_presenter.view.lift()
 
@@ -283,7 +287,9 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             if answer == "yes":
                 # Create and show the residual or intrusive presenter
                 popup_presenter = ResidualOrIntrusivePresenter(
-                    self.mediator, ResidualOrIntrusiveView(self.view), self.model.current_model
+                    self.mediator,
+                    ResidualOrIntrusiveView(self.view, self.mediator.get_theme_manager()),
+                    self.model.current_model,
                 )
                 popup_presenter.view.lift()
                 # Wait for the popup to be closed
@@ -291,7 +297,9 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             else:
                 # If not, show the group relation ship management view/presenter, formerly popupWindow3
                 popup_presenter = ManageGroupRelationshipsPresenter(
-                    self.mediator, ManageGroupRelationshipsView(self.view), self.model.current_model
+                    self.mediator,
+                    ManageGroupRelationshipsView(self.view, self.mediator.get_theme_manager()),
+                    self.model.current_model,
                 )
                 popup_presenter.view.lift()
                 self.view.wait_window(popup_presenter.view)
@@ -306,7 +314,9 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             The string result value, which should be "cancel" or "load"
         """
         datafile_model = DatafilePreviewModel(df)
-        popup_presenter = DatafilePreviewPresenter(self.mediator, DatafilePreviewView(self.view), datafile_model)
+        popup_presenter = DatafilePreviewPresenter(
+            self.mediator, DatafilePreviewView(self.view, self.mediator.get_theme_manager()), datafile_model
+        )
         popup_presenter.view.lift()
 
         # Prevent the view's canvas element from being interacted with?
@@ -612,7 +622,9 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             model_model.load_check = "not_loaded"
 
         addContextModel = AddContextModel()
-        popup_presenter = AddContextPresenter(self.mediator, AddContextView(self.view), addContextModel)
+        popup_presenter = AddContextPresenter(
+            self.mediator, AddContextView(self.view, self.mediator.get_theme_manager()), addContextModel
+        )
         popup_presenter.view.lift()
         self.view.wait_window(popup_presenter.view)
         self.node = addContextModel.label
@@ -865,7 +877,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         # Instantiate the child presenter and view
         popup_presenter = ProjectSelectProcessPopupPresenter(
-            self.mediator, ProjectSelectProcessPopupView(self.view), self.model
+            self.mediator, ProjectSelectProcessPopupView(self.view, self.mediator.get_theme_manager()), self.model
         )
         # Ensure it is visible and on top
         popup_presenter.view.lift()
@@ -882,7 +894,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         """
         # Instantiate the child presenter and view
         popup_presenter = ProjectSelectProcessPopupPresenter(
-            self.mediator, ProjectSelectProcessPopupView(self.view), self.model
+            self.mediator, ProjectSelectProcessPopupView(self.view, self.mediator.get_theme_manager()), self.model
         )
         # Set the models' next project to the current project
         self.model.next_project_name = self.model.current_project_name
@@ -924,7 +936,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         # Instantiate the child presenter and view
         popup_presenter = ProjectSelectProcessPopupPresenter(
-            self.mediator, ProjectSelectProcessPopupView(self.view), self.model
+            self.mediator, ProjectSelectProcessPopupView(self.view, self.mediator.get_theme_manager()), self.model
         )
 
         # Specify the initial project to the current one
@@ -1153,7 +1165,9 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         data = RemoveContextModel(context=context_name, reason=None)
         # Create the popup window, formerly popupWindow5
-        popup_presenter = RemoveContextPresenter(self.mediator, RemoveContextView(self.view), data)
+        popup_presenter = RemoveContextPresenter(
+            self.mediator, RemoveContextView(self.view, self.mediator.get_theme_manager()), data
+        )
         self.view.canvas["state"] = "disabled"
         popup_presenter.view.lift()
         self.view.wait_window(popup_presenter.view)
@@ -1179,7 +1193,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         # Create the popup window, formerly popupWindow6
         popup_presenter = RemoveStratigraphicRelationshipPresenter(
-            self.mediator, RemoveStratigraphicRelationshipView(self.view), data
+            self.mediator, RemoveStratigraphicRelationshipView(self.view, self.mediator.get_theme_manager()), data
         )
         self.view.canvas["state"] = "disabled"
         popup_presenter.view.lift()
