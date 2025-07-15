@@ -440,7 +440,7 @@ def phase_labels(
 
     Parameters:
         phi_ref: Ordered list of group/phase labels
-        post_group: Ordered list containing the relation ship between the nth group, and the n+1th group
+        post_group: Ordered list containing the relationship between the nth group, and the n+1th group
         phi_accept: Accepted group boundaries from MCMC simulation. The length of the outer list depends on the values of post_group
         all_samps_phi: all samples for group boundaries from MCMC, including rejected samples. The length of the outer list depends on the values of post_group
 
@@ -451,37 +451,37 @@ def phase_labels(
         - A dictionary of group limits from accepted phi samples
         - A dictionary of group limits from all phi samples
     """
-    labels = ["a_" + str(phi_ref[0])]
+    labels = [f"a_{phi_ref[0]}"]
     i = 0
     results_dict = {labels[0]: phi_accept[i]}
     all_results_dict = {labels[0]: all_samps_phi[i]}
-    for a_val in enumerate(post_group):
+    for idx, post_type in enumerate(post_group):
         i = i + 1
-        if a_val[1] == "abutting":
-            labels.append("b_" + str(phi_ref[a_val[0]]) + " = a_" + str(phi_ref[a_val[0] + 1]))
-            results_dict["a_" + str(phi_ref[a_val[0] + 1]) + " = b_" + str(phi_ref[a_val[0]])] = phi_accept[i]
-            all_results_dict["a_" + str(phi_ref[a_val[0] + 1]) + " = b_" + str(phi_ref[a_val[0]])] = all_samps_phi[i]
-        # results_dict['a_' + str(phi_ref[a_val[0]+1])] = phi_accept[i]
-        elif a_val[1] == "end":
-            labels.append("b_" + str(phi_ref[-1]))
-            results_dict["b_" + str(phi_ref[a_val[0]])] = phi_accept[i]
-            all_results_dict["b_" + str(phi_ref[a_val[0]])] = all_samps_phi[i]
-        elif a_val[1] == "gap":
-            labels.append("b_" + str(phi_ref[a_val[0]]))
-            labels.append("a_" + str(phi_ref[a_val[0] + 1]))
-            results_dict["b_" + str(phi_ref[a_val[0]])] = phi_accept[i]
-            all_results_dict["b_" + str(phi_ref[a_val[0]])] = all_samps_phi[i]
+        if post_type == "abutting":
+            labels.append(f"b_{phi_ref[idx]} = a_{phi_ref[idx + 1]}")
+            results_dict[f"a_{phi_ref[idx + 1]} = b_{phi_ref[idx]}"] = phi_accept[i]
+            all_results_dict[f"a_{phi_ref[idx + 1]} = b_{phi_ref[idx]}"] = all_samps_phi[i]
+            # results_dict[f"a_{phi_ref[idx + 1]}"] = phi_accept[i]
+        elif post_type == "end":
+            labels.append(f"b_{phi_ref[-1]}")
+            results_dict[f"b_{phi_ref[idx]}"] = phi_accept[i]
+            all_results_dict[f"b_{phi_ref[idx]}"] = all_samps_phi[i]
+        elif post_type == "gap":
+            labels.append(f"b_{phi_ref[idx]}")
+            labels.append(f"a_{phi_ref[idx + 1]}")
+            results_dict[f"b_{phi_ref[idx]}"] = phi_accept[i]
+            all_results_dict[f"b_{phi_ref[idx]}"] = all_samps_phi[i]
             i = i + 1
-            results_dict["a_" + str(phi_ref[a_val[0] + 1])] = phi_accept[i]
-            all_results_dict["a_" + str(phi_ref[a_val[0] + 1])] = all_samps_phi[i]
-        else:  # "overlap"
-            labels.append("a_" + str(phi_ref[a_val[0] + 1]))
-            labels.append("b_" + str(phi_ref[a_val[0]]))
-            results_dict["a_" + str(phi_ref[a_val[0] + 1])] = phi_accept[i]
-            all_results_dict["a_" + str(phi_ref[a_val[0] + 1])] = all_samps_phi[i]
+            results_dict[f"a_{phi_ref[idx + 1]}"] = phi_accept[i]
+            all_results_dict[f"a_{phi_ref[idx + 1]}"] = all_samps_phi[i]
+        else:  # post_type == "overlap"
+            labels.append(f"a_{phi_ref[idx + 1]}")
+            labels.append(f"b_{phi_ref[idx]}")
+            results_dict[f"a_{phi_ref[idx + 1]}"] = phi_accept[i]
+            all_results_dict[f"a_{phi_ref[idx + 1]}"] = all_samps_phi[i]
             i = i + 1
-            results_dict["b_" + str(phi_ref[a_val[0]])] = phi_accept[i]
-            all_results_dict["b_" + str(phi_ref[a_val[0]])] = all_samps_phi[i]
+            results_dict[f"b_{phi_ref[idx]}"] = phi_accept[i]
+            all_results_dict[f"b_{phi_ref[idx]}"] = all_samps_phi[i]
     # returns dictionary of results do we can plot probability density functions
     return labels, results_dict, all_results_dict
 
