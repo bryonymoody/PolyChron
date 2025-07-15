@@ -38,6 +38,7 @@ dependencies = [
     "pydot<4", # pydot 4 includes an api break which requires network 3.5 to support.
     "pyyaml",
     "ttkthemes",
+    "ttkbootstrap",
 ]
 
 # When widely supported, it would be better to leverage [dependency-groups] than optional-extras for at least dev. https://packaging.python.org/en/latest/specifications/dependency-groups

@@ -19,7 +19,7 @@ class ModelSelectView(FrameView):
         # Set this element's background to white
         self.config(background="white")
 
-        self.list_label = ttk.Label(self, text="Model list", style="ListboxTitle.TLabel")
+        self.list_label = ttk.Label(self, text="Model list")  # , style="ListboxTitle.TLabel")
         self.list_label.place(relx=0.36, rely=0.1)
         self.model_listbox = tk.Listbox(
             self,

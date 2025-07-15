@@ -5,6 +5,7 @@ import io
 import tkinter as tk
 from typing import Any, Callable
 
+import ttkbootstrap as ttk
 from PIL import Image, ImageTk
 
 from ..GUIThemeManager import GUIThemeManager
@@ -33,35 +34,35 @@ class ProjectWelcomeView(FrameView):
         # Convert the image which has been read from disk into an ImageTK, as a class memebr to avoid it going out of scope
         self.logo_image = ImageTk.PhotoImage(image1.resize((360, 70)))
         # Add the logo to a tk label within the main canvas
-        self.logo_label = tk.Label(self, image=self.logo_image, background="white")
+        self.logo_label = ttk.Label(self, image=self.logo_image)  # , background="white")
         self.logo_label.place(relx=0.2, rely=0.2, relheight=0.2, relwidth=0.4)
 
         # Add some greeting text to the main canvas
-        self.greeting = tk.Label(
+        self.greeting = ttk.Label(
             self,
             text="Welcome to PolyChron, how would you like to proceed?",
-            bg="white",
-            fg=GUIThemeManager.colour("slate_grey"),
+            # bg="white",
+            # fg=GUIThemeManager.colour("slate_grey"),
             anchor="w",
         )
         self.greeting.place(relx=0.22, rely=0.45)
 
         # Add the back button with no command set
-        self.load_button = tk.Button(
+        self.load_button = ttk.Button(
             self,
             text="Load existing project",
-            bg=GUIThemeManager.colour("slate_grey"),
-            fg=GUIThemeManager.colour("offwhite2"),
+            # bg=GUIThemeManager.colour("slate_grey"),
+            # fg=GUIThemeManager.colour("offwhite2"),
         )
         self.load_button.place(relx=0.8, rely=0.9)
         self.load_button.bind("<Return>", lambda event: self.load_button.invoke())
 
         # Add the create button with no command set
-        self.create_button = tk.Button(
+        self.create_button = ttk.Button(
             self,
             text="Create new project",
-            bg=GUIThemeManager.colour("offwhite2"),
-            fg=GUIThemeManager.colour("slate_grey"),
+            # bg=GUIThemeManager.colour("offwhite2"),
+            # fg=GUIThemeManager.colour("slate_grey"),
         )
         self.create_button.place(relx=0.62, rely=0.9)
         self.create_button.bind("<Return>", lambda event: self.create_button.invoke())

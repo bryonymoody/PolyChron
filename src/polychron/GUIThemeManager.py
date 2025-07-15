@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import tkinter.font as tkFont
 
-from ttkthemes import ThemedStyle, ThemedTk
+from ttkthemes import ThemedTk
 
 
 class GUIThemeManager:
@@ -59,15 +59,15 @@ class GUIThemeManager:
 
         # Get and modify the ThemedStyle to change the defaults for ttk elements, and define some additional custom styles.
         # Using ttkthemes and arc, custom button background colours are non trivial, so tk.Button are stil used.
-        style = ThemedStyle(root)
+        # style = ThemedStyle(root)
 
         # Define a custom ttk.label style for listbox titles, used in the project selection process.
-        style.configure(
-            "ListboxTitle.TLabel",
-            background="white",
-            foreground=GUIThemeManager.colour("slate_grey"),
-            font=(self.__font_family, 14, "bold"),
-        )
+        # style.configure(
+        #     "ListboxTitle.TLabel",
+        #     background="white",
+        #     foreground=GUIThemeManager.colour("slate_grey"),
+        #     font=(self.__font_family, 14, "bold"),
+        # )
 
     def font(self, size: int, weight: str = "normal") -> tkFont.Font:
         """Get a TKFont instance with the speficified size and optional weight, using the 'default' font.
