@@ -466,7 +466,7 @@ def phase_labels(
             labels.append("b_" + str(phi_ref[-1]))
             results_dict["b_" + str(phi_ref[a_val[0]])] = phi_accept[i]
             all_results_dict["b_" + str(phi_ref[a_val[0]])] = all_samps_phi[i]
-        elif a_val == "gap":
+        elif a_val[1] == "gap":
             labels.append("b_" + str(phi_ref[a_val[0]]))
             labels.append("a_" + str(phi_ref[a_val[0] + 1]))
             results_dict["b_" + str(phi_ref[a_val[0]])] = phi_accept[i]
