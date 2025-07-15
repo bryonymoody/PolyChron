@@ -238,8 +238,8 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
             ####find paths in that phase
 
             phase = atribs[j]
-            root = [i for i in nodes if "b_" + str(phase) in i][0]
-            leaf = [i for i in nodes if "a_" + str(phase) in i][0]
+            root = [i for i in nodes if f"b_{phase}" in i][0]
+            leaf = [i for i in nodes if f"a_{phase}" in i][0]
             all_paths = []
             all_paths.extend(nx.all_simple_paths(self.graphcopy, source=root, target=leaf))
 

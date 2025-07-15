@@ -111,7 +111,7 @@ def rank_func(tes: dict[str, list[str]], dot_str: str) -> str:
         y_3 = y_2.replace("]", "")
         y_4 = y_3.replace("'", "")
         y_5 = y_4.replace(",", ";")
-        x_2 = "{rank = same; " + y_5 + ";}\n"
+        x_2 = f"{{rank = same; {y_5};}}\n"
         rank_same.append(x_2)
     rank_string = "".join(rank_same)[:-1]
     new_string = dot_str[:-2] + rank_string + dot_str[-2]
@@ -256,7 +256,7 @@ def edge_of_phase(
                 phase_lst = [list(mydict.values()).index(j) for j in list(mydict.values()) if test1[i[0]][0] in j]
                 key_1 = list(mydict.keys())[phase_lst[0]]  # trying to find phase of other value
                 x_l.append(test1[i[0]][0])
-                y_l.append(str(key_1) + "_below")
+                y_l.append(f"{key_1}_below")
                 phase_tracker.append((key_1, key))
     return x_l, y_l, mydict.keys(), phase_tracker, mydict
 
@@ -327,7 +327,7 @@ def all_node_info(node_list: List[Any], x_image: List[str], node_info: List[Any]
                         atr_new = atr_new.replace("' \"", '"')
                         atr_new = atr_new.replace("\"'", '"')
                         atr_new = atr_new.replace("' ", "'")
-                        atr_newer = str("{'" + atr_new + "}")
+                        atr_newer = f"{{'{atr_new}}}"
                         dicc = ast.literal_eval(atr_newer)
                         node_info.append(dicc)
     return node_info
@@ -426,8 +426,8 @@ def alp_beta_node_add(group: str, graph: nx.DiGraph) -> None:
         group: The group label to add alpha and beta nodes for
         graph: The graph to be mutated
     """
-    graph.add_node("a_" + str(group), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
-    graph.add_node("b_" + str(group), shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
+    graph.add_node(f"a_{group}", shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
+    graph.add_node(f"b_{group}", shape="diamond", fontsize="20.0", fontname="helvetica", penwidth="1.0")
 
 
 def phase_labels(
@@ -571,7 +571,7 @@ def group_rels_delete_empty(
     # adds edges between phases that had gaps due to no contexts being left in them
     label_dict = {}
     null_phases = []  # keep track of phases we need to delete
-    [file_graph.add_edge("a_" + str(i[0]), "b_" + str(i[1]), arrowhead="none") for i in new_group_rels]
+    [file_graph.add_edge(f"a_{i[0]}", f"b_{i[1]}", arrowhead="none") for i in new_group_rels]
     for p in p_list:
         relation = phasedict[p]
         if relation == "gap":
@@ -581,27 +581,27 @@ def group_rels_delete_empty(
             elif p[1] not in graph_data[1][2]:
                 null_phases.append(p)
             else:
-                file_graph.add_edge("a_" + str(p[0]), "b_" + str(p[1]), arrowhead="none")
+                file_graph.add_edge(f"a_{p[0]}", f"b_{p[1]}", arrowhead="none")
         if relation == "overlap":
             if p[0] not in graph_data[1][2]:
                 null_phases.append(p)
             elif p[1] not in graph_data[1][2]:
                 null_phases.append(p)
             else:
-                file_graph.add_edge("b_" + str(p[1]), "a_" + str(p[0]), arrowhead="none")
+                file_graph.add_edge(f"b_{p[1]}", f"a_{p[0]}", arrowhead="none")
         if relation == "abutting":
             if p[0] not in graph_data[1][2]:
                 null_phases.append(p)
             elif p[1] not in graph_data[1][2]:
                 null_phases.append(p)
             else:
-                file_graph = nx.contracted_nodes(file_graph, "a_" + str(p[0]), "b_" + str(p[1]))
+                file_graph = nx.contracted_nodes(file_graph, f"a_{p[0]}", f"b_{p[1]}")
                 x_nod = list(file_graph)
-                newnode = str("a_" + str(p[0]) + " = " + "b_" + str(p[1]))
-                label_str = "<&alpha;<SUB>" + str(p[0]) + "</SUB> = &beta;<SUB>" + str(p[1]) + "</SUB>>"
+                newnode = str(f"a_{p[0]} = b_{p[1]}")
+                label_str = f"<&alpha;<SUB>{p[0]}</SUB> = &beta;<SUB>{p[1]}</SUB>>"
                 label_dict[newnode] = label_str
-                phase_nodes.append("a_" + str(p[0]) + " = " + "b_" + str(p[1]))
-                y_nod = [newnode if i == "a_" + str(p[0]) else i for i in x_nod]
+                phase_nodes.append(f"a_{p[0]} = b_{p[1]}")
+                y_nod = [newnode if i == f"a_{p[0]}" else i for i in x_nod]
                 mapping = dict(zip(x_nod, y_nod))
                 file_graph = nx.relabel_nodes(file_graph, mapping)
     return file_graph, null_phases, label_dict
@@ -625,17 +625,17 @@ def chrono_edge_add(
     for i in node_list:  # loop adds edges between phases
         if i not in xs:
             if i not in ys:
-                file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrowhead="none")
-                file_graph.add_edge(i, "a_" + str(all_node_phase[i]), arrowhead="none")
+                file_graph.add_edge(f"b_{all_node_phase[i]}", i, arrowhead="none")
+                file_graph.add_edge(i, f"a_{all_node_phase[i]}", arrowhead="none")
             else:
-                file_graph.add_edge(i, "a_" + str(all_node_phase[i]), arrowhead="none")
+                file_graph.add_edge(i, f"a_{all_node_phase[i]}", arrowhead="none")
         elif i in xs:
             if i not in ys:
-                file_graph.add_edge("b_" + str(all_node_phase[i]), i, arrowhead="none")
+                file_graph.add_edge(f"b_{all_node_phase[i]}", i, arrowhead="none")
     if phasedict is not None:
         p_list = list(set(phase_trck))  # phases before any get removed due to having no dates
 
-        phase_nodes.append("a_" + str(p_list[0][0]))
+        phase_nodes.append(f"a_{p_list[0][0]}")
         up_phase = [i[0] for i in p_list]
         low_phase = [i[1] for i in p_list]
         act_phases = set(up_phase + low_phase)  # actual phases we are working with
@@ -657,7 +657,7 @@ def chrono_edge_add(
         )
 
         phi_ref = [i for i in phi_ref if i in set(graph_data[1][2])]
-        phase_nodes.append("b_" + str(p_list[len(p_list) - 1][0]))
+        phase_nodes.append(f"b_{p_list[len(p_list) - 1][0]}")
 
     # replace phase rels with gap for phases adjoined due to missing phases
     for i in new_group_rels:
@@ -716,9 +716,9 @@ def chrono_edge_remov(file_graph: nx.DiGraph) -> tuple[nx.DiGraph, list[list[Any
         file_graph = phase_relabel(file_graph)
 
         for i, j in enumerate(elist):
-            file_graph.add_edge("b_" + str(j), evenlist[i], arrowhead="none")
+            file_graph.add_edge(f"b_{j}", evenlist[i], arrowhead="none")
         for i, j in enumerate(olist):
-            file_graph.add_edge(oddlist[i], "a_" + str(j.replace("_below", "")), arrowhead="none")
+            file_graph.add_edge(oddlist[i], f"a_{j.replace('_below', '')}", arrowhead="none")
     # case when there's only one phase
     elif len(phase_list) == 1:
         evenlist = []
@@ -734,10 +734,10 @@ def chrono_edge_remov(file_graph: nx.DiGraph) -> tuple[nx.DiGraph, list[list[Any
             alp_beta_node_add(node, file_graph)
         phase_lab = phase_list[0]
         for z in evenlist:
-            file_graph.add_edge("b_" + str(phase_lab), z, arrowhead="none")
+            file_graph.add_edge(f"b_{phase_lab}", z, arrowhead="none")
 
         for m in oddlist:
-            file_graph.add_edge(m, "a_" + str(phase_lab), arrowhead="none")
+            file_graph.add_edge(m, f"a_{phase_lab}", arrowhead="none")
     return graph_data, [xs, ys], phase_list
 
 
