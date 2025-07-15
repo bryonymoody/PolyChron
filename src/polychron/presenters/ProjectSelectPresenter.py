@@ -20,7 +20,7 @@ class ProjectSelectPresenter(FramePresenter[ProjectSelectView, ProjectSelection]
 
     def update_view(self) -> None:
         """Update text & tables within the view to reflect the current state of the model"""
-        project_names = list(self.model.projects_directory.projects.keys())
+        project_names = sorted(list(self.model.projects_directory.projects.keys()))
         self.view.update_project_list(project_names)
 
     def on_load_button(self) -> None:

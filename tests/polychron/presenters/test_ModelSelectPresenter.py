@@ -33,6 +33,8 @@ class TestModelSelectPresenter:
         foo = self.project_selection.projects_directory.get_or_create_project("foo")
         foo.create_model("bar")
         foo.create_model("baz")
+        # Create a model which is lexicographically after existing models, to test sorting within update_view
+        foo.create_model("1")
 
         # Yield control to the tests
         yield
@@ -82,7 +84,7 @@ class TestModelSelectPresenter:
     @pytest.mark.parametrize(
         ("next_project_name", "expected_model_names"),
         [
-            ("foo", ["bar", "baz"]),
+            ("foo", ["1", "bar", "baz"]),
         ],
     )
     def test_update_view(self, next_project_name: str | None, expected_model_names: List[str]):
