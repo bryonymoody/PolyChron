@@ -157,6 +157,9 @@ ruff format
 
 This can be automatically applied on commit through [pre-commit hooks](https://docs.astral.sh/ruff/integrations/#pre-commit)
 
+## Contributing
+
+If you would like to contribute towards PolyChron, please see the [contributing guidelines](./CONTRIBUTING.md).
 
 ## License
 
