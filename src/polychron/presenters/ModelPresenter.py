@@ -536,13 +536,13 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             self.testmenu_add_new_contexts()
         # checks if any nodes are in edge node to see if we want to add/delete a context
         elif len(self.edge_nodes) == 1:
-            if testmenu_value == "Delete stratigraphic relationship with " + str(self.edge_nodes[0]):
+            if testmenu_value == f"Delete stratigraphic relationship with {self.edge_nodes[0]}":
                 self.testmenu_delete_strat_with()
-            elif testmenu_value == ("Place " + str(self.edge_nodes[0]) + " Above"):
+            elif testmenu_value == (f"Place {self.edge_nodes[0]} Above"):
                 self.testmenu_place_above()
         elif testmenu_value == "Delete stratigraphic relationship":
             self.testmenu_delete_stratigraphic_prep()
-        elif len(self.comb_nodes) == 1 and testmenu_value == "Equate context with " + str(self.comb_nodes[0]):
+        elif len(self.comb_nodes) == 1 and testmenu_value == f"Equate context with {self.comb_nodes[0]}":
             self.testmenu_equate_context_with()
         elif testmenu_value == "Equate context with another":
             self.testmenu_equate_context_prep()
@@ -652,7 +652,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                     "Error", f"An edge doesnt exist between '{self.edge_nodes[0]}' and '{self.edge_nodes[1]}' nodes"
                 )
                 # Remove the deleted releationshipo with X entry from the right click menu and reset the edges which have been selected so far
-                self.view.remove_testmenu_entry("Delete stratigraphic relationship with " + str(self.edge_nodes[0]))
+                self.view.remove_testmenu_entry(f"Delete stratigraphic relationship with {self.edge_nodes[0]}")
                 self.edge_nodes = []
                 return
 
@@ -668,7 +668,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         self.view.append_deleted_edge(edge_label(edge_src, edge_dst), reason)
 
         # Remove the deleted releationshipo with X entry from the right click menu and reset the edges which have been selected so far
-        self.view.remove_testmenu_entry("Delete stratigraphic relationship with " + str(self.edge_nodes[0]))
+        self.view.remove_testmenu_entry(f"Delete stratigraphic relationship with {self.edge_nodes[0]}")
         self.edge_nodes = []
 
     def testmenu_place_above(self) -> None:
@@ -689,7 +689,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         model_model.load_check = False
         self.edge_nodes.append(self.node)
         self.addedge(self.edge_nodes)
-        self.view.remove_testmenu_entry("Place " + str(self.edge_nodes[0]) + " Above")
+        self.view.remove_testmenu_entry(f"Place {self.edge_nodes[0]} Above")
         self.edge_nodes = []
 
     def testmenu_delete_stratigraphic_prep(self) -> None:
@@ -700,12 +700,12 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             return
 
         if len(self.edge_nodes) >= 1:
-            self.view.remove_testmenu_entry("Delete stratigraphic relationship with " + str(self.edge_nodes[0]))
+            self.view.remove_testmenu_entry(f"Delete stratigraphic relationship with {self.edge_nodes[0]}")
             self.edge_nodes = []
 
         if self.node != "no node":
             self.edge_nodes.append(self.node)
-            self.view.append_testmenu_entry("Delete stratigraphic relationship with " + str(self.edge_nodes[0]))
+            self.view.append_testmenu_entry(f"Delete stratigraphic relationship with {self.edge_nodes[0]}")
 
     def testmenu_equate_context_with(self) -> None:
         """Callback function from the testmenu to equate two contexts (when one has already been selected)"""
@@ -724,7 +724,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         self.comb_nodes.appen(self.node)
         strat_graph_temp = nx.contracted_nodes(model_model.stratigraphic_dag, self.comb_nodes[0], self.comb_nodes[1])
         x_nod = list(strat_graph_temp)
-        newnode = str(self.comb_nodes[0]) + " = " + str(self.comb_nodes[1])
+        newnode = f"{self.comb_nodes[0]} = {self.comb_nodes[1]}"
         y_nod = [newnode if i == self.comb_nodes[0] else i for i in x_nod]
         mapping = dict(zip(x_nod, y_nod))
         strat_graph_temp = nx.relabel_nodes(strat_graph_temp, mapping)
@@ -736,7 +736,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             self.view.messagebox_info("Error!", "This creates a cycle so you cannot equate these contexts")
         except Exception:
             pass
-        self.view.remove_testmenu_entry("Equate context with " + str(self.comb_nodes[0]))
+        self.view.remove_testmenu_entry(f"Equate context with {self.comb_nodes[0]}")
         self.comb_nodes = []
 
     def testmenu_equate_context_prep(self) -> None:
@@ -747,12 +747,12 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             return
 
         if len(self.comb_nodes) >= 1:
-            self.view.remove_testmenu_entry("Equate context with " + str(self.comb_nodes[0]))
+            self.view.remove_testmenu_entry(f"Equate context with {self.comb_nodes[0]}")
             self.comb_nodes = []
 
         if self.node != "no node":
             self.comb_nodes.append(self.node)
-            self.view.append_testmenu_entry("Equate context with " + str(self.comb_nodes[0]))
+            self.view.append_testmenu_entry(f"Equate context with {self.comb_nodes[0]}")
 
     def testmenu_supplementary_menu(self) -> None:
         """Callback function from the testmenu for users to provide additional supplementary data
@@ -812,12 +812,12 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             return
 
         if len(self.edge_nodes) >= 1:
-            self.view.remove_testmenu_entry("Place " + str(self.edge_nodes[0]) + " Above")
+            self.view.remove_testmenu_entry(f"Place {self.edge_nodes[0]} Above")
             self.edge_nodes = []
 
         if self.node != "no node":
             self.edge_nodes.append(self.node)
-            self.view.append_testmenu_entry("Place " + str(self.edge_nodes[0]) + " Above")
+            self.view.append_testmenu_entry(f"Place {self.edge_nodes[0]} Above")
 
     def pre_click(self, *args) -> None:
         """makes test menu appear and removes any previous test menu

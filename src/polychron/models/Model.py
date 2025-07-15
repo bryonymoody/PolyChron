@@ -674,7 +674,7 @@ class Model:
         for k, j in enumerate(context_1):
             self.stratigraphic_dag = nx.contracted_nodes(self.stratigraphic_dag, j, context_2[k])
             x_nod = list(self.stratigraphic_dag)
-            newnode = str(j) + " = " + str(context_2[k])
+            newnode = f"{j} = {context_2[k]}"
             y_nod = [newnode if i == j else i for i in x_nod]
             mapping = dict(zip(x_nod, y_nod))
             self.stratigraphic_dag = nx.relabel_nodes(self.stratigraphic_dag, mapping)

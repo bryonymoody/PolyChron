@@ -266,7 +266,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
                     hpd_str = ""
                     refs = [k for k in range(len(interval)) if k % 2]
                     for i in refs:
-                        hpd_str = hpd_str + str(np.abs(interval[i - 1])) + " - " + str(np.abs(interval[i])) + " Cal BP "
+                        hpd_str = hpd_str + f"{np.abs(interval[i - 1])} - {np.abs(interval[i])} Cal BP "
                     # add data to the treeview
                     intervals.append((node, hpd_str))
 
@@ -291,11 +291,9 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
             self.testmenu_add_to_results_list()
 
         if len(self.phase_len_nodes) == 1:
-            if testmenu2_value == "Get time elapsed between " + str(self.phase_len_nodes[0]) + " and another context":
+            if testmenu2_value == f"Get time elapsed between {self.phase_len_nodes[0]} and another context":
                 self.testmenu_get_time_elapsed_between()
-            self.view.remove_testmenu2_entry(
-                "Get time elapsed between " + str(self.phase_len_nodes[0]) + " and another context"
-            )
+            self.view.remove_testmenu2_entry(f"Get time elapsed between {self.phase_len_nodes[0]} and another context")
             self.phase_len_nodes = []
 
         if testmenu2_value == "Get time elapsed":
@@ -337,9 +335,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         plot1.spines["top"].set_visible(False)
         # plot1.set_ylim([0, 0.05])
         # plot1.set_xlim([0, 400])
-        plot1.title.set_text(
-            "Time elapsed between " + str(self.phase_len_nodes[0]) + " and " + str(self.phase_len_nodes[1])
-        )
+        plot1.title.set_text(f"Time elapsed between {self.phase_len_nodes[0]} and {self.phase_len_nodes[1]}")
         # self.fig.set_tight_layout(True)
         self.view.show_canvas_plot(self.fig)
         # show hpd intervals
@@ -348,7 +344,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         hpd_str = ""
         refs = [k for k in range(len(interval)) if k % 2]
         for i in refs:
-            hpd_str = hpd_str + str(np.abs(interval[i - 1])) + " - " + str(np.abs(interval[i])) + " Cal BP "
+            hpd_str = hpd_str + f"{np.abs(interval[i - 1])} - {np.abs(interval[i])} Cal BP "
         intervals.append((self.phase_len_nodes[0], self.phase_len_nodes[1], hpd_str))
         self.view.update_hpd_interval_3col(intervals)
 
@@ -358,16 +354,12 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         - Add a new get time elapsed option.
         """
         if len(self.phase_len_nodes) == 1:
-            self.view.remove_testmenu2_entry(
-                "Get time elapsed between " + str(self.phase_len_nodes[0]) + " and another context"
-            )
+            self.view.remove_testmenu2_entry(f"Get time elapsed between {self.phase_len_nodes[0]} and another context")
             self.phase_len_nodes = []
 
         if self.node != "no node":
             self.phase_len_nodes.append(self.node)
-            self.view.append_testmenu2_entry(
-                "Get time elapsed between " + str(self.phase_len_nodes[0]) + " and another context"
-            )
+            self.view.append_testmenu2_entry(f"Get time elapsed between {self.phase_len_nodes[0]} and another context")
 
     def mcmc_output(self) -> None:
         """loads posterior density plots into the graph

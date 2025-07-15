@@ -678,7 +678,7 @@ class ModelView(FrameView):
         """Update the contents of the supplementary data table (tree 1)"""
         # @note fixed this to update the title
         self.labelcanvas3.itemconfig(
-            self.metatext_id, text="Supplementary data of node " + str(node), font="helvetica 12 bold"
+            self.metatext_id, text=f"Supplementary data of node {node}", font="helvetica 12 bold"
         )
         cols = list(meta_df.columns)
         # Clear the tree view

@@ -482,7 +482,7 @@ class DatingResultsView(FrameView):
         columns = ("context", "hpd_interval")
         self.tree_phases = ttk.Treeview(self.littlecanvas_a, columns=columns, show="headings")
         self.tree_phases.heading("context", text="Context")
-        self.tree_phases.heading("hpd_interval", text=str(USER_INP) + "% HPD interval")
+        self.tree_phases.heading("hpd_interval", text=f"{USER_INP} % HPD interval")
         for contact in intervals:
             self.tree_phases.insert("", tk.END, values=contact)
         self.tree_phases.place(relx=0, rely=0, relwidth=0.99)
