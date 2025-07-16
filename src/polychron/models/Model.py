@@ -26,7 +26,7 @@ from ..Config import get_config
 from ..models.MCMCData import MCMCData
 from ..util import (
     MonotonicTimer,
-    node_coords_fromjson,
+    node_coords_from_dag,
     phase_info_func,
     phase_labels,
     rank_func,
@@ -250,7 +250,7 @@ class Model:
 
     Set and used for node right-click detection
     
-    Values are returned from `node_coords_fromjson`, or in some cases set to just be the dataframe.
+    Values are returned from `node_coords_from_dag`, or in some cases set to just be the dataframe.
 
     Formerly `global node_df`
     """
@@ -716,7 +716,7 @@ class Model:
         inp_final = trim(inp)
         inp_final.save(workdir / "testdag.png")
         self.stratigraphic_image = Image.open(workdir / "testdag.png")
-        self.node_coords_and_scale = node_coords_fromjson(self.stratigraphic_dag)
+        self.node_coords_and_scale = node_coords_from_dag(self.stratigraphic_dag)
 
     def __render_strat_graph_phase(self) -> None:
         """Render the stratigraphic graph, with phasing mutating the Model state
@@ -743,7 +743,7 @@ class Model:
         # Call the real .tkraise
         inp.save(workdir / "testdag.png")
         self.stratigraphic_image = Image.open(workdir / "testdag.png")
-        self.node_coords_and_scale = node_coords_fromjson(grouped_stratigraphic_dag)
+        self.node_coords_and_scale = node_coords_from_dag(grouped_stratigraphic_dag)
 
     def __render_resid_or_intru_dag(self) -> None:
         """Render the stratigraphic graph mutating the Model state
@@ -763,7 +763,7 @@ class Model:
         inp_final = trim(inp)
         inp_final.save(workdir / "testdag.png")
         self.resid_or_intru_image = Image.open(workdir / "testdag.png")
-        self.node_coords_and_scale = node_coords_fromjson(self.resid_or_intru_dag)
+        self.node_coords_and_scale = node_coords_from_dag(self.resid_or_intru_dag)
 
     def __render_resid_or_intru_dag_phase(self) -> None:
         """Render the stratigraphic graph, with phasing mutating the Model state
@@ -788,7 +788,7 @@ class Model:
         # Call the real .tkraise
         inp.save(workdir / "testdag.png")
         self.resid_or_intru_image = Image.open(workdir / "testdag.png")
-        self.node_coords_and_scale = node_coords_fromjson(self.resid_or_intru_dag)
+        self.node_coords_and_scale = node_coords_from_dag(self.resid_or_intru_dag)
 
     def render_chrono_graph(self) -> None:
         """Render the chronological graph as a PNG and an SVG, mutating the Model state

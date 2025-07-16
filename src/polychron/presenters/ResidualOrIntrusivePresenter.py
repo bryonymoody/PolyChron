@@ -9,7 +9,7 @@ from PIL import ImageTk
 from ..interfaces import Mediator
 from ..models.Model import Model
 from ..presenters.ManageIntrusiveOrResidualContextsPresenter import ManageIntrusiveOrResidualContextsPresenter
-from ..util import node_coords_fromjson
+from ..util import node_coords_from_dag
 from ..views.ManageIntrusiveOrResidualContextsView import ManageIntrusiveOrResidualContextsView
 from ..views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
 from .PopupPresenter import PopupPresenter
@@ -199,7 +199,7 @@ class ResidualOrIntrusivePresenter(PopupPresenter[ResidualOrIntrusiveView, Model
 
         if self.model.resid_or_intru_dag is not None:
             # gets node coordinates from the graph
-            node_df_con = node_coords_fromjson(self.model.resid_or_intru_dag)
+            node_df_con = node_coords_from_dag(self.model.resid_or_intru_dag)
             # forms a dataframe from the dicitonary of coords
             node_df = node_df_con[0]
             xmax, ymax = node_df_con[1]

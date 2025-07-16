@@ -196,17 +196,135 @@ class TestUtil:
         mutated_dot_string = util.rank_func({}, dot_string)
         assert dot_string == mutated_dot_string
 
-    def test_node_coords_fromjson(self):
-        """Test node_coords_fromjson behaves as expected for a range of inputs
+    @pytest.mark.parametrize(
+        ("test_svg", "expected_coords", "expected_scale"),
+        [
+            # Files using linux line endings, including a strat graph, a chrono graph and a test graph of shapes
+            (
+                "svg/lf/shapes.svg",
+                {
+                    "x_lower": {"box": 32.75, "diamond": -0.25, "ellipse": 131.15, "oval": 137.75, "circle": 134.16},
+                    "x_upper": {"box": 86.75, "diamond": 119.74, "ellipse": 198.35, "oval": 191.75, "circle": 195.34},
+                    "y_lower": {
+                        "box": 169.09,
+                        "diamond": 97.09,
+                        "ellipse": 169.09,
+                        "oval": 97.09,
+                        "circle": -0.03999999999999915,
+                    },
+                    "y_upper": {"box": 205.09, "diamond": 133.09, "ellipse": 205.09, "oval": 133.09, "circle": 61.14},
+                },
+                [202.54, 209.09],
+            ),
+            (
+                "svg/lf/demo_strat.svg",
+                {
+                    "x_lower": {"a": 72.0, "b": 72.0, "e": 0.0, "h": 0.0, "c": 72.0, "d": 144.0, "f": 144.0},
+                    "x_upper": {"a": 126.0, "b": 126.0, "e": 54.0, "h": 54.0, "c": 126.0, "d": 198.0, "f": 198.0},
+                    "y_lower": {"a": 231.0, "b": 154.0, "e": 77.0, "h": -0.0, "c": 77.0, "d": 77.0, "f": -0.0},
+                    "y_upper": {"a": 272.0, "b": 195.0, "e": 118.0, "h": 41.0, "c": 118.0, "d": 118.0, "f": 41.0},
+                },
+                [202.0, 276.0],
+            ),
+            (
+                "svg/lf/demo_chrono.svg",
+                {
+                    "x_lower": {
+                        "a": 72.0,
+                        "b": 72.0,
+                        "e": 9.0,
+                        "h": 0.0,
+                        "a_2 = b_1": 17.0,
+                        "a_1": 57.0,
+                        "c": 72.0,
+                        "d": 127.0,
+                        "b_2": 61.0,
+                    },
+                    "x_upper": {
+                        "a": 126.0,
+                        "b": 126.0,
+                        "e": 63.0,
+                        "h": 54.0,
+                        "a_2 = b_1": 181.0,
+                        "a_1": 141.0,
+                        "c": 126.0,
+                        "d": 181.0,
+                        "b_2": 137.0,
+                    },
+                    "y_lower": {
+                        "a": 423.0,
+                        "b": 346.0,
+                        "e": 173.0,
+                        "h": 96.0,
+                        "a_2 = b_1": 250.0,
+                        "a_1": -0.0,
+                        "c": 96.0,
+                        "d": 173.0,
+                        "b_2": 500.0,
+                    },
+                    "y_upper": {
+                        "a": 464.0,
+                        "b": 387.0,
+                        "e": 214.0,
+                        "h": 137.0,
+                        "a_2 = b_1": 310.0,
+                        "a_1": 60.0,
+                        "c": 137.0,
+                        "d": 214.0,
+                        "b_2": 560.0,
+                    },
+                },
+                [185.0, 564.0],
+            ),
+            # Check windows line endings for a file with one of each shape
+            (
+                "svg/crlf/shapes.svg",
+                {
+                    "x_lower": {"box": 32.75, "diamond": -0.25, "ellipse": 131.15, "oval": 137.75, "circle": 134.16},
+                    "x_upper": {"box": 86.75, "diamond": 119.74, "ellipse": 198.35, "oval": 191.75, "circle": 195.34},
+                    "y_lower": {
+                        "box": 169.09,
+                        "diamond": 97.09,
+                        "ellipse": 169.09,
+                        "oval": 97.09,
+                        "circle": -0.03999999999999915,
+                    },
+                    "y_upper": {"box": 205.09, "diamond": 133.09, "ellipse": 205.09, "oval": 133.09, "circle": 61.14},
+                },
+                [202.54, 209.09],
+            ),
+        ],
+    )
+    def test_node_coords_from_svg(
+        self, test_svg: str, expected_coords, expected_scale: list[float], test_data_path: pathlib.Path
+    ):
+        """Test extraction of node coordinates from an svg string
 
-        Due to non-determinism within graphviz layout generation, we probably cannot rely on exact coordinates for all graphs, but ideally we should be able to for relatively simple graphs.
-        The test may need ammending to account for this.
+        This can be an exact coordinate test, as we can test against stored svg files which were produced by graphviz
 
         Todo:
-            - Split node_coords_fromjson into a method which takes a graph and returns the coordinates, and an internally used method which takes a string containing an svg. svg extraction can then accurately be tested, while graphviz .svg generation cannot. This also means that we should ensure .png and .svg are regenerated on polychron launch, in case graphviz has changed.
-            - Ensure that the new tests with platform specific line endings, if multi-line matching is still present.
-            - rectangular bounding boxes are always used for click detection, even for diamonds and elipses. This may be problematic if graphviz does not ensure that the rectangular bounding box of a diamond/kite is free from other nodes.
+            - rectangular bounding boxes are always used for click detection, even for diamonds and ellipses. This may be problematic if graphviz does not ensure that the rectangular bounding box of a diamond/kite is free from other nodes.
             - Consider returning a dict instead of a dataframe.
+        """
+        # Open the input file in binary mode and cast to a string, so it has the literal characters rather than true line endings, matching usage in node_coords_from_dag
+        input_path = test_data_path / test_svg
+        with open(input_path, "rb") as f:
+            svg_string = str(f.read())
+        # Call node_coords_from_svg
+        coords, scale = util.node_coords_from_svg(svg_string)
+        # Check coordinates are as expected, with some float tolerance
+        expected_coords = pd.DataFrame(expected_coords)
+        pd.testing.assert_frame_equal(coords, expected_coords, check_exact=False)
+        # Assert the scale is as expected, with some float tolerance
+        assert scale == pytest.approx(expected_scale)
+
+    def test_node_coords_from_dag(self):
+        """Test node_coords_from_dag behaves as expected for a range of inputs
+
+        Due to non-determinism within graphviz layout generation, we cannot check the exact returned coordinates from the dynamically genrated svg, but that is covered by `test_node_coords_from_svg`
+
+        Todo:
+            - Call test_node_coords_from_dag less often, storing the coordinates when the png is re-rendered instead. Possibly even remove this method and operate on the svg which is rendered at the same time as the png.
         """
 
         # Get the node coordinates and scale for a nx.DiGraph
@@ -215,7 +333,7 @@ class TestUtil:
             g.add_node(node, shape="box")
         for u, v in [("a", "b"), ("a", "c"), ("b", "d"), ("c", "d")]:
             g.add_edge(u, v)
-        df, scale = util.node_coords_fromjson(g)
+        df, scale = util.node_coords_from_dag(g)
         # Assert the types and shape of returned data is as it should be
         assert isinstance(df, pd.DataFrame)
         assert "x_lower" in df.columns
@@ -236,7 +354,7 @@ class TestUtil:
         for value in scale:
             assert isinstance(value, float)
 
-        # Get the node coordinates and scale for a nx.DiGraph including contraction attribtues, to ensure networkx < 3.4 compatibility (due to use of nx_pydot internally)
+        # Get the node coordinates and scale for a nx.DiGraph including contraction attributes, to ensure networkx < 3.4 compatibility (due to use of nx_pydot internally)
         g = nx.DiGraph()
         for node in ["a", "b", "c", "d"]:
             g.add_node(node, shape="box")
@@ -244,7 +362,7 @@ class TestUtil:
             g.add_edge(u, v)
         g = nx.contracted_nodes(g, "b", "c")
         g = nx.relabel_nodes(g, {"b": "b = c"})
-        df, scale = util.node_coords_fromjson(g)
+        df, scale = util.node_coords_from_dag(g)
         assert isinstance(df, pd.DataFrame)
         assert "x_lower" in df.columns
         assert "x_upper" in df.columns
@@ -273,7 +391,7 @@ class TestUtil:
             a -- b -- c;
         }""")
         pydot_g: Dot = graph_from_dot_data(dot_string)[0]
-        df, scale = util.node_coords_fromjson(pydot_g)
+        df, scale = util.node_coords_from_dag(pydot_g)
         assert isinstance(df, pd.DataFrame)
         assert "x_lower" in df.columns
         assert "x_upper" in df.columns
@@ -306,7 +424,7 @@ class TestUtil:
         g.add_edge("a_1", "a", arrowhead="none")
         g.add_edge("b", "b_1", arrowhead="none")
 
-        df, scale = util.node_coords_fromjson(g)
+        df, scale = util.node_coords_from_dag(g)
         assert isinstance(df, pd.DataFrame)
         assert "x_lower" in df.columns
         assert "x_upper" in df.columns
@@ -326,7 +444,7 @@ class TestUtil:
         for value in scale:
             assert isinstance(value, float)
 
-        # Test with a graph that includes elipses/ovals/circles
+        # Test with a graph that includes ellipses/ovals/circles
         # polychron currently (0.2.0) only explicitly sets box or diamond, so this is only for .dot inputs which explciitly set custom shapes?
         # Manually build a graph "ellipse" -> "oval" -> "circle"
         g = nx.DiGraph()
@@ -335,7 +453,7 @@ class TestUtil:
         g.add_node("circle", shape="circle")
         g.add_edge("ellipse", "oval")
         g.add_edge("oval", "circle")
-        df, scale = util.node_coords_fromjson(g)
+        df, scale = util.node_coords_from_dag(g)
         # Assert the returned values are the correct types and shape
         assert isinstance(df, pd.DataFrame)
         assert "x_lower" in df.columns

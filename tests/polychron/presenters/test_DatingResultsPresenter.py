@@ -332,7 +332,7 @@ class TestDatingResultsPresenter:
     def test_nodecheck(self):
         """Test nodecheck behaves as expected.
 
-        As node coordinates are generated via graphviz in node_coords_fromjson, and we cannot rely on graphviz node placement being consistent across platfroms, we must mock node_coords_from_json out to return a dataframe of accepted coordinates
+        As node coordinates are generated via graphviz in node_coords_from_dag, and we cannot rely on graphviz node placement being consistent across platfroms, we must mock node_coords_from_json out to return a dataframe of accepted coordinates
 
         Todo:
             - Fully implement this test with a valid Model, whch has a chronological_image
@@ -377,7 +377,7 @@ class TestDatingResultsPresenter:
         model.current_model.load_check = True
         model.current_model.render_chrono_graph()
 
-        # Prepare mock values to be returned from node_coords_fromjson to avoid graphviz non-determinsm issues.
+        # Prepare mock values to be returned from node_coords_from_dag to avoid graphviz non-determinsm issues.
         #  Alteranatively we could get the values returned and only test within those.
         # Use values which were emitted by manually rendering this graph
         node_coords = pd.DataFrame(
@@ -411,7 +411,7 @@ class TestDatingResultsPresenter:
         ]
 
         # The incoming coordinates have their origin at the top left of the image, after translation from panning. Zoom level conversion is handled in nodecheck.
-        # SVG coordinates are also origin 0, 0, but the values retuned by node_coords_fromjson have been inverted in the y axis.
+        # SVG coordinates are also origin 0, 0, but the values retuned by node_coords_from_dag have been inverted in the y axis.
         # So invert the y axis before providing the coordinates
         for test_case in tests_coords:
             test_case[0][1] = scale[1] - test_case[0][1]
@@ -421,10 +421,10 @@ class TestDatingResultsPresenter:
             (int(math.ceil(scale[0])), int(math.ceil(scale[1])))
         )
 
-        # Patch  node_coords_fromjson
-        with patch("polychron.presenters.DatingResultsPresenter.node_coords_fromjson") as mock_node_coords_fromjson:
+        # Patch  node_coords_from_dag
+        with patch("polychron.presenters.DatingResultsPresenter.node_coords_from_dag") as mock_node_coords_from_dag:
             # Ensure the mock returns the correct values
-            mock_node_coords_fromjson.return_value = (node_coords, scale)
+            mock_node_coords_from_dag.return_value = (node_coords, scale)
 
             # Check with several coordinatee pairs, which should miss, hit boxes, hit diamonds, or hit elipses.
             for (x, y), node in tests_coords:
