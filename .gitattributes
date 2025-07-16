@@ -1,0 +1,8 @@
+# Set the default behaviour, in case people don't have core.autocrlf set.
+* text=auto
+
+# Ensure that files in tests/data/svg/lf always have LF line endings
+tests/data/svg/lf/*.svg text eol=lf
+
+# Ensure that files in tests/data/svg/crlf always have CRLF line endings
+tests/data/svg/crlf/*.svg text eol=crlf
