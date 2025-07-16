@@ -26,7 +26,7 @@ class ModelSelectPresenter(FramePresenter[ModelSelectView, ProjectSelection]):
 
         if self.model.next_project is not None:
             model_names = list(self.model.next_project.models.keys())
-            project_name = self.model.next_project.name 
+            project_name = self.model.next_project.name
             self.view.set_project_name(project_name)
         else:
             model_names = []

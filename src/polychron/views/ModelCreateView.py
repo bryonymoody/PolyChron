@@ -48,7 +48,7 @@ class ModelCreateView(FrameView):
     def get_name(self) -> str:
         """Get the model name provided by the user"""
         return self.user_input.get()
-    
+
     def set_project_name(self, project_name: str) -> None:
         """Update the label to include the project name"""
         self.text_1.config(text=f"Model list (Project: {project_name})")

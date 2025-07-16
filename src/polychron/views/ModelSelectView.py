@@ -82,7 +82,7 @@ class ModelSelectView(FrameView):
             return self.model_listbox.get(selected_index[0])
         else:
             return None
-    
+
     def set_project_name(self, project_name: str) -> None:
         """Update the label to include the project name"""
         self.list_label.config(text=f"Model list (Project: {project_name})")
