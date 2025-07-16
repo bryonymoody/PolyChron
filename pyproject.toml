@@ -9,6 +9,7 @@ requires-python = ">= 3.9"
 authors = [
     {name = "Bryony Moody", email = "bryony.moody@sheffield.ac.uk"},
     {name = "Peter Heywood", email = "p.heywood@sheffield.ac.uk"},
+    {name = "Shreyan Ghosh", email = "shreyanghosh27@gmail.com"},
 ]
 maintainers = [
     {name = "Bryony Moody", email = "bryony.moody@sheffield.ac.uk"},
