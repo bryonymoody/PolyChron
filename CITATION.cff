@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+title: PolyChron
+message: "If you use this software, please cite it using the metadata from this file. For more details on the underlying research, please see the references section."
+type: software
+authors:
+  - given-names: Bryony
+    family-names: Moody
+    email: "bryony.moody@sheffield.ac.uk"
+    affiliation: The University of Sheffield
+    orcid: "https://orcid.org/0009-0005-8601-3164"
+  - given-names: Peter
+    family-names: Heywood
+    email: "p.heywood@sheffield.ac.uk"
+    affiliation: The University of Sheffield
+    orcid: "https://orcid.org/0000-0001-9277-8394"
+  - given-names: Shreyan
+    family-names: Ghosh
+    email: "shreyanghosh27@gmail.com"
+    affiliation: The University of Sheffield
+repository-code: "https://github.com/bryonymoody/PolyChron"
+# doi:
+license: GPL-3.0
+references:
+  - type: "thesis"
+    authors:
+      - family-names: Moody
+        given-names: Bryony
+        orcid: "https://orcid.org/0009-0005-8601-3164"
+    title: "Semi-Automation of Bayesian Chronology Construction Using a Graph-Theoretic Approach"
+    url: "https://etheses.whiterose.ac.uk/id/eprint/33387/"
+    date-released: 2023-05-01
+    institution:
+      name: "University of Sheffield"
