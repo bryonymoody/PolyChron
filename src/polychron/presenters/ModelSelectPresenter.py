@@ -24,7 +24,14 @@ class ModelSelectPresenter(FramePresenter[ModelSelectView, ProjectSelection]):
     def update_view(self) -> None:
         """Update text & tables within the view to reflect the current state of the model"""
         # Update the list of models to select from, if a project has been selected
-        model_names = list(self.model.next_project.models.keys()) if self.model.next_project is not None else []
+        if self.model.next_project is not None:
+            model_names = list(self.model.next_project.models.keys())
+            project_name = self.model.next_project.name
+            self.view.set_project_name(project_name)
+        else:
+            model_names = []
+            self.view.set_project_name("")
+
         self.view.update_model_list(model_names)
 
     def on_load_button(self) -> None:
