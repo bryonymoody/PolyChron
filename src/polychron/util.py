@@ -118,36 +118,50 @@ def rank_func(tes: dict[str, list[str]], dot_str: str) -> str:
     return new_string
 
 
-def node_coords_fromjson(graph: nx.DiGraph | pydot.Dot) -> Tuple[pd.DataFrame, List[float]]:
-    """Gets coordinates of each node
+def node_coords_from_svg(svg_string: str) -> tuple[pd.DataFrame, list[float]]:
+    """Get the coordinates of each node from a string containing the SVG representation of a graphviz DiGraph.
 
     Parameters:
-        graph: The graph to extract coordinates from
+        svg_string: The SVG version for a DiGraph. The string should be cast from a byte string and not decoded for the multi-line regular expression to behave
 
     Returns:
         A dataframe of coordinates, and svg scale information. Y coordinates are inverted, so the origin of coordinates is at the bottom left.
     """
+    scale_info = re.search("points=(.*?)/>", svg_string).group(1).replace(" ", ",")
+    scale_info = scale_info.split(",")
+    scale = [float(scale_info[4]), -1 * float(scale_info[3])]
+    coords_x = re.findall(r'id="node(.*?)</text>', svg_string)
+    coords_temp = [polygonfunc(i) if "points" in i else ellipsefunc(i) for i in coords_x]
+    node_test_pattern = r'node">(\\r)?\\n<title>(.*?)</title>'
+    node_test = re.findall(node_test_pattern, svg_string)
+    node_list = [i.replace("&#45;", "-") for _, i in node_test]
+    new_pos = dict(zip(node_list, coords_temp))
+    df = pd.DataFrame.from_dict(new_pos, orient="index", columns=["x_lower", "x_upper", "y_lower", "y_upper"])
+    return df, scale
+
+
+def node_coords_from_dag(graph: nx.DiGraph | pydot.Dot) -> tuple[pd.DataFrame, list[float]]:
+    """Get the coordinates of each node from a Directed Acyclic Graph via SVG rendering in graphviz.
+
+    Parameters:
+        graph: The networkx or pydot Graph
+
+    Returns:
+        A dataframe of coordinates, and svg scale information. Y coordinates are inverted, so the origin of coordinates is at the bottom left.
+    """
+    # Ensure invalid graph attributes are removed and the graph is available in pydot form
     if "pydot" in str(type(graph)):
         graphs = graph
     else:
         # Ensure the graph is compatible with networkx < 3.4 nx_pydot
         graph = remove_invalid_attributes_networkx_lt_3_4(graph)
         graphs = nx.nx_pydot.to_pydot(graph)
+
+    # Get the svg string for the graph via pydot
     svg_string = str(graphs.create_svg())
-    scale_info = re.search("points=(.*?)/>", svg_string).group(1).replace(" ", ",")
-    scale_info = scale_info.split(",")
-    scale = [float(scale_info[4]), -1 * float(scale_info[3])]
-    coords_x = re.findall(r'id="node(.*?)</text>', svg_string)
-    coords_temp = [polygonfunc(i) if "points" in i else ellipsefunc(i) for i in coords_x]
-    if platform.system() == "Windows":
-        node_test_pattern = r'node">\\r\\n<title>(.*?)</title>'
-    else:
-        node_test_pattern = r'node">\\n<title>(.*?)</title>'
-    node_test = re.findall(node_test_pattern, svg_string)
-    node_list = [i.replace("&#45;", "-") for i in node_test]
-    new_pos = dict(zip(node_list, coords_temp))
-    df = pd.DataFrame.from_dict(new_pos, orient="index", columns=["x_lower", "x_upper", "y_lower", "y_upper"])
-    return df, scale
+
+    # Extract and return the node coordinates and bounds information from the svg
+    return node_coords_from_svg(svg_string)
 
 
 def phase_info_func(file_graph: nx.DiGraph) -> Tuple[dict[Any, Any], list[Any], list[Any], list[dict[Any, Any]]]:

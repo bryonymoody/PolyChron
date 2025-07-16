@@ -11,7 +11,7 @@ from matplotlib.figure import Figure
 from ..automated_mcmc_ordering_coupling_copy import HPD_interval
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
-from ..util import node_coords_fromjson, phase_length_finder
+from ..util import node_coords_from_dag, phase_length_finder
 from ..views.DatingResultsView import DatingResultsView
 from .FramePresenter import FramePresenter
 
@@ -205,7 +205,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         if model_model is None:
             return node_inside
 
-        node_df_con = node_coords_fromjson(model_model.chronological_dag)
+        node_df_con = node_coords_from_dag(model_model.chronological_dag)
         node_df = node_df_con[0]
         xmax, ymax = node_df_con[1]
         # forms a dataframe from the dicitonary of coords

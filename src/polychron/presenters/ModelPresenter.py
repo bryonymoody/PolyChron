@@ -19,7 +19,7 @@ from ..presenters.MCMCProgressPresenter import MCMCProgressPresenter
 from ..presenters.RemoveContextPresenter import RemoveContextPresenter
 from ..presenters.RemoveStratigraphicRelationshipPresenter import RemoveStratigraphicRelationshipPresenter
 from ..presenters.ResidualOrIntrusivePresenter import ResidualOrIntrusivePresenter
-from ..util import edge_label, get_right_click_binding, imagefunc, node_coords_fromjson, node_del_fixed
+from ..util import edge_label, get_right_click_binding, imagefunc, node_coords_from_dag, node_del_fixed
 from ..views.AddContextView import AddContextView
 from ..views.CalibrateModelSelectView import CalibrateModelSelectView
 from ..views.DatafilePreviewView import DatafilePreviewView
@@ -1111,9 +1111,9 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         if model_model.grouped_rendering:
             (graph,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")
-            node_df_con = node_coords_fromjson(graph)
+            node_df_con = node_coords_from_dag(graph)
         else:
-            node_df_con = node_coords_fromjson(model_model.stratigraphic_dag)
+            node_df_con = node_coords_from_dag(model_model.stratigraphic_dag)
         node_df = node_df_con[0]
 
         xmax, ymax = node_df_con[1]
