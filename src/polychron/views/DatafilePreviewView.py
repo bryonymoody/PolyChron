@@ -62,4 +62,4 @@ class DatafilePreviewView(PopupView):
             self.tree.column(i, anchor="w")
             self.tree.heading(i, text=i, anchor="w")
         for index, row in rows:
-            self.tree.insert("", 00, text=index, values=row)
+            self.tree.insert("", "end", text=index, values=row)
