@@ -18,7 +18,7 @@ class ModelSelectView(FrameView):
         # Set this element's background to white
         self.config(background="white")
 
-        self.list_label = tk.Label(self, text="Model list", bg="white", font=("helvetica 14 bold"), fg="#2F4858")
+        self.list_label = tk.Label(self, bg="white", font=("helvetica 14 bold"), fg="#2F4858")
         self.list_label.place(relx=0.36, rely=0.1)
         self.model_listbox = tk.Listbox(
             self,
@@ -82,3 +82,7 @@ class ModelSelectView(FrameView):
             return self.model_listbox.get(selected_index[0])
         else:
             return None
+    
+    def set_project_name(self, project_name: str) -> None:
+        """Update the label to include the project name"""
+        self.list_label.config(text=f"Model list (Project: {project_name})")
