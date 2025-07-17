@@ -20,8 +20,8 @@ class ModelCreatePresenter(FramePresenter[ModelCreateView, ProjectSelection]):
 
     def update_view(self) -> None:
         """Update the view with the current project name."""
-        if self.model.next_project is not None:
-            project_name = self.model.next_project.name
+        if self.model.next_project_name is not None:
+            project_name = self.model.next_project_name
             self.view.set_project_name(project_name)
         else:
             self.view.set_project_name("New")
