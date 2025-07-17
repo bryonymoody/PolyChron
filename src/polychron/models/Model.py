@@ -26,7 +26,7 @@ from ..Config import get_config
 from ..models.MCMCData import MCMCData
 from ..util import (
     MonotonicTimer,
-    node_coords_from_dag,
+    node_coords_from_svg,
     phase_info_func,
     phase_labels,
     rank_func,
@@ -245,14 +245,39 @@ class Model:
     If mcmc_check is true, it is implied that this has been saved to disk
     """
 
-    node_coords_and_scale: Optional[Tuple[pd.DataFrame, List[float]]] = field(default=None)
-    """A tuple containing a dataframe of node coordinates within the most recently rendered svg graph, and a list of 2 floating point numbers which are from svg scale properties.
+    stratigraphic_node_coords: Optional[Tuple[pd.DataFrame, List[float]]] = field(default=None)
+    """A tuple containing node coordinates and  within the svg representation of the stratigraphic graph, and the dimensions of the svg.
 
-    Set and used for node right-click detection
+    This is updated when the stratigraphic_dag is re-rendered.
     
-    Values are returned from `node_coords_from_dag`, or in some cases set to just be the dataframe.
+    Formerly (part of) `global node_df`
 
-    Formerly `global node_df`
+    Todo:
+        - ensure this is correct when reopening from disk? and there is no other places where this needs re-generating, for all 3 versions.
+    """
+
+    chronological_node_coords: Optional[Tuple[pd.DataFrame, List[float]]] = field(default=None)
+    """A tuple containing node coordinates and  within the svg representation of the chronological graph, and the dimensions of the svg.
+
+    This is updated when the chronological_dag is re-rendered.
+    
+    Formerly (part of) `global node_df`
+    """
+
+    chronological_node_coords: Optional[Tuple[pd.DataFrame, List[float]]] = field(default=None)
+    """A tuple containing node coordinates and  within the svg representation of the chronological graph, and the dimensions of the svg.
+
+    This is updated when the chronological_dag is re-rendered.
+    
+    Formerly (part of) `global node_df`
+    """
+
+    resid_or_intru_node_coords: Optional[Tuple[pd.DataFrame, List[float]]] = field(default=None)
+    """A tuple containing node coordinates and  within the svg representation of the resid_or_intru graph, and the dimensions of the svg.
+
+    This is updated when the resid_or_intru_dag is re-rendered.
+    
+    Formerly (part of) `global node_df`
     """
 
     __calibration: Optional[InterpolatedRCDCalibrationCurve] = field(default=None, init=False, repr=False)
@@ -311,7 +336,9 @@ class Model:
             "intrusive_context_types",  # not needed, ephemeral
             "residual_contexts",  # not needed, ephemeral
             "residual_context_types",  # not needed, ephemeral
-            "node_coords_and_scale",  # don't include the the locations of images from svgs?
+            "stratigraphic_node_coords",  # svg coords are ephemeral
+            "chronological_node_coords",  # svg coords are ephemeral
+            "resid_or_intru_node_coords",  # svg coords are ephemeral
             "mcmc_data",  # don't include the mcmc_data object, which has been saved elsewhere.
             "_Model__calibration",  # don't save the interpolated calibration curve, it is already on disk. Must use the fully qualified name for __ members?
         ]
@@ -711,17 +738,20 @@ class Model:
         self.stratigraphic_dag = remove_invalid_attributes_networkx_lt_3_4(self.stratigraphic_dag)
         write_dot(self.stratigraphic_dag, workdir / "fi_new")
         render("dot", "png", workdir / "fi_new")
-        render("dot", "svg", workdir / "fi_new")
+        svg_path = render("dot", "svg", workdir / "fi_new")
         inp = Image.open(workdir / "fi_new.png")
         inp_final = trim(inp)
         inp_final.save(workdir / "testdag.png")
         self.stratigraphic_image = Image.open(workdir / "testdag.png")
-        self.node_coords_and_scale = node_coords_from_dag(self.stratigraphic_dag)
+        self.stratigraphic_node_coords = node_coords_from_svg(svg_path)
 
     def __render_strat_graph_phase(self) -> None:
         """Render the stratigraphic graph, with phasing mutating the Model state
 
         Formerly `imgrender_phase`
+
+        Todo:
+            - Consistently use graphviz.render or write_png|dot if possible throughout Model
         """
         workdir = self.get_working_directory()
         workdir.mkdir(parents=True, exist_ok=True)
@@ -738,12 +768,13 @@ class Model:
         # Note: This previously set self.stratigraphic_dag to a pydot.Dot, rather than an nx.DiGraph which is expected elsewhere. This may need further testing.
         (grouped_stratigraphic_dag,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")
         grouped_stratigraphic_dag.write_png(workdir / "test.png")
+        grouped_stratigraphic_dag.write_svg(workdir / "test.svg")
+
         inp = Image.open(workdir / "test.png")
         inp = trim(inp)
-        # Call the real .tkraise
         inp.save(workdir / "testdag.png")
         self.stratigraphic_image = Image.open(workdir / "testdag.png")
-        self.node_coords_and_scale = node_coords_from_dag(grouped_stratigraphic_dag)
+        self.stratigraphic_node_coords = node_coords_from_svg(workdir / "test.svg")
 
     def __render_resid_or_intru_dag(self) -> None:
         """Render the stratigraphic graph mutating the Model state
@@ -758,12 +789,12 @@ class Model:
         self.resid_or_intru_dag = remove_invalid_attributes_networkx_lt_3_4(self.resid_or_intru_dag)
         write_dot(self.resid_or_intru_dag, workdir / "fi_new")
         render("dot", "png", workdir / "fi_new")
-        render("dot", "svg", workdir / "fi_new")
+        svg_path = render("dot", "svg", workdir / "fi_new")
         inp = Image.open(workdir / "fi_new.png")
         inp_final = trim(inp)
         inp_final.save(workdir / "testdag.png")
         self.resid_or_intru_image = Image.open(workdir / "testdag.png")
-        self.node_coords_and_scale = node_coords_from_dag(self.resid_or_intru_dag)
+        self.resid_or_intru_node_coords = node_coords_from_svg(svg_path)
 
     def __render_resid_or_intru_dag_phase(self) -> None:
         """Render the stratigraphic graph, with phasing mutating the Model state
@@ -783,12 +814,13 @@ class Model:
         textfile.close()
         (self.resid_or_intru_dag,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")
         self.resid_or_intru_dag.write_png(workdir / "test.png")
+        self.resid_or_intru_dag.write_svg(workdir / "test.svg")
         inp = Image.open(workdir / "test.png")
         inp = trim(inp)
         # Call the real .tkraise
         inp.save(workdir / "testdag.png")
         self.resid_or_intru_image = Image.open(workdir / "testdag.png")
-        self.node_coords_and_scale = node_coords_from_dag(self.resid_or_intru_dag)
+        self.resid_or_intru_node_coords = node_coords_from_svg(workdir / "test.svg")
 
     def render_chrono_graph(self) -> None:
         """Render the chronological graph as a PNG and an SVG, mutating the Model state
@@ -804,13 +836,15 @@ class Model:
         fi_new_chrono = workdir / "fi_new_chrono"
         if self.load_check and fi_new_chrono.is_file():
             render("dot", "png", fi_new_chrono)
-            render("dot", "svg", fi_new_chrono)
+            svg_path = render("dot", "svg", fi_new_chrono)
             inp = Image.open(workdir / "fi_new_chrono.png")
             inp_final = trim(inp)
             # scale_factor = min(canv_width/inp.size[0], canv_height/inp.size[1])
             # inp_final = inp.resize((int(inp.size[0]*scale_factor), int(inp.size[1]*scale_factor)), Image.ANTIALIAS)
             inp_final.save(workdir / "testdag_chrono.png")
             self.chronological_image = Image.open(workdir / "testdag_chrono.png")
+            self.chronological_node_coords = node_coords_from_svg(svg_path)
+
         else:
             self.chronological_image = None
 

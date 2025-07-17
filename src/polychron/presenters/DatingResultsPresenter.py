@@ -11,13 +11,17 @@ from matplotlib.figure import Figure
 from ..automated_mcmc_ordering_coupling_copy import HPD_interval
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
-from ..util import node_coords_from_dag, phase_length_finder
+from ..util import node_coords_check, phase_length_finder
 from ..views.DatingResultsView import DatingResultsView
 from .FramePresenter import FramePresenter
 
 
 class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]):
-    """Presenter for the Dating Results page/tab."""
+    """Presenter for the Dating Results page/tab.
+
+    Todo:
+        - "no node" is a valid label provided by the user, this should probably be left None until it is included in the view.
+    """
 
     def __init__(self, mediator: Mediator, view: DatingResultsView, model: ProjectSelection):
         # Call the parent class' constructor
@@ -143,7 +147,8 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         # If the model has a chronographic image presented, check if a node has been right clicked on and store in a member variable
         # this was part of `PageOne.chrono_nodes``, but standardised to match the other tab a bit more.
         if has_image and x_scal is not None and y_scal is not None:
-            self.node = self.nodecheck(x_scal, y_scal)
+            node = self.nodecheck(x_scal, y_scal)
+            self.node = node if node is not None else "no node"
 
     def on_canvas_wheel2(self, event: Any) -> None:
         """Zoom with mouse wheel for the chronological image canvas
@@ -189,40 +194,40 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
                 # Update the view with the image
                 self.view.update_littlecanvas2(model_model.chronological_image)
 
-    def nodecheck(self, x_current: int, y_current: int) -> str:
-        """Returns the node that corresponds to the mouse coordinates
+    def nodecheck(self, x_current: int, y_current: int) -> str | None:
+        """Returns the node that corresponds to the mouse cooridinates
 
         Formerly `PageOne.nodecheck`
 
-        Todo:
-            - Should this also reset the outline attribtues for non-selected nodes?. It also would need to triggere a re-render for this to be visibly shown to users.
-            - "no node" is potentially a valid context name that could have been provided by a user. Use None instead.
-            - Should probably do an epsilon (approximate) floating point comparisons
-        """
-        node_inside = "no node"
+        Parameters:
+            x_current: the x coord in image space accounting for translation
+            y_current: the y coord in image space accounting for translation
 
+        Returns:
+            The name of the node clicked on, or None
+
+        Todo:
+            Should this also reset the outline attribtues for non-selected nodes?. It also would need to triggere a re-render for this to be visibly shown to users.
+
+            ```
+            # outline = nx.get_node_attributes(model_model.chronological_dag, "color")
+            # outline[node_inside] = "red"
+            # nx.set_node_attributes(model_model.chronological_dag, outline, "color")
+            ```
+        """
         model_model = self.model.current_model
         if model_model is None:
-            return node_inside
+            return None
 
-        node_df_con = node_coords_from_dag(model_model.chronological_dag)
-        node_df = node_df_con[0]
-        xmax, ymax = node_df_con[1]
-        # forms a dataframe from the dicitonary of coords
-        x, y = model_model.chronological_image.size
-        cavx = x * self.view.imscale2
-        cany = y * self.view.imscale2
-        xscale = (x_current) * (xmax) / cavx
-        yscale = (cany - y_current) * (ymax) / cany
-        outline = nx.get_node_attributes(model_model.chronological_dag, "color")
-        for n_ind in range(node_df.shape[0]):
-            if (node_df.iloc[n_ind].x_lower < xscale < node_df.iloc[n_ind].x_upper) and (
-                node_df.iloc[n_ind].y_lower < yscale < node_df.iloc[n_ind].y_upper
-            ):
-                node_inside = node_df.iloc[n_ind].name
-                outline[node_inside] = "red"
-                nx.set_node_attributes(model_model.chronological_dag, outline, "color")
-        return node_inside
+        node_df_con = model_model.chronological_node_coords
+        node = node_coords_check(
+            (x_current, y_current),
+            model_model.chronological_image.size,
+            self.view.imscale2,
+            node_df_con[0],
+            node_df_con[1],
+        )
+        return node
 
     def clear_results_list(self) -> None:
         """clears nodes from results lists

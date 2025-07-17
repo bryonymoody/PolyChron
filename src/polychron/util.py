@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import ast
 import copy
+import pathlib
 import platform
 import re
 import sys
 import time
 import xml.etree.ElementTree as ElementTree
-from typing import Any, Dict, Iterable, List, Literal, Tuple
+from typing import IO, Any, Dict, Iterable, List, Literal, Tuple
 
 import networkx as nx
 import numpy as np
@@ -119,7 +120,7 @@ def rank_func(tes: dict[str, list[str]], dot_str: str) -> str:
     return new_string
 
 
-def node_coords_from_svg(svg_string: str) -> tuple[pd.DataFrame, list[float]]:
+def node_coords_from_svg_string(svg_string: str) -> tuple[pd.DataFrame, list[float]]:
     """Get the coordinates of each node from a string containing the SVG representation of a graphviz DiGraph.
 
     Parameters:
@@ -181,6 +182,31 @@ def node_coords_from_svg(svg_string: str) -> tuple[pd.DataFrame, list[float]]:
         return coords_df, []
 
 
+def node_coords_from_svg(svg_file: str | pathlib.Path | IO[str]) -> tuple[pd.DataFrame, list[float]]:
+    """Get the coordinates of each node from a Directed Acyclic Graph from an SCG file on disk
+
+    Parameters:
+        svg_file: path to the svg file on disk, or an open file handle
+
+    Returns:
+        A dataframe of coordinates, and svg scale information. Y coordinates are inverted, so the origin of coordinates is at the bottom left.
+    """
+
+    # Depending on the type of svg_file, get the contents as a string
+    if isinstance(svg_file, str):
+        with open(svg_file, "r") as f:
+            svg_string = f.read()
+    elif isinstance(svg_file, pathlib.Path):
+        with svg_file.open("r") as f:
+            svg_string = f.read()
+    else:
+        # Otherwise it should be a file handle
+        svg_string = svg_file.read()
+
+    # Extract and return the node coordinates and bounds information from the svg string
+    return node_coords_from_svg_string(svg_string)
+
+
 def node_coords_from_dag(graph: nx.DiGraph | pydot.Dot) -> tuple[pd.DataFrame, list[float]]:
     """Get the coordinates of each node from a Directed Acyclic Graph via SVG rendering in graphviz.
 
@@ -202,7 +228,50 @@ def node_coords_from_dag(graph: nx.DiGraph | pydot.Dot) -> tuple[pd.DataFrame, l
     svg_string = graphs.create_svg().decode("utf-8")
 
     # Extract and return the node coordinates and bounds information from the svg
-    return node_coords_from_svg(svg_string)
+    return node_coords_from_svg_string(svg_string)
+
+
+def node_coords_check(
+    coords: tuple[float, float],
+    img_size: tuple[int, int],
+    img_scale: float,
+    node_coords: pd.DataFrame,
+    node_coords_scale: tuple[float, float],
+) -> str | None:
+    """Return the node at the provided coordinates, using data extracted from an svg, with potential zooming and panning of an image
+
+    Parameters:
+        coords: the (x, y) target coordinates in UI-space, accounting for translation?
+        img_size: the (w, h) of the image on disk
+        img_scale: the zoom level for the image in UI-space
+        node_coords: the axis aligned bounding box coordinates in svg-space for each node
+        node_coords_scale: The (w, h) of the svg for coordinate translation
+
+    Returns:
+        the id of the node selected, or None
+    """
+    x, y = coords
+    png_width, png_height = img_size
+    svg_width, svg_height = node_coords_scale
+
+    # Convert the image dimensions into UI-space coordinates
+    scaled_png_width = img_scale * png_width
+    scaled_png_height = img_scale * png_height
+
+    # Get the target coordinates in svg-space
+    svg_x = x * (svg_width / scaled_png_width)
+    # We also move the origin from the top left to the bottom left here, to be removed
+    svg_y = (scaled_png_height - y) * (svg_height / scaled_png_height)
+
+    # Iterate the nodes until a matching bbox is found. This assumes bboxes are not overlapping.
+    for n_ind in range(node_coords.shape[0]):
+        if (node_coords.iloc[n_ind].x_lower < svg_x < node_coords.iloc[n_ind].x_upper) and (
+            node_coords.iloc[n_ind].y_lower < svg_y < node_coords.iloc[n_ind].y_upper
+        ):
+            return node_coords.iloc[n_ind].name
+
+    # If no matches found, return None
+    return None
 
 
 def phase_info_func(file_graph: nx.DiGraph) -> Tuple[dict[Any, Any], list[Any], list[Any], list[dict[Any, Any]]]:

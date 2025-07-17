@@ -58,7 +58,9 @@ class TestModel:
         assert m.phi_ref == []
         assert m.removed_nodes_tracker == []
         assert m.mcmc_data == MCMCData()
-        assert m.node_coords_and_scale is None
+        assert m.stratigraphic_node_coords is None
+        assert m.chronological_node_coords is None
+        assert m.resid_or_intru_node_coords is None
         # Check private members are initialised correctly, although not part of the public interface
         assert m._Model__calibration is None
 

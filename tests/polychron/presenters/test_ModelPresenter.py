@@ -1946,15 +1946,13 @@ class TestModelPresenter:
     def test_nodecheck(self):
         """Test nodecheck behaves as expected.
 
-        As node coordinates are generated via graphviz in node_coords_from_dag, and we cannot rely on graphviz node placement being consistent across platfroms, we must mock node_coords_from_json out to return a dataframe of accepted coordinates
+        As node coordinates are generated via graphviz in node_coords_from_svg, and the coordinates vary on different platforms / versions, we cannot check specific coordinates without mocking
 
         Todo:
             - Fully implement this test with a valid Model, whch has a stratigraphic_image/dag
-            - Test hitting a diamond, within the axis-aligned bounding box, but outside the true diamond. This would currently report a hit, when ideally it would be a miss. Changes are required here and in node_check in that case.
             - Test with different imscale values
             - Propperly create the test Model, rather than manually producing the DAG and image
-            - Testing this would be cleaner if nodecheck was split into several methods which could be tested independently (i.e. a function which takes bounding boxes, image dims etc rather than having to mutate a Model)
-            - Scaling maths in this test seems quite far off in corner casers, will be simpler to test if methods are split up as suggested
+            - This test could be simplified to cover less edge cases, now that TestUtil tests the underling methods for a lot of cases
         """
 
         # Setup the mock mediator, mock view and fixture-provided ProjectSelection
@@ -1968,10 +1966,10 @@ class TestModelPresenter:
         # Instantiate the Presenter
         presenter = ModelPresenter(mock_mediator, mock_view, model)
 
-        # There should be no current project or presenter, "no node" should be returned
+        # There should be no current project or presenter, None should be returned
         assert presenter.model.current_project_name is None
         assert presenter.model.current_model_name is None
-        assert presenter.nodecheck(0, 0) == "no node"
+        assert presenter.nodecheck(0, 0) is None
 
         # ---
 
@@ -1990,9 +1988,8 @@ class TestModelPresenter:
         write_dot(model.current_model.stratigraphic_dag, model.current_model.get_working_directory() / "fi_new.txt")
         # Fake the load_check so the strat dag will get rendered, which is a bit evil.
         model.current_model.load_check = True
-        model.current_model.render_strat_graph()
 
-        # Prepare mock values to be returned from node_coords_from_dag to avoid graphviz non-determinsm issues.
+        # Prepare mock values to be returned from node_coords_from_svg to avoid graphviz non-determinsm issues.
         #  Alteranatively we could get the values returned and only test within those.
         # Use values which were emitted by manually rendering this graph
         node_coords = pd.DataFrame(
@@ -2010,36 +2007,39 @@ class TestModelPresenter:
         tests_coords = [
             [[59.75, 90.0], "box"],  # mid box
             [[33.76, 72.5], "box"],  # inside the corner of the box. Ideally should be checking closer to 32.75
-            [[32.75, 72.0], "no node"],  # on the corner of  box
-            [[31.75, 71.0], "no node"],  # outside corner box
+            [[32.75, 72.0], None],  # on the corner of  box
+            [[31.75, 71.0], None],  # outside corner box
             [[59.745, 18.0], "diamond"],  # mid diamond
             [[1.0, 1.0], "diamond"],  # inside corner diamond, would be no_node ideally
-            [[-0.25, -0.0], "no node"],  # on the corner diamond
-            [[-1.25, -1.0], "no node"],  # outside corner diamond
+            [[-0.25, -0.0], None],  # on the corner diamond
+            [[-1.25, -1.0], None],  # outside corner diamond
             [[138.75, 90.0], "ellipse"],  # mid ellipse
             [[105.5, 72.2], "ellipse"],  # inside corner ellipse, would be no_node ideally
-            [[105.15, 72.0], "no node"],  # on corner ellipse
-            [[104.15, 71.0], "no node"],  # outside corner ellipse
-            [[0.0, 0.0], "no node"],  # nothing
-            [[-100.0, -100.0], "no node"],  # negative
-            [[1000.0, 1000.0], "no node"],  # larger then scale
+            [[105.15, 72.0], None],  # on corner ellipse
+            [[104.15, 71.0], None],  # outside corner ellipse
+            [[0.0, 0.0], None],  # nothing
+            [[-100.0, -100.0], None],  # negative
+            [[1000.0, 1000.0], None],  # larger then scale
         ]
 
         # The incoming coordinates have their origin at the top left of the image, after translation from panning. Zoom level conversion is handled in nodecheck.
-        # SVG coordinates are also origin 0, 0, but the values retuned by node_coords_from_dag have been inverted in the y axis.
+        # SVG coordinates are also origin 0, 0, but the values retuned by node_coords_from_svg have been inverted in the y axis.
         # So invert the y axis before providing the coordinates
         for test_case in tests_coords:
             test_case[0][1] = scale[1] - test_case[0][1]
 
-        # Resize the models image, as graphviz may not be making an image that matches the placement in the hard-coded svg.
-        model.current_model.stratigraphic_image = model.current_model.stratigraphic_image.resize(
-            (int(math.ceil(scale[0])), int(math.ceil(scale[1])))
-        )
-
-        # Patch  node_coords_from_dag
-        with patch("polychron.presenters.ModelPresenter.node_coords_from_dag") as mock_node_coords_from_dag:
+        # Patch  node_coords_from_svg
+        with patch("polychron.models.Model.node_coords_from_svg") as mock_node_coords_from_svg:
             # Ensure the mock returns the correct values
-            mock_node_coords_from_dag.return_value = (node_coords, scale)
+            mock_node_coords_from_svg.return_value = (node_coords, scale)
+
+            # render the stratigraphic dag, which will also set the node coordinates using the mocked method
+            model.current_model.render_strat_graph()
+
+            # Resize the models image, as graphviz may not be making an image that matches the placement in the hard-coded svg.
+            model.current_model.stratigraphic_image = model.current_model.stratigraphic_image.resize(
+                (int(math.ceil(scale[0])), int(math.ceil(scale[1])))
+            )
 
             # Check with several coordinate pairs, which should miss, hit boxes, hit diamonds, or hit elipses.
             for (x, y), node in tests_coords:
