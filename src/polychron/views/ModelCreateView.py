@@ -17,7 +17,7 @@ class ModelCreateView(FrameView):
         self.config(background="white")
 
         # Add a text label
-        self.text_1 = tk.Label(self, text="Input model name:", bg="white", font=("helvetica 14 bold"), fg="#2F4858")
+        self.text_1 = tk.Label(self, bg="white", font=("helvetica 14 bold"), fg="#2F4858")
         self.text_1.place(relx=0.4, rely=0.2)
 
         # Add an text input element
@@ -48,3 +48,7 @@ class ModelCreateView(FrameView):
     def get_name(self) -> str:
         """Get the model name provided by the user"""
         return self.user_input.get()
+
+    def set_project_name(self, project_name: str) -> None:
+        """Update the label to include the project name"""
+        self.text_1.config(text=f"Model list (Project: {project_name})")

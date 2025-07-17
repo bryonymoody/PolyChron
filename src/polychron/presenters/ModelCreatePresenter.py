@@ -19,7 +19,12 @@ class ModelCreatePresenter(FramePresenter[ModelCreateView, ProjectSelection]):
         self.update_view()
 
     def update_view(self) -> None:
-        pass
+        """Update the view with the current project name."""
+        if self.model.next_project_name is not None:
+            project_name = self.model.next_project_name
+            self.view.set_project_name(project_name)
+        else:
+            self.view.set_project_name("New")
 
     def on_submit_button(self) -> None:
         """When the submit button is pressed, update the data model, validate and close the view or present an error"""
