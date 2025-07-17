@@ -9,7 +9,6 @@ from unittest.mock import patch
 
 import networkx as nx
 import packaging.version
-import pandas as pd
 import pytest
 from networkx.drawing.nx_pydot import write_dot
 from PIL import Image, ImageDraw
@@ -193,16 +192,11 @@ class TestUtil:
             (
                 "svg/lf/shapes.svg",
                 {
-                    "x_lower": {"box": 32.75, "diamond": -0.25, "ellipse": 131.15, "oval": 137.75, "circle": 134.16},
-                    "x_upper": {"box": 86.75, "diamond": 119.74, "ellipse": 198.35, "oval": 191.75, "circle": 195.34},
-                    "y_lower": {
-                        "box": 169.09,
-                        "diamond": 97.09,
-                        "ellipse": 169.09,
-                        "oval": 97.09,
-                        "circle": -0.03999999999999915,
-                    },
-                    "y_upper": {"box": 205.09, "diamond": 133.09, "ellipse": 205.09, "oval": 133.09, "circle": 61.14},
+                    "box": [32.75, 86.75, 169.09, 205.09],
+                    "diamond": [-0.25, 119.74, 97.09, 133.09],
+                    "ellipse": [131.15, 198.35, 169.09, 205.09],
+                    "oval": [137.75, 191.75, 97.09, 133.09],
+                    "circle": [134.16, 195.34, -0.03999999999999915, 61.14],
                 },
                 [202.54, 209.09],
                 False,
@@ -210,10 +204,13 @@ class TestUtil:
             (
                 "svg/lf/demo_strat.svg",
                 {
-                    "x_lower": {"a": 72.0, "b": 72.0, "e": 0.0, "h": 0.0, "c": 72.0, "d": 144.0, "f": 144.0},
-                    "x_upper": {"a": 126.0, "b": 126.0, "e": 54.0, "h": 54.0, "c": 126.0, "d": 198.0, "f": 198.0},
-                    "y_lower": {"a": 231.0, "b": 154.0, "e": 77.0, "h": -0.0, "c": 77.0, "d": 77.0, "f": -0.0},
-                    "y_upper": {"a": 272.0, "b": 195.0, "e": 118.0, "h": 41.0, "c": 118.0, "d": 118.0, "f": 41.0},
+                    "a": [72.0, 126.0, 231.0, 272.0],
+                    "b": [72.0, 126.0, 154.0, 195.0],
+                    "e": [0.0, 54.0, 77.0, 118.0],
+                    "h": [0.0, 54.0, -0.0, 41.0],
+                    "c": [72.0, 126.0, 77.0, 118.0],
+                    "d": [144.0, 198.0, 77.0, 118.0],
+                    "f": [144.0, 198.0, -0.0, 41.0],
                 },
                 [202.0, 276.0],
                 False,
@@ -221,50 +218,15 @@ class TestUtil:
             (
                 "svg/lf/demo_chrono.svg",
                 {
-                    "x_lower": {
-                        "a": 72.0,
-                        "b": 72.0,
-                        "e": 9.0,
-                        "h": 0.0,
-                        "a_2 = b_1": 17.0,
-                        "a_1": 57.0,
-                        "c": 72.0,
-                        "d": 127.0,
-                        "b_2": 61.0,
-                    },
-                    "x_upper": {
-                        "a": 126.0,
-                        "b": 126.0,
-                        "e": 63.0,
-                        "h": 54.0,
-                        "a_2 = b_1": 181.0,
-                        "a_1": 141.0,
-                        "c": 126.0,
-                        "d": 181.0,
-                        "b_2": 137.0,
-                    },
-                    "y_lower": {
-                        "a": 423.0,
-                        "b": 346.0,
-                        "e": 173.0,
-                        "h": 96.0,
-                        "a_2 = b_1": 250.0,
-                        "a_1": -0.0,
-                        "c": 96.0,
-                        "d": 173.0,
-                        "b_2": 500.0,
-                    },
-                    "y_upper": {
-                        "a": 464.0,
-                        "b": 387.0,
-                        "e": 214.0,
-                        "h": 137.0,
-                        "a_2 = b_1": 310.0,
-                        "a_1": 60.0,
-                        "c": 137.0,
-                        "d": 214.0,
-                        "b_2": 560.0,
-                    },
+                    "a": [72.0, 126.0, 423.0, 464.0],
+                    "b": [72.0, 126.0, 346.0, 387.0],
+                    "e": [9.0, 63.0, 173.0, 214.0],
+                    "h": [0.0, 54.0, 96.0, 137.0],
+                    "a_2 = b_1": [17.0, 181.0, 250.0, 310.0],
+                    "a_1": [57.0, 141.0, -0.0, 60.0],
+                    "c": [72.0, 126.0, 96.0, 137.0],
+                    "d": [127.0, 181.0, 173.0, 214.0],
+                    "b_2": [61.0, 137.0, 500.0, 560.0],
                 },
                 [185.0, 564.0],
                 False,
@@ -273,16 +235,11 @@ class TestUtil:
             (
                 "svg/crlf/shapes.svg",
                 {
-                    "x_lower": {"box": 32.75, "diamond": -0.25, "ellipse": 131.15, "oval": 137.75, "circle": 134.16},
-                    "x_upper": {"box": 86.75, "diamond": 119.74, "ellipse": 198.35, "oval": 191.75, "circle": 195.34},
-                    "y_lower": {
-                        "box": 169.09,
-                        "diamond": 97.09,
-                        "ellipse": 169.09,
-                        "oval": 97.09,
-                        "circle": -0.03999999999999915,
-                    },
-                    "y_upper": {"box": 205.09, "diamond": 133.09, "ellipse": 205.09, "oval": 133.09, "circle": 61.14},
+                    "box": [32.75, 86.75, 169.09, 205.09],
+                    "diamond": [-0.25, 119.74, 97.09, 133.09],
+                    "ellipse": [131.15, 198.35, 169.09, 205.09],
+                    "oval": [137.75, 191.75, 97.09, 133.09],
+                    "circle": [134.16, 195.34, -0.03999999999999915, 61.14],
                 },
                 [202.54, 209.09],
                 False,
@@ -290,21 +247,21 @@ class TestUtil:
             # Check how SVG with no nodes are handled, this should not occur in real usage
             (
                 "svg/lf/no_nodes.svg",
-                {"x_lower": [], "x_upper": [], "y_lower": [], "y_upper": []},
+                {},
                 [202.54, 209.09],
                 False,
             ),
             # An unfinished SVG
             (
                 "svg/lf/invalid.svg",
-                {"x_lower": [], "x_upper": [], "y_lower": [], "y_upper": []},
+                {},
                 [],
                 True,
             ),
             # An empty svg file
             (
                 "svg/lf/empty.svg",
-                {"x_lower": [], "x_upper": [], "y_lower": [], "y_upper": []},
+                {},
                 [],
                 True,
             ),
@@ -313,7 +270,7 @@ class TestUtil:
     def test_node_coords_from_svg_string(
         self,
         test_svg: str,
-        expected_coords,
+        expected_coords: dict[str, list[float]],
         expected_scale: list[float],
         stderr: bool,
         test_data_path: pathlib.Path,
@@ -336,10 +293,9 @@ class TestUtil:
         coords, scale = util.node_coords_from_svg_string(svg_string)
         captured = capsys.readouterr()
         # Check coordinates are as expected, with some float tolerance
-        expected_coords = pd.DataFrame(expected_coords)
-        pd.testing.assert_frame_equal(
-            coords, expected_coords, check_exact=False, check_index_type=False, check_column_type=False
-        )
+        assert list(coords.keys()) == list(expected_coords.keys())
+        for key in coords:
+            assert list(coords[key]) == pytest.approx(list(expected_coords[key]))
         # Assert the scale is as expected, with some float tolerance
         assert scale == pytest.approx(expected_scale)
         if stderr:
@@ -355,16 +311,11 @@ class TestUtil:
                 "svg/lf/shapes.svg",
                 "str",
                 {
-                    "x_lower": {"box": 32.75, "diamond": -0.25, "ellipse": 131.15, "oval": 137.75, "circle": 134.16},
-                    "x_upper": {"box": 86.75, "diamond": 119.74, "ellipse": 198.35, "oval": 191.75, "circle": 195.34},
-                    "y_lower": {
-                        "box": 169.09,
-                        "diamond": 97.09,
-                        "ellipse": 169.09,
-                        "oval": 97.09,
-                        "circle": -0.03999999999999915,
-                    },
-                    "y_upper": {"box": 205.09, "diamond": 133.09, "ellipse": 205.09, "oval": 133.09, "circle": 61.14},
+                    "box": [32.75, 86.75, 169.09, 205.09],
+                    "diamond": [-0.25, 119.74, 97.09, 133.09],
+                    "ellipse": [131.15, 198.35, 169.09, 205.09],
+                    "oval": [137.75, 191.75, 97.09, 133.09],
+                    "circle": [134.16, 195.34, -0.03999999999999915, 61.14],
                 },
                 [202.54, 209.09],
                 False,
@@ -373,16 +324,11 @@ class TestUtil:
                 "svg/lf/shapes.svg",
                 "pathlib.Path",
                 {
-                    "x_lower": {"box": 32.75, "diamond": -0.25, "ellipse": 131.15, "oval": 137.75, "circle": 134.16},
-                    "x_upper": {"box": 86.75, "diamond": 119.74, "ellipse": 198.35, "oval": 191.75, "circle": 195.34},
-                    "y_lower": {
-                        "box": 169.09,
-                        "diamond": 97.09,
-                        "ellipse": 169.09,
-                        "oval": 97.09,
-                        "circle": -0.03999999999999915,
-                    },
-                    "y_upper": {"box": 205.09, "diamond": 133.09, "ellipse": 205.09, "oval": 133.09, "circle": 61.14},
+                    "box": [32.75, 86.75, 169.09, 205.09],
+                    "diamond": [-0.25, 119.74, 97.09, 133.09],
+                    "ellipse": [131.15, 198.35, 169.09, 205.09],
+                    "oval": [137.75, 191.75, 97.09, 133.09],
+                    "circle": [134.16, 195.34, -0.03999999999999915, 61.14],
                 },
                 [202.54, 209.09],
                 False,
@@ -391,16 +337,11 @@ class TestUtil:
                 "svg/lf/shapes.svg",
                 "IO",
                 {
-                    "x_lower": {"box": 32.75, "diamond": -0.25, "ellipse": 131.15, "oval": 137.75, "circle": 134.16},
-                    "x_upper": {"box": 86.75, "diamond": 119.74, "ellipse": 198.35, "oval": 191.75, "circle": 195.34},
-                    "y_lower": {
-                        "box": 169.09,
-                        "diamond": 97.09,
-                        "ellipse": 169.09,
-                        "oval": 97.09,
-                        "circle": -0.03999999999999915,
-                    },
-                    "y_upper": {"box": 205.09, "diamond": 133.09, "ellipse": 205.09, "oval": 133.09, "circle": 61.14},
+                    "box": [32.75, 86.75, 169.09, 205.09],
+                    "diamond": [-0.25, 119.74, 97.09, 133.09],
+                    "ellipse": [131.15, 198.35, 169.09, 205.09],
+                    "oval": [137.75, 191.75, 97.09, 133.09],
+                    "circle": [134.16, 195.34, -0.03999999999999915, 61.14],
                 },
                 [202.54, 209.09],
                 False,
@@ -411,7 +352,7 @@ class TestUtil:
         self,
         test_svg: str,
         type: Literal["str", "pathlib.Path", "IO"],
-        expected_coords,
+        expected_coords: dict[str, list[float]],
         expected_scale: list[float],
         stderr: bool,
         test_data_path: pathlib.Path,
@@ -438,10 +379,9 @@ class TestUtil:
                 coords, scale = util.node_coords_from_svg(f)
         captured = capsys.readouterr()
         # Check coordinates are as expected, with some float tolerance
-        expected_coords = pd.DataFrame(expected_coords)
-        pd.testing.assert_frame_equal(
-            coords, expected_coords, check_exact=False, check_index_type=False, check_column_type=False
-        )
+        assert list(coords.keys()) == list(expected_coords.keys())
+        for key in coords:
+            assert list(coords[key]) == pytest.approx(list(expected_coords[key]))
         # Assert the scale is as expected, with some float tolerance
         assert scale == pytest.approx(expected_scale)
         if stderr:
@@ -464,21 +404,16 @@ class TestUtil:
             g.add_node(node, shape="box")
         for u, v in [("a", "b"), ("a", "c"), ("b", "d"), ("c", "d")]:
             g.add_edge(u, v)
-        df, scale = util.node_coords_from_dag(g)
+        coords, scale = util.node_coords_from_dag(g)
         # Assert the types and shape of returned data is as it should be
-        assert isinstance(df, pd.DataFrame)
-        assert "x_lower" in df.columns
-        assert "x_upper" in df.columns
-        assert "y_lower" in df.columns
-        assert "y_upper" in df.columns
-        assert len(df) == 4
+        assert isinstance(coords, dict)
+        assert set(coords.keys()) == set([node for node in g.nodes()])
         # Assert the types of values are correct, as we cannot test the values due to non-deterministic graphviz svg generation
-        for node in g.nodes():
-            assert node in df.index
-            assert isinstance(df["x_lower"][node], float)
-            assert isinstance(df["x_upper"][node], float)
-            assert isinstance(df["y_lower"][node], float)
-            assert isinstance(df["y_upper"][node], float)
+        for bbox in coords.values():
+            assert isinstance(bbox, list)
+            assert len(bbox) == 4
+            for f in bbox:
+                assert isinstance(f, float)
         # Assert the scale is the correct shape and types. We cannot test exact values here due to graphviz non-determinism
         assert isinstance(scale, list)
         assert len(scale) == 2
@@ -493,20 +428,16 @@ class TestUtil:
             g.add_edge(u, v)
         g = nx.contracted_nodes(g, "b", "c")
         g = nx.relabel_nodes(g, {"b": "b = c"})
-        df, scale = util.node_coords_from_dag(g)
-        assert isinstance(df, pd.DataFrame)
-        assert "x_lower" in df.columns
-        assert "x_upper" in df.columns
-        assert "y_lower" in df.columns
-        assert "y_upper" in df.columns
-        assert len(df) == 3
+        coords, scale = util.node_coords_from_dag(g)
+        # Assert the types and shape of returned data is as it should be
+        assert isinstance(coords, dict)
+        assert set(coords.keys()) == set([node for node in g.nodes()])
         # Assert the types of values are correct, as we cannot test the values due to non-deterministic graphviz svg generation
-        for node in g.nodes():
-            assert node in df.index
-            assert isinstance(df["x_lower"][node], float)
-            assert isinstance(df["x_upper"][node], float)
-            assert isinstance(df["y_lower"][node], float)
-            assert isinstance(df["y_upper"][node], float)
+        for bbox in coords.values():
+            assert isinstance(bbox, list)
+            assert len(bbox) == 4
+            for f in bbox:
+                assert isinstance(f, float)
         # Assert the scale is the correct shape and types. We cannot test exact values here due to graphviz non-determinism
         assert isinstance(scale, list)
         assert len(scale) == 2
@@ -522,20 +453,16 @@ class TestUtil:
             a -- b -- c;
         }""")
         pydot_g: Dot = graph_from_dot_data(dot_string)[0]
-        df, scale = util.node_coords_from_dag(pydot_g)
-        assert isinstance(df, pd.DataFrame)
-        assert "x_lower" in df.columns
-        assert "x_upper" in df.columns
-        assert "y_lower" in df.columns
-        assert "y_upper" in df.columns
-        assert len(df) == 3
+        coords, scale = util.node_coords_from_dag(pydot_g)
+        # Assert the types and shape of returned data is as it should be
+        assert isinstance(coords, dict)
+        assert set(coords.keys()) == set([node.get_name() for node in pydot_g.get_nodes()])
         # Assert the types of values are correct, as we cannot test the values due to non-deterministic graphviz svg generation
-        for node in pydot_g.get_nodes():
-            assert node.get_name() in df.index
-            assert isinstance(df["x_lower"][node.get_name()], float)
-            assert isinstance(df["x_upper"][node.get_name()], float)
-            assert isinstance(df["y_lower"][node.get_name()], float)
-            assert isinstance(df["y_upper"][node.get_name()], float)
+        for bbox in coords.values():
+            assert isinstance(bbox, list)
+            assert len(bbox) == 4
+            for f in bbox:
+                assert isinstance(f, float)
         # Assert the scale is the correct shape and types. We cannot test exact values here due to graphviz non-determinism
         assert isinstance(scale, list)
         assert len(scale) == 2
@@ -555,20 +482,16 @@ class TestUtil:
         g.add_edge("a_1", "a", arrowhead="none")
         g.add_edge("b", "b_1", arrowhead="none")
 
-        df, scale = util.node_coords_from_dag(g)
-        assert isinstance(df, pd.DataFrame)
-        assert "x_lower" in df.columns
-        assert "x_upper" in df.columns
-        assert "y_lower" in df.columns
-        assert "y_upper" in df.columns
-        assert len(df) == 6
+        coords, scale = util.node_coords_from_dag(g)
+        # Assert the types and shape of returned data is as it should be
+        assert isinstance(coords, dict)
+        assert set(coords.keys()) == set([node for node in g.nodes()])
         # Assert the types of values are correct, as we cannot test the values due to non-deterministic graphviz svg generation
-        for node in g.nodes():
-            assert node in df.index
-            assert isinstance(df["x_lower"][node], float)
-            assert isinstance(df["x_upper"][node], float)
-            assert isinstance(df["y_lower"][node], float)
-            assert isinstance(df["y_upper"][node], float)
+        for bbox in coords.values():
+            assert isinstance(bbox, list)
+            assert len(bbox) == 4
+            for f in bbox:
+                assert isinstance(f, float)
         # Assert the scale is the correct shape and types. We cannot test exact values here due to graphviz non-determinism
         assert isinstance(scale, list)
         assert len(scale) == 2
@@ -584,26 +507,16 @@ class TestUtil:
         g.add_node("circle", shape="circle")
         g.add_edge("ellipse", "oval")
         g.add_edge("oval", "circle")
-        df, scale = util.node_coords_from_dag(g)
-        # Assert the returned values are the correct types and shape
-        assert isinstance(df, pd.DataFrame)
-        assert "x_lower" in df.columns
-        assert "x_upper" in df.columns
-        assert "y_lower" in df.columns
-        assert "y_upper" in df.columns
-        assert len(df) == 3
-        assert isinstance(scale, list)
-        assert len(scale) == 2
-        # Assert each node is included
-        for node in g.nodes():
-            assert node in df.index
+        coords, scale = util.node_coords_from_dag(g)
+        # Assert the types and shape of returned data is as it should be
+        assert isinstance(coords, dict)
+        assert set(coords.keys()) == set([node for node in g.nodes()])
         # Assert the types of values are correct, as we cannot test the values due to non-deterministic graphviz svg generation
-        for node in g.nodes():
-            assert node in df.index
-            assert isinstance(df["x_lower"][node], float)
-            assert isinstance(df["x_upper"][node], float)
-            assert isinstance(df["y_lower"][node], float)
-            assert isinstance(df["y_upper"][node], float)
+        for bbox in coords.values():
+            assert isinstance(bbox, list)
+            assert len(bbox) == 4
+            for f in bbox:
+                assert isinstance(f, float)
         # Assert the scale is the correct shape and types. We cannot test exact values here due to graphviz non-determinism
         assert isinstance(scale, list)
         assert len(scale) == 2

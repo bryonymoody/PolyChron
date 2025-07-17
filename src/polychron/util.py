@@ -13,7 +13,6 @@ from typing import IO, Any, Dict, Iterable, List, Literal, Tuple
 import networkx as nx
 import numpy as np
 import packaging.version
-import pandas as pd
 import pydot
 from networkx.drawing.nx_pydot import read_dot
 from PIL import Image, ImageChops
@@ -59,7 +58,7 @@ def bbox_from_polygon(points_str: str) -> list[float]:
 
     # Split the xs and ys to get the max and min of each trivially, forming the bbox. Y values need to be made positive
     xs, ys = zip(*points)
-    bbox = min(xs), max(xs), -1 * max(ys), -1 * min(ys)
+    bbox = [min(xs), max(xs), -1 * max(ys), -1 * min(ys)]
     return bbox
 
 
@@ -120,14 +119,14 @@ def rank_func(tes: dict[str, list[str]], dot_str: str) -> str:
     return new_string
 
 
-def node_coords_from_svg_string(svg_string: str) -> tuple[pd.DataFrame, list[float]]:
+def node_coords_from_svg_string(svg_string: str) -> tuple[dict[str, list[float]], list[float]]:
     """Get the coordinates of each node from a string containing the SVG representation of a graphviz DiGraph.
 
     Parameters:
         svg_string: The SVG version of a DiGraph produced by graphviz
 
     Returns:
-        A dataframe of coordinates, and svg scale information. Y coordinates are inverted, so the origin of coordinates is at the bottom left.
+        A tuple of a dictionary of axis aligned bounding boxes for each node `[x0, x1, y0, y1]`, and svg scale information `[w, h]`. Y coordinates are inverted, so the origin of coordinates is at the bottom left.
 
     Note:
         This function depends upon graphviz producing svg files with the expected structure
@@ -172,24 +171,22 @@ def node_coords_from_svg_string(svg_string: str) -> tuple[pd.DataFrame, list[flo
                         float(ellipse.attrib["ry"]),
                     )
                     node_coords[title] = bbox
-        coords_df = pd.DataFrame.from_dict(
-            node_coords, orient="index", columns=["x_lower", "x_upper", "y_lower", "y_upper"], dtype=float
-        )
-        return coords_df, scale
+        return node_coords, scale
     except ElementTree.ParseError as e:
         print(f"Warning: Unable to extract node coordinates from SVG:\n {e}", file=sys.stderr)
-        coords_df = pd.DataFrame(columns=["x_lower", "x_upper", "y_lower", "y_upper"], dtype=float)
-        return coords_df, []
+        return {}, []
 
 
-def node_coords_from_svg(svg_file: str | pathlib.Path | IO[str]) -> tuple[pd.DataFrame, list[float]]:
+def node_coords_from_svg(
+    svg_file: str | pathlib.Path | IO[str],
+) -> tuple[dict[str, list[float]], list[float]]:
     """Get the coordinates of each node from a Directed Acyclic Graph from an SCG file on disk
 
     Parameters:
         svg_file: path to the svg file on disk, or an open file handle
 
     Returns:
-        A dataframe of coordinates, and svg scale information. Y coordinates are inverted, so the origin of coordinates is at the bottom left.
+        A tuple of a dictionary of axis aligned bounding boxes for each node `[x0, x1, y0, y1]`, and svg scale information `[w, h]`. Y coordinates are inverted, so the origin of coordinates is at the bottom left.
     """
 
     # Depending on the type of svg_file, get the contents as a string
@@ -207,14 +204,14 @@ def node_coords_from_svg(svg_file: str | pathlib.Path | IO[str]) -> tuple[pd.Dat
     return node_coords_from_svg_string(svg_string)
 
 
-def node_coords_from_dag(graph: nx.DiGraph | pydot.Dot) -> tuple[pd.DataFrame, list[float]]:
+def node_coords_from_dag(graph: nx.DiGraph | pydot.Dot) -> tuple[dict[str, list[float]], list[float]]:
     """Get the coordinates of each node from a Directed Acyclic Graph via SVG rendering in graphviz.
 
     Parameters:
         graph: The networkx or pydot Graph
 
     Returns:
-        A dataframe of coordinates, and svg scale information. Y coordinates are inverted, so the origin of coordinates is at the bottom left.
+        A tuple of a dictionary of axis aligned bounding boxes for each node `[x0, x1, y0, y1]`, and svg scale information `[w, h]`. Y coordinates are inverted, so the origin of coordinates is at the bottom left.
     """
     # Ensure invalid graph attributes are removed and the graph is available in pydot form
     if "pydot" in str(type(graph)):
@@ -235,8 +232,8 @@ def node_coords_check(
     coords: tuple[float, float],
     img_size: tuple[int, int],
     img_scale: float,
-    node_coords: pd.DataFrame,
-    node_coords_scale: tuple[float, float],
+    node_coords: dict[str, list[float]],
+    node_coords_scale: list[float],
 ) -> str | None:
     """Return the node at the provided coordinates, using data extracted from an svg, with potential zooming and panning of an image
 
@@ -264,11 +261,9 @@ def node_coords_check(
     svg_y = (scaled_png_height - y) * (svg_height / scaled_png_height)
 
     # Iterate the nodes until a matching bbox is found. This assumes bboxes are not overlapping.
-    for n_ind in range(node_coords.shape[0]):
-        if (node_coords.iloc[n_ind].x_lower < svg_x < node_coords.iloc[n_ind].x_upper) and (
-            node_coords.iloc[n_ind].y_lower < svg_y < node_coords.iloc[n_ind].y_upper
-        ):
-            return node_coords.iloc[n_ind].name
+    for node, (x_lower, x_upper, y_lower, y_upper) in node_coords.items():
+        if (x_lower < svg_x < x_upper) and (y_lower < svg_y < y_upper):
+            return node
 
     # If no matches found, return None
     return None
