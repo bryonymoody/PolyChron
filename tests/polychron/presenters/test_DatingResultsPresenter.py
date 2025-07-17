@@ -386,27 +386,21 @@ class TestDatingResultsPresenter:
         # Define the svg coordinates to check.
         tests_coords = [
             [[59.75, 90.0], "box"],  # mid box
-            [[33.76, 72.1], "box"],  # inside the corner of the box
+            [[32.85, 72.1], "box"],  # inside the corner of the box
             [[32.75, 72.0], None],  # on the corner of  box
             [[31.75, 71.0], None],  # outside corner box
             [[59.745, 18.0], "diamond"],  # mid diamond
-            [[-0.20, +0.1], "diamond"],  # inside corner diamond, would be no_node ideally
+            [[-0.20, +0.1], "diamond"],  # inside corner diamond, would be None with non-axis aligned bounding boxes
             [[-0.25, -0.0], None],  # on the corner diamond
             [[-1.25, -1.0], None],  # outside corner diamond
             [[138.75, 90.0], "ellipse"],  # mid ellipse
-            [[105.5, 72.2], "ellipse"],  # inside corner ellipse, would be no_node ideally
+            [[105.5, 72.2], "ellipse"],  # inside corner ellipse, would be None with non-axis aligned bounding boxes
             [[105.15, 72.0], None],  # on corner ellipse
             [[104.15, 71.0], None],  # outside corner ellipse
             [[0.0, 0.0], None],  # nothing
             [[-100.0, -100.0], None],  # negative
             [[1000.0, 1000.0], None],  # larger then scale
         ]
-
-        # The incoming coordinates have their origin at the top left of the image, after translation from panning. Zoom level conversion is handled in nodecheck.
-        # SVG coordinates are also origin 0, 0, but the values retuned by node_coords_from_svg have been inverted in the y axis.
-        # So invert the y axis before providing the coordinates
-        for test_case in tests_coords:
-            test_case[0][1] = scale[1] - test_case[0][1]
 
         # Patch  node_coords_from_svg
         with patch("polychron.models.Model.node_coords_from_svg") as mock_node_coords_from_svg:
