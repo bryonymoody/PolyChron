@@ -4,7 +4,9 @@ import ast
 import copy
 import platform
 import re
+import sys
 import time
+import xml.etree.ElementTree as ElementTree
 from typing import Any, Dict, Iterable, List, Literal, Tuple
 
 import networkx as nx
@@ -35,52 +37,51 @@ def trim(im_trim: Image.Image) -> Image.Image:
     return im_trim.crop(bbox)
 
 
-def polygonfunc(i: str) -> list[float]:
-    """finds node coords of a polygon, from a string extracted from a svg
+def bbox_from_polygon(points_str: str) -> list[float]:
+    """Get the axis aligned bounding box from an svg polygon points attribute, supporting rectangles (box) and kites (diamond).
+
+    The returned Y axis values are inverted from the provided svg attribute string
+
 
     Parameters:
-        i: substring from an svg string, which shouuld include 'points='
+        points_str: the points attribute from an svg <polygon>
 
     Returns:
-        [x0, x1, y0, y1] - A list of 4 floating point numbers, which are the bounding box of the shape. The origin used is the bottom left, rather than top left in the svg.
+        The 4 floating point coordinates defining the axis aligned bounding box for click detection, as `[x0, x1, y0, y1]`
 
     Todo:
-        - Instead of using regular expressions, use a SVG (or just xml parsing, which is stdlib but defusedxml should probably be used instead.) library
-        - Handle being provided invalid inputs (strings without points)
+        - Gracefully handle bad input strings
+        - Todo pass in the transform values as an alt to -1*?
     """
-    x = re.findall(r'points="(.*?)"', i)[0].replace(" ", ",")
-    a = x.split(",")
-    # if statement checks if it's a rectangle or a kite then gets the right coords
-    if -1 * float(a[7]) == -1 * float(a[3]):
-        coords_converted = [float(a[2]), float(a[6]), -1 * float(a[5]), -1 * float(a[1])]
-    else:
-        coords_converted = [float(a[2]), float(a[6]), -1 * float(a[7]), -1 * float(a[3])]
-    return coords_converted
+    # Split the string into a list of tuples of floats
+    points = [tuple(map(float, xy.split(","))) for xy in points_str.split(" ")]
+
+    # Split the xs and ys to get the max and min of each trivially, forming the bbox. Y values need to be made positive
+    xs, ys = zip(*points)
+    bbox = min(xs), max(xs), -1 * max(ys), -1 * min(ys)
+    return bbox
 
 
-def ellipsefunc(i: str) -> list[float]:
-    """finds coords from dot file for ellipse nodes, from a string extracted from a svg
+def bbox_from_ellipse(cx: float, cy: float, rx: float, ry: float) -> list[float]:
+    """Get the axis aligned bounding box for an ellipse, using the ellipse parameters from svg attributes.
+
+    The returned Y axis values are inverted from the provided svg attribute string
 
     Parameters:
-        i: substring from an svg string, which shouuld include 'cx='
+        cx: the cx attribute from the ellipse, as a float
+        cy: the cy attribute from the ellipse, as a float
+        rx: the rx attribute from the ellipse, as a float
+        ry: the ry attribute from the ellipse, as a float
 
     Returns:
-        [x0, x1, y0, y1] - A list of 4 floating point numbers, which are the bounding box of the shape. The origin used is the bottom left, rather than top left in the svg.
+        The 4 floating point coordinates defining the axis aligned bounding box for click detection, as `[x0, x1, y0, y1]`
 
     Todo:
-        - Instead of using regular expressions, use a SVG (or just xml parsing, which is stdlib but defusedxml should probably be used instead.) library
-        - Handle being provided invalid inputs (strings without cx=)
+        - Gracefully handle bad inputs
+        - Todo pass in the transform values as an alt to -1*?
     """
-    x = re.findall(r"cx=(.*?)/>", i)[0].replace(" ", ",")
-    x = x.replace("cy=", "").replace("rx=", "").replace("ry=", "").replace('"', "")
-    a = x.split(",")
-    coords_converted = [
-        float(a[0]) - float(a[2]),
-        float(a[0]) + float(a[2]),
-        -1 * float(a[1]) - float(a[3]),
-        -1 * float(a[1]) + float(a[3]),
-    ]
-    return coords_converted
+    bbox = [cx - rx, cx + rx, -1 * cy - ry, -1 * cy + ry]
+    return bbox
 
 
 def rank_func(tes: dict[str, list[str]], dot_str: str) -> str:
@@ -122,22 +123,62 @@ def node_coords_from_svg(svg_string: str) -> tuple[pd.DataFrame, list[float]]:
     """Get the coordinates of each node from a string containing the SVG representation of a graphviz DiGraph.
 
     Parameters:
-        svg_string: The SVG version for a DiGraph. The string should be cast from a byte string and not decoded for the multi-line regular expression to behave
+        svg_string: The SVG version of a DiGraph produced by graphviz
 
     Returns:
         A dataframe of coordinates, and svg scale information. Y coordinates are inverted, so the origin of coordinates is at the bottom left.
+
+    Note:
+        This function depends upon graphviz producing svg files with the expected structure
     """
-    scale_info = re.search("points=(.*?)/>", svg_string).group(1).replace(" ", ",")
-    scale_info = scale_info.split(",")
-    scale = [float(scale_info[4]), -1 * float(scale_info[3])]
-    coords_x = re.findall(r'id="node(.*?)</text>', svg_string)
-    coords_temp = [polygonfunc(i) if "points" in i else ellipsefunc(i) for i in coords_x]
-    node_test_pattern = r'node">(\\r)?\\n<title>(.*?)</title>'
-    node_test = re.findall(node_test_pattern, svg_string)
-    node_list = [i.replace("&#45;", "-") for _, i in node_test]
-    new_pos = dict(zip(node_list, coords_temp))
-    df = pd.DataFrame.from_dict(new_pos, orient="index", columns=["x_lower", "x_upper", "y_lower", "y_upper"])
-    return df, scale
+    try:
+        # Parse the svg string as xml, returning the <svg> (root) element
+        root = ElementTree.fromstring(svg_string)
+        # Get the xmlns for the svg element, used for latter queries
+        xmlns = root.tag[: root.tag.find("}") + 1] if "}" in root.tag else ""
+        # Get the width and height of the svg in points
+        # svg_width, svg_height, svg_vb = root.attrib["width"], root.attrib["height"], root.attrib["viewBox"]
+
+        # Get the translation values from the (first) <g> element, which can then be applied to all extracted coordinate values.
+        graph0 = root.find(f"{xmlns}g")
+        # translate_match = re.match(r".*translate\((.*)\).*", graph0.attrib["transform"])
+        # translate_x, translate_y = translate_match.group(1).split(" ")
+        # Todo: use the transform values rather than -1 *?
+
+        # Get the first polygon from within the <g>, this is the white background that will have been trimmed around, so provides the real image width and height from it's points.
+        background_polygon = graph0.find(f"{xmlns}polygon")
+        background_points = [tuple(x.split(",")) for x in background_polygon.attrib["points"].split(" ")]
+        # Store the 2 values which define the scaled bounds / dims. y is negative in the svg
+        scale = [float(background_points[2][0]), -1 * float(background_points[2][1])]
+
+        node_coords = {}
+        # Iterate all g elements which have an id beginning `node`.
+        for child_g in graph0.findall(f".//{xmlns}g"):
+            # If the <g> is for a node
+            if child_g.attrib["id"].startswith("node"):
+                # Extract the name (title)
+                title = child_g.find(f"{xmlns}title").text
+                # Attempt to find a polygon element, and if so extract values
+                if (polygon := child_g.find(f"{xmlns}polygon")) is not None:
+                    bbox = bbox_from_polygon(polygon.attrib["points"])
+                    node_coords[title] = bbox
+                # Otherwise, attempt to find an ellipse and if so extract values
+                elif (ellipse := child_g.find(f"{xmlns}ellipse")) is not None:
+                    bbox = bbox_from_ellipse(
+                        float(ellipse.attrib["cx"]),
+                        float(ellipse.attrib["cy"]),
+                        float(ellipse.attrib["rx"]),
+                        float(ellipse.attrib["ry"]),
+                    )
+                    node_coords[title] = bbox
+        coords_df = pd.DataFrame.from_dict(
+            node_coords, orient="index", columns=["x_lower", "x_upper", "y_lower", "y_upper"], dtype=float
+        )
+        return coords_df, scale
+    except ElementTree.ParseError as e:
+        print(f"Warning: Unable to extract node coordinates from SVG:\n {e}", file=sys.stderr)
+        coords_df = pd.DataFrame(columns=["x_lower", "x_upper", "y_lower", "y_upper"], dtype=float)
+        return coords_df, []
 
 
 def node_coords_from_dag(graph: nx.DiGraph | pydot.Dot) -> tuple[pd.DataFrame, list[float]]:
@@ -158,7 +199,7 @@ def node_coords_from_dag(graph: nx.DiGraph | pydot.Dot) -> tuple[pd.DataFrame, l
         graphs = nx.nx_pydot.to_pydot(graph)
 
     # Get the svg string for the graph via pydot
-    svg_string = str(graphs.create_svg())
+    svg_string = graphs.create_svg().decode("utf-8")
 
     # Extract and return the node coordinates and bounds information from the svg
     return node_coords_from_svg(svg_string)

@@ -97,54 +97,44 @@ class TestUtil:
         ("input", "expected"),
         [
             (
-                '1" class="node">\n<title>a</title>\n<polygon fill="none" stroke="black" points="54,-180 0,-180 0,-144 54,-144 54,-180"/>\n<text text-anchor="middle" x="27" y="-158.3" font-family="Times,serif" font-size="14.00">a',
+                "54,-180 0,-180 0,-144 54,-144 54,-180",
                 [0.0, 54.0, 144.0, 180.0],
             ),
             (
-                '2" class="node">\n<title>b = c</title>\n<polygon fill="none" stroke="black" points="54,-108 0,-108 0,-72 54,-72 54,-108"/>\n<text text-anchor="middle" x="27" y="-86.3" font-family="Times,serif" font-size="14.00">b = c',
+                "54,-108 0,-108 0,-72 54,-72 54,-108",
                 [0.0, 54.0, 72.0, 108.0],
             ),
             (
-                '3" class="node">\n<title>d</title>\n<polygon fill="none" stroke="black" points="54,-36 0,-36 0,0 54,0 54,-36"/>\n<text text-anchor="middle" x="27" y="-14.3" font-family="Times,serif" font-size="14.00">d',
+                "54,-36 0,-36 0,0 54,0 54,-36",
                 [0.0, 54.0, -0.0, 36.0],
             ),
         ],
     )
-    def test_polygonfunc(self, input: str, expected: list[float]):
-        """Test polygonfunc behaves as expected for a range of inputs
+    def test_bbox_from_polygon(self, input: str, expected: list[float]):
+        """Test bbox_from_polygon behaves as expected for a range of inputs
 
         Todo:
-            - Test invalid inputs (i.e. elipses)
+            - Test other numbers of points.
         """
-        # Call polygonfunc with the parametrized input,
-        retval = util.polygonfunc(input)
+        # Call bbox_from_polygon with the parametrized input
+        retval = util.bbox_from_polygon(input)
         assert retval == pytest.approx(expected)
 
     @pytest.mark.parametrize(
-        ("input", "expected"),
+        ("cx", "cy", "rx", "ry", "expected"),
         [
-            (
-                '1" class="node">\n<title>ellipse</title>\n<ellipse fill="none" stroke="black" cx="33.8" cy="-187.09" rx="33.6" ry="18"/>\n<text text-anchor="middle" x="33.8" y="-183.39" font-family="Times,serif" font-size="14.00">ellipse',
-                [0.19999999999999574, 67.4, 169.09, 205.09],
-            ),
-            (
-                '2" class="node">\n<title>oval</title>\n<ellipse fill="none" stroke="black" cx="33.8" cy="-115.09" rx="27" ry="18"/>\n<text text-anchor="middle" x="33.8" y="-111.39" font-family="Times,serif" font-size="14.00">oval',
-                [6.799999999999997, 60.8, 97.09, 133.09],
-            ),
-            (
-                '3" class="node">\n<title>circle</title>\n<ellipse fill="none" stroke="black" cx="33.8" cy="-30.55" rx="30.59" ry="30.59"/>\n<text text-anchor="middle" x="33.8" y="-26.85" font-family="Times,serif" font-size="14.00">circle',
-                [3.2099999999999973, 64.39, -0.03999999999999915, 61.14],
-            ),
+            (164.75, -187.09, 33.6, 18, [131.15, 198.35, 169.09, 205.09]),
+            (164.75, -115.09, 27, 18, [137.75, 191.75, 97.09, 133.09]),
+            (164.75, -30.55, 30.59, 30.59, [134.16, 195.34, -0.03999999, 61.14]),
+            (33.8, -187.09, 33.6, 18, [0.19999999999999574, 67.4, 169.09, 205.09]),
+            (33.8, -115.09, 27, 18, [6.799999999999997, 60.8, 97.09, 133.09]),
+            (33.8, -30.55, 30.59, 30.59, [3.2099999999999973, 64.39, -0.03999999999999915, 61.14]),
         ],
     )
-    def test_ellipsefunc(self, input: str, expected: list[float]):
-        """Test ellipsefunc behaves as expected for a range of inputs
-
-        Todo:
-            - Test invalid inputs (i.e. box/diamonds)
-        """
-        # Call ellipsefunc with the parametrized input,
-        retval = util.ellipsefunc(input)
+    def test_bbox_from_ellipse(self, cx: float, cy: float, rx: float, ry: float, expected: list[float]):
+        """Test bbox_from_ellipse behaves as expected for a range of ellipse parameters"""
+        # Call bbox_from_ellipse with the parametrized input,
+        retval = util.bbox_from_ellipse(cx, cy, rx, ry)
         assert retval == pytest.approx(expected)
 
     def test_rank_func(self):
@@ -197,7 +187,7 @@ class TestUtil:
         assert dot_string == mutated_dot_string
 
     @pytest.mark.parametrize(
-        ("test_svg", "expected_coords", "expected_scale"),
+        ("test_svg", "expected_coords", "expected_scale", "stderr"),
         [
             # Files using linux line endings, including a strat graph, a chrono graph and a test graph of shapes
             (
@@ -215,6 +205,7 @@ class TestUtil:
                     "y_upper": {"box": 205.09, "diamond": 133.09, "ellipse": 205.09, "oval": 133.09, "circle": 61.14},
                 },
                 [202.54, 209.09],
+                False,
             ),
             (
                 "svg/lf/demo_strat.svg",
@@ -225,6 +216,7 @@ class TestUtil:
                     "y_upper": {"a": 272.0, "b": 195.0, "e": 118.0, "h": 41.0, "c": 118.0, "d": 118.0, "f": 41.0},
                 },
                 [202.0, 276.0],
+                False,
             ),
             (
                 "svg/lf/demo_chrono.svg",
@@ -275,6 +267,7 @@ class TestUtil:
                     },
                 },
                 [185.0, 564.0],
+                False,
             ),
             # Check windows line endings for a file with one of each shape
             (
@@ -292,11 +285,33 @@ class TestUtil:
                     "y_upper": {"box": 205.09, "diamond": 133.09, "ellipse": 205.09, "oval": 133.09, "circle": 61.14},
                 },
                 [202.54, 209.09],
+                False,
+            ),
+            # Check how SVG with no nodes are handled, this should not occur in real usage
+            (
+                "svg/lf/no_nodes.svg",
+                {"x_lower": [], "x_upper": [], "y_lower": [], "y_upper": []},
+                [202.54, 209.09],
+                False,
+            ),
+            # An unfinished SVG
+            (
+                "svg/lf/invalid.svg",
+                {"x_lower": [], "x_upper": [], "y_lower": [], "y_upper": []},
+                [],
+                True,
+            ),
+            # An empty svg file
+            (
+                "svg/lf/empty.svg",
+                {"x_lower": [], "x_upper": [], "y_lower": [], "y_upper": []},
+                [],
+                True,
             ),
         ],
     )
     def test_node_coords_from_svg(
-        self, test_svg: str, expected_coords, expected_scale: list[float], test_data_path: pathlib.Path
+        self, test_svg: str, expected_coords, expected_scale: list[float], stderr: bool, test_data_path: pathlib.Path, capsys: pytest.CaptureFixture
     ):
         """Test extraction of node coordinates from an svg string
 
@@ -308,15 +323,21 @@ class TestUtil:
         """
         # Open the input file in binary mode and cast to a string, so it has the literal characters rather than true line endings, matching usage in node_coords_from_dag
         input_path = test_data_path / test_svg
-        with open(input_path, "rb") as f:
-            svg_string = str(f.read())
+        with open(input_path, "r") as f:
+            svg_string = f.read()
+        capsys.readouterr()
         # Call node_coords_from_svg
         coords, scale = util.node_coords_from_svg(svg_string)
+        captured = capsys.readouterr()
         # Check coordinates are as expected, with some float tolerance
         expected_coords = pd.DataFrame(expected_coords)
-        pd.testing.assert_frame_equal(coords, expected_coords, check_exact=False)
+        pd.testing.assert_frame_equal(coords, expected_coords, check_exact=False, check_index_type=False, check_column_type=False)
         # Assert the scale is as expected, with some float tolerance
         assert scale == pytest.approx(expected_scale)
+        if stderr:
+            assert len(captured.err) != 0
+        else:
+            assert len(captured.err) == 0
 
     def test_node_coords_from_dag(self):
         """Test node_coords_from_dag behaves as expected for a range of inputs
