@@ -4,7 +4,6 @@ from typing import Any, List
 
 import networkx as nx
 import pandas as pd
-import pydot
 
 from ..interfaces import Mediator
 from ..models.AddContextModel import AddContextModel
@@ -19,7 +18,7 @@ from ..presenters.MCMCProgressPresenter import MCMCProgressPresenter
 from ..presenters.RemoveContextPresenter import RemoveContextPresenter
 from ..presenters.RemoveStratigraphicRelationshipPresenter import RemoveStratigraphicRelationshipPresenter
 from ..presenters.ResidualOrIntrusivePresenter import ResidualOrIntrusivePresenter
-from ..util import edge_label, get_right_click_binding, imagefunc, node_coords_from_dag, node_del_fixed
+from ..util import edge_label, get_right_click_binding, imagefunc, node_coords_check, node_del_fixed
 from ..views.AddContextView import AddContextView
 from ..views.CalibrateModelSelectView import CalibrateModelSelectView
 from ..views.DatafilePreviewView import DatafilePreviewView
@@ -851,7 +850,8 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         x_scal, y_scal = self.view.show_testmenu(has_image)
         # If the model has a stratigraphic image presented, check if a node has been right clicked on and store in a member variable
         if has_image and x_scal is not None and y_scal is not None:
-            self.node = self.nodecheck(x_scal, y_scal)
+            node = self.nodecheck(x_scal, y_scal)
+            self.node = node if node is not None else "no node"
 
     def check_list_gen(self) -> None:
         """Update the contents of the datacanvas checklist based on provided model state
@@ -1095,40 +1095,31 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         joined_below = ", ".join(below)
         return joined_above, joined_below
 
-    def nodecheck(self, x_current: int, y_current: int) -> str:
+    def nodecheck(self, x_current: int, y_current: int) -> str | None:
         """returns the node that corresponds to the mouse cooridinates
 
-        Formerly StartPage.nodecheck
+        Formerly `StartPage.nodecheck`
+
+        Parameters:
+            x_current: the x coord in image space accounting for translation
+            y_current: the y coord in image space accounting for translation
+
+        Returns:
+            The name of the node clicked on, or None
         """
-
-        node_inside = "no node"
-
         model_model = self.model.current_model
         if model_model is None:
-            return node_inside
+            return None
 
-        workdir = model_model.get_working_directory()
-
-        if model_model.grouped_rendering:
-            (graph,) = pydot.graph_from_dot_file(workdir / "fi_new.txt")
-            node_df_con = node_coords_from_dag(graph)
-        else:
-            node_df_con = node_coords_from_dag(model_model.stratigraphic_dag)
-        node_df = node_df_con[0]
-
-        xmax, ymax = node_df_con[1]
-        # forms a dataframe from the dicitonary of coords
-        x, y = model_model.stratigraphic_image.size
-        cavx = x * self.view.imscale
-        cany = y * self.view.imscale
-        xscale = (x_current) * (xmax) / cavx
-        yscale = (cany - y_current) * (ymax) / cany
-        for n_ind in range(node_df.shape[0]):
-            if (node_df.iloc[n_ind].x_lower < xscale < node_df.iloc[n_ind].x_upper) and (
-                node_df.iloc[n_ind].y_lower < yscale < node_df.iloc[n_ind].y_upper
-            ):
-                node_inside = node_df.iloc[n_ind].name
-        return node_inside
+        node_df_con = model_model.stratigraphic_node_coords
+        node = node_coords_check(
+            (x_current, y_current),
+            model_model.stratigraphic_image.size,
+            self.view.imscale,
+            node_df_con[0],
+            node_df_con[1],
+        )
+        return node
 
     def node_del_popup(self, context_name: str) -> str | None:
         """Open a popup window for the user to provide input on deleting a node, returning the value

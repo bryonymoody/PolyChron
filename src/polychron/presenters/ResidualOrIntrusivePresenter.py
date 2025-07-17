@@ -9,7 +9,7 @@ from PIL import ImageTk
 from ..interfaces import Mediator
 from ..models.Model import Model
 from ..presenters.ManageIntrusiveOrResidualContextsPresenter import ManageIntrusiveOrResidualContextsPresenter
-from ..util import node_coords_from_dag
+from ..util import node_coords_check
 from ..views.ManageIntrusiveOrResidualContextsView import ManageIntrusiveOrResidualContextsView
 from ..views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
 from .PopupPresenter import PopupPresenter
@@ -147,77 +147,65 @@ class ResidualOrIntrusivePresenter(PopupPresenter[ResidualOrIntrusiveView, Model
         x_scal = cursorx2 + self.view.transx2
         y_scal = cursory2 + self.view.transy2
         node = self.nodecheck(x_scal, y_scal)
-        outline = nx.get_node_attributes(self.model.resid_or_intru_dag, "color")
-        # changes colour of the node outline to represent: intrustive (green), residual (orange) or none (black)
-        if (node in self.model.residual_contexts) and (self.mode != "intru"):
-            self.model.residual_contexts.remove(node)
-            outline[node] = "black"
-        elif (node in self.model.residual_contexts) and (self.mode == "intru"):
-            self.model.residual_contexts.remove(node)
-            outline[node] = "blue"
-            self.model.intrusive_contexts.append(node)
-        elif (node in self.model.intrusive_contexts) and (self.mode != "resid"):
-            self.model.intrusive_contexts.remove(node)
-            outline[node] = "black"
-        elif (node in self.model.intrusive_contexts) and (self.mode == "resid"):
-            self.model.intrusive_contexts.remove(node)
-            self.model.residual_contexts.append(node)
-            outline[node] = "orange"
-        elif (self.mode == "resid") and (node not in self.model.residual_contexts):
-            self.model.residual_contexts.append(node)
-            outline[node] = "orange"
-        elif self.mode == "intru" and (node not in self.model.intrusive_contexts):
-            self.model.intrusive_contexts.append(node)
-            outline[node] = "blue"
+        if node is not None:
+            outline = nx.get_node_attributes(self.model.resid_or_intru_dag, "color")
+            # changes colour of the node outline to represent: intrustive (green), residual (orange) or none (black)
+            if (node in self.model.residual_contexts) and (self.mode != "intru"):
+                self.model.residual_contexts.remove(node)
+                outline[node] = "black"
+            elif (node in self.model.residual_contexts) and (self.mode == "intru"):
+                self.model.residual_contexts.remove(node)
+                outline[node] = "blue"
+                self.model.intrusive_contexts.append(node)
+            elif (node in self.model.intrusive_contexts) and (self.mode != "resid"):
+                self.model.intrusive_contexts.remove(node)
+                outline[node] = "black"
+            elif (node in self.model.intrusive_contexts) and (self.mode == "resid"):
+                self.model.intrusive_contexts.remove(node)
+                self.model.residual_contexts.append(node)
+                outline[node] = "orange"
+            elif (self.mode == "resid") and (node not in self.model.residual_contexts):
+                self.model.residual_contexts.append(node)
+                outline[node] = "orange"
+            elif self.mode == "intru" and (node not in self.model.intrusive_contexts):
+                self.model.intrusive_contexts.append(node)
+                outline[node] = "blue"
 
-        # Update the list of intrusive and residual contexts in-place.
-        self.view.set_intru_label_text(self.model.intrusive_contexts)
-        self.view.set_resid_label_text(self.model.residual_contexts)
+            # Update the list of intrusive and residual contexts in-place.
+            self.view.set_intru_label_text(self.model.intrusive_contexts)
+            self.view.set_resid_label_text(self.model.residual_contexts)
 
-        # updates the node outline colour
-        nx.set_node_attributes(self.model.resid_or_intru_dag, outline, "color")
+            # updates the node outline colour
+            nx.set_node_attributes(self.model.resid_or_intru_dag, outline, "color")
 
-        # re render the stratigraphic graph
-        self.model.render_resid_or_intru_dag()
+            # re render the stratigraphic graph
+            self.model.render_resid_or_intru_dag()
 
-        # Update the image in the view
-        if self.model.resid_or_intru_image is not None:
-            self.view.update_littlecanvas2_image_only(self.model.resid_or_intru_image)
-
-        # return the node which was clicked on
-        return node
+            # Update the image in the view
+            if self.model.resid_or_intru_image is not None:
+                self.view.update_littlecanvas2_image_only(self.model.resid_or_intru_image)
 
     def nodecheck(self, x_current: int, y_current: int) -> str:
         """returns the node that corresponds to the mouse cooridinates
 
         Formerly `PageTwo.nodecheck`
+
         """
-        node_inside = "no node"
-
         if self.model is None:
-            return node_inside
+            return None
 
-        if self.model.resid_or_intru_dag is not None:
-            # gets node coordinates from the graph
-            node_df_con = node_coords_from_dag(self.model.resid_or_intru_dag)
-            # forms a dataframe from the dicitonary of coords
-            node_df = node_df_con[0]
-            xmax, ymax = node_df_con[1]
-            # scales the coordinates using the canvas and image size
-            x, y = self.view.image2.size
-            cavx = x * self.view.imscale2
-            cany = y * self.view.imscale2
-            xscale = (x_current) * (xmax) / cavx
-            yscale = (cany - y_current) * (ymax) / cany
-            # gets current node colours
-            outline = nx.get_node_attributes(self.model.resid_or_intru_dag, "color")
-            for n_ind in range(node_df.shape[0]):
-                if (node_df.iloc[n_ind].x_lower < xscale < node_df.iloc[n_ind].x_upper) and (
-                    node_df.iloc[n_ind].y_lower < yscale < node_df.iloc[n_ind].y_upper
-                ):
-                    node_inside = node_df.iloc[n_ind].name
-                    nx.set_node_attributes(self.model.resid_or_intru_dag, outline, "color")
-        return node_inside
+        if self.model.resid_or_intru_dag is None:
+            return None
+
+        node_df_con = self.model.resid_or_intru_node_coords
+        node = node_coords_check(
+            (x_current, y_current),
+            self.view.image2.size,
+            self.view.imscale2,
+            node_df_con[0],
+            node_df_con[1],
+        )
+        return node
 
     def load_graph(self) -> None:
         """Loads graph on results page

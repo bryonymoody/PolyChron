@@ -310,8 +310,14 @@ class TestUtil:
             ),
         ],
     )
-    def test_node_coords_from_svg(
-        self, test_svg: str, expected_coords, expected_scale: list[float], stderr: bool, test_data_path: pathlib.Path, capsys: pytest.CaptureFixture
+    def test_node_coords_from_svg_string(
+        self,
+        test_svg: str,
+        expected_coords,
+        expected_scale: list[float],
+        stderr: bool,
+        test_data_path: pathlib.Path,
+        capsys: pytest.CaptureFixture,
     ):
         """Test extraction of node coordinates from an svg string
 
@@ -326,12 +332,116 @@ class TestUtil:
         with open(input_path, "r") as f:
             svg_string = f.read()
         capsys.readouterr()
-        # Call node_coords_from_svg
-        coords, scale = util.node_coords_from_svg(svg_string)
+        # Call node_coords_from_svg_string
+        coords, scale = util.node_coords_from_svg_string(svg_string)
         captured = capsys.readouterr()
         # Check coordinates are as expected, with some float tolerance
         expected_coords = pd.DataFrame(expected_coords)
-        pd.testing.assert_frame_equal(coords, expected_coords, check_exact=False, check_index_type=False, check_column_type=False)
+        pd.testing.assert_frame_equal(
+            coords, expected_coords, check_exact=False, check_index_type=False, check_column_type=False
+        )
+        # Assert the scale is as expected, with some float tolerance
+        assert scale == pytest.approx(expected_scale)
+        if stderr:
+            assert len(captured.err) != 0
+        else:
+            assert len(captured.err) == 0
+
+    @pytest.mark.parametrize(
+        ("test_svg", "type", "expected_coords", "expected_scale", "stderr"),
+        [
+            # Files using linux line endings, accessed via a string, or a pathlib.Path
+            (
+                "svg/lf/shapes.svg",
+                "str",
+                {
+                    "x_lower": {"box": 32.75, "diamond": -0.25, "ellipse": 131.15, "oval": 137.75, "circle": 134.16},
+                    "x_upper": {"box": 86.75, "diamond": 119.74, "ellipse": 198.35, "oval": 191.75, "circle": 195.34},
+                    "y_lower": {
+                        "box": 169.09,
+                        "diamond": 97.09,
+                        "ellipse": 169.09,
+                        "oval": 97.09,
+                        "circle": -0.03999999999999915,
+                    },
+                    "y_upper": {"box": 205.09, "diamond": 133.09, "ellipse": 205.09, "oval": 133.09, "circle": 61.14},
+                },
+                [202.54, 209.09],
+                False,
+            ),
+            (
+                "svg/lf/shapes.svg",
+                "pathlib.Path",
+                {
+                    "x_lower": {"box": 32.75, "diamond": -0.25, "ellipse": 131.15, "oval": 137.75, "circle": 134.16},
+                    "x_upper": {"box": 86.75, "diamond": 119.74, "ellipse": 198.35, "oval": 191.75, "circle": 195.34},
+                    "y_lower": {
+                        "box": 169.09,
+                        "diamond": 97.09,
+                        "ellipse": 169.09,
+                        "oval": 97.09,
+                        "circle": -0.03999999999999915,
+                    },
+                    "y_upper": {"box": 205.09, "diamond": 133.09, "ellipse": 205.09, "oval": 133.09, "circle": 61.14},
+                },
+                [202.54, 209.09],
+                False,
+            ),
+            (
+                "svg/lf/shapes.svg",
+                "IO",
+                {
+                    "x_lower": {"box": 32.75, "diamond": -0.25, "ellipse": 131.15, "oval": 137.75, "circle": 134.16},
+                    "x_upper": {"box": 86.75, "diamond": 119.74, "ellipse": 198.35, "oval": 191.75, "circle": 195.34},
+                    "y_lower": {
+                        "box": 169.09,
+                        "diamond": 97.09,
+                        "ellipse": 169.09,
+                        "oval": 97.09,
+                        "circle": -0.03999999999999915,
+                    },
+                    "y_upper": {"box": 205.09, "diamond": 133.09, "ellipse": 205.09, "oval": 133.09, "circle": 61.14},
+                },
+                [202.54, 209.09],
+                False,
+            ),
+        ],
+    )
+    def test_node_coords_from_svg(
+        self,
+        test_svg: str,
+        type: Literal["str", "pathlib.Path", "IO"],
+        expected_coords,
+        expected_scale: list[float],
+        stderr: bool,
+        test_data_path: pathlib.Path,
+        capsys: pytest.CaptureFixture,
+    ):
+        """Test extraction of node coordinates from an svg string
+
+        This can be an exact coordinate test, as we can test against stored svg files which were produced by graphviz
+
+        Todo:
+            - rectangular bounding boxes are always used for click detection, even for diamonds and ellipses. This may be problematic if graphviz does not ensure that the rectangular bounding box of a diamond/kite is free from other nodes.
+            - Consider returning a dict instead of a dataframe.
+        """
+        # Open the input file in binary mode and cast to a string, so it has the literal characters rather than true line endings, matching usage in node_coords_from_dag
+        input_path = test_data_path / test_svg
+        capsys.readouterr()
+        # Call node_coords_from_svg, using the appropriate type of parameter
+        if type == "str":
+            coords, scale = util.node_coords_from_svg(str(input_path))
+        elif type == "pathlib.Path":
+            coords, scale = util.node_coords_from_svg(pathlib.Path(input_path))
+        else:  # type == "IO"
+            with open(input_path, "r") as f:
+                coords, scale = util.node_coords_from_svg(f)
+        captured = capsys.readouterr()
+        # Check coordinates are as expected, with some float tolerance
+        expected_coords = pd.DataFrame(expected_coords)
+        pd.testing.assert_frame_equal(
+            coords, expected_coords, check_exact=False, check_index_type=False, check_column_type=False
+        )
         # Assert the scale is as expected, with some float tolerance
         assert scale == pytest.approx(expected_scale)
         if stderr:
@@ -342,7 +452,7 @@ class TestUtil:
     def test_node_coords_from_dag(self):
         """Test node_coords_from_dag behaves as expected for a range of inputs
 
-        Due to non-determinism within graphviz layout generation, we cannot check the exact returned coordinates from the dynamically genrated svg, but that is covered by `test_node_coords_from_svg`
+        Due to non-determinism within graphviz layout generation, we cannot check the exact returned coordinates from the dynamically genrated svg, but that is covered by `test_node_coords_from_svg_string`
 
         Todo:
             - Call test_node_coords_from_dag less often, storing the coordinates when the png is re-rendered instead. Possibly even remove this method and operate on the svg which is rendered at the same time as the png.
@@ -499,6 +609,11 @@ class TestUtil:
         assert len(scale) == 2
         for value in scale:
             assert isinstance(value, float)
+
+    def test_node_coords_check(self):
+        """Test the method which returns the node which is at a given set of coordinates, after scaling and zooming may have occurred"""
+
+        pass
 
     @pytest.mark.skip(reason="test_phase_info_func not yet implemented")
     def test_phase_info_func(self):
