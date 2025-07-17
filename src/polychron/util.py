@@ -17,7 +17,7 @@ import pydot
 from networkx.drawing.nx_pydot import read_dot
 from PIL import Image, ImageChops
 
-"""Utiltiy methods
+"""Utility methods
 """
 
 
@@ -40,8 +40,6 @@ def trim(im_trim: Image.Image) -> Image.Image:
 def bbox_from_polygon(points_str: str) -> list[float]:
     """Get the axis aligned bounding box from an svg polygon points attribute, supporting rectangles (box) and kites (diamond).
 
-    The returned Y axis values are inverted from the provided svg attribute string
-
 
     Parameters:
         points_str: the points attribute from an svg <polygon>
@@ -58,14 +56,12 @@ def bbox_from_polygon(points_str: str) -> list[float]:
 
     # Split the xs and ys to get the max and min of each trivially, forming the bbox. Y values need to be made positive
     xs, ys = zip(*points)
-    bbox = [min(xs), max(xs), -1 * max(ys), -1 * min(ys)]
+    bbox = [min(xs), max(xs), min(ys), max(ys)]
     return bbox
 
 
 def bbox_from_ellipse(cx: float, cy: float, rx: float, ry: float) -> list[float]:
     """Get the axis aligned bounding box for an ellipse, using the ellipse parameters from svg attributes.
-
-    The returned Y axis values are inverted from the provided svg attribute string
 
     Parameters:
         cx: the cx attribute from the ellipse, as a float
@@ -80,7 +76,16 @@ def bbox_from_ellipse(cx: float, cy: float, rx: float, ry: float) -> list[float]
         - Gracefully handle bad inputs
         - Todo pass in the transform values as an alt to -1*?
     """
-    bbox = [cx - rx, cx + rx, -1 * cy - ry, -1 * cy + ry]
+    bbox = [cx - rx, cx + rx, cy - ry, cy + ry]
+    return bbox
+
+
+def translate_bbox(translate: list[float], bbox: list[float]) -> list[float]:
+    translate_x, translate_y = translate
+    bbox[0] += translate_x
+    bbox[1] += translate_x
+    bbox[2] += translate_y
+    bbox[3] += translate_y
     return bbox
 
 
@@ -126,7 +131,7 @@ def node_coords_from_svg_string(svg_string: str) -> tuple[dict[str, list[float]]
         svg_string: The SVG version of a DiGraph produced by graphviz
 
     Returns:
-        A tuple of a dictionary of axis aligned bounding boxes for each node `[x0, x1, y0, y1]`, and svg scale information `[w, h]`. Y coordinates are inverted, so the origin of coordinates is at the bottom left.
+        A tuple of a dictionary of axis aligned bounding boxes for each node `[x0, x1, y0, y1]`, and svg scale information `[w, h]`. Coordinates use a top-left origin.
 
     Note:
         This function depends upon graphviz producing svg files with the expected structure
@@ -140,16 +145,20 @@ def node_coords_from_svg_string(svg_string: str) -> tuple[dict[str, list[float]]
         # svg_width, svg_height, svg_vb = root.attrib["width"], root.attrib["height"], root.attrib["viewBox"]
 
         # Get the translation values from the (first) <g> element, which can then be applied to all extracted coordinate values.
+        translate = [0.0, 0.0]
         graph0 = root.find(f"{xmlns}g")
-        # translate_match = re.match(r".*translate\((.*)\).*", graph0.attrib["transform"])
-        # translate_x, translate_y = translate_match.group(1).split(" ")
-        # Todo: use the transform values rather than -1 *?
+        if graph0 is not None and "transform" in graph0.attrib:
+            translate_match = re.match(r".*translate\((.*)\).*", graph0.attrib["transform"])
+            translate = [float(v) for v in translate_match.group(1).split(" ")]
 
         # Get the first polygon from within the <g>, this is the white background that will have been trimmed around, so provides the real image width and height from it's points.
         background_polygon = graph0.find(f"{xmlns}polygon")
-        background_points = [tuple(x.split(",")) for x in background_polygon.attrib["points"].split(" ")]
-        # Store the 2 values which define the scaled bounds / dims. y is negative in the svg
-        scale = [float(background_points[2][0]), -1 * float(background_points[2][1])]
+        background_points = [list(map(float, x.split(","))) for x in background_polygon.attrib["points"].split(" ")]
+        # Translate the background points by the translation for the graph
+        translated_background_points = [[translate[0] + x, translate[1] + y] for x, y in background_points]
+        # Find the size of the background area, to match coordinates for the png and svg versions of the same graph
+        xs, ys = zip(*translated_background_points)
+        dims = [max(xs), max(ys)]
 
         node_coords = {}
         # Iterate all g elements which have an id beginning `node`.
@@ -161,7 +170,8 @@ def node_coords_from_svg_string(svg_string: str) -> tuple[dict[str, list[float]]
                 # Attempt to find a polygon element, and if so extract values
                 if (polygon := child_g.find(f"{xmlns}polygon")) is not None:
                     bbox = bbox_from_polygon(polygon.attrib["points"])
-                    node_coords[title] = bbox
+                    # Translate and store the bbox coords
+                    node_coords[title] = translate_bbox(translate, bbox)
                 # Otherwise, attempt to find an ellipse and if so extract values
                 elif (ellipse := child_g.find(f"{xmlns}ellipse")) is not None:
                     bbox = bbox_from_ellipse(
@@ -170,8 +180,9 @@ def node_coords_from_svg_string(svg_string: str) -> tuple[dict[str, list[float]]
                         float(ellipse.attrib["rx"]),
                         float(ellipse.attrib["ry"]),
                     )
-                    node_coords[title] = bbox
-        return node_coords, scale
+                    # Translate and store the bbox coords
+                    node_coords[title] = translate_bbox(translate, bbox)
+        return node_coords, dims
     except ElementTree.ParseError as e:
         print(f"Warning: Unable to extract node coordinates from SVG:\n {e}", file=sys.stderr)
         return {}, []
@@ -186,7 +197,7 @@ def node_coords_from_svg(
         svg_file: path to the svg file on disk, or an open file handle
 
     Returns:
-        A tuple of a dictionary of axis aligned bounding boxes for each node `[x0, x1, y0, y1]`, and svg scale information `[w, h]`. Y coordinates are inverted, so the origin of coordinates is at the bottom left.
+        A tuple of a dictionary of axis aligned bounding boxes for each node `[x0, x1, y0, y1]`, and svg scale information `[w, h]`. Coordinates use a top-left origin.
     """
 
     # Depending on the type of svg_file, get the contents as a string
@@ -211,7 +222,7 @@ def node_coords_from_dag(graph: nx.DiGraph | pydot.Dot) -> tuple[dict[str, list[
         graph: The networkx or pydot Graph
 
     Returns:
-        A tuple of a dictionary of axis aligned bounding boxes for each node `[x0, x1, y0, y1]`, and svg scale information `[w, h]`. Y coordinates are inverted, so the origin of coordinates is at the bottom left.
+        A tuple of a dictionary of axis aligned bounding boxes for each node `[x0, x1, y0, y1]`, and svg scale information `[w, h]`. Coordinates use a top-left origin.
     """
     # Ensure invalid graph attributes are removed and the graph is available in pydot form
     if "pydot" in str(type(graph)):
@@ -238,7 +249,7 @@ def node_coords_check(
     """Return the node at the provided coordinates, using data extracted from an svg, with potential zooming and panning of an image
 
     Parameters:
-        coords: the (x, y) target coordinates in UI-space, accounting for translation?
+        coords: the (x, y) target coordinates in UI-space, accounting for panning
         img_size: the (w, h) of the image on disk
         img_scale: the zoom level for the image in UI-space
         node_coords: the axis aligned bounding box coordinates in svg-space for each node
@@ -257,8 +268,7 @@ def node_coords_check(
 
     # Get the target coordinates in svg-space
     svg_x = x * (svg_width / scaled_png_width)
-    # We also move the origin from the top left to the bottom left here, to be removed
-    svg_y = (scaled_png_height - y) * (svg_height / scaled_png_height)
+    svg_y = y * (svg_height / scaled_png_height)
 
     # Iterate the nodes until a matching bbox is found. This assumes bboxes are not overlapping.
     for node, (x_lower, x_upper, y_lower, y_upper) in node_coords.items():
