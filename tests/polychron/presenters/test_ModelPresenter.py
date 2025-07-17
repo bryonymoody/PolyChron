@@ -1992,15 +1992,11 @@ class TestModelPresenter:
         # Prepare mock values to be returned from node_coords_from_svg to avoid graphviz non-determinsm issues.
         #  Alteranatively we could get the values returned and only test within those.
         # Use values which were emitted by manually rendering this graph
-        node_coords = pd.DataFrame(
-            {
-                "x_lower": [32.75, -0.25, 105.15],
-                "x_upper": [86.75, 119.74, 172.35],
-                "y_lower": [72.0, -0.0, 72.0],
-                "y_upper": [108.0, 36.0, 108.0],
-            },
-            index=["box", "diamond", "ellipse"],
-        )
+        node_coords = {
+            "box": [32.75, 86.75, 72.0, 108.0],
+            "diamond": [-0.25, 119.74, -0.0, 36.0],
+            "ellipse": [105.15, 172.35, 72.0, 108.0],
+        }
         scale = [176.54, 112.0]
 
         # Define the svg coordinates to check.

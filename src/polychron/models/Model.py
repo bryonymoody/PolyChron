@@ -245,7 +245,7 @@ class Model:
     If mcmc_check is true, it is implied that this has been saved to disk
     """
 
-    stratigraphic_node_coords: Optional[Tuple[pd.DataFrame, List[float]]] = field(default=None)
+    stratigraphic_node_coords: Optional[tuple[dict[str, list[float]], list[FloatingPointError]]] = field(default=None)
     """A tuple containing node coordinates and  within the svg representation of the stratigraphic graph, and the dimensions of the svg.
 
     This is updated when the stratigraphic_dag is re-rendered.
@@ -256,7 +256,7 @@ class Model:
         - ensure this is correct when reopening from disk? and there is no other places where this needs re-generating, for all 3 versions.
     """
 
-    chronological_node_coords: Optional[Tuple[pd.DataFrame, List[float]]] = field(default=None)
+    chronological_node_coords: Optional[tuple[dict[str, list[float]], list[FloatingPointError]]] = field(default=None)
     """A tuple containing node coordinates and  within the svg representation of the chronological graph, and the dimensions of the svg.
 
     This is updated when the chronological_dag is re-rendered.
@@ -264,7 +264,7 @@ class Model:
     Formerly (part of) `global node_df`
     """
 
-    chronological_node_coords: Optional[Tuple[pd.DataFrame, List[float]]] = field(default=None)
+    chronological_node_coords: Optional[tuple[dict[str, list[float]], list[FloatingPointError]]] = field(default=None)
     """A tuple containing node coordinates and  within the svg representation of the chronological graph, and the dimensions of the svg.
 
     This is updated when the chronological_dag is re-rendered.

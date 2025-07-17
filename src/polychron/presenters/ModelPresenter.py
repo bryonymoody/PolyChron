@@ -1096,7 +1096,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         return joined_above, joined_below
 
     def nodecheck(self, x_current: int, y_current: int) -> str | None:
-        """returns the node that corresponds to the mouse cooridinates
+        """Returns the node that corresponds to the mouse cooridinates
 
         Formerly `StartPage.nodecheck`
 
