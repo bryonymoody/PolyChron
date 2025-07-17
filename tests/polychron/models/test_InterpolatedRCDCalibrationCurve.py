@@ -42,7 +42,6 @@ class TestInterpolatedRCDCalibrationCurve:
         # There should be 4 columns
         assert len(df.columns) == 4
         # Check the expected column names are all present
-        assert "Unnamed: 0" in df.columns
         assert "Calendar_year" in df.columns
         assert "Carbon_year" in df.columns
         assert "Carbon_error" in df.columns

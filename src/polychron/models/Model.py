@@ -595,7 +595,7 @@ class Model:
         self.create_dirs()
         # Write csv to disk, which may raise OSError (e.g. if disk is full)
         path = self.get_working_directory() / "deleted_contexts_meta"
-        df.to_csv(path)
+        df.to_csv(path, index=False)
 
     def set_stratigraphic_graphviz_file(self, file_input: str | pathlib.Path) -> None:
         """provdided a .dot/.gv file path, set the model input."""

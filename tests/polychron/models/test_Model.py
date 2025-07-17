@@ -256,7 +256,7 @@ class TestModel:
         m.save_deleted_contexts()
         assert expected_csv_path.is_file()
         df = pd.read_csv(expected_csv_path, dtype=str, keep_default_na=False)
-        assert list(df.columns) == ["Unnamed: 0", "context", "Reason for deleting"]
+        assert list(df.columns) == ["context", "Reason for deleting"]
         assert len(df) == 0
 
         # With some deleted contexts, expect the correct data to be included. Includes an edge case with an empry reason.
@@ -265,7 +265,7 @@ class TestModel:
         m.save_deleted_contexts()
         assert expected_csv_path.is_file()
         df = pd.read_csv(expected_csv_path, dtype=str, keep_default_na=False)
-        assert list(df.columns) == ["Unnamed: 0", "context", "Reason for deleting"]
+        assert list(df.columns) == ["context", "Reason for deleting"]
         assert len(df) == 2
         for idx, (ctx, reason) in enumerate(deletions):
             assert df["context"].iloc[idx] == ctx
@@ -277,7 +277,7 @@ class TestModel:
         m.save_deleted_contexts()
         assert expected_csv_path.is_file()
         df = pd.read_csv(expected_csv_path, dtype=str, keep_default_na=False)
-        assert list(df.columns) == ["Unnamed: 0", "context", "Reason for deleting"]
+        assert list(df.columns) == ["context", "Reason for deleting"]
         assert len(df) == 1
         for idx, (ctx, reason) in enumerate(deletions):
             assert df["context"].iloc[idx] == ctx
