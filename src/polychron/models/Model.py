@@ -598,11 +598,11 @@ class Model:
         df.to_csv(path, index=False)
 
     def set_stratigraphic_graphviz_file(self, file_input: str | pathlib.Path) -> None:
-        """provdided a .dot/.gv file path, set the model input."""
+        """provided a .dot/.gv file path, set the model input."""
         self.stratigraphic_graphviz_file = pathlib.Path(file_input)
 
     def set_stratigraphic_df(self, df: pd.DataFrame) -> None:
-        """Provided a dataframe for stratigraphic relationships, set the values locally and post-process it to produce the stratgiraphic graph"""
+        """Provided a dataframe for stratigraphic relationships, set the values locally and post-process it to produce the stratigraphic graph"""
 
         self.stratigraphic_df = df.copy()
         G = nx.DiGraph(graph_attr={"splines": "ortho"})

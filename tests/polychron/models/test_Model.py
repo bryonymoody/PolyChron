@@ -271,7 +271,7 @@ class TestModel:
             assert df["context"].iloc[idx] == ctx
             assert df["Reason for deleting"].iloc[idx] == reason
 
-        # Test that reasons containing new line characters are handeld by pandas in a way that allows them to be read back in (by quoting the value but including true newline characters).
+        # Test that reasons containing new line characters are handled by pandas in a way that allows them to be read back in (by quoting the value but including true newline characters).
         deletions = [("foo", "test\nwith\nmultiple\nlines")]
         m.deleted_nodes = deletions
         m.save_deleted_contexts()

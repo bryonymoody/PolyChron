@@ -12,7 +12,7 @@ class TestInterpolatedRCDCalibrationCurve:
         # Assert the path is defined and ends in "resources/linear_interpolation.txt"
         assert instance.path.name == "linear_interpolation.txt"
         assert instance.path.parent.name == "resources"
-        # Assert the default pathd file exists
+        # Assert the default path file exists
         assert instance.path.is_file()
 
         # Assert the dataframe is initially None

@@ -116,7 +116,7 @@ class MCMCData:
             JSON string representing the MCMCData instance
         """
 
-        # Create a dictionary contianing a subset of this instance's member variables, converted to formats which can be json serialised.
+        # Create a dictionary containing a subset of this instance's member variables, converted to formats which can be json serialised.
         data = {}
 
         for k, v in self.__dict__.items():
