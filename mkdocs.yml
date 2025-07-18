@@ -48,6 +48,7 @@ nav:
   - About: index.md
   - User Guide:
     - userguide/index.md
+    - userguide/configuration.md
   - Developer Reference: reference/
 
 extra:

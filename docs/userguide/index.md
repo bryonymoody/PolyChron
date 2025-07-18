@@ -36,7 +36,7 @@ For more information, use the `-h` or `--help` options
 $ polychron --help
 ```
 
-There are 4 main sections when using PolyChron.
+Once launched, there are there are 4 main sections when using PolyChron.
 
 ```mermaid
 graph LR
@@ -51,21 +51,3 @@ graph LR
 
 >[!WARNING]
 > @todo -  improve the user guide with additional sections
-
-### Configuration
-
-PolyChron can be configured through a yaml file, stored in an appropriate location for your operating system.
-
-- Linux: `$XDG_CONFIG_HOME/polychron/config.yaml`
-    - Or `$HOME/.config/polychron/config.yaml` if `XDG_CONFIG_HOME` is not set
-- Windows: `%LOCALAPPDATA%/polychron/config.yaml`
-<!-- - MacOs: @todo -->
-
-This can be used to control several configuration options, such as the location of the polychron projects directory, which otherwise defaults to `polychron/projects` within your `Documents` directory.
-
-```yaml
-projects_directory: $HOME/Documents/polychron/projects
-```
-
-> [!WARNING]
-> @todo - fully document the configuration options.
