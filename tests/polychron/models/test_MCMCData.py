@@ -209,7 +209,7 @@ class TestMCMCData:
         """Test saving the results dataframes, using a temporary path via a fixture"""
         # Create a MCMCData instance to save
         obj = MCMCData()
-        # Populate with data to check was writen to disk.
+        # Populate with data to check was written to disk.
         contexts = ["a", "b", "c"]
         obj.contexts = contexts
         # all_group_limits requires more than 10000 elements per row for any to be written to disk
@@ -229,24 +229,24 @@ class TestMCMCData:
         full_results_df_path = tmp_path / "full_results_df"
         assert full_results_df_path.is_file()
         df_from_disk = pd.read_csv(full_results_df_path)
-        # Assert the number of columns in the csv (including +1 for the index column)
-        assert len(df_from_disk.columns) == len(all_group_limits) + 1
+        # Assert the number of columns in the csv
+        assert len(df_from_disk.columns) == len(all_group_limits)
         # Assert the number of rows in the csv
         assert len(df_from_disk) == max([len(x) - 10000 for x in all_group_limits.values()])
 
         key_ref_csv_path = tmp_path / "key_ref.csv"
         assert key_ref_csv_path.is_file()
         df_from_disk = pd.read_csv(key_ref_csv_path)
-        # Assert the number of columns in the csv (index + groups in an unlableed column)
-        assert len(df_from_disk.columns) == 2
+        # Assert the number of columns in the csv
+        assert len(df_from_disk.columns) == 1
         # Assert there is one row per context/group from teh group df
         assert len(df_from_disk) == len(group_df)
 
         context_no_csv_path = tmp_path / "context_no.csv"
         assert context_no_csv_path.is_file()
         df_from_disk = pd.read_csv(context_no_csv_path)
-        # Assert the number of columns in the csv (index + contexts in an unlableed column)
-        assert len(df_from_disk.columns) == 2
+        # Assert the number of columns in the csv
+        assert len(df_from_disk.columns) == 1
         # Assert there is one row per context/group from teh group df
         assert len(df_from_disk) == len(obj.contexts)
 

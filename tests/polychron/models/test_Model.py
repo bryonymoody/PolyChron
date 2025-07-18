@@ -256,7 +256,7 @@ class TestModel:
         m.save_deleted_contexts()
         assert expected_csv_path.is_file()
         df = pd.read_csv(expected_csv_path, dtype=str, keep_default_na=False)
-        assert list(df.columns) == ["Unnamed: 0", "context", "Reason for deleting"]
+        assert list(df.columns) == ["context", "Reason for deleting"]
         assert len(df) == 0
 
         # With some deleted contexts, expect the correct data to be included. Includes an edge case with an empry reason.
@@ -265,19 +265,19 @@ class TestModel:
         m.save_deleted_contexts()
         assert expected_csv_path.is_file()
         df = pd.read_csv(expected_csv_path, dtype=str, keep_default_na=False)
-        assert list(df.columns) == ["Unnamed: 0", "context", "Reason for deleting"]
+        assert list(df.columns) == ["context", "Reason for deleting"]
         assert len(df) == 2
         for idx, (ctx, reason) in enumerate(deletions):
             assert df["context"].iloc[idx] == ctx
             assert df["Reason for deleting"].iloc[idx] == reason
 
-        # Test that reasons containing new line characters are handeld by pandas in a way that allows them to be read back in (by quoting the value but including true newline characters).
+        # Test that reasons containing new line characters are handled by pandas in a way that allows them to be read back in (by quoting the value but including true newline characters).
         deletions = [("foo", "test\nwith\nmultiple\nlines")]
         m.deleted_nodes = deletions
         m.save_deleted_contexts()
         assert expected_csv_path.is_file()
         df = pd.read_csv(expected_csv_path, dtype=str, keep_default_na=False)
-        assert list(df.columns) == ["Unnamed: 0", "context", "Reason for deleting"]
+        assert list(df.columns) == ["context", "Reason for deleting"]
         assert len(df) == 1
         for idx, (ctx, reason) in enumerate(deletions):
             assert df["context"].iloc[idx] == ctx

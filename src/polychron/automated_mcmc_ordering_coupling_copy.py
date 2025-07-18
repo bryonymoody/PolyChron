@@ -636,12 +636,12 @@ def get_hpd_intervals(CONTEXT_NO, ACCEPT, PHI_ACCEPT):
     for i, j in enumerate(CONTEXT_NO):
         hpd_dict[j] = list(HPD_interval(np.array(ACCEPT[i][1000:])))
     hpd_df = pd.DataFrame.from_dict(hpd_dict, orient='index')
-    hpd_df.to_csv("resid_hpd_intervals_thetas_correct")
+    hpd_df.to_csv("resid_hpd_intervals_thetas_correct", index = False)
     hpd_dict = {}
     for k, l in enumerate(PHI_ACCEPT):
         hpd_dict[k] = list(HPD_interval(PHI_ACCEPT[k][1000:]))
     hpd_df = pd.DataFrame.from_dict(hpd_dict, orient='index')
-    hpd_df.to_csv("resid_hpd_intervals_phis_correct")
+    hpd_df.to_csv("resid_hpd_intervals_phis_correct", index = False)
 
 #%%
 def gibbs_code(iter_num, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT, CONT_TYPE):

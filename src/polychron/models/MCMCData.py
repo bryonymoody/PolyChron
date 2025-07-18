@@ -95,16 +95,16 @@ class MCMCData:
         for i in self.all_group_limits.keys():
             df[i] = self.all_group_limits[i][10000:]
         full_results_df_path = path / "full_results_df"
-        df.to_csv(full_results_df_path)
+        df.to_csv(full_results_df_path, index=False)
 
         # List containing the the group for each context, in order of topologically sorted contexts.
         key_ref = [list(group_df["Group"])[list(group_df["context"]).index(i)] for i in self.contexts]
         df1 = pd.DataFrame(key_ref)
-        df1.to_csv(path / "key_ref.csv")
+        df1.to_csv(path / "key_ref.csv", index=False)
 
         # Output the context labels in topologically sorted order
         df2 = pd.DataFrame(self.contexts)
-        df2.to_csv(path / "context_no.csv")
+        df2.to_csv(path / "context_no.csv", index=False)
 
     def to_json(self, pretty: bool = False) -> str:
         """Serialise this object to JSON
@@ -116,7 +116,7 @@ class MCMCData:
             JSON string representing the MCMCData instance
         """
 
-        # Create a dictionary contianing a subset of this instance's member variables, converted to formats which can be json serialised.
+        # Create a dictionary containing a subset of this instance's member variables, converted to formats which can be json serialised.
         data = {}
 
         for k, v in self.__dict__.items():
