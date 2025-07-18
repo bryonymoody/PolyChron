@@ -59,7 +59,7 @@ dev = [
 ]
 
 [project.urls]
-# Documentation = "https://bryonymoody.github.io/PolyChron"
+Documentation = "https://bryonymoody.github.io/PolyChron"
 Repository = "https://github.com/bryonymoody/PolyChron"
 Issues = "https://github.com/bryonymoody/PolyChron/issues"
 
