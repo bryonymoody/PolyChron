@@ -35,6 +35,10 @@ classifiers = [
     "Topic :: Sociology :: History",
     "Intended Audience :: Science/Research",
 ]
+keywords = [
+    "statistics",
+    "chronology",
+]
 dependencies = [
     "graphviz",
     "lxml>=6",
