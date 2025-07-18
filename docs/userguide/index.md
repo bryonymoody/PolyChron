@@ -5,7 +5,7 @@
 
 ## Getting Started
 
-PolyChron is not yet available via `pip` / [PyPI](https://pypi.org/), but can be installed locally from source.
+PolyChron can be installed from [PyPI](https://pypi.org/project/polychron/) using `pip`, or can be installed locally from source.
 
 For detailed installation instructions, please see the [PolyChron Readme for local installation instructions](https://github.com/bryonymoody/PolyChron).
 
