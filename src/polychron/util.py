@@ -7,13 +7,13 @@ import platform
 import re
 import sys
 import time
-import xml.etree.ElementTree as ElementTree
 from typing import IO, Any, Dict, Iterable, List, Literal, Tuple
 
 import networkx as nx
 import numpy as np
 import packaging.version
 import pydot
+from lxml import etree
 from networkx.drawing.nx_pydot import read_dot
 from PIL import Image, ImageChops
 
@@ -137,8 +137,15 @@ def node_coords_from_svg_string(svg_string: str) -> tuple[dict[str, list[float]]
         This function depends upon graphviz producing svg files with the expected structure
     """
     try:
+        # Prepare an xml parser with some functionality disabled to reduce xml security issue (DTDs, resolving external entities)
+        parser = etree.XMLParser(
+            dtd_validation=False,
+            load_dtd=False,
+            no_network=True,
+            resolve_entities=False,
+        )
         # Parse the svg string as xml, returning the <svg> (root) element
-        root = ElementTree.fromstring(svg_string)
+        root = etree.fromstring(svg_string.encode(), parser=parser)
         # Get the xmlns for the svg element, used for latter queries
         xmlns = root.tag[: root.tag.find("}") + 1] if "}" in root.tag else ""
         # Get the width and height of the svg in points
@@ -183,7 +190,7 @@ def node_coords_from_svg_string(svg_string: str) -> tuple[dict[str, list[float]]
                     # Translate and store the bbox coords
                     node_coords[title] = translate_bbox(translate, bbox)
         return node_coords, dims
-    except ElementTree.ParseError as e:
+    except Exception as e:
         print(f"Warning: Unable to extract node coordinates from SVG:\n {e}", file=sys.stderr)
         return {}, []
 

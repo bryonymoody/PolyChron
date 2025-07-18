@@ -29,6 +29,7 @@ classifiers = [
 ]
 dependencies = [
     "graphviz",
+    "lxml>=6",
     "numpy>=2",
     "matplotlib",
     "networkx>=3.4; python_version >= '3.10'", # required for https://github.com/networkx/networkx/pull/7588, but not available for py 3.9
