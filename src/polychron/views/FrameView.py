@@ -94,7 +94,7 @@ class FrameView(tk.Frame):
         Parameters:
             title: The message box title
             message: The error message
-            args*: Other positional arugments forwarded to the underlyin tkinter call
+            *args: Other positional arguments forwarded to the underlying tkinter call
             icon: The icon to display in the dialog
             **options: other arguments forwarded to `tkinter.messagebox.askquestion`, excluding `parent`
 
@@ -119,7 +119,7 @@ class FrameView(tk.Frame):
         Parameters:
             title: The message box title
             message: The error message
-            args*: Other positional arugments forwarded to the underlyin tkinter call
+            *args: Other positional arguments forwarded to the underlying tkinter call
             icon: The icon to display in the dialog
             **options: other arguments forwarded to `tkinter.messagebox.askokcancel`, excluding `parent`
 
@@ -144,7 +144,7 @@ class FrameView(tk.Frame):
         Parameters:
             title: The message box title
             message: The error message
-            args*: Other positional arugments forwarded to the underlyin tkinter call
+            *args: Other positional arguments forwarded to the underlying tkinter call
             icon: The icon to display in the dialog
             **options: other arguments forwarded to `tkinter.messagebox.askyesno`, excluding `parent`
 
@@ -169,7 +169,7 @@ class FrameView(tk.Frame):
         Parameters:
             title: The message box title
             message: The error message
-            args*: Other positional arugments forwarded to the underlyin tkinter call
+            *args: Other positional arguments forwarded to the underlying tkinter call
             icon: The icon to display in the dialog
             **options: other arguments forwarded to `tkinter.messagebox.askyesnocancel`, excluding `parent`
 
