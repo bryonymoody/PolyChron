@@ -12,11 +12,12 @@ extra_css:
 theme:
   name: "material"
   locale: en
-  logo: assets/img/logo.png
+  icon:
+    logo: material/graph
+  # logo: assets/img/logo.png
   features:
     - content.code.copy
     - navigation.indexes 
-    - navigation.expand
 
   palette:
     # Palette toggle for automatic mode
@@ -47,6 +48,7 @@ nav:
   - About: index.md
   - User Guide:
     - userguide/index.md
+    - userguide/configuration.md
   - Developer Reference: reference/
 
 extra:

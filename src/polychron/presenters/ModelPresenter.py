@@ -1147,7 +1147,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         Parameters:
             context_u: the source of the relationship to be removed
-            contxt_v: the destination of the context to be removed
+            context_v: the destination of the context to be removed
 
         Returns:
             An optional string of the reason the context was removed
