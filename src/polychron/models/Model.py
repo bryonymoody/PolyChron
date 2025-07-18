@@ -629,25 +629,53 @@ class Model:
         self.stratigraphic_graphviz_file = pathlib.Path(file_input)
 
     def set_stratigraphic_df(self, df: pd.DataFrame) -> None:
-        """Provided a dataframe for stratigraphic relationships, set the values locally and post-process it to produce the stratigraphic graph"""
+        """Provided a dataframe for stratigraphic relationships, set the values locally and post-process it to produce the stratigraphic graph
+
+        Nodes are added to the graph in row-major order, rather than using a set to avoid duplicates to ensure deterministic graph production.
+
+        I.e.
+
+        ```csv
+        a, b
+        c, d
+        ```
+
+        Will have nodes created in the order `a, b, c, d`
+
+        Parameters:
+            df: A dataframe containing 2 columns of context labels.
+        """
+
+        def is_context_label(ctx: str):
+            """Local function for validating a context label from the dataframe should be added to the graph.
+
+            This should be moved elsewhere when full validation is added"""
+            return ctx is not None and not pd.isna(ctx) and len(ctx) > 0
 
         self.stratigraphic_df = df.copy()
-        G = nx.DiGraph(graph_attr={"splines": "ortho"})
-        set1 = set(self.stratigraphic_df.iloc[:, 0])
-        set2 = set(self.stratigraphic_df.iloc[:, 1])
-        set2.update(set1)
-        node_set = {x for x in set2 if x == x}
-        for i in set(node_set):
-            G.add_node(i, shape="box", fontname="helvetica", fontsize="30.0", penwidth="1.0", color="black")
-            G.nodes()[i].update({"Determination": [None, None]})
-            G.nodes()[i].update({"Group": None})
+        g = nx.DiGraph(graph_attr={"splines": "ortho"})
         edges = []
-        for i in range(len(self.stratigraphic_df)):
-            a = tuple(self.stratigraphic_df.iloc[i, :])
-            if not pd.isna(a[1]):
-                edges.append(a[:2])
-        G.add_edges_from(edges, arrowhead="none")
-        self.stratigraphic_dag = G
+        # Iterate the rows of edges in order
+        for index, row in df.iterrows():
+            edge = tuple(row.iloc[:2])
+            # For each node in the edge, add it to the graph if it it is a valid context name and does not yet exist
+            for node in edge:
+                if is_context_label(node) and not g.has_node(node):
+                    g.add_node(
+                        node,
+                        shape="box",
+                        fontname="helvetica",
+                        fontsize="30.0",
+                        penwidth="1.0",
+                        color="black",
+                        Determination=[None, None],
+                        Group=None,
+                    )
+            source, dest = edge
+            if is_context_label(source) and is_context_label(dest):
+                edges.append(edge)
+        g.add_edges_from(edges, arrowhead="none")
+        self.stratigraphic_dag = g
 
     def set_radiocarbon_df(self, df: pd.DataFrame) -> None:
         """Provided a dataframe containing radiocarbon dating information for contexts, store a copy of the dataframe and mutate the stratigraphic dag

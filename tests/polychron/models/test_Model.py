@@ -319,19 +319,19 @@ class TestModel:
                 ["a", "b", "c"],
                 [("a", "b")],
             ),
-            # A custom df which includes an unconnected context c, so 3 nodes, 1 edge expected. This does not currently pass as an emptry string is included as a context
-            # (
-            #     {"above": ["a", "c"], "below": ["b", ""]},
-            #     ["a", "b", "c"],
-            #     [("a", "b")],
-            # ),
+            # A custom df which includes an unconnected context c, so 3 nodes, 1 edge expected. This does not currently pass as an empty string is included as a context
+            (
+                {"above": ["a", "c"], "below": ["b", ""]},
+                ["a", "b", "c"],
+                [("a", "b")],
+            ),
             # A dataframe with expected columns, but no rows of data
             (
                 {"above": [], "below": []},
                 [],
                 [],
             ),
-            # An empty dataframe. Currently fails as atleast 2 cols required.
+            # An empty dataframe. Currently fails as at least 2 cols required.
             # (
             #     {},
             #     [],
@@ -373,9 +373,9 @@ class TestModel:
         assert isinstance(m.stratigraphic_dag, nx.DiGraph)
         assert m.stratigraphic_dag.number_of_nodes() == len(expected_nodes)
 
-        # Assert that each expected context exists and is box shaped width an empty determiniation and group
-        for node, attribs in m.stratigraphic_dag.nodes(True):
-            assert node in expected_nodes
+        # Assert that each expected context exists and is box shaped width an empty determination and group. Nodes must be in the expected order for the input file, as a way to enforce deterministic graph layout.
+        for expected_node, (node, attribs) in zip(expected_nodes, m.stratigraphic_dag.nodes(True)):
+            assert expected_node == node
             assert attribs["shape"] == "box"
             assert attribs["Determination"] == [None, None]
             assert attribs["Group"] is None
