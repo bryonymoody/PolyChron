@@ -18,7 +18,6 @@ theme:
   features:
     - content.code.copy
     - navigation.indexes 
-    - navigation.expand
 
   palette:
     # Palette toggle for automatic mode
