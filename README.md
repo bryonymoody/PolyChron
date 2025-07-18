@@ -16,8 +16,6 @@ of their stratigraphic sequences and prior knowledge within a given hierarchical
 
 ## Installation
 
-PolyChron is not yet available from [PyPI](https://pypi.org/) and must be installed from source.
-
 ### Requirements
 
 Before installing PolyChron, the following non-python requirements must be installed:
@@ -41,9 +39,9 @@ Before installing PolyChron, the following non-python requirements must be insta
         apt-get install python3-tk
         ```
 
-## Installing PolyChron from Source
+## Virtual Environments
 
-It is recommended to use a Python virtual environment (`venv`) or similar for installations of PolyChron, for example:
+It is recommended to use a Python virtual environment (`venv`) or similar for installations of PolyChron, for example, creating a `venv` on linux:
 
 ```bash
 # Create and activate a venv
@@ -51,7 +49,17 @@ python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-You can then install the latest version of PolyChron into your Python environment using pip:
+## Installing PolyChron from `PyPI`
+
+PolyChron can be installed from PyPI using `pip`
+
+```bash
+python3 -m pip install polychron
+```
+
+## Installing PolyChron from Source
+
+The current development version of PolyChron can be installed using git: 
 
 ```bash
 python3 -m pip install git+https://github.com/bryonymoody/PolyChron.git
@@ -65,7 +73,7 @@ cd PolyChron
 python3 -m pip install .
 ```
 
-If you are installing PolyChron from source for as a developer, consider using an editable installation (`-e` / `--editable`) and installing the `dev`, `doc` and `test` extras.
+If you are installing PolyChron from source as a developer, consider using an editable installation (`-e` / `--editable`) and installing the `dev`, `doc` and `test` extras.
 
 ```bash
 python3 -m pip install -e .[dev,doc,test]
