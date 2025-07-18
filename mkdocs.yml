@@ -12,7 +12,9 @@ extra_css:
 theme:
   name: "material"
   locale: en
-  logo: assets/img/logo.png
+  icon:
+    logo: material/graph
+  # logo: assets/img/logo.png
   features:
     - content.code.copy
     - navigation.indexes 
