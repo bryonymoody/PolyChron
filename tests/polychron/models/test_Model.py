@@ -559,8 +559,6 @@ class TestModel:
         else:
             input_df = pd.DataFrame(data_or_path, dtype=str)
 
-        input_relationships = []
-
         # call set_group_relationship_df potentially expecting an exception
         if exception_t is None:
             m.set_group_relationship_df(input_df, input_relationships)
