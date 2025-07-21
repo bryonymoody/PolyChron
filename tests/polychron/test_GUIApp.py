@@ -3,15 +3,15 @@ from __future__ import annotations
 import pathlib
 import platform
 import tkinter as tk
-from tkinter import ttk
 from unittest.mock import MagicMock, patch
 
 import pytest
-from ttkthemes import ThemedStyle, ThemedTk
+from ttkthemes import ThemedTk
 
 from polychron import __version__
 from polychron.Config import Config
 from polychron.GUIApp import GUIApp
+from polychron.GUIThemeManager import GUIThemeManager
 from polychron.models.ProjectSelection import ProjectSelection
 from polychron.presenters.DatingResultsPresenter import DatingResultsPresenter
 from polychron.presenters.ModelPresenter import ModelPresenter
@@ -84,19 +84,6 @@ class TestGUIApp:
             yield
             self.mock_get_config = None
 
-    @pytest.fixture(autouse=True)
-    def patch_tkinter(self):
-        """Patch out ttk.style and ThemedStyle to check they were called"""
-        with (
-            patch("polychron.GUIApp.ThemedStyle", autospec=ThemedStyle) as mock_ThemedStyle,
-            patch("polychron.GUIApp.ttk.Style", spec=ttk.Style) as mock_ttk_Style,
-        ):
-            self.mock_ThemedStyle = mock_ThemedStyle
-            self.mock_ttk_Style = mock_ttk_Style
-            yield
-            self.mock_ThemedStyle = None
-            self.mock_ttk_Style = None
-
     def test_init(self):
         """Tests the __init__ method of the GUIApp class.
 
@@ -109,9 +96,8 @@ class TestGUIApp:
         assert app.config == self.mock_get_config.return_value
         assert isinstance(app.root, ThemedTk)
 
-        # Assert that styling was mutated
-        self.mock_ThemedStyle.assert_called()
-        self.mock_ttk_Style.assert_called()
+        # Assert that styling was mutated via the GUIThemeManager being constructed and stored
+        assert isinstance(app.theme_manager, GUIThemeManager)
 
         # Todo: Assert that set_window_title, resize_window, register_global_keybinds, register_protocols were called
 
@@ -201,6 +187,11 @@ class TestGUIApp:
             app.close_window("unknown")
             mock_root_quit.assert_called()
             mock_root_quit.reset_mock()
+
+    def test_get_theme_manager(self):
+        """Test that GUIapp implements the Mediator.get_theme_manager"""
+        app = GUIApp()
+        assert isinstance(app.get_theme_manager(), GUIThemeManager)
 
     def test_register_global_keybinds(self):
         """Test that register_global_keybinds behaves as expected"""

@@ -9,6 +9,7 @@ import numpy as np
 from matplotlib.figure import Figure
 
 from ..automated_mcmc_ordering_coupling_copy import HPD_interval
+from ..GUIThemeManager import GUIThemeManager
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
 from ..util import node_coords_check, phase_length_finder
@@ -333,7 +334,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
             self.phase_len_nodes[0], self.phase_len_nodes[1], model_model.mcmc_data.all_group_limits
         )
         plot1 = self.fig.add_subplot(111)
-        plot1.hist(lengths, bins="auto", color="#0504aa", rwidth=1, density=True)
+        plot1.hist(lengths, bins="auto", color=GUIThemeManager.colour("histogram"), rwidth=1, density=True)
         # plot1.xlabel('Time elapsed in calibrated years (cal BP)')
         # plot1.ylabel('Probability density')
         plot1.spines["right"].set_visible(False)
@@ -391,7 +392,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
                 plot1.hist(
                     model_model.mcmc_data.accept_group_limits[j],
                     bins="auto",
-                    color="#0504aa",
+                    color=GUIThemeManager.colour("histogram"),
                     alpha=0.7,
                     rwidth=1,
                     density=True,

@@ -5,17 +5,22 @@ from tkinter import messagebox as messagebox
 from tkinter.filedialog import askopenfile
 from typing import IO, Any, Dict, Literal
 
+from ..GUIThemeManager import GUIThemeManager
+
 
 class FrameView(tk.Frame):
     """Base class for Views which are frames rather than windows"""
 
-    def __init__(self, parent: tk.Frame) -> None:
+    def __init__(self, parent: tk.Frame, theme_manager: GUIThemeManager) -> None:
         """Call the base class (Frame) constructor"""
         # Call the tk.Frame's constructor providing the parent/master element
         super().__init__(parent)
 
         self.parent = parent
         """A reference to the parent frame"""
+
+        self.theme_manager = theme_manager
+        """A reference to the theme/style provider, to access common fonts, colours and theming elements"""
 
         self.__grid_initialised: bool = False
         """Flag indicating if place_in_container has been called"""

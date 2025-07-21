@@ -5,14 +5,13 @@ from __future__ import annotations
 import re
 import sys
 import tkinter as tk
-import tkinter.font as tkFont
-from tkinter import ttk
 from typing import Any, Dict
 
-from ttkthemes import ThemedStyle, ThemedTk
+from ttkthemes import ThemedTk
 
 from . import __version__
 from .Config import Config, get_config
+from .GUIThemeManager import GUIThemeManager
 from .interfaces import Mediator
 from .models.ProjectSelection import ProjectSelection
 from .presenters.DatingResultsPresenter import DatingResultsPresenter
@@ -31,7 +30,7 @@ class GUIApp(Mediator):
 
     This includes code which used to belong to `MainFrame`
 
-    This is the only class/file which should import tkinter / ThemedTK other than View classes (unless needed for typehinting?)
+    This is one of the only class/file which should import tkinter / ThemedTK other than View classes
     """
 
     def __init__(self) -> None:
@@ -41,16 +40,8 @@ class GUIApp(Mediator):
         # Construct the root tkinter window, as a themed TK app
         self.root: ThemedTk = ThemedTk(theme="arc")
 
-        # style / font configuration options.
-        style = ThemedStyle(self.root)
-        default_font = tkFont.nametofont("TkDefaultFont")
-        default_font.configure(size=12, weight="bold")
-        style = ttk.Style(self.root)
-        style.configure("TEntry", font=("Helvetica", 12, "bold"))
-        style.configure("TButton", font=("Helvetica", 12, "bold"))
-        style.configure("TLabel", font=("Helvetica", 12, "bold"))
-        style.configure("TOptionMenu", font=("Helvetica", 12, "bold"))
-        style.configure("TTreeView", font=("Helvetica", 12, "bold"))
+        # Apply custom styling for polychron, on top of the ThemedTK
+        self.theme_manager = GUIThemeManager(self.root, self.config.verbose)
 
         # Set the window title
         self.set_window_title()
@@ -73,9 +64,11 @@ class GUIApp(Mediator):
         # Construct the views and presenters for main window views (i.e. not-popups)
         self.current_presenter_key: str | None = None
         self.presenters: Dict[str, FramePresenter] = {
-            "Splash": SplashPresenter(self, SplashView(self.container), self.project_selector_obj),
-            "Model": ModelPresenter(self, ModelView(self.container), self.project_selector_obj),
-            "DatingResults": DatingResultsPresenter(self, DatingResultsView(self.container), self.project_selector_obj),
+            "Splash": SplashPresenter(self, SplashView(self.container, self.theme_manager), self.project_selector_obj),
+            "Model": ModelPresenter(self, ModelView(self.container, self.theme_manager), self.project_selector_obj),
+            "DatingResults": DatingResultsPresenter(
+                self, DatingResultsView(self.container, self.theme_manager), self.project_selector_obj
+            ),
         }
 
         # Place each main window within the container
@@ -146,6 +139,9 @@ class GUIApp(Mediator):
     def close_window(self, reason: str | None = None) -> None:
         self.exit_application()
 
+    def get_theme_manager(self) -> GUIThemeManager:
+        return self.theme_manager
+
     def register_global_keybinds(self) -> None:
         """Register application-wide key bindings"""
         # ctrl+w to close the window
@@ -203,7 +199,7 @@ class GUIApp(Mediator):
 
         # Instantiate the child presenter and view, which otherwise would be done by SplashPresenter.on_select_project. This does not start hidden
         popup_presenter = ProjectSelectProcessPopupPresenter(
-            self, ProjectSelectProcessPopupView(splash_presenter.view), self.project_selector_obj
+            self, ProjectSelectProcessPopupView(splash_presenter.view, self.theme_manager), self.project_selector_obj
         )
 
         # Handle the --project and --model cli-provided arguments.

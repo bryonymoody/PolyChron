@@ -8,6 +8,7 @@ from typing import Any, Callable, List, Tuple
 
 from PIL import Image, ImageTk
 
+from ..GUIThemeManager import GUIThemeManager
 from .FrameView import FrameView
 
 
@@ -19,10 +20,10 @@ class SplashView(FrameView):
     This is implemented as a passive view, i.e. UI elements have no callbacks at constrution, and they must be explcitly bound afterwards
     """
 
-    def __init__(self, parent: tk.Frame) -> None:
+    def __init__(self, parent: tk.Frame, theme_manager: GUIThemeManager) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent)
+        super().__init__(parent, theme_manager)
 
         self.configure(background="white")
 
@@ -32,17 +33,23 @@ class SplashView(FrameView):
 
         # Add the file menu button
         self.file_menubar = ttk.Menubutton(self, text="File", state=tk.DISABLED)
-        self.file_menubar["menu"] = tk.Menu(self.file_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
+        self.file_menubar["menu"] = tk.Menu(
+            self.file_menubar, tearoff=0, bg=GUIThemeManager.colour("background_offwhite")
+        )
         self.file_menubar.place(relx=0.0, rely=0, relwidth=0.1, relheight=0.03)
 
         # Adding View menu button
         self.view_menubar = ttk.Menubutton(self, text="View", state=tk.DISABLED)
-        self.view_menubar["menu"] = tk.Menu(self.view_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
+        self.view_menubar["menu"] = tk.Menu(
+            self.view_menubar, tearoff=0, bg=GUIThemeManager.colour("background_offwhite")
+        )
         self.view_menubar.place(relx=0.07, rely=0, relwidth=0.1, relheight=0.03)
 
         # Adding Tools menu button
         self.tool_menubar = ttk.Menubutton(self, text="Tools", state=tk.DISABLED)
-        self.tool_menubar["menu"] = tk.Menu(self.tool_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
+        self.tool_menubar["menu"] = tk.Menu(
+            self.tool_menubar, tearoff=0, bg=GUIThemeManager.colour("background_offwhite")
+        )
         self.tool_menubar.place(relx=0.15, rely=0, relwidth=0.1, relheight=0.03)
 
         # Load the image from the package resources, and add it to the current frame
@@ -86,7 +93,7 @@ class SplashView(FrameView):
             if item is not None:
                 # If the item is not None, it should be a Tuple contianing a string label and a callback function
                 label, callback = item
-                menu.add_command(font="helvetica 12 bold", label=label, command=callback)
+                menu.add_command(label=label, command=callback)
             else:
                 # Add a separator if the item is None
                 menu.add_separator()

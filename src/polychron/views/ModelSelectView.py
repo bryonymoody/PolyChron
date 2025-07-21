@@ -4,27 +4,28 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, List
 
+from ..GUIThemeManager import GUIThemeManager
 from .FrameView import FrameView
 
 
 class ModelSelectView(FrameView):
     """Passive view for Model loading/selection"""
 
-    def __init__(self, parent: tk.Frame) -> None:
+    def __init__(self, parent: tk.Frame, theme_manager: GUIThemeManager) -> None:
         """Construct the view, without binding any callbacks"""
         # Call the parent class constructor
-        super().__init__(parent)
+        super().__init__(parent, theme_manager)
 
         # Set this element's background to white
         self.config(background="white")
 
-        self.list_label = tk.Label(self, bg="white", font=("helvetica 14 bold"), fg="#2F4858")
+        self.list_label = ttk.Label(self, style="ListboxTitle.TLabel")
         self.list_label.place(relx=0.36, rely=0.1)
         self.model_listbox = tk.Listbox(
             self,
-            bg="#eff3f6",
-            font=("Helvetica 11 bold"),
-            fg="#2F4858",
+            bg=GUIThemeManager.colour("offwhite2"),
+            font=self.theme_manager.font(11, "bold"),
+            fg=GUIThemeManager.colour("slate_grey"),
             selectmode="browse",
         )
         scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.model_listbox.yview)
@@ -32,17 +33,25 @@ class ModelSelectView(FrameView):
         self.model_listbox.place(relx=0.36, rely=0.17, relheight=0.4, relwidth=0.28)
 
         self.load_button = tk.Button(
-            self, text="Load selected model", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6"
+            self,
+            text="Load selected model",
+            bg=GUIThemeManager.colour("slate_grey"),
+            fg=GUIThemeManager.colour("offwhite2"),
         )
         self.load_button.place(relx=0.8, rely=0.9, relwidth=0.195)
         self.load_button.bind("<Return>", lambda event: self.load_button.invoke())
 
-        self.back_button = tk.Button(self, text="Back", bg="#eff3f6", font=("Helvetica 12 bold"), fg="#2F4858")
+        self.back_button = tk.Button(
+            self, text="Back", bg=GUIThemeManager.colour("offwhite2"), fg=GUIThemeManager.colour("slate_grey")
+        )
         self.back_button.place(relx=0.21, rely=0.01)
         self.back_button.bind("<Return>", lambda event: self.back_button.invoke())
 
         self.create_model_button = tk.Button(
-            self, text="Create new model", bg="#eff3f6", font=("Helvetica 12 bold"), fg="#2F4858"
+            self,
+            text="Create new model",
+            bg=GUIThemeManager.colour("offwhite2"),
+            fg=GUIThemeManager.colour("slate_grey"),
         )
         self.create_model_button.place(relx=0.62, rely=0.9, relwidth=0.17)
         self.create_model_button.bind("<Return>", lambda event: self.create_model_button.invoke())
