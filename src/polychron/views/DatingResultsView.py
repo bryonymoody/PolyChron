@@ -566,17 +566,19 @@ class DatingResultsView(FrameView):
             5, 10, anchor="nw", text=canvas_list, fill="#0A3200", font=("Helvetica 12 bold")
         )
 
-    def show_canvas_plot(self, fig: Figure) -> None:
-        """Add (or reaplce) the visible plot with the provided figure"""
-        self.canvas_plt = FigureCanvasTkAgg(fig, master=self.littlecanvas)
-        self.canvas_plt.get_tk_widget().place(relx=0, rely=0, relwidth=1)
-        self.canvas_plt.draw_idle()
-
     def show_canvas_plot_with_toolbar(self, fig: Figure) -> None:
-        """Add (or reaplce) the visible plot with the provided figure"""
+        """Add (or replace) the visible plot with the provided figure
+
+        Parameters:
+            fig: The matplotlib Figure to be displayed in the interactive canvas
+        """
+        # Construct a matplotlib figure canvas using the tkinter agg backend
         self.canvas_plt = FigureCanvasTkAgg(fig, master=self.littlecanvas)
         self.canvas_plt.draw()
-        # creating the Matplotlib toolbar
-        self.toolbar = NavigationToolbar2Tk(self.canvas_plt, self.littlecanvas)
+        # Create the Matplotlib toolbar
+        self.toolbar = NavigationToolbar2Tk(self.canvas_plt, self.littlecanvas, pack_toolbar=False)
         self.toolbar.update()
-        self.canvas_plt.get_tk_widget().pack()
+        # Pack the toolbar below the figure
+        self.toolbar.pack(side=tk.BOTTOM, fill=tk.X)
+        # Pack the canvas plot tk widget into the littlecanvas, filling in both directions. expand=true could be used instead if the plots being reshaped to fill the space is desirable
+        self.canvas_plt.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH)
