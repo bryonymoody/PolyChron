@@ -21,13 +21,9 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
         # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
-        # Create a box per phase in the model, based on the models phase releationships
-        phases = []
-        for i in self.model.group_relationships:
-            phases.append(i[0])
-            phases.append(i[1])
-        phase_labels = list(set(phases))
-        self.view.create_phase_boxes(phase_labels)
+        # Create a box per group in the model, based on the provided group relationships
+        group_labels = self.model.get_unique_groups()
+        self.view.create_phase_boxes(group_labels)
 
         self.prev_dict = {}
         self.post_dict = {}

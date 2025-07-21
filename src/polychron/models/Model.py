@@ -711,6 +711,20 @@ class Model:
         # Store a copy of the list of tuples extracted from the dataframe
         self.group_relationships = group_relationships.copy()
 
+    def get_unique_groups(self) -> list[str]:
+        """Get a list of unique group labels
+
+        Returns:
+            List of group labels in a stable order."""
+
+        # If there are no group relationships, return an empty list
+        if self.group_relationships is None or len(self.group_relationships) == 0:
+            return []
+
+        # Use a dictionary for insertion order preserving unique group label selection
+        labels = list(dict.fromkeys([item for sublist in self.group_relationships for item in sublist]).keys())
+        return labels
+
     def set_context_equality_df(self, df: pd.DataFrame) -> None:
         """Provided a dataframe for context equality information, set the values locally and post-process
 

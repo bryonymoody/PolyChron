@@ -571,6 +571,56 @@ class TestModel:
                 m.set_group_relationship_df(input_df, input_relationships)
 
     @pytest.mark.parametrize(
+        ("data_or_path", "input_relationships", "expected_groups"),
+        [
+            # Empty dataframe, empty list
+            ({}, [], []),
+            # Valid dataframe, with changes
+            ("group-relationships-csv/simple.csv", [("1", "2"), ("2", "3")], ["1", "2", "3"]),
+            # Dataframe with partial information
+            ({"above": ["1"], "below": ["2"]}, [("1", "2")], ["1", "2"]),
+            # Dataframe with unknown group
+            (
+                {
+                    "above": ["1", "2", "3"],
+                    "below": ["2", "3", "4"],
+                },
+                [("1", "2"), ("2", "3"), ("3", "4")],
+                ["1", "2", "3", "4"],
+            ),
+        ],
+    )
+    def test_get_unique_groups(
+        self,
+        data_or_path: dict[str, list] | str,
+        input_relationships: list[tuple[str, str]],
+        expected_groups: list[str],
+        tmp_path: pathlib.Path,
+        test_data_path: pathlib.Path,
+    ):
+        """Test getting a deterministically ordered list of unique group labels for a range of inputs"""
+        # Construct the model instance
+        m = Model("foo", tmp_path / "foo")
+
+        # Add a simple stratigraphic graph to the model
+        strat_df = pd.read_csv(test_data_path / "strat-csv" / "simple.csv", dtype=str)
+        m.set_stratigraphic_df(strat_df)
+
+        # Build the parametrised dataframe
+        if isinstance(data_or_path, str):
+            input_df = pd.read_csv(test_data_path / data_or_path, dtype=str)
+        else:
+            input_df = pd.DataFrame(data_or_path, dtype=str)
+
+        # set the group relationships on the model
+        m.set_group_relationship_df(input_df, input_relationships)
+
+        # get the list of unique group labels
+        group_labels = m.get_unique_groups()
+
+        assert group_labels == expected_groups
+
+    @pytest.mark.parametrize(
         ("data_or_path", "expect_num_nodes", "exception_t"),
         [
             # Empty dataframe, this currently fails with an IndexError.
