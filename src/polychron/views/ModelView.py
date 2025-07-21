@@ -59,6 +59,8 @@ class ModelView(FrameView):
         self.view_menubar = ttk.Menubutton(self, text="View", state=tk.DISABLED)
         self.view_menubar["menu"] = tk.Menu(self.view_menubar, tearoff=0, bg="#fcfdfd", font=("helvetica", 11))
         self.view_menubar.place(relx=0.07, rely=0, relwidth=0.1, relheight=0.03)
+        # Dict for checkbox labels
+        self.view_menubar_checkboxes = {}
 
         # Adding Tools menu button
         self.tool_menubar = ttk.Menubutton(self, text="Tools", state=tk.DISABLED)
@@ -321,8 +323,13 @@ class ModelView(FrameView):
     def build_view_menu(self, items: List[Tuple[str, Callable[[], Any]] | None]) -> None:
         """Builds the 'view' menu element with labels and callback functions.
 
+        The view menu uses checkboxes rather than just commands to show if the setting is enabled or not
+
         Parameters:
             items: A List of menu entries to add, which may be None to identify a separator, or a tuple containing a label anf callback fucntion.
+
+        Todo:
+            Use a common method in a MainFrameView class to handle this for all main frame menu's, taking the menubar as a parameter to reduce code duplication. items will have to be extended to take the type as well.
         """
         # Get a handle to the Menu belonging to the MenuButton
         menubar: ttk.Menubutton = self.view_menubar
@@ -334,7 +341,14 @@ class ModelView(FrameView):
             if item is not None:
                 # If the item is not None, it should be a Tuple contianing a string label and a callback function
                 label, callback = item
-                menu.add_command(font="helvetica 12 bold", label=label, command=callback)
+                if label not in self.view_menubar_checkboxes:
+                    self.view_menubar_checkboxes[label] = False
+                menu.add_checkbutton(
+                    font="helvetica 12 bold",
+                    label=label,
+                    command=callback,
+                    variable=self.view_menubar_checkboxes[label],
+                )
             else:
                 # Add a separator if the item is None
                 menu.add_separator()
