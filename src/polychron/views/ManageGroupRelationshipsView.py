@@ -5,8 +5,65 @@ from tkinter import ttk
 from typing import Any, Callable, Dict, List, Tuple
 
 import pandas as pd
+from matplotlib import color_sequences
+from matplotlib.colors import hex2color, to_hex
 
+from ..util import contrast_ratio, luminance
 from .PopupView import PopupView
+
+
+class GroupBoxPalette:
+    """A sequence of colours used as a palette for the group boxes"""
+
+    __TEXT_COLOURS = {c: luminance(c) for c in [hex2color("#131E29"), hex2color("#F8F8F9")]}
+
+    def __init__(self):
+        """Initialise the colour palette using a sequence from matplotlib, with some re-ordering so sequential elements are not matched"""
+        tab20 = [(to_hex(c), to_hex(self.__contrasting_color(c))) for c in color_sequences["tab20"]]
+        self._colours: list[str] = tab20[::2] + tab20[1::2]
+        """The sequence of colours from tab20 and a corresponding contrasting text colour, but reordered a little"""
+
+    def __len__(self) -> int:
+        """Get the number of colours in the palette
+
+        Returns:
+            The number of colours in the palette
+        """
+        return len(self._colours)
+
+    def __getitem__(self, idx: int) -> tuple[str, str]:
+        """Get the pair of colours from the index, containing the background colour, and the contrasting label colour
+
+        parameters:
+            idx: the index / key of the item to access
+
+        returns:
+            The pair of colours at the specified index in hex codes"""
+        return self._colours[idx % len(self)]
+
+    @classmethod
+    def __contrasting_color(cls, rgb: tuple[float, float, float]) -> tuple[float, float, float]:
+        """Given an rgb-tuple of floats in the range [0,1], return the colour with the most contrast from the list of available text colours.
+
+        Ideally a contrast ratio threshold of 4.5:1 or 3:1 would also be required following accessibility guidelines, but that is not possible for all colour palettes in distributed with matplotlib
+
+        Parameters:
+            rgb: a 3-tuple of normalised colour channels
+
+        Returns:
+            a 3-tuple of normalised colour channels with sufficient contrast to the base colour
+        """
+        # Get the luminance of the rgb colour (including gamma correction)
+        l = luminance(rgb)
+
+        # Calculate contrast ratio with each text colour
+        contrasts = {text: contrast_ratio(l, text_l) for text, text_l in cls.__TEXT_COLOURS.items()}
+
+        # Sort the list of contrasting colours and ratios by contrast value
+        sorted_text_colours = sorted(contrasts.items(), key=lambda item: item[1], reverse=True)
+
+        # Return the text colour with the larger contrast ratio
+        return sorted_text_colours[0][0]
 
 
 class ManageGroupRelationshipsView(PopupView):
@@ -29,7 +86,7 @@ class ManageGroupRelationshipsView(PopupView):
         # Ensure this window is on top
         self.attributes("-topmost", "true")
 
-        self.label_dict = {}
+        self.group_label_dict = {}
         """Dictionary of phases boxes/tkinter label elements"""
 
         self.__phase_box_move_callback: Callable[[], Any] = lambda event: None
@@ -106,394 +163,23 @@ class ManageGroupRelationshipsView(PopupView):
         self.render_button = None
         self.change_button = None
 
-        self.COLORS = [
-            "LavenderBlush2",
-            "powder blue",
-            "LavenderBlush3",
-            "LemonChiffon4",
-            "dark khaki",
-            "LightGoldenrod1",
-            "aquamarine2",
-            "hot pink",
-            "DarkOrchid4",
-            "pale turquoise",
-            "LightSteelBlue2",
-            "DeepPink4",
-            "firebrick4",
-            "khaki4",
-            "turquoise3",
-            "alice blue",
-            "DarkOrange4",
-            "LavenderBlush4",
-            "misty rose",
-            "pink1",
-            "OrangeRed2",
-            "chocolate2",
-            "OliveDrab2",
-            "LightSteelBlue3",
-            "firebrick2",
-            "dark orange",
-            "ivory2",
-            "yellow2",
-            "DeepPink3",
-            "aquamarine",
-            "LightPink2",
-            "DeepSkyBlue2",
-            "LightCyan4",
-            "RoyalBlue3",
-            "SeaGreen3",
-            "SlateGray1",
-            "IndianRed3",
-            "DarkGoldenrod3",
-            "HotPink1",
-            "navy",
-            "tan2",
-            "orange4",
-            "tomato",
-            "LightSteelBlue1",
-            "coral1",
-            "MediumOrchid4",
-            "light grey",
-            "DarkOrchid3",
-            "RosyBrown2",
-            "LightSkyBlue1",
-            "medium sea green",
-            "deep pink",
-            "OrangeRed3",
-            "sienna2",
-            "thistle2",
-            "linen",
-            "tan4",
-            "bisque2",
-            "MediumPurple4",
-            "DarkSlateGray4",
-            "mint cream",
-            "sienna3",
-            "lemon chiffon",
-            "ivory3",
-            "chocolate1",
-            "peach puff",
-            "DeepSkyBlue3",
-            "khaki2",
-            "SlateGray2",
-            "dark turquoise",
-            "deep sky blue",
-            "light sky blue",
-            "lime green",
-            "yellow",
-            "burlywood3",
-            "tomato4",
-            "orange3",
-            "wheat2",
-            "olive drab",
-            "brown3",
-            "burlywood1",
-            "LightPink1",
-            "light cyan",
-            "saddle brown",
-            "SteelBlue3",
-            "SpringGreen3",
-            "goldenrod4",
-            "dark salmon",
-            "DodgerBlue3",
-            "MediumPurple3",
-            "azure2",
-            "lavender blush",
-            "SteelBlue4",
-            "honeydew3",
-            "LightBlue1",
-            "DeepSkyBlue4",
-            "medium aquamarine",
-            "turquoise1",
-            "thistle",
-            "DarkGoldenrod2",
-            "wheat3",
-            "LemonChiffon2",
-            "turquoise",
-            "light sea green",
-            "maroon3",
-            "green4",
-            "SlateBlue1",
-            "DarkOliveGreen3",
-            "dark violet",
-            "LightYellow3",
-            "DarkGoldenrod1",
-            "PeachPuff3",
-            "DarkOrange1",
-            "goldenrod2",
-            "goldenrod1",
-            "SkyBlue4",
-            "ivory4",
-            "DarkSeaGreen3",
-            "aquamarine4",
-            "VioletRed3",
-            "orange red",
-            "CadetBlue3",
-            "DarkSlateGray2",
-            "seashell2",
-            "DarkOliveGreen4",
-            "SkyBlue2",
-            "DarkOrchid2",
-            "maroon1",
-            "orchid1",
-            "red3",
-            "LightSkyBlue4",
-            "HotPink4",
-            "LightBlue2",
-            "coral3",
-            "magenta4",
-            "bisque4",
-            "SteelBlue1",
-            "cornsilk3",
-            "dark sea green",
-            "RosyBrown3",
-            "salmon3",
-            "NavajoWhite2",
-            "PaleTurquoise4",
-            "SteelBlue2",
-            "OliveDrab1",
-            "ghost white",
-            "HotPink3",
-            "salmon",
-            "maroon",
-            "khaki3",
-            "AntiqueWhite1",
-            "PaleVioletRed2",
-            "maroon2",
-            "cyan3",
-            "MistyRose4",
-            "thistle3",
-            "gold3",
-            "tomato3",
-            "tan1",
-            "LightGoldenrod3",
-            "blue violet",
-            "tomato2",
-            "RoyalBlue4",
-            "pink3",
-            "cadet blue",
-            "slate gray",
-            "medium slate blue",
-            "PaleGreen3",
-            "DodgerBlue2",
-            "LightSkyBlue3",
-            "lawn green",
-            "PaleGreen1",
-            "forest green",
-            "thistle1",
-            "snow",
-            "LightSteelBlue4",
-            "medium violet red",
-            "pink2",
-            "PaleVioletRed4",
-            "VioletRed1",
-            "gainsboro",
-            "navajo white",
-            "DarkOliveGreen1",
-            "IndianRed2",
-            "RoyalBlue2",
-            "dark olive green",
-            "AntiqueWhite3",
-            "DarkSlateGray1",
-            "LightSalmon3",
-            "salmon4",
-            "plum3",
-            "orchid3",
-            "azure",
-            "bisque3",
-            "turquoise4",
-            "SeaGreen1",
-            "sienna4",
-            "pink",
-            "MediumOrchid1",
-            "thistle4",
-            "PaleVioletRed3",
-            "blanched almond",
-            "DarkOrange2",
-            "royal blue",
-            "blue2",
-            "chartreuse4",
-            "LightGoldenrod4",
-            "NavajoWhite4",
-            "dark orchid",
-            "plum1",
-            "SkyBlue1",
-            "OrangeRed4",
-            "khaki",
-            "PaleGreen2",
-            "yellow4",
-            "maroon4",
-            "turquoise2",
-            "firebrick3",
-            "bisque",
-            "LightCyan2",
-            "burlywood4",
-            "PaleTurquoise3",
-            "azure4",
-            "gold",
-            "yellow3",
-            "chartreuse3",
-            "RosyBrown1",
-            "white smoke",
-            "PaleVioletRed1",
-            "papaya whip",
-            "medium spring green",
-            "AntiqueWhite4",
-            "SlateGray4",
-            "LightYellow4",
-            "coral2",
-            "MediumOrchid3",
-            "CadetBlue2",
-            "LightBlue3",
-            "snow2",
-            "purple1",
-            "magenta3",
-            "OliveDrab4",
-            "DarkOrange3",
-            "seashell3",
-            "magenta2",
-            "green2",
-            "snow4",
-            "DarkSeaGreen4",
-            "slate blue",
-            "PaleTurquoise1",
-            "red2",
-            "LightSkyBlue2",
-            "snow3",
-            "green yellow",
-            "DeepPink2",
-            "orange2",
-            "cyan",
-            "light goldenrod",
-            "light pink",
-            "honeydew4",
-            "RoyalBlue1",
-            "sea green",
-            "pale violet red",
-            "AntiqueWhite2",
-            "blue",
-            "LightSalmon2",
-            "SlateBlue4",
-            "orchid4",
-            "dark slate gray",
-            "dark slate blue",
-            "purple",
-            "chartreuse2",
-            "khaki1",
-            "LightBlue4",
-            "light yellow",
-            "indian red",
-            "VioletRed2",
-            "gold4",
-            "light goldenrod yellow",
-            "rosy brown",
-            "IndianRed4",
-            "azure3",
-            "orange",
-            "VioletRed4",
-            "salmon2",
-            "SeaGreen2",
-            "pale goldenrod",
-            "pale green",
-            "plum2",
-            "dark green",
-            "coral4",
-            "LightGoldenrod2",
-            "goldenrod3",
-            "NavajoWhite3",
-            "MistyRose2",
-            "wheat1",
-            "medium turquoise",
-            "floral white",
-            "red4",
-            "firebrick1",
-            "burlywood2",
-            "DarkGoldenrod4",
-            "goldenrod",
-            "sienna1",
-            "MediumPurple1",
-            "purple2",
-            "LightPink4",
-            "dim gray",
-            "LemonChiffon3",
-            "light steel blue",
-            "seashell4",
-            "brown1",
-            "wheat4",
-            "MediumOrchid2",
-            "DarkOrchid1",
-            "RosyBrown4",
-            "blue4",
-            "cyan2",
-            "salmon1",
-            "MistyRose3",
-            "chocolate3",
-            "light salmon",
-            "coral",
-            "honeydew2",
-            "light blue",
-            "sandy brown",
-            "LightCyan3",
-            "brown2",
-            "midnight blue",
-            "CadetBlue1",
-            "LightYellow2",
-            "cornsilk4",
-            "cornsilk2",
-            "SpringGreen4",
-            "PeachPuff4",
-            "PaleGreen4",
-            "SlateBlue2",
-            "orchid2",
-            "purple3",
-            "light slate blue",
-            "purple4",
-            "lavender",
-            "cornflower blue",
-            "CadetBlue4",
-            "DodgerBlue4",
-            "SlateBlue3",
-            "DarkSlateGray3",
-            "medium orchid",
-            "gold2",
-            "pink4",
-            "DarkOliveGreen2",
-            "spring green",
-            "dodger blue",
-            "IndianRed1",
-            "violet red",
-            "MediumPurple2",
-            "old lace",
-            "LightSalmon4",
-            "brown4",
-            "SpringGreen2",
-            "yellow green",
-            "plum4",
-            "SlateGray3",
-            "steel blue",
-            "HotPink2",
-            "medium purple",
-            "LightPink3",
-            "PeachPuff2",
-            "sky blue",
-            "dark goldenrod",
-            "PaleTurquoise2",
-        ]
-        """List of tkinter string colours used for phase boxes."""
+        self.COLOURS = GroupBoxPalette()
+        """A palette of colours and corresponding text colours for the boxes used for groups. If more colours are required than available the palette will wrap"""
 
-    def create_phase_boxes(self, phase_labels: List[Tuple[str, str]] | None) -> None:
+    def create_phase_boxes(self, group_labels: List[Tuple[str, str]] | None) -> None:
         """Create a box within the canvas for each provided phase label"""
-        self.label_dict = {}
+        self.group_label_dict = {}
 
         w, h = self.canvas.winfo_width(), self.canvas.winfo_height()
         # If the width and height info was not available, fallback to the requested dimensions
         if w == 1 and h == 1:
             w, h = self.canvas.winfo_reqwidth(), self.canvas.winfo_reqheight()
-        m = len(phase_labels)
+        m = len(group_labels)
 
-        for idx, phase_label in enumerate(phase_labels):
-            label = tk.Label(self.canvas, text=str(phase_label))
-            label.config(bg=self.COLORS[idx], font=("helvetica", 14, "bold"))
+        for idx, group_label in enumerate(group_labels):
+            label = tk.Label(self.canvas, text=str(group_label))
+            bg, fg = self.COLOURS[idx]
+            label.config(bg=bg, fg=fg, font=("helvetica", 14, "bold"))
             label.bind("<B1-Motion>", lambda event: self.__phase_box_move_callback(event))
             label.place(
                 x=0.05 * w + (w / (2 * m)) * idx,
@@ -501,11 +187,37 @@ class ManageGroupRelationshipsView(PopupView):
                 relwidth=0.76 / m,
                 relheight=min(0.1, 0.9 / m),
             )
-            self.label_dict[phase_label] = label
+            self.group_label_dict[group_label] = label
 
     def get_phase_boxes(self) -> Dict[str, tk.Label]:
         """Get the dictionary of tk label objects for each phase label"""
-        return self.label_dict
+        return self.group_label_dict
+
+    def get_group_box_properties(self) -> dict[str, tuple[float, float, float, float]]:
+        """Get a dictionary containing the `(x, y, w, h)` for each group box
+
+        Returns:
+            A dictionary indexed by the group label with the `(x, y, w, h)` for each box.
+        """
+        return {
+            group: (tk_label.winfo_x(), tk_label.winfo_y(), tk_label.winfo_width(), tk_label.winfo_height())
+            for group, tk_label in self.group_label_dict.items()
+        }
+
+    def update_box_coords(self, boxes: dict[str, tuple[float, float]]):
+        """Update the coordinates and size for each group box
+
+        Parameters:
+            boxes: A dictionary indexed by the group label with the `(x, y)` for each box.
+        """
+        # Iterate the boxes, updating the position / dimensions based on the provided values
+        for group, tk_label in self.group_label_dict.items():
+            if group in boxes:
+                new_x, new_y = boxes[group]
+                tk_label.place(x=new_x, y=new_y)
+
+        # ensure the canvas is updated for rendering / updated coordinates
+        self.update_canvas()
 
     def update_canvas(self) -> None:
         """Update the canvas to ensure coordinates are correct?"""
@@ -542,7 +254,7 @@ class ManageGroupRelationshipsView(PopupView):
             self.tree.insert("", 0, text=index, values=list(row))
         self.tree["show"] = "headings"
 
-    def update_tree_3col(self, menudict: Dict[Tuple[str, str], str]) -> None:
+    def update_tree_3col(self, menudict: Dict[Tuple[str, str], object]) -> None:
         """Update the table of group relationships to the value(s) provided by the user
 
         This is the 3 column version, for the confirmation step in the residual checking process.
@@ -555,7 +267,7 @@ class ManageGroupRelationshipsView(PopupView):
         for i in menudict.keys():
             col1.append(i[0])
             col2.append(i[1])
-            col3.append(menudict[i])
+            col3.append(str(menudict[i]))
         rels_df["Younger group"] = col1
         rels_df["Older group"] = col2
         rels_df["Relationship"] = col3

@@ -46,18 +46,15 @@ class TestManageGroupRelationshipsPresenter:
         mock_view.create_phase_boxes.assert_called()
 
         # The order is currently non-deterministic, so we must compare as sets
-        assert set(mock_view.create_phase_boxes.call_args.args[0]) == set(["1", "2"])
+        assert mock_view.create_phase_boxes.call_args.args[0] == ["2", "1"]
 
         # Assert that instance members were set as expected.
 
         assert presenter.prev_dict == {}
         assert presenter.post_dict == {}
-        assert presenter.menudict == {}
-        # Just check the graphcopy is an instance of the right type for now.
-        assert isinstance(presenter.graphcopy, nx.DiGraph)
-        assert presenter.prev_group == []
-        assert presenter.post_group == []
-        assert presenter.phi_ref == []
+        assert presenter.group_relationship_dict == {}
+        # Just check the dag is an instance of the right type for now.
+        assert isinstance(presenter.dag, nx.DiGraph)
         # context_no_unordered is ordered based on nx.DiGraph.nodes, which appears non-deterministic even for the same inputs (it is documented as being set-like, not list-like), so the comparison must be as sets
         assert set(presenter.context_no_unordered) == set(["a", "b", "c = d", "e", "f", "g"])
         # There are no residual or intrusive nodes at this point
@@ -98,27 +95,6 @@ class TestManageGroupRelationshipsPresenter:
         # Assert update_view can be called wihtout raising any exceptions, it currently does nothing.
         presenter.update_view()
 
-    @pytest.mark.skip(reason="test_on_confirm not implemented due to tkinter calls in get_coords")
-    def test_on_confirm(self, test_data_model_demo: Model):
-        """Test on_confirm behaves as intended with the Demo model"""
-        # Create mocked objects with autospec=True
-        mock_mediator = MagicMock(spec=Mediator)
-        mock_view = MagicMock(spec=ManageGroupRelationshipsView)
-
-        # Gets a Model instance via a fixture in conftest.py
-        model = test_data_model_demo
-
-        # Instantiate the Presenter
-        presenter = ManageGroupRelationshipsPresenter(mock_mediator, mock_view, model)
-
-        # Call the on_confirm method
-        presenter.on_confirm()
-
-        # Assert that the view.on_confirm method was called
-        mock_view.on_confirm.assert_called()
-        # Assert that the view.update_tree_3col method was called
-        mock_view.update_tree_3col.assert_called()
-
     @pytest.mark.skip(reason="test_on_move not implemented due to tkinter calls in on_move")
     def test_on_move(self, test_data_model_demo: Model):
         """Test on_move behaves as intended with the Demo model"""
@@ -132,7 +108,7 @@ class TestManageGroupRelationshipsPresenter:
         # Instantiate the Presenter
         presenter = ManageGroupRelationshipsPresenter(mock_mediator, mock_view, model)
 
-        # Call the on_confirm method
+        # Call the on_move method
         presenter.on_move()
 
     def test_on_back(self, test_data_model_demo: Model):
@@ -155,12 +131,91 @@ class TestManageGroupRelationshipsPresenter:
         # Assert that the view.update_tree_2col method was called
         mock_view.update_tree_2col.assert_called()
 
-    @pytest.mark.skip(reason="test_get_coords not implemented due to tkinter calls in get_coords")
-    def test_get_coords(self, test_data_model_demo: Model):
+    @pytest.mark.parametrize(
+        ("mock_box_properties", "update_xy", "expect_prev", "expect_post", "expect_group_relationships"),
+        [
+            # demo, with abutting group placement
+            (
+                {
+                    "2": (308, 189, 302, 34),
+                    "1": (5, 228, 302, 34),
+                },
+                {"1": (5, 228), "2": (307, 194.0)},
+                {"2": "abutting"},
+                {"1": "abutting"},
+                {("2", "1"): "abutting"},
+            ),
+            # demo, with overlapping group placement
+            (
+                {
+                    "2": (179, 187, 302, 34),
+                    "1": (5, 228, 302, 34),
+                },
+                {"1": (5, 228), "2": (231.5, 194.0)},
+                {"2": "overlap"},
+                {"1": "overlap"},
+                {("2", "1"): "overlap"},
+            ),
+            # demo, with gap group placement
+            (
+                {
+                    "2": (410, 189, 302, 34),
+                    "1": (5, 228, 302, 34),
+                },
+                {"1": (5, 228), "2": (382.5, 194.0)},
+                {"2": "gap"},
+                {"1": "gap"},
+                {("2", "1"): "gap"},
+            ),
+            # Manual values, 4 groups. 1 oldest, 4 youngest. abutting, gap, overlap
+            (
+                {
+                    "4": (300, 100, 100, 50),
+                    "3": (250, 200, 100, 50),
+                    "2": (100, 300, 100, 50),
+                    "1": (0, 400, 100, 50),
+                },
+                {"1": (0, 400), "2": (100, 350.0), "3": (225.0, 300.0), "4": (325.0, 250.0)},
+                {"2": "abutting", "3": "gap", "4": "overlap"},
+                {"1": "abutting", "2": "gap", "3": "overlap"},
+                {("2", "1"): "abutting", ("3", "2"): "gap", ("4", "3"): "overlap"},
+            ),
+            # Manual values, single group.
+            (
+                {
+                    "1": (5, 228, 302, 34),
+                },
+                {"1": (5, 228)},
+                {},
+                {},
+                {},
+            ),
+            # Manual values, 0 groups
+            (
+                {},
+                {},
+                {},
+                {},
+                {},
+            ),
+        ],
+    )
+    def test_get_coords(
+        self,
+        mock_box_properties: dict[str, tuple[float, float, float, float]],
+        update_xy: dict[str, tuple[float, float]],
+        expect_prev: dict[str, str],
+        expect_post: dict[str, str],
+        expect_group_relationships: dict[tuple[str, str], str],
+        test_data_model_demo: Model,
+    ):
         """Test get_coords behaves as intended with the Demo model
 
+        Relies on mocking/patching `ManageGroupRelationshipsView.get_group_box_properties` to return an expected set of coordinates without requiring a displayed tkinter window for valid coordinates to be produced
+
         Todo:
-            - ManageGroupRelationshipsPresenter.get_phase_boxes should be modified to return custom data strucures rather than tkinter objects, so that tkinter methods are not required in the Presenter, especially when the coordinates returned would  be incorrect in tkinter without a visible window.
+            - Test/handle exactly matching y coordinates
+            - Test/handle exactly matching x coordinates
         """
         # Create mocked objects with autospec=True
         mock_mediator = MagicMock(spec=Mediator)
@@ -172,10 +227,26 @@ class TestManageGroupRelationshipsPresenter:
         # Instantiate the Presenter
         presenter = ManageGroupRelationshipsPresenter(mock_mediator, mock_view, model)
 
+        # Mock out view get_group_box_properties to include the groups in the Model at arbitrary coordinates / dimensions for a specific case
+        mock_view.reset_mock()
+        mock_view.get_group_box_properties.return_value = mock_box_properties
+
         # Call the get_coords method
         presenter.get_coords()
 
-        # @todo
+        # Check that the prev, post and group relationships dicts are now as expected
+        assert presenter.prev_dict == expect_prev
+        assert presenter.post_dict == expect_post
+        assert presenter.group_relationship_dict == expect_group_relationships
+
+        # Assert that the view was updated, if more than one group box was expected to be present
+        if len(mock_box_properties) > 1:
+            mock_view.update_box_coords.assert_called_once_with(update_xy)
+        else:
+            mock_view.update_box_coords.assert_not_called()
+
+        mock_view.on_confirm.assert_called_once()
+        mock_view.update_tree_3col.assert_called_once_with(presenter.group_relationship_dict)
 
     @pytest.mark.skip(reason="test_full_chronograph_func not yet implemented, as it relies on values set by get_coords")
     def test_full_chronograph_func(self, test_data_model_demo: Model):
