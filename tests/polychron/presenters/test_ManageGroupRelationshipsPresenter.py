@@ -62,7 +62,7 @@ class TestManageGroupRelationshipsPresenter:
         assert presenter.removed_nodes_tracker == []
 
         # Assert that the table was updated.
-        mock_view.update_tree_2col.assert_called_with(model.group_relationships)
+        mock_view.update_tree_2col.assert_called_with(model.group_relationships_list())
 
         # Assert that button callbacks were bound with callables
         mock_view.bind_confirm_button.assert_called()
