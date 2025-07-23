@@ -75,7 +75,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         self.view.build_file_menu(
             [
                 None,
-                ("Load stratigraphic diagram file (.dot)", lambda: self.open_strat_dot_file()),
+                # ("Load stratigraphic diagram file (.dot)", lambda: self.open_strat_dot_file()),
                 ("Load stratigraphic relationship file (.csv)", lambda: self.open_strat_csv_file()),
                 ("Load scientific dating file (.csv)", lambda: self.open_scientific_dating_file()),
                 ("Load context grouping file (.csv)", lambda: self.open_context_grouping_file()),
