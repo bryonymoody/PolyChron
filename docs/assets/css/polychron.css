@@ -24,3 +24,17 @@
 .md-typeset details {
   font-size: 1em;
 }
+
+/* Add a bottom-border to h2 elements to make sections more obvious */
+.md-typeset h2 {
+    border-bottom: 1px solid var(--md-default-fg-color--lighter);
+}
+
+.md-typeset h3 {
+    border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+
+/* Hide mermaid code blocks, i.e. before they have been rendered.*/
+.md-typeset pre.mermaid {
+    display: none;
+}

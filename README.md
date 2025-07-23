@@ -7,7 +7,6 @@
 [![Lint](https://github.com/bryonymoody/PolyChron/actions/workflows/lint.yml/badge.svg)](https://github.com/bryonymoody/PolyChron/actions/workflows/lint.yml)
 [![Format](https://github.com/bryonymoody/PolyChron/actions/workflows/format.yml/badge.svg)](https://github.com/bryonymoody/PolyChron/actions/workflows/format.yml)
 
-
 PolyChron is prototype software required to be installed locally on a user’s machine, allowing users to produce multiple chronological models.
 
 In addition, it allows the user to obtain graph theoretic representations
@@ -68,7 +67,7 @@ cd PolyChron
 python3 -m pip install .
 ```
 
-If you are installing PolyChron from source for as a developer, consider using an editable installation (`-e` / `--editable`) and installing the `dev`, `doc` and `test` extras.
+If you are installing PolyChron from source as a developer, consider using an editable installation (`-e` / `--editable`) and installing the `dev`, `doc` and `test` extras.
 
 ```bash
 python3 -m pip install -e .[dev,doc,test]
@@ -81,11 +80,11 @@ With PolyChron installed in the current python environment, it can be launched u
 ```bash
 # via the executable script
 polychron
-# By running the installed polychron module
+# or by running the installed polychron module
 python3 -m polychron
 ```
 
-## Documentation
+## Building Documentation
 
 Documentation is built using [mkdocs](https://github.com/mkdocs/mkdocs) and some extensions.
 
@@ -112,7 +111,7 @@ python3 -m mkdocs build
 python3 -m mkdocs build --no-directory-urls
 ```
 
-## Tests
+## Testing
 
 Tests are implemented using `pytest`, which can be installed as part of the `test` optional dependencies via:
 
