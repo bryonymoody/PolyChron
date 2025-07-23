@@ -87,7 +87,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
         self.step_1 = chrono_edge_remov(self.dag)
 
         # Update the table
-        self.view.update_tree_2col(self.model.group_relationships)
+        self.view.update_tree_2col(self.model.group_relationships_list())
 
         # Bind buttons
         self.view.bind_confirm_button(lambda: self.get_coords())
@@ -129,7 +129,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
 
         Formerly popupWindow3.back_func"""
         self.view.on_back()
-        self.view.update_tree_2col(self.model.group_relationships)
+        self.view.update_tree_2col(self.model.group_relationships_list())
 
     def get_coords(self) -> None:
         """Triggered when confirming the provided layout of phase relationships.
@@ -156,7 +156,6 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
             sorted_group_xywh = sorted(
                 group_box_xywh.items(), key=lambda item: item[1][1] + (0.5 * item[1][3]), reverse=True
             )
-
             # Use the lower-most box as a reference
             ref_group, ref_xywh = sorted_group_xywh[0]
             # ref_w = ref_xywh[2]
@@ -232,7 +231,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
                 self.step_1[0],
                 self.step_1[1],
                 self.group_relationship_dict,
-                self.model.group_relationships,
+                self.model.group_relationships_list(),
                 self.post_dict,
                 self.prev_dict,
             )

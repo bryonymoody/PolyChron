@@ -96,15 +96,9 @@ class Model:
     group_relationship_df: Optional[pd.DataFrame] = field(default=None)
     """Dataframe containing group relationship information loaded from disk
     
-    Expected columns ["above", "below"], although order of columns is used not the column names
+    Required columns ["above", "below"], optional columns ["relationship"]
 
     Formerly `phase_rel_df` in `StartPage.open_file5`
-    """
-
-    group_relationships: Optional[List[Tuple[str, str]]] = field(default=None)
-    """A list of the relative relationships between groups, stored as Tuples of (above, below))
-
-    Formerly `StartPage.phase_rels`
     """
 
     context_equality_df: Optional[pd.DataFrame] = field(default=None)
@@ -539,6 +533,14 @@ class Model:
             for k in keys_to_remove:
                 del model_data[k]
 
+            # Fixup the types of dataframes which may not have been saved in the correct types. I.e. all context and group labels must be strings.
+            if "stratigraphic_df" in model_data and model_data["stratigraphic_df"] is not None:
+                model_data["stratigraphic_df"] = model_data["stratigraphic_df"].astype(str)
+            if "group_df" in model_data and model_data["group_df"] is not None:
+                model_data["group_df"] = model_data["group_df"].astype(str)
+            if "group_relationship_df" in model_data and model_data["group_relationship_df"] is not None:
+                model_data["group_relationship_df"] = model_data["group_relationship_df"].astype(str)
+
             # Overwrite certain elements, i.e the path (in case the model fields have been copied), but the path was included in the save file
             if "name" not in model_data:
                 model_data["name"] = str(path.name)
@@ -704,12 +706,50 @@ class Model:
             for i, j in enumerate(self.group_df["context"]):
                 self.stratigraphic_dag.nodes()[str(j)].update({"Group": self.group_df["Group"][i]})
 
-    def set_group_relationship_df(self, df: pd.DataFrame, group_relationships: List[Tuple[str, str]]) -> None:
-        """Provided a dataframe for group relationships information, set the values locally and post-process"""
+    def set_group_relationship_df(self, df: pd.DataFrame) -> None:
+        """Provided a dataframe for group relationships information, set the values locally and post-process
+
+        Parameters:
+            df: The dataframe containing group relationship information, with required columns ["above", "below"] and optional column "relationship".
+        """
         # Store a copy of the dataframe
         self.group_relationship_df = df.copy()
-        # Store a copy of the list of tuples extracted from the dataframe
-        self.group_relationships = group_relationships.copy()
+
+    def group_relationships_list(self) -> list[tuple[str, str]]:
+        """Get a list of group relationships for the model, based on the group_relationship_df.
+
+        Returns:
+            A list of the group relationships, as tuples of `(above, below)`
+        """
+        if (
+            self.group_relationship_df is None
+            or "above" not in self.group_relationship_df
+            or "below" not in self.group_relationship_df
+        ):
+            return []
+
+        return [tup for tup in self.group_relationship_df[["above", "below"]].itertuples(index=False, name=None)]
+
+    def group_relationships_dict(self) -> dict[tuple[str, str], Optional[str]]:
+        """Get a dict of group relationships for the model including the type of relationship if known, based on the group_relationship_df.
+
+        Returns:
+            A list of the group relationships, as tuples of `(above, below)`
+        """
+        if (
+            self.group_relationship_df is None
+            or "above" not in self.group_relationship_df
+            or "below" not in self.group_relationship_df
+        ):
+            return {}
+
+        if "relationship" in self.group_relationship_df:
+            return {
+                (tup.above, tup.below): tup.relationship
+                for tup in self.group_relationship_df[["above", "below", "relationship"]].itertuples(index=False)
+            }
+        else:
+            return dict.fromkeys(self.group_relationships_list(), None)
 
     def get_unique_groups(self) -> list[str]:
         """Get a list of unique group labels
@@ -718,11 +758,15 @@ class Model:
             List of group labels in a stable order."""
 
         # If there are no group relationships, return an empty list
-        if self.group_relationships is None or len(self.group_relationships) == 0:
+        if self.group_relationship_df is None or len(self.group_relationship_df) == 0:
             return []
 
         # Use a dictionary for insertion order preserving unique group label selection
-        labels = list(dict.fromkeys([item for sublist in self.group_relationships for item in sublist]).keys())
+        labels = list(
+            dict.fromkeys(
+                [item for tup in self.group_relationship_df[["above", "below"]].itertuples(index=False) for item in tup]
+            ).keys()
+        )
         return labels
 
     def set_context_equality_df(self, df: pd.DataFrame) -> None:
