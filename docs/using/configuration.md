@@ -8,7 +8,7 @@ PolyChron can be configured through an **optional** `yaml` file, stored in an ap
 - Windows: `%LOCALAPPDATA%/polychron/config.yaml`
 <!-- - MacOs: @todo -->
 
-For example: 
+For example:
 
 ```yaml
 projects_directory: $HOME/Documents/polychron/projects
@@ -16,11 +16,10 @@ verbose: false
 geometry: "1920x1080"
 ```
 
-
 The following configuration options are available:
 
-| name | type | description | 
-|-----|-----|-----|
-| `projects_directory` | `string` | The location of the polychron projects directory on disk, which defaults to `~/Documents/polychron/projects` | 
-| `verbose` | `bool` | If verbose output should be printed by polychron | 
-| `geometry` | `string` | The initial window geometry for the main polychron window, in the form `<width>x<height>` |
+| Name                 | Type     | Description |
+|----------------------|----------|-------------|
+| `projects_directory` | `string` | The location of the polychron projects directory on disk, which defaults to `~/Documents/polychron/projects` |
+| `verbose`            | `bool`   | If verbose output should be printed by polychron |
+| `geometry`           | `string` | The initial window geometry for the main polychron window, in the form `<width>x<height>` |

@@ -10,7 +10,8 @@ extra_css:
   - assets/css/mkdocstrings.css
 
 theme:
-  name: "material"
+  name: material
+  custom_dir: docs/overrides
   locale: en
   icon:
     logo: material/graph
@@ -18,6 +19,8 @@ theme:
   features:
     - content.code.copy
     - navigation.indexes 
+    - content.tabs.link
+    - navigation.footer
 
   palette:
     # Palette toggle for automatic mode
@@ -46,17 +49,30 @@ theme:
 
 nav:
   - About: index.md
-  - User Guide:
-    - userguide/index.md
-    - userguide/configuration.md
+  - Getting Started: getting-started.md
+  - Using PolyChron:
+    - using/index.md
+    - using/project-loading.md
+    - using/prior-elicitation.md
+    - using/posterior-inference.md
+    - using/post-mcmc-analysis.md
+    - using/configuration.md
   - Developer Reference: reference/
 
 extra:
+  polychron_footer_version: ""
+  footer_code_scheme: "slate"
   social:
     - icon: fontawesome/brands/github 
       link: https://github.com/bryonymoody
 
+hooks:
+  - docs/hooks.py
+
 plugins:
+- macros:
+    module_name: docs/macros
+- search
 - section-index
 - literate-nav:
     nav_file: SUMMARY.md
@@ -78,10 +94,13 @@ plugins:
 
 markdown_extensions:
   - admonition
+  - attr_list
   - callouts
   - github-callouts
   - pymdownx.details
   - pymdownx.tasklist
+  - pymdownx.tabbed:
+      alternate_style: true
   - pymdownx.superfences:
       custom_fences:
         # Enable Mermaid, via the material theme
