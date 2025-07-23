@@ -61,7 +61,9 @@ doc = [
     "mkdocs-gen-files",
     "mkdocs-literate-nav",
     "mkdocs-section-index",
+    "mkdocs-macros-plugin",
     "markdown-callouts",
+    'tomli; python_version < "3.11"' # python 3.11 includes tomllib, 3.9 & 3.10 require an extra dependency
 ]
 test = [
     "pytest>=6.0"
