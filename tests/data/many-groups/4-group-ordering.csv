@@ -1,0 +1,6 @@
+above,below,relationship
+group_a,foo,abutting
+foo,bar,overlap
+bar,very long group name with spaces,gap
+very long group name with spaces,0,gap
+0,-,abutting

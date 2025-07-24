@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import math
 from typing import Any
 
 import networkx as nx
@@ -17,7 +18,22 @@ from .PopupPresenter import PopupPresenter
 class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsView, Model]):
     """Presenter for managing Residual vs Intrusive contexts"""
 
+    # Set some thresholds and offsets
+    OVERLAP_PERCENT = 0.25
+    ABUTTING_THRESHOLD = 15
+    BOX_MAX_HEIGHT = 48
+
     def __init__(self, mediator: Mediator, view: ManageGroupRelationshipsView, model: Model) -> None:
+        """Construct a presenter for managing group relationships.
+
+        Parameters:
+            mediator: The mediator for switching windows etc
+            view: the ManageGroupRelationshipsView
+            model: The `models.Model` to manipulate groups within
+
+        Raises:
+            RuntimeError: if the Model contains an invalid set of defined group relationships. Groups must have 1 incoming relationship, 1 outgoing relationship or 1 relationship in each direction and must not form cycles
+        """
         # Call the parent class' constructor
         super().__init__(mediator, view, model)
 
@@ -27,7 +43,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
         self.post_dict = {}
         """A dictionary containing the group relationship type between a group and the next group"""
 
-        self.group_relationship_dict = {}
+        self.group_relationship_dict = copy.deepcopy(self.model.group_relationships_dict())
         """A dictionary of the group relationship type, indexed by `(group, prev_group)`"""
 
         self.dag = copy.deepcopy(self.model.stratigraphic_dag)
@@ -36,9 +52,32 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
         self.removed_nodes_tracker = []
         """A list of nodes which have been removed from the copy of the stratigraphic dag due to an absence of node or phase information"""
 
+        # Validate the model's group relationship status, so that assumptions can be made within this class, by building a relationship graph.
+        self.__group_relationship_dag = nx.DiGraph([rel for rel in self.group_relationship_dict.keys()])
+        """A graph of relationships in the graph"""
+        # If the graph of group relationships is not acyclic, raise an error
+        if not nx.is_directed_acyclic_graph(self.__group_relationship_dag):
+            raise RuntimeError("Groups Relationships must for a directed acyclic graph")
+        # If any nodes (groups) in the graph have 0 edges, or more than 1 edge in a direction, raise an error.
+        for node in self.__group_relationship_dag.nodes():
+            if self.__group_relationship_dag.degree(node) == 0:
+                raise RuntimeError(f"Groups must have at least one relationship. {node} does not.")
+            elif (indegree := self.__group_relationship_dag.in_degree(node)) > 1:
+                raise RuntimeError(
+                    f"Groups must only be the 'below' group in at most 1 relationship. {node} is in {indegree}"
+                )
+            elif (outdegree := self.__group_relationship_dag.out_degree(node)) > 1:
+                raise RuntimeError(
+                    f"Groups must only be the 'above' group in at most 1 relationship. {node} is in {outdegree}"
+                )
+        # If any groups are not in the graph, an error should be raised
+        missing_groups = set(self.model.get_unique_groups()) - set(self.__group_relationship_dag.nodes())
+        if len(missing_groups) > 0:
+            raise RuntimeError(f"Groups must have at least one relationship. {', '.join(missing_groups)} do not.")
+
         # Create a box per group in the model, based on the provided group relationships
-        group_labels = self.model.get_unique_groups()
-        self.view.create_phase_boxes(group_labels)
+        boxes_to_create = self.compute_box_placement()
+        self.view.create_group_boxes(boxes_to_create)
 
         # populate some local members from model inputs.
         # get all the phases for each node
@@ -95,7 +134,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
         self.view.bind_change_button(lambda: self.on_back())
 
         # Bind canvas events for dragging boxes around
-        self.view.bind_phase_box_on_move(self.on_move)
+        self.view.bind_group_box_on_move(self.on_move)
 
         # Update view information to reflect the current state of the model
         self.update_view()
@@ -103,14 +142,95 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
     def update_view(self) -> None:
         pass
 
+    def compute_box_placement(self) -> dict[str, tuple[float, float, float, float]]:
+        """Compute the (initial) location of group boxes for the current model
+
+        Returns:
+            A tuple dictionary of tuples (x, y, w, h), keyed by the label.
+        """
+        relationships = self.group_relationship_dict
+        num_groups = len(self.model.get_unique_groups())
+
+        # Get the size of the canvas area
+        canvas_width, canvas_height = self.view.get_group_canvas_dimensions()
+
+        # Compute the width for each box, based on the number of boxes, the total width available, and enough room for the gaps to be rendered.
+        box_width = math.floor((canvas_width / num_groups) / (1 + self.OVERLAP_PERCENT))
+
+        # Compute the height for each box, based on the number of boxes, total height available, and some margin, with an upper limit.
+        box_height = (canvas_height - (self.BOX_MAX_HEIGHT)) / num_groups
+        box_height = min(self.BOX_MAX_HEIGHT, box_height)
+
+        # Topologically sort the nodes (requires an acyclic graph)
+        topo_sorted_groups = list(nx.topological_sort(self.__group_relationship_dag))
+
+        # Sort the dictionary of relationships in order of the topological nodes
+        mapping = {element: index for index, element in enumerate(topo_sorted_groups)}
+        sorted_relationships = sorted(
+            relationships.items(),
+            key=lambda item: (mapping.get(item[0][0], float("inf")), mapping.get(item[0][1], float("inf"))),
+        )
+
+        # Calculate the coordinates and dimension for each box within the available space, starting with the oldest group at the bottom left, working through the known before-after relationships.
+        xywh_per_group = {}
+
+        # Place the oldest group at the bottom left (excluding margin)
+        xywh_per_group[topo_sorted_groups[-1]] = (0.0, canvas_height - box_height, box_width, box_height)
+
+        # Iterate the sorted relationships in reverse order, adding a box for each newly encountered group. Groups must only have at most one incoming and at most one outgoing relationship, so this should be fine.
+        for (younger, older), relationship in reversed(sorted_relationships):
+            # Get the position of the older group which should be known
+            older_x, older_y, older_w, _ = xywh_per_group[older]
+            older_right_edge = older_x + older_w
+            # Calculate the box placement for the current group based on the placement of the the older box and the type of relationship (if known).
+            # This will not handle having relationships with multiple groups well.
+            if relationship == "overlap":
+                x = older_right_edge - (self.OVERLAP_PERCENT * older_w)
+            elif relationship == "gap":
+                x = older_right_edge + (self.OVERLAP_PERCENT * older_w)
+            elif relationship == "abutting":
+                x = older_right_edge
+            else:  # None / unknown
+                # When relationships are not known, leave enough room for the rendered gap amount (OVERLAP_PERCENT)
+                x = older_right_edge + (self.OVERLAP_PERCENT * older_w)
+            # The box should be on the net vertical height compared to the prior group
+            y = older_y - box_height
+            # Store the x, y, width and height for the box
+            xywh_per_group[younger] = x, y, box_width, box_height
+
+        # Adjust placement to be horizontally and vertically centred by adding a margin to each box. This is done in a separate pass to account for overlap, gap,and abutting boxes.
+
+        min_x, max_x = canvas_width, 0
+        min_y, max_y = canvas_height, 0
+        for x, y, w, h in xywh_per_group.values():
+            min_x = min(min_x, x)
+            max_x = max(max_x, x + w)
+            min_y = min(min_y, y)
+            max_y = max(max_y, y + h)
+
+        x_range = max_x - min_x
+        y_range = max_y - min_y
+        x_margin = (canvas_width - x_range) / 2.0
+        y_margin = (canvas_height - y_range) / 2.0
+
+        # Add a margin (subtract in y, as placement started at the bottom but origin is top left) to each box to place in the centre of the area
+        for group, (x, y, w, h) in xywh_per_group.items():
+            xywh_per_group[group] = (x + x_margin, y - y_margin, w, h)
+
+        # Return the initial locations of the boxes
+        return xywh_per_group
+
     def on_move(self, event: Any) -> None:
         """on move event for dragging boxes around
 
         Formerly `popupWindow3.on_move`
+
+        Parameters:
+            event: The event object from tkinter, for the mouse move event
         """
         component = event.widget
         locx, locy = component.winfo_x(), component.winfo_y()  # top left coords for where the object is
-        w, h = self.view.canvas.winfo_width(), self.view.canvas.winfo_height()  # width of master canvas
+        w, h = self.view.get_group_canvas_dimensions()  # width of master canvas
         mx, my = component.winfo_width(), component.winfo_height()  # width of boxes
         xpos = (locx + event.x) - (15)
         ypos = (locy + event.y) - int(my / 2)
@@ -136,11 +256,12 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
 
         Builds prev_dict, post_dict and group_relationship_dict based on the relative positions of the phase boxes before updating the view to the 2nd stage.
 
+
         Formerly `popupWindow3.get_coords`
 
         Todo:
             - How should exactly equal vertical alignment be handled? Should the sort be y and x?
-
+            - Should an error occur and be presented if a within-group relationship is detected? (i.e. a box is fully encompassed by another, or has exact x positioning?) within-group is not (currently) supported by polychron.
         """
         # Get the coords and dimensions for each group box label
         group_box_xywh = self.view.get_group_box_properties()
@@ -158,14 +279,8 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
             )
             # Use the lower-most box as a reference
             ref_group, ref_xywh = sorted_group_xywh[0]
-            # ref_w = ref_xywh[2]
+            ref_y = ref_xywh[1]
             ref_h = ref_xywh[3]
-            # Store the reference vertical midpoint
-            ref_y = ref_xywh[1] + (0.5 * ref_h)
-
-            # Set some thresholds and offsets
-            OVERLAP_PERCENT = 0.25
-            ABUTTING_THRESHOLD = 15
 
             # Prepare a dictionary for the new x y for each box, initialised with the reference box's location
             new_xy = {ref_group: (ref_xywh[0:2])}
@@ -181,17 +296,17 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
                 x_delta = curr_left - prev_right
 
                 # If the difference in x less than the negative threshold, it is an overlap
-                if x_delta < -ABUTTING_THRESHOLD:
+                if x_delta < -self.ABUTTING_THRESHOLD:
                     # Compute the new x position for the next node
                     rel = "overlap"
-                    new_x = prev_right - (OVERLAP_PERCENT * prev_w)
+                    new_x = prev_right - (self.OVERLAP_PERCENT * prev_w)
                     self.prev_dict[curr_group] = rel
                     self.post_dict[prev_group] = rel
                     self.group_relationship_dict[(curr_group, prev_group)] = rel
                 # Otherwise, if the difference is greater than the positive threshold, it's a gap
-                elif x_delta > +ABUTTING_THRESHOLD:
+                elif x_delta > +self.ABUTTING_THRESHOLD:
                     rel = "gap"
-                    new_x = prev_right + (OVERLAP_PERCENT * prev_w)
+                    new_x = prev_right + (self.OVERLAP_PERCENT * prev_w)
                     self.prev_dict[curr_group] = rel
                     self.post_dict[prev_group] = rel
                     self.group_relationship_dict[(curr_group, prev_group)] = rel
@@ -203,8 +318,8 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
                     self.post_dict[prev_group] = rel
                     self.group_relationship_dict[(curr_group, prev_group)] = rel
 
-                # centre of top box + (half and scale factor) times height
-                new_y = ref_y - (0.5 + prev_idx + 1) * ref_h
+                # New y value is based on the top edge of the bottom-most box, with the correct number of box heights removed
+                new_y = ref_y - ((prev_idx + 1) * ref_h)
                 new_xy[curr_group] = (new_x, new_y)
 
             # Update the box coordinates
