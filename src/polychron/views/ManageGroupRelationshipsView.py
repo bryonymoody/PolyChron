@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
-from matplotlib import color_sequences
+import numpy as np
+from matplotlib import color_sequences, colormaps
 from matplotlib.colors import hex2color, to_hex
 
 from ..util import contrast_ratio, luminance
@@ -16,10 +17,22 @@ class GroupBoxPalette:
 
     __TEXT_COLOURS = {c: luminance(c) for c in [hex2color("#131E29"), hex2color("#F8F8F9")]}
 
-    def __init__(self):
+    def __init__(self, palette: Literal["pastel", "tab20", "cubehelix"] = "pastel"):
         """Initialise the colour palette using a sequence from matplotlib, with some re-ordering so sequential elements are not matched"""
-        tab20 = [(to_hex(c), to_hex(self.__contrasting_color(c))) for c in color_sequences["tab20"]]
-        self._colours: list[str] = tab20[::2] + tab20[1::2]
+        if palette == "pastel":
+            colours = [
+                (to_hex(c), to_hex(self.__contrasting_color(c)))
+                for c in color_sequences["Pastel1"] + color_sequences["Pastel2"]
+            ]
+        elif palette == "tab20":
+            tab20 = [(to_hex(c), to_hex(self.__contrasting_color(c))) for c in color_sequences["tab20"]]
+            colours = tab20[::2] + tab20[1::2]
+        else:  # if palette == "cubehelix":
+            # interleaved discrete samples from the continuous colour map
+            cmap = colormaps["cubehelix"](np.linspace(0, 1, 40))
+            interleaved = [item for i in range(5) for item in cmap[i::5]]
+            colours = [(to_hex(c), to_hex(self.__contrasting_color(c))) for c in interleaved]
+        self._colours: list[str] = colours
         """The sequence of colours from tab20 and a corresponding contrasting text colour, but reordered a little"""
 
     def __len__(self) -> int:
