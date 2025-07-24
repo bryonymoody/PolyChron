@@ -62,7 +62,7 @@ class TestManageGroupRelationshipsPresenter:
         assert presenter.removed_nodes_tracker == []
 
         # Assert that the table was updated.
-        mock_view.update_tree_2col.assert_called_with(model.group_relationships_list())
+        mock_view.update_relationships_table.assert_called_once()
 
         # Assert that button callbacks were bound with callables
         mock_view.bind_confirm_button.assert_called()
@@ -128,8 +128,8 @@ class TestManageGroupRelationshipsPresenter:
 
         # Assert that the view.on_back method was called
         mock_view.on_back.assert_called()
-        # Assert that the view.update_tree_2col method was called
-        mock_view.update_tree_2col.assert_called()
+        # Assert that the view.update_relationships_table method was called
+        mock_view.update_relationships_table.assert_called()
 
     @pytest.mark.parametrize(
         ("mock_box_properties", "update_xy", "expect_prev", "expect_post", "expect_group_relationships"),
@@ -246,7 +246,7 @@ class TestManageGroupRelationshipsPresenter:
             mock_view.update_box_coords.assert_not_called()
 
         mock_view.on_confirm.assert_called_once()
-        mock_view.update_tree_3col.assert_called_once_with(presenter.group_relationship_dict)
+        mock_view.update_relationships_table.assert_called_once_with(presenter.group_relationship_dict)
 
     @pytest.mark.skip(reason="test_full_chronograph_func not yet implemented, as it relies on values set by get_coords")
     def test_full_chronograph_func(self, test_data_model_demo: Model):
