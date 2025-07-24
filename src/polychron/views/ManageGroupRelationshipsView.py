@@ -83,9 +83,6 @@ class ManageGroupRelationshipsView(PopupView):
         # Set the geometry, which naturally is centered within the parent window
         self.geometry("1500x400")
 
-        # Ensure this window is on top
-        self.attributes("-topmost", "true")
-
         self.group_label_dict = {}
         """Dictionary of phases boxes/tkinter label elements"""
 
