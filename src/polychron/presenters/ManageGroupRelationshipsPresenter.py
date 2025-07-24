@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 import math
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import networkx as nx
 import numpy as np
@@ -14,12 +14,15 @@ from ..util import chrono_edge_add, chrono_edge_remov, node_del_fixed, remove_in
 from ..views.ManageGroupRelationshipsView import ManageGroupRelationshipsView
 from .PopupPresenter import PopupPresenter
 
+if TYPE_CHECKING:
+    import tkinter as tk
+
 
 class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsView, Model]):
     """Presenter for managing Residual vs Intrusive contexts"""
 
     # Set some thresholds and offsets
-    OVERLAP_PERCENT = 0.25
+    INITIAL_OVERLAP_FACTOR = 0.25
     ABUTTING_THRESHOLD = 15
     BOX_MAX_HEIGHT = 48
 
@@ -74,6 +77,9 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
         missing_groups = set(self.model.get_unique_groups()) - set(self.__group_relationship_dag.nodes())
         if len(missing_groups) > 0:
             raise RuntimeError(f"Groups must have at least one relationship. {', '.join(missing_groups)} do not.")
+
+        self._overlap_factor = self.INITIAL_OVERLAP_FACTOR
+        """The overlap to use when calculating box widths and post-confirmation placement. Ideally a relative proportion of box widths, but clamped to above the ABUTTING_THRESHOLD"""
 
         # Create a box per group in the model, based on the provided group relationships
         boxes_to_create = self.compute_box_placement()
@@ -134,7 +140,21 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
         self.view.bind_change_button(lambda: self.on_back())
 
         # Bind canvas events for dragging boxes around
-        self.view.bind_group_box_on_move(self.on_move)
+        self.view.bind_group_box_mouse_events(
+            self.on_box_mouse_press, self.on_box_mouse_move, self.on_box_mouse_release
+        )
+
+        self.__group_box_drag_x: float | None = None
+        """x coordinate for the start of the current dragging event, in canvas coordinate space?"""
+
+        self.__group_box_drag_y: float | None = None
+        """y coordinate for the start of the current dragging event, in canvas coordinate space?"""
+
+        self.__group_box_widget: Any | None = None
+        """The tkinter label being dragged.
+        Todo: 
+            This is a tkinter leak into the presenter, but that's required if the presenter is handling mouse events...
+        """
 
         # Update view information to reflect the current state of the model
         self.update_view()
@@ -155,7 +175,12 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
         canvas_width, canvas_height = self.view.get_group_canvas_dimensions()
 
         # Compute the width for each box, based on the number of boxes, the total width available, and enough room for the gaps to be rendered.
-        box_width = math.floor((canvas_width / num_groups) / (1 + self.OVERLAP_PERCENT))
+        # As there is an absolute threshold for abutting detection, the actual overlap must be at least the threshold.
+        space_per_group = math.floor(canvas_width / num_groups)
+        if math.ceil(space_per_group * self._overlap_factor) <= self.ABUTTING_THRESHOLD:
+            max_box_width = math.floor(space_per_group - (self.ABUTTING_THRESHOLD + 1))
+            self._overlap_factor = ((self.ABUTTING_THRESHOLD + 1) / max_box_width) + 0.01
+        box_width = space_per_group / (1 + self._overlap_factor)
 
         # Compute the height for each box, based on the number of boxes, total height available, and some margin, with an upper limit.
         box_height = (canvas_height - (self.BOX_MAX_HEIGHT)) / num_groups
@@ -185,14 +210,14 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
             # Calculate the box placement for the current group based on the placement of the the older box and the type of relationship (if known).
             # This will not handle having relationships with multiple groups well.
             if relationship == "overlap":
-                x = older_right_edge - (self.OVERLAP_PERCENT * older_w)
+                x = older_right_edge - (self._overlap_factor * older_w)
             elif relationship == "gap":
-                x = older_right_edge + (self.OVERLAP_PERCENT * older_w)
+                x = older_right_edge + (self._overlap_factor * older_w)
             elif relationship == "abutting":
                 x = older_right_edge
             else:  # None / unknown
-                # When relationships are not known, leave enough room for the rendered gap amount (OVERLAP_PERCENT)
-                x = older_right_edge + (self.OVERLAP_PERCENT * older_w)
+                # When relationships are not known, leave enough room for the rendered gap amount (_overlap_factor)
+                x = older_right_edge + (self._overlap_factor * older_w)
             # The box should be on the net vertical height compared to the prior group
             y = older_y - box_height
             # Store the x, y, width and height for the box
@@ -220,35 +245,33 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
         # Return the initial locations of the boxes
         return xywh_per_group
 
-    def on_move(self, event: Any) -> None:
-        """on move event for dragging boxes around
+    def on_box_mouse_press(self, event: "tk.Event") -> None:
+        self.__group_box_drag_x = event.x
+        self.__group_box_drag_y = event.y
+        self.__group_box_widget = event.widget
 
-        Formerly `popupWindow3.on_move`
+    def on_box_mouse_move(self, event: "tk.Event") -> None:
+        new_x = self.__group_box_widget.winfo_x() + (event.x - self.__group_box_drag_x)
+        new_y = self.__group_box_widget.winfo_y() + (event.y - self.__group_box_drag_y)
 
-        Parameters:
-            event: The event object from tkinter, for the mouse move event
-        """
-        component = event.widget
-        locx, locy = component.winfo_x(), component.winfo_y()  # top left coords for where the object is
-        w, h = self.view.get_group_canvas_dimensions()  # width of master canvas
-        mx, my = component.winfo_width(), component.winfo_height()  # width of boxes
-        xpos = (locx + event.x) - (15)
-        ypos = (locy + event.y) - int(my / 2)
-        if (
-            xpos >= 0
-            and ypos >= 0
-            and w - abs(xpos) >= 0
-            and xpos <= (w - mx)
-            and h - abs(ypos) >= 0
-            and ypos <= (h - my)
-        ):
-            component.place(x=xpos, y=ypos)
+        # Do not allow the new x / y to be outside the canvas
+        canvas_w, canvas_h = self.view.get_group_canvas_dimensions()
+
+        new_x = max(0, min(new_x, canvas_w - self.__group_box_widget.winfo_width()))
+        new_y = max(0, min(new_y, canvas_h - self.__group_box_widget.winfo_height()))
+
+        self.__group_box_widget.place(x=new_x, y=new_y)
+
+    def on_box_mouse_release(self, event: "tk.Event") -> None:
+        self.__group_box_drag_x = None
+        self.__group_box_drag_y = None
+        self.__group_box_widget = None
 
     def on_back(self) -> None:
         """Callback for when the back button is pressed (when it exists), which updates the view to show the first phase
 
         Formerly popupWindow3.back_func"""
-        self.view.on_back()
+        self.view.layout_step_one()
         self.view.update_relationships_table(self.model.group_relationships_dict())
 
     def get_coords(self) -> None:
@@ -258,10 +281,6 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
 
 
         Formerly `popupWindow3.get_coords`
-
-        Todo:
-            - How should exactly equal vertical alignment be handled? Should the sort be y and x?
-            - Should an error occur and be presented if a within-group relationship is detected? (i.e. a box is fully encompassed by another, or has exact x positioning?) within-group is not (currently) supported by polychron.
         """
         # Get the coords and dimensions for each group box label
         group_box_xywh = self.view.get_group_box_properties()
@@ -295,25 +314,26 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
                 curr_left = curr_x
                 x_delta = curr_left - prev_right
 
+                new_prev_right = new_xy[prev_group][0] + prev_w
                 # If the difference in x less than the negative threshold, it is an overlap
                 if x_delta < -self.ABUTTING_THRESHOLD:
                     # Compute the new x position for the next node
                     rel = "overlap"
-                    new_x = prev_right - (self.OVERLAP_PERCENT * prev_w)
+                    new_x = new_prev_right - (self._overlap_factor * prev_w)
                     self.prev_dict[curr_group] = rel
                     self.post_dict[prev_group] = rel
                     self.group_relationship_dict[(curr_group, prev_group)] = rel
                 # Otherwise, if the difference is greater than the positive threshold, it's a gap
                 elif x_delta > +self.ABUTTING_THRESHOLD:
                     rel = "gap"
-                    new_x = prev_right + (self.OVERLAP_PERCENT * prev_w)
+                    new_x = new_prev_right + (self._overlap_factor * prev_w)
                     self.prev_dict[curr_group] = rel
                     self.post_dict[prev_group] = rel
                     self.group_relationship_dict[(curr_group, prev_group)] = rel
                 # Otherwise, it's abutting
                 else:
                     rel = "abutting"
-                    new_x = prev_right
+                    new_x = new_prev_right
                     self.prev_dict[curr_group] = rel
                     self.post_dict[prev_group] = rel
                     self.group_relationship_dict[(curr_group, prev_group)] = rel
@@ -326,7 +346,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
             self.view.update_box_coords(new_xy)
 
         # Update the view
-        self.view.on_confirm()
+        self.view.layout_step_two()
         self.view.update_relationships_table(self.group_relationship_dict)
 
     def full_chronograph_func(self) -> None:

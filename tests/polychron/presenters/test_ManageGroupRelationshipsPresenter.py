@@ -78,9 +78,11 @@ class TestManageGroupRelationshipsPresenter:
         assert len(mock_view.bind_change_button.call_args.args) == 1
         assert callable(mock_view.bind_change_button.call_args.args[0])
 
-        mock_view.bind_group_box_on_move.assert_called()
-        assert len(mock_view.bind_group_box_on_move.call_args.args) == 1
-        assert callable(mock_view.bind_group_box_on_move.call_args.args[0])
+        mock_view.bind_group_box_mouse_events.assert_called()
+        assert len(mock_view.bind_group_box_mouse_events.call_args.args) == 3
+        assert callable(mock_view.bind_group_box_mouse_events.call_args.args[0])
+        assert callable(mock_view.bind_group_box_mouse_events.call_args.args[1])
+        assert callable(mock_view.bind_group_box_mouse_events.call_args.args[2])
 
     def test_update_view(self, test_data_model_demo: Model):
         """Test update_view behaves as intended with the Demo model"""
@@ -117,11 +119,12 @@ class TestManageGroupRelationshipsPresenter:
         boxes = presenter.compute_box_placement()
 
         # Given the fixed/mocked dimensions, we can check for exact box placement
-        assert boxes == {"1": (50.0, 500.0, 400, 48), "2": (550.0, 452.0, 400, 48)}
+        expected_boxes = {"1": (50.0, 500.0, 400.0, 48), "2": (550.0, 452.0, 400.0, 48)}
+        for group in boxes:
+            assert group in expected_boxes
+            assert boxes[group] == pytest.approx(expected_boxes[group])
 
-    @pytest.mark.skip(reason="test_on_move not implemented due to tkinter calls in on_move")
-    def test_on_move(self, test_data_model_demo: Model):
-        """Test on_move behaves as intended with the Demo model"""
+    def test_on_box_mouse_press(self, test_data_model_demo: Model):
         # Create mocked objects with autospec=True
         mock_mediator = MagicMock(spec=Mediator)
         mock_view = MagicMock(spec=ManageGroupRelationshipsView)
@@ -133,8 +136,42 @@ class TestManageGroupRelationshipsPresenter:
         # Instantiate the Presenter
         presenter = ManageGroupRelationshipsPresenter(mock_mediator, mock_view, model)
 
-        # Call the on_move method
-        presenter.on_move()
+        # Call the on_box_mouse_press method
+        mock_event = MagicMock()
+        mock_event.x = 12
+        mock_event.y = 24
+        mock_event.widget = object()
+        presenter.on_box_mouse_press(mock_event)
+
+        # Assert private members have been reset
+        assert presenter._ManageGroupRelationshipsPresenter__group_box_drag_x == 12
+        assert presenter._ManageGroupRelationshipsPresenter__group_box_drag_y == 24
+        assert isinstance(presenter._ManageGroupRelationshipsPresenter__group_box_widget, object)
+
+    @pytest.mark.skip(reason="test_on_box_mouse_move not implemented due to tkinter calls in on_box_mouse_move")
+    def test_on_box_mouse_move(self, test_data_model_demo: Model):
+        pass
+
+    def test_on_box_mouse_release(self, test_data_model_demo: Model):
+        # Create mocked objects with autospec=True
+        mock_mediator = MagicMock(spec=Mediator)
+        mock_view = MagicMock(spec=ManageGroupRelationshipsView)
+        mock_view.get_group_canvas_dimensions.return_value = (1000, 1000)
+
+        # Gets a Model instance via a fixture in conftest.py
+        model = test_data_model_demo
+
+        # Instantiate the Presenter
+        presenter = ManageGroupRelationshipsPresenter(mock_mediator, mock_view, model)
+
+        # Call the on_box_mouse_release method
+        mock_event = MagicMock()
+        presenter.on_box_mouse_release(mock_event)
+
+        # Assert private members have been reset
+        assert presenter._ManageGroupRelationshipsPresenter__group_box_drag_x is None
+        assert presenter._ManageGroupRelationshipsPresenter__group_box_drag_y is None
+        assert presenter._ManageGroupRelationshipsPresenter__group_box_widget is None
 
     def test_on_back(self, test_data_model_demo: Model):
         """Test on_back behaves as intended with the Demo model"""
@@ -149,11 +186,11 @@ class TestManageGroupRelationshipsPresenter:
         # Instantiate the Presenter
         presenter = ManageGroupRelationshipsPresenter(mock_mediator, mock_view, model)
 
-        # Call the on_confirm method
+        # Call the on_back method
         presenter.on_back()
 
         # Assert that the view.on_back method was called
-        mock_view.on_back.assert_called()
+        mock_view.layout_step_one.assert_called()
         # Assert that the view.update_relationships_table method was called
         mock_view.update_relationships_table.assert_called()
 
@@ -166,7 +203,7 @@ class TestManageGroupRelationshipsPresenter:
                     "2": (308, 189, 302, 34),
                     "1": (5, 228, 302, 34),
                 },
-                {"1": (5, 228), "2": (307, 194.0)},
+                {"1": (5, 228), "2": (307, 194)},
                 {"2": "abutting"},
                 {"1": "abutting"},
                 {("2", "1"): "abutting"},
@@ -177,7 +214,7 @@ class TestManageGroupRelationshipsPresenter:
                     "2": (179, 187, 302, 34),
                     "1": (5, 228, 302, 34),
                 },
-                {"1": (5, 228), "2": (231.5, 194.0)},
+                {"1": (5, 228), "2": (231.5, 194)},
                 {"2": "overlap"},
                 {"1": "overlap"},
                 {("2", "1"): "overlap"},
@@ -188,7 +225,7 @@ class TestManageGroupRelationshipsPresenter:
                     "2": (410, 189, 302, 34),
                     "1": (5, 228, 302, 34),
                 },
-                {"1": (5, 228), "2": (382.5, 194.0)},
+                {"1": (5, 228), "2": (382.5, 194)},
                 {"2": "gap"},
                 {"1": "gap"},
                 {("2", "1"): "gap"},
@@ -201,7 +238,7 @@ class TestManageGroupRelationshipsPresenter:
                     "2": (100, 300, 100, 50),
                     "1": (0, 400, 100, 50),
                 },
-                {"1": (0, 400), "2": (100, 350.0), "3": (225.0, 300.0), "4": (325.0, 250.0)},
+                {"1": (0, 400), "2": (100, 350), "3": (225.0, 300), "4": (300.0, 250)},
                 {"2": "abutting", "3": "gap", "4": "overlap"},
                 {"1": "abutting", "2": "gap", "3": "overlap"},
                 {("2", "1"): "abutting", ("3", "2"): "gap", ("4", "3"): "overlap"},
@@ -268,14 +305,19 @@ class TestManageGroupRelationshipsPresenter:
 
         # Assert that the view was updated, if more than one group box was expected to be present
         if len(mock_box_properties) > 1:
-            mock_view.update_box_coords.assert_called_once_with(update_xy)
+            mock_view.update_box_coords.assert_called_once()
+            arg = mock_view.update_box_coords.call_args.args[0]
+            assert len(arg) == len(update_xy)
+            assert arg.keys() == update_xy.keys()
+            for k in arg:
+                assert arg[k] == pytest.approx(update_xy[k])
         else:
             mock_view.update_box_coords.assert_not_called()
 
-        mock_view.on_confirm.assert_called_once()
+        mock_view.layout_step_two.assert_called_once()
         mock_view.update_relationships_table.assert_called_once_with(presenter.group_relationship_dict)
 
-    @pytest.mark.skip(reason="test_full_chronograph_func not yet implemented, as it relies on values set by get_coords")
+    @pytest.mark.skip(reason="test_full_chronograph_func not yet implemented")
     def test_full_chronograph_func(self, test_data_model_demo: Model):
         """Test full_chronograph_func behaves as intended with the Demo model
 
