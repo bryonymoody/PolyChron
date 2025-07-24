@@ -87,7 +87,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
         self.step_1 = chrono_edge_remov(self.dag)
 
         # Update the table
-        self.view.update_tree_2col(self.model.group_relationships_list())
+        self.view.update_relationships_table(self.model.group_relationships_dict())
 
         # Bind buttons
         self.view.bind_confirm_button(lambda: self.get_coords())
@@ -129,7 +129,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
 
         Formerly popupWindow3.back_func"""
         self.view.on_back()
-        self.view.update_tree_2col(self.model.group_relationships_list())
+        self.view.update_relationships_table(self.model.group_relationships_dict())
 
     def get_coords(self) -> None:
         """Triggered when confirming the provided layout of phase relationships.
@@ -212,7 +212,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
 
         # Update the view
         self.view.on_confirm()
-        self.view.update_tree_3col(self.group_relationship_dict)
+        self.view.update_relationships_table(self.group_relationship_dict)
 
     def full_chronograph_func(self) -> None:
         """renders the chronological graph and forms the prev_phase and past_phase vectors

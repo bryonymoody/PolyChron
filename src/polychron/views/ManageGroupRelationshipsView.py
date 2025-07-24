@@ -4,7 +4,6 @@ import tkinter as tk
 from tkinter import ttk
 from typing import Any, Callable, Dict, List, Tuple
 
-import pandas as pd
 from matplotlib import color_sequences
 from matplotlib.colors import hex2color, to_hex
 
@@ -149,12 +148,12 @@ class ManageGroupRelationshipsView(PopupView):
         self.confirm_button.place(relx=0.8, rely=0.91)
 
         # Add an empty table
-        self.frmtreeborder = tk.LabelFrame(self.maincanvas, bg="white")
-        self.frmtreeborder.columnconfigure(0, weight=1)
-        self.frmtreeborder.rowconfigure(0, weight=1)
-        self.tree = ttk.Treeview(self.frmtreeborder)
-        self.frmtreeborder.place(relx=0.67, rely=0.25, relheight=0.65, relwidth=0.32)
-        self.tree.grid(column=0, row=0, sticky="nsew", padx=6, pady=6)
+        self.relationships_table_frame = tk.LabelFrame(self.maincanvas, bg="white")
+        self.relationships_table_frame.columnconfigure(0, weight=1)
+        self.relationships_table_frame.rowconfigure(0, weight=1)
+        self.relationships_table = ttk.Treeview(self.relationships_table_frame)
+        self.relationships_table_frame.place(relx=0.67, rely=0.25, relheight=0.65, relwidth=0.32)
+        self.relationships_table.grid(column=0, row=0, sticky="nsew", padx=6, pady=6)
 
         # member variables which will store other tkinter buttons once confirm has been pressed.
         self.render_button = None
@@ -220,75 +219,38 @@ class ManageGroupRelationshipsView(PopupView):
         """Update the canvas to ensure coordinates are correct?"""
         self.canvas.update()
 
-    def update_tree_2col(self, group_relationships: List[Tuple[str, str]] | None) -> None:
-        """Update the table of group relationships to the value(s) provided by the user
-
-        This is the 2 column version, for the first step in the residual checking process.
-
-        Parameters:
-            group_relationships: A list of tuples containing relationships between groups, (above, below)
-        """
-        # Prep a local dataframe for presentation
-        df = pd.DataFrame(group_relationships, columns=["Younger group", "Older group"])
-        cols = list(df.columns)
-
-        # Destroy the old table
-        self.tree.destroy()
-        self.frmtreeborder.destroy()
-
-        # Create and populate the new table
-        self.frmtreeborder = tk.LabelFrame(self.maincanvas, bg="white")
-        self.frmtreeborder.columnconfigure(0, weight=1)
-        self.frmtreeborder.rowconfigure(0, weight=1)
-        self.tree = ttk.Treeview(self.frmtreeborder)
-        self.frmtreeborder.place(relx=0.67, rely=0.25, relheight=0.65, relwidth=0.32)
-        self.tree.grid(column=0, row=0, sticky="nsew", padx=6, pady=6)
-        self.tree["columns"] = cols
-        for i in cols:
-            self.tree.column(i, anchor="w")
-            self.tree.heading(i, text=i, anchor="w")
-        for index, row in df.iterrows():
-            self.tree.insert("", 0, text=index, values=list(row))
-        self.tree["show"] = "headings"
-
-    def update_tree_3col(self, menudict: Dict[Tuple[str, str], object]) -> None:
-        """Update the table of group relationships to the value(s) provided by the user
+    def update_relationships_table(self, relationships_dict: dict[tuple[str, str], str | None]) -> None:
+        """Update the table of group relationships.
 
         This is the 3 column version, for the confirmation step in the residual checking process.
 
-        Formerly part of popupwindow3.get_coords"""
+        Formerly part of `popupwindow3.get_coords`
 
-        # Prepare the new 3 column dataframe
-        col1, col2, col3 = [], [], []
-        rels_df = pd.DataFrame()
-        for i in menudict.keys():
-            col1.append(i[0])
-            col2.append(i[1])
-            col3.append(str(menudict[i]))
-        rels_df["Younger group"] = col1
-        rels_df["Older group"] = col2
-        rels_df["Relationship"] = col3
-        cols = list(rels_df.columns)
+        Parameters:
+            relationship_dict: A dictionary of relationship types for each directed group relationship
+        """
 
         # Destroy the old table
-        self.tree.destroy()
-        self.frmtreeborder.destroy()
+        self.relationships_table.destroy()
+        self.relationships_table_frame.destroy()
 
         # Create the new table and populate with the 3 col data.
-        self.frmtreeborder = tk.LabelFrame(self.maincanvas, bg="white")
-        self.frmtreeborder.columnconfigure(0, weight=1)
-        self.frmtreeborder.rowconfigure(0, weight=1)
-        self.tree = ttk.Treeview(self.frmtreeborder)
-        self.frmtreeborder.place(relx=0.67, rely=0.25, relheight=0.65, relwidth=0.32)
-        self.tree.grid(column=0, row=0, sticky="nsew", padx=6, pady=6)
-        self.tree["columns"] = cols
-        for i in cols:
-            self.tree.column(i, anchor="w", width=100)
-            self.tree.heading(i, text=i, anchor="w")
+        self.relationships_table_frame = tk.LabelFrame(self.maincanvas, bg="white")
+        self.relationships_table_frame.columnconfigure(0, weight=1)
+        self.relationships_table_frame.rowconfigure(0, weight=1)
+        self.relationships_table = ttk.Treeview(self.relationships_table_frame)
+        self.relationships_table_frame.place(relx=0.67, rely=0.25, relheight=0.65, relwidth=0.32)
+        self.relationships_table.grid(column=0, row=0, sticky="nsew", padx=6, pady=6)
+        self.relationships_table["columns"] = ["Younger group", "Older group", "Relationship"]
+        for col in self.relationships_table["columns"]:
+            self.relationships_table.column(col, anchor="w", width=100)
+            self.relationships_table.heading(col, text=col, anchor="w")
 
-        for index, row in rels_df.iterrows():
-            self.tree.insert("", 0, text=index, values=list(row))
-        self.tree["show"] = "headings"
+        for index, ((younger, older), relationship) in enumerate(relationships_dict.items()):
+            row = [younger, older, str(relationship) if relationship is not None else ""]
+
+            self.relationships_table.insert("", tk.END, text=index, values=row)
+        self.relationships_table["show"] = "headings"
 
     def bind_phase_box_on_move(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for moving the phase boxes.
@@ -322,8 +284,8 @@ class ManageGroupRelationshipsView(PopupView):
         """
         self.instruc_label.destroy()
         self.confirm_button.destroy()
-        self.tree.destroy()
-        self.frmtreeborder.destroy()
+        self.relationships_table.destroy()
+        self.relationships_table_frame.destroy()
         self.maincanvas.columnconfigure(0, weight=1)
         self.maincanvas.rowconfigure(0, weight=1)
         self.maincanvas.update()
