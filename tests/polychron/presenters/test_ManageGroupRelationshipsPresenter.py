@@ -30,6 +30,7 @@ class TestManageGroupRelationshipsPresenter:
         # Create mocked objects with autospec=True
         mock_mediator = MagicMock(spec=Mediator)
         mock_view = MagicMock(spec=ManageGroupRelationshipsView)
+        mock_view.get_group_canvas_dimensions.return_value = (1000, 1000)
 
         # Gets a Model instance via a fixture in conftest.py
         model = test_data_model_demo
@@ -42,17 +43,17 @@ class TestManageGroupRelationshipsPresenter:
         assert presenter.view == mock_view
         assert presenter.model == model
 
-        # Assert that ManageGroupRelationshipsView.create_phase_boxes was called with expected data
-        mock_view.create_phase_boxes.assert_called()
-
-        # The order is currently non-deterministic, so we must compare as sets
-        assert mock_view.create_phase_boxes.call_args.args[0] == ["2", "1"]
+        # Assert that ManageGroupRelationshipsView.create_group_boxes was called with expected data
+        mock_view.create_group_boxes.assert_called()
+        assert isinstance(mock_view.create_group_boxes.call_args.args[0], dict)
+        assert "2" in mock_view.create_group_boxes.call_args.args[0]
+        assert "1" in mock_view.create_group_boxes.call_args.args[0]
 
         # Assert that instance members were set as expected.
 
         assert presenter.prev_dict == {}
         assert presenter.post_dict == {}
-        assert presenter.group_relationship_dict == {}
+        assert presenter.group_relationship_dict == {("2", "1"): None}
         # Just check the dag is an instance of the right type for now.
         assert isinstance(presenter.dag, nx.DiGraph)
         # context_no_unordered is ordered based on nx.DiGraph.nodes, which appears non-deterministic even for the same inputs (it is documented as being set-like, not list-like), so the comparison must be as sets
@@ -77,14 +78,15 @@ class TestManageGroupRelationshipsPresenter:
         assert len(mock_view.bind_change_button.call_args.args) == 1
         assert callable(mock_view.bind_change_button.call_args.args[0])
 
-        mock_view.bind_phase_box_on_move.assert_called()
-        assert len(mock_view.bind_phase_box_on_move.call_args.args) == 1
-        assert callable(mock_view.bind_phase_box_on_move.call_args.args[0])
+        mock_view.bind_group_box_on_move.assert_called()
+        assert len(mock_view.bind_group_box_on_move.call_args.args) == 1
+        assert callable(mock_view.bind_group_box_on_move.call_args.args[0])
 
     def test_update_view(self, test_data_model_demo: Model):
         """Test update_view behaves as intended with the Demo model"""
         mock_mediator = MagicMock(spec=Mediator)
         mock_view = MagicMock(spec=ManageGroupRelationshipsView)
+        mock_view.get_group_canvas_dimensions.return_value = (1000, 1000)
 
         # Gets a Model instance via a fixture in conftest.py
         model = test_data_model_demo
@@ -95,12 +97,35 @@ class TestManageGroupRelationshipsPresenter:
         # Assert update_view can be called wihtout raising any exceptions, it currently does nothing.
         presenter.update_view()
 
+    def test_compute_box_placement(self, test_data_model_demo: Model):
+        """Test compute_box_placement produces expected results for the demo model
+
+        Todo:
+            - Expand test coverage to include a wider range of models
+        """
+        mock_mediator = MagicMock(spec=Mediator)
+        mock_view = MagicMock(spec=ManageGroupRelationshipsView)
+        mock_view.get_group_canvas_dimensions.return_value = (1000, 1000)
+
+        # Gets a Model instance via a fixture in conftest.py
+        model = test_data_model_demo
+
+        # Instantiate the Presenter
+        presenter = ManageGroupRelationshipsPresenter(mock_mediator, mock_view, model)
+
+        # Call the compute_box_placement method
+        boxes = presenter.compute_box_placement()
+
+        # Given the fixed/mocked dimensions, we can check for exact box placement
+        assert boxes == {"1": (50.0, 500.0, 400, 48), "2": (550.0, 452.0, 400, 48)}
+
     @pytest.mark.skip(reason="test_on_move not implemented due to tkinter calls in on_move")
     def test_on_move(self, test_data_model_demo: Model):
         """Test on_move behaves as intended with the Demo model"""
         # Create mocked objects with autospec=True
         mock_mediator = MagicMock(spec=Mediator)
         mock_view = MagicMock(spec=ManageGroupRelationshipsView)
+        mock_view.get_group_canvas_dimensions.return_value = (1000, 1000)
 
         # Gets a Model instance via a fixture in conftest.py
         model = test_data_model_demo
@@ -116,6 +141,7 @@ class TestManageGroupRelationshipsPresenter:
         # Create mocked objects with autospec=True
         mock_mediator = MagicMock(spec=Mediator)
         mock_view = MagicMock(spec=ManageGroupRelationshipsView)
+        mock_view.get_group_canvas_dimensions.return_value = (1000, 1000)
 
         # Gets a Model instance via a fixture in conftest.py
         model = test_data_model_demo
@@ -220,6 +246,7 @@ class TestManageGroupRelationshipsPresenter:
         # Create mocked objects with autospec=True
         mock_mediator = MagicMock(spec=Mediator)
         mock_view = MagicMock(spec=ManageGroupRelationshipsView)
+        mock_view.get_group_canvas_dimensions.return_value = (1000, 1000)
 
         # Gets a Model instance via a fixture in conftest.py
         model = test_data_model_demo
@@ -258,6 +285,7 @@ class TestManageGroupRelationshipsPresenter:
         # Create mocked objects with autospec=True
         mock_mediator = MagicMock(spec=Mediator)
         mock_view = MagicMock(spec=ManageGroupRelationshipsView)
+        mock_view.get_group_canvas_dimensions.return_value = (1000, 1000)
 
         # Gets a Model instance via a fixture in conftest.py
         model = test_data_model_demo
@@ -275,6 +303,7 @@ class TestManageGroupRelationshipsPresenter:
         # Create mocked objects with autospec=True
         mock_mediator = MagicMock(spec=Mediator)
         mock_view = MagicMock(spec=ManageGroupRelationshipsView)
+        mock_view.get_group_canvas_dimensions.return_value = (1000, 1000)
 
         # Gets a Model instance via a fixture in conftest.py
         model = test_data_model_demo

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import tkinter as tk
 from tkinter import ttk
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable
 
 from matplotlib import color_sequences
 from matplotlib.colors import hex2color, to_hex
@@ -79,14 +79,14 @@ class ManageGroupRelationshipsView(PopupView):
         # Set the popup title
         self.title("Adding group relationships")
 
-        # Set the geometry, which naturally is centered within the parent window
+        # Set the geometry, which naturally is centred within the parent window
         self.geometry("1500x400")
 
         self.group_label_dict = {}
-        """Dictionary of phases boxes/tkinter label elements"""
+        """Dictionary of group boxes/tkinter label elements"""
 
-        self.__phase_box_move_callback: Callable[[], Any] = lambda event: None
-        """Callback method for when a phase box is moved."""
+        self.__group_box_move_callback: Callable[[], Any] = lambda event: None
+        """Callback method for when a group box is moved."""
 
         self.__confirm_callback: Callable[[], Any] = lambda: None
         """Callback method for when the confirm button is pressed. 
@@ -162,32 +162,34 @@ class ManageGroupRelationshipsView(PopupView):
         self.COLOURS = GroupBoxPalette()
         """A palette of colours and corresponding text colours for the boxes used for groups. If more colours are required than available the palette will wrap"""
 
-    def create_phase_boxes(self, group_labels: List[Tuple[str, str]] | None) -> None:
-        """Create a box within the canvas for each provided phase label"""
-        self.group_label_dict = {}
+    def get_group_canvas_dimensions(self) -> tuple[int, int]:
+        """Get the dimensions of the group canvas, so the presenter can compute initial box placement based on known relationships
 
+        Returns:
+            A tuple (width, height) containing the dimensions of the canvas area.
+        """
         w, h = self.canvas.winfo_width(), self.canvas.winfo_height()
         # If the width and height info was not available, fallback to the requested dimensions
         if w == 1 and h == 1:
             w, h = self.canvas.winfo_reqwidth(), self.canvas.winfo_reqheight()
-        m = len(group_labels)
+        return w, h
 
-        for idx, group_label in enumerate(group_labels):
+    def create_group_boxes(self, group_boxes_xywh: dict[str, tuple[float, float, float, float]]) -> None:
+        """Create a box within the canvas for each group label, with an initial location provided by the presenter.
+
+        Colours will be selected from a palette.
+
+        Parameters:
+            group_boxes_xywh: an (ordered) dictionary of boxes `(x, y, w, h)` to create from the presenter
+        """
+        self.group_label_dict = {}
+        for idx, (group_label, (x, y, w, h)) in enumerate(group_boxes_xywh.items()):
             label = tk.Label(self.canvas, text=str(group_label))
             bg, fg = self.COLOURS[idx]
             label.config(bg=bg, fg=fg, font=("helvetica", 14, "bold"))
-            label.bind("<B1-Motion>", lambda event: self.__phase_box_move_callback(event))
-            label.place(
-                x=0.05 * w + (w / (2 * m)) * idx,
-                y=0.85 * h - ((0.95 * h) / m) * idx,
-                relwidth=0.76 / m,
-                relheight=min(0.1, 0.9 / m),
-            )
+            label.bind("<B1-Motion>", lambda event: self.__group_box_move_callback(event))
+            label.place(x=x, y=y, width=w, height=h)
             self.group_label_dict[group_label] = label
-
-    def get_phase_boxes(self) -> Dict[str, tk.Label]:
-        """Get the dictionary of tk label objects for each phase label"""
-        return self.group_label_dict
 
     def get_group_box_properties(self) -> dict[str, tuple[float, float, float, float]]:
         """Get a dictionary containing the `(x, y, w, h)` for each group box
@@ -252,13 +254,13 @@ class ManageGroupRelationshipsView(PopupView):
             self.relationships_table.insert("", tk.END, text=index, values=row)
         self.relationships_table["show"] = "headings"
 
-    def bind_phase_box_on_move(self, callback: Callable[[], Any]) -> None:
-        """Bind the callback for moving the phase boxes.
+    def bind_group_box_on_move(self, callback: Callable[[], Any]) -> None:
+        """Bind the callback for moving the group boxes.
 
-        This is set on a (private) view class member, to avoid havnig to call this method again if the phase boxes are ever re-generated.
+        This is set on a (private) view class member, to avoid havnig to call this method again if the group boxes are ever re-generated.
         """
         if callback is not None:
-            self.__phase_box_move_callback = callback
+            self.__group_box_move_callback = callback
 
     def bind_confirm_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the confirm_button is pressed"""
