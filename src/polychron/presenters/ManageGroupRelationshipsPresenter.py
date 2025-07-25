@@ -6,11 +6,10 @@ from typing import TYPE_CHECKING, Any
 
 import networkx as nx
 import numpy as np
-from networkx.drawing.nx_pydot import write_dot
 
 from ..interfaces import Mediator
 from ..models.Model import Model
-from ..util import chrono_edge_add, chrono_edge_remov, node_del_fixed, remove_invalid_attributes_networkx_lt_3_4
+from ..util import chrono_edge_add, chrono_edge_remov, node_del_fixed
 from ..views.ManageGroupRelationshipsView import ManageGroupRelationshipsView
 from .PopupPresenter import PopupPresenter
 
@@ -355,8 +354,6 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
         Formerly `popupWindow3.full_chronograph_func`
         """
 
-        workdir = self.model.get_working_directory()
-
         prev_group = ["start"]
         post_group = []
         group_list = self.step_1[2]
@@ -426,19 +423,20 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
         for b in edge_remove:
             self.dag.remove_edge(b[0], b[1])
 
-        # Ensure the graph is compatible with networkx < 3.4 nx_pydot
-        self.dag = remove_invalid_attributes_networkx_lt_3_4(self.dag)
+        # Store the chronological dag
+        self.model.chronological_dag = self.dag
 
-        write_dot(self.dag, workdir / "fi_new_chrono")
-
-        # write output variables into the Model once it is confirmed.
+        # Update other model properties
         self.model.context_types = self.context_types
         self.model.prev_group = prev_group
         self.model.post_group = post_group
         self.model.phi_ref = phi_ref
         self.model.context_no_unordered = self.context_no_unordered
-        self.model.chronological_dag = self.dag
         self.model.removed_nodes_tracker = self.removed_nodes_tracker
+
+        # set the load_check flag indicating the chorological_dag has been rendered
+        self.model.load_check = True
+
         # Close the popup window
         self.close_window()
 
