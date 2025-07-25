@@ -59,8 +59,7 @@ def test_data_model_demo(tmp_path: pathlib.Path, test_data_path: pathlib.Path) -
     model.set_group_df(pd.read_csv(test_data_path / "demo" / "3-context-grouping.csv", dtype=str))
     # Read and set group relationship data from csv
     group_df = pd.read_csv(test_data_path / "demo" / "4-group-ordering.csv", dtype=str)
-    group_rels = [(str(group_df["above"][i]), str(group_df["below"][i])) for i in range(len(group_df))]
-    model.set_group_relationship_df(group_df, group_rels)
+    model.set_group_relationship_df(group_df)
     # Read and set context equality data from csv
     model.set_context_equality_df(pd.read_csv(test_data_path / "demo" / "5-context-equality.csv", dtype=str))
 

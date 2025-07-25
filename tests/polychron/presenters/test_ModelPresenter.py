@@ -336,49 +336,44 @@ class TestModelPresenter:
 
         # Do not select a model, which should not result in other methods being called
         with patch("polychron.presenters.ModelPresenter.ModelPresenter.resid_check") as mock_resid_check:
-            dag = presenter.chronograph_render()
+            presenter.chronograph_render()
             assert presenter.model.current_model is None
             mock_resid_check.assert_not_called()
             mock_view.update_littlecanvas2.assert_not_called()
             mock_view.bind_littlecanvas2_callback.assert_not_called()
             mock_view.show_image2.assert_not_called()
-            assert dag is None
         mock_view.reset_mock()
 
         # select a model, and call chronograph render, checking expected state changes and mocked method calls
         presenter.model.switch_to("demo", "demo")
-        # Make sure the chronograph exists. Todo: this should be handled by a method on the Model instance. Currently in ManageGroupRelationshipsPresenter.full_chronograph_func
-        presenter.model.current_model.create_dirs()
-        presenter.model.current_model.chronological_dag = remove_invalid_attributes_networkx_lt_3_4(
-            presenter.model.current_model.stratigraphic_dag
-        )
-        write_dot(
-            presenter.model.current_model.chronological_dag,
-            presenter.model.current_model.get_working_directory() / "fi_new_chrono",
-        )
+
+        # Define a function which makes the necessary changes to model_model for chronograph_render's conditional behaviour to occur. This does not fully replicate what happens in a successful resid_check
+        def mock_resid_check_side_effect(model):
+            model.chronological_dag = model.stratigraphic_dag
+            model.load_check = True
 
         assert not presenter.model.current_model.load_check
         with patch("polychron.presenters.ModelPresenter.ModelPresenter.resid_check") as mock_resid_check:
-            dag = presenter.chronograph_render()
+            mock_resid_check.side_effect = lambda: mock_resid_check_side_effect(presenter.model.current_model)
+            presenter.chronograph_render()
             assert presenter.model.current_model is not None
             assert presenter.model.current_model.load_check
             mock_resid_check.assert_called()
             mock_view.update_littlecanvas2.assert_called()
             mock_view.bind_littlecanvas2_callback.assert_called()
             mock_view.show_image2.assert_called()
-            assert dag == presenter.model.current_model.chronological_dag
         mock_view.reset_mock()
 
         # Call the method once again, which should not trigger a re-render due to load_check
         with patch("polychron.presenters.ModelPresenter.ModelPresenter.resid_check") as mock_resid_check:
-            dag = presenter.chronograph_render()
+            mock_resid_check.side_effect = lambda: mock_resid_check_side_effect(presenter.model.current_model)
+            presenter.chronograph_render()
             assert presenter.model.current_model is not None
             assert presenter.model.current_model.load_check
             mock_resid_check.assert_not_called()
             mock_view.update_littlecanvas2.assert_not_called()
             mock_view.bind_littlecanvas2_callback.assert_not_called()
             mock_view.show_image2.assert_not_called()
-            assert dag == presenter.model.current_model.chronological_dag
 
     @pytest.mark.skip(reason="test_resid_check not implemented, includes tkinter")
     def test_resid_check(self):
@@ -838,14 +833,24 @@ class TestModelPresenter:
             "expect_model_change",
             "expect_error",
             "expect_num_group_rels",
+            "expect_relationship",
         ),
         [
             # No input, silently do nothing (i.e. if the popup was closed.)
-            (None, None, None, "cancel", False, False, 0),
+            (None, None, None, "cancel", False, False, 0, 0),
             # A valid csv file, but it the user did not select "load"
-            ("demo/1-strat.csv", "demo/3-context-grouping.csv", "demo/4-group-ordering.csv", "cancel", False, False, 0),
+            (
+                "demo/1-strat.csv",
+                "demo/3-context-grouping.csv",
+                "demo/4-group-ordering.csv",
+                "cancel",
+                False,
+                False,
+                0,
+                0,
+            ),
             # Valid csv files, which are loaded
-            ("demo/1-strat.csv", "demo/3-context-grouping.csv", "demo/4-group-ordering.csv", "load", True, False, 1),
+            ("demo/1-strat.csv", "demo/3-context-grouping.csv", "demo/4-group-ordering.csv", "load", True, False, 1, 0),
             (
                 "thesis/thesis-b1-strat.csv",
                 "thesis/thesis-b3-context-grouping.csv",
@@ -854,6 +859,7 @@ class TestModelPresenter:
                 True,
                 False,
                 1,
+                0,
             ),
             (
                 "strat-csv/simple.csv",
@@ -862,6 +868,28 @@ class TestModelPresenter:
                 "load",
                 True,
                 False,
+                2,
+                0,
+            ),
+            # Valid csv files including the optional relationship column
+            (
+                "demo/1-strat.csv",
+                "demo/3-context-grouping.csv",
+                "demo/4-group-ordering-with-relationship.csv",
+                "load",
+                True,
+                False,
+                1,
+                1,
+            ),
+            (
+                "strat-csv/simple.csv",
+                "context-grouping-csv/simple.csv",
+                "group-relationships-csv/with-relationship.csv",
+                "load",
+                True,
+                False,
+                2,
                 2,
             ),
             # A completely empty csv
@@ -873,6 +901,7 @@ class TestModelPresenter:
                 False,
                 True,
                 0,
+                0,
             ),
             # A csv file with no rows. This is currently accepted but should not be.
             (
@@ -883,9 +912,10 @@ class TestModelPresenter:
                 True,
                 False,
                 0,
+                0,
             ),
             # A csv with the incorrect column names. This currently does not matter.
-            pytest.param(
+            (
                 "strat-csv/simple.csv",
                 "context-grouping-csv/simple.csv",
                 "group-relationships-csv/bad-column-names.csv",
@@ -893,7 +923,7 @@ class TestModelPresenter:
                 False,
                 True,
                 0,
-                marks=pytest.mark.skip(reason="Column names are not checked in open_group_relationship_file"),
+                0,
             ),
             # A csv with extra columns, which are not used
             (
@@ -904,6 +934,18 @@ class TestModelPresenter:
                 True,
                 False,
                 2,
+                0,
+            ),
+            # A csv file with an invalid relatiopnship value
+            (
+                "strat-csv/simple.csv",
+                "context-grouping-csv/simple.csv",
+                "group-relationships-csv/invalid-relationship.csv",
+                "load",
+                True,
+                True,
+                2,
+                1,
             ),
         ],
     )
@@ -916,6 +958,7 @@ class TestModelPresenter:
         expect_model_change: bool,
         expect_error: bool,
         expect_num_group_rels: int,
+        expect_relationship: int,
         test_data_path: pathlib.Path,
     ):
         """Test that open_group_relationship_file behaves as intended for a range of csv files.
@@ -930,6 +973,7 @@ class TestModelPresenter:
             expect_model_change: If we expect the model to have been updated for these inputs
             expect_error: If we expect an error messagebox to have occurred
             expect_num_group_rels: The expected number of group relationships
+            expect_relationship: The expected number of rows with valid group relationship columns. 0 implies the column is not expected.
 
         Todo:
             - Tests with invalid data values
@@ -985,18 +1029,30 @@ class TestModelPresenter:
                 assert model.current_model is not None
                 assert model.current_model.group_relationship_df is not None
                 pd.testing.assert_frame_equal(
-                    model.current_model.group_relationship_df, pd.read_csv(test_data_path / input_path)
+                    model.current_model.group_relationship_df, pd.read_csv(test_data_path / input_path, dtype=str)
                 )
                 assert model.current_model.stratigraphic_dag is not None
                 # Check the number of group relationships is as expected
-                assert len(model.current_model.group_relationships) == expect_num_group_rels
+                assert len(model.current_model.group_relationships_list()) == expect_num_group_rels
+                # Check there is a column named "above"
+                assert "above" in model.current_model.group_relationship_df.columns
+                assert "below" in model.current_model.group_relationship_df.columns
+                # If we expect a reason to have been provided, check there are 3 columns in the stored dataframe and the number of rows with a value in the 3rd column
+                if expect_relationship > 0:
+                    assert "relationship" in model.current_model.group_relationship_df.columns
+                    assert len(model.current_model.group_relationship_df.columns) >= 3
+                    assert model.current_model.group_relationship_df["relationship"].count() == expect_relationship
+                else:
+                    assert len(model.current_model.group_relationship_df.columns) >= 2
+                # Check the presenter has been updated
                 assert presenter.phase_check
+                # Check an infobox was shown
                 mock_view.messagebox_info.assert_called()
             # Otherwise, the model should not have group_relationship set or view methods called.
             else:
                 assert model.current_model is not None
                 assert model.current_model.group_relationship_df is None
-                assert model.current_model.group_relationships is None
+                assert model.current_model.group_relationship_df is None
                 assert not presenter.phase_check
                 mock_view.messagebox_info.assert_not_called()
 

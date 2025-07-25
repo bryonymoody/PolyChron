@@ -995,3 +995,33 @@ def get_right_click_binding(double: bool = False) -> str:
     """
     number = "2" if platform.system() == "Darwin" else "3"
     return f"<Button-{number}>" if not double else f"<Double-Button-{number}>"
+
+
+def luminance(rgb: tuple[float, float, float]) -> float:
+    """Given an rgb-tuple in normalised srgb space, return the percieved luminance
+
+    Paramters:
+        rgb: an 3-tuple of RGB values as floats in the range [0, 1]
+
+    Returns:
+        Percieved relative luminance of the provided srgb colour
+    """
+    # Gamma correct to linear values for sRGB
+    corrected = [c / 12.92 if c < 0.04045 else ((c + 0.055) / 1.055) ** 2.4 for c in rgb]
+    # Calculate relative luminance
+    luminance = (0.2126 * corrected[0]) + (0.7152 * corrected[1]) + (0.0722 * corrected[2])
+    return luminance
+
+
+def contrast_ratio(a: float, b: float) -> float:
+    """Get the contrast ratio between relative luminance values
+
+    Parameters:
+        a: a luminance value to compare
+        b: the other luminance value to compare
+
+    Returns:
+        The contrast ratio
+    """
+    a, b = max(a, b), min(a, b)
+    return (a + 0.05) / (b + 0.05)
