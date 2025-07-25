@@ -342,7 +342,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         # plot1.set_xlim([0, 400])
         plot1.title.set_text(f"Time elapsed between {self.phase_len_nodes[0]} and {self.phase_len_nodes[1]}")
         # self.fig.set_tight_layout(True)
-        self.view.show_canvas_plot(self.fig)
+        self.view.show_canvas_plot_with_toolbar(self.fig)
         # show hpd intervals
         interval = list(HPD_interval(np.array(lengths[1000:])))
         intervals = []
