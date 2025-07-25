@@ -630,7 +630,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             if answer == "yes":
                 self.save_as_new_model()
             # self.littlecanvas2.delete("all")
-            model_model.load_check = "not_loaded"
+            model_model.load_check = False
 
         addContextModel = AddContextModel()
         popup_presenter = AddContextPresenter(self.mediator, AddContextView(self.view), addContextModel)
