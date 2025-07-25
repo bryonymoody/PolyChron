@@ -336,49 +336,44 @@ class TestModelPresenter:
 
         # Do not select a model, which should not result in other methods being called
         with patch("polychron.presenters.ModelPresenter.ModelPresenter.resid_check") as mock_resid_check:
-            dag = presenter.chronograph_render()
+            presenter.chronograph_render()
             assert presenter.model.current_model is None
             mock_resid_check.assert_not_called()
             mock_view.update_littlecanvas2.assert_not_called()
             mock_view.bind_littlecanvas2_callback.assert_not_called()
             mock_view.show_image2.assert_not_called()
-            assert dag is None
         mock_view.reset_mock()
 
         # select a model, and call chronograph render, checking expected state changes and mocked method calls
         presenter.model.switch_to("demo", "demo")
-        # Make sure the chronograph exists. Todo: this should be handled by a method on the Model instance. Currently in ManageGroupRelationshipsPresenter.full_chronograph_func
-        presenter.model.current_model.create_dirs()
-        presenter.model.current_model.chronological_dag = remove_invalid_attributes_networkx_lt_3_4(
-            presenter.model.current_model.stratigraphic_dag
-        )
-        write_dot(
-            presenter.model.current_model.chronological_dag,
-            presenter.model.current_model.get_working_directory() / "fi_new_chrono",
-        )
+
+        # Define a function which makes the necessary changes to model_model for chronograph_render's conditional behaviour to occur. This does not fully replicate what happens in a successful resid_check
+        def mock_resid_check_side_effect(model):
+            model.chronological_dag = model.stratigraphic_dag
+            model.load_check = True
 
         assert not presenter.model.current_model.load_check
         with patch("polychron.presenters.ModelPresenter.ModelPresenter.resid_check") as mock_resid_check:
-            dag = presenter.chronograph_render()
+            mock_resid_check.side_effect = lambda: mock_resid_check_side_effect(presenter.model.current_model)
+            presenter.chronograph_render()
             assert presenter.model.current_model is not None
             assert presenter.model.current_model.load_check
             mock_resid_check.assert_called()
             mock_view.update_littlecanvas2.assert_called()
             mock_view.bind_littlecanvas2_callback.assert_called()
             mock_view.show_image2.assert_called()
-            assert dag == presenter.model.current_model.chronological_dag
         mock_view.reset_mock()
 
         # Call the method once again, which should not trigger a re-render due to load_check
         with patch("polychron.presenters.ModelPresenter.ModelPresenter.resid_check") as mock_resid_check:
-            dag = presenter.chronograph_render()
+            mock_resid_check.side_effect = lambda: mock_resid_check_side_effect(presenter.model.current_model)
+            presenter.chronograph_render()
             assert presenter.model.current_model is not None
             assert presenter.model.current_model.load_check
             mock_resid_check.assert_not_called()
             mock_view.update_littlecanvas2.assert_not_called()
             mock_view.bind_littlecanvas2_callback.assert_not_called()
             mock_view.show_image2.assert_not_called()
-            assert dag == presenter.model.current_model.chronological_dag
 
     @pytest.mark.skip(reason="test_resid_check not implemented, includes tkinter")
     def test_resid_check(self):

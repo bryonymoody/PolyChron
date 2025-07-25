@@ -919,20 +919,28 @@ class Model:
         workdir = self.get_working_directory()
         workdir.mkdir(parents=True, exist_ok=True)
 
-        fi_new_chrono = workdir / "fi_new_chrono"
-        if self.load_check and fi_new_chrono.is_file():
-            render("dot", "png", fi_new_chrono)
-            svg_path = render("dot", "svg", fi_new_chrono)
-            inp = Image.open(workdir / "fi_new_chrono.png")
-            inp_final = trim(inp)
-            # scale_factor = min(canv_width/inp.size[0], canv_height/inp.size[1])
-            # inp_final = inp.resize((int(inp.size[0]*scale_factor), int(inp.size[1]*scale_factor)), Image.ANTIALIAS)
-            inp_final.save(workdir / "testdag_chrono.png")
-            self.chronological_image = Image.open(workdir / "testdag_chrono.png")
-            self.chronological_node_coords = node_coords_from_svg(svg_path)
+        # If the chronological graph has been set and is currnet
+        if self.load_check and self.chronological_dag is not None:
+            # Ensure the graph is compatible with networkx < 3.4 nx_pydot
+            self.chronological_dag = remove_invalid_attributes_networkx_lt_3_4(self.chronological_dag)
+            # create the dot representation on disk
+            fi_new_chrono = workdir / "fi_new_chrono"
+            write_dot(self.chronological_dag, fi_new_chrono)
 
+            # If writing to disk succeeded, render the png and svg
+            if fi_new_chrono.is_file():
+                render("dot", "png", fi_new_chrono)
+                svg_path = render("dot", "svg", fi_new_chrono)
+                # Open the png and trim it for use in the GUI
+                inp = Image.open(workdir / "fi_new_chrono.png")
+                inp_final = trim(inp)
+                inp_final.save(workdir / "testdag_chrono.png")
+                self.chronological_image = Image.open(workdir / "testdag_chrono.png")
+                # Get node coordinates from the svg, storing them for right-click interaction in the dating results view
+                self.chronological_node_coords = node_coords_from_svg(svg_path)
         else:
             self.chronological_image = None
+            self.chronological_node_coords = None
 
     def reopen_stratigraphic_image(self) -> None:
         """Re-open the stratigraphic image from disk
