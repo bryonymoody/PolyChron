@@ -249,7 +249,7 @@ def dict_seek_ordered_new(i_seek, key, site_dict, THETAS, CONTEXT_NO, RCD_ERR, R
         res = min(enumerate(v_seek), key=lambda x: abs(site_dict[key]["dates"][i_seek][0] - x[1]))
         c_ind = np.where(like1 == res[1])
         x_temp = llhood[1:][0][c_ind[0]][0]
-        x_len = (x_temp/phase_len)*(np.sum(temp_vec)/np.sum(temp_vec_2))
+        x_len = (x_temp/phase_len)*(temp_vec.sum()/temp_vec_2.sum())
     return x_temp, x_len
 
 def dict_seek_ordered(A, P, i_seek, key, site_dict, THETAS, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION):
@@ -777,7 +777,7 @@ def step_2_squeeze(i, prob_1_test, M, PHI_SAMP_DICT, POST_S, R, PHIS_VEC, SITE_D
     return backup_b_test, prob_2_test, POST_S, PHIS_VEC, SITE_DICT_TEST_3, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, ALL_SAMPS_PHI
 
 def step_3_squeeze(A, P, i, backup_b_test, prob_2_test, S, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_4, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, POST_PHASE, PHI_REF, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI):
-    step = np.random.uniform(-1*S, 1*S)
+    step = np.random.uniform(max(-1*S, A - min(PHIS_VEC)), 1*S)
     THETAS = [x + step for x in THETAS]
     PHIS_VEC = [x + step for x in PHIS_VEC]
     for g2, a_3 in enumerate(THETAS):
@@ -825,7 +825,7 @@ def step_3_squeeze(A, P, i, backup_b_test, prob_2_test, S, ACCEPT, POST_S, PHIS_
     return b_test, prob_3_test, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_4, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, ALL_SAMPS_CONT, ALL_SAMPS_PHI
 
 def step_4_squeeze(A, P, i, b_test, prob_3_test, ACCEPT, POST_S, R, PHIS_VEC, SITE_DICT_TEST_5, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, POST_PHASE, PHI_REF, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI):
-    rho = np.random.uniform(2/3, 3/2)
+    rho = np.random.uniform(2/3, 1)
     constant = (rho-1)*mean(np.concatenate([PHIS_VEC, THETAS])).item()
     THETAS = [x*rho - constant for x in THETAS]
     PHIS_VEC = [x*rho - constant for x in PHIS_VEC]
@@ -841,7 +841,10 @@ def step_4_squeeze(A, P, i, b_test, prob_3_test, ACCEPT, POST_S, R, PHIS_VEC, SI
     PREV_PROB_TEST = temp_2[1]
     c_test = []
     for q_4, k_4 in enumerate(a_test):
-        c_test.append(k_4/b_test[q_4])
+        if b_test[q_4] == 0:
+            c_test.append(0)
+        else:
+            c_test.append(k_4/b_test[q_4])
     h_temp_test = np.prod(c_test)
     h_4 = h_temp_test*const
     if h_4 >= 1:
