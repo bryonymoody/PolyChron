@@ -1222,8 +1222,8 @@ class TestModelPresenter:
         # This should have requested the mediator to close
         mock_mediator.close_window.assert_called_with("exit")
 
-    def test_phasing(self):
-        """Test the phasing method, triggered from the view toolbar, would call the expected view methods (with a current_model)"""
+    def test_toggle_grouped_rendering(self):
+        """Test the callback functiuon, triggered from the view toolbar, which toggles if grouped rendering is used or not correctly inverts the flag and calls expected methods to re-render the stratigraphic graph and update UI components."""
 
         # Setup the mock mediator, mock view and fixture-provided ProjectSelection
         mock_mediator = MagicMock(spec=Mediator)
@@ -1237,7 +1237,7 @@ class TestModelPresenter:
 
         # With no current model, no view methods should be called.
         assert presenter.model.current_model is None
-        presenter.phasing()
+        presenter.toggle_grouped_rendering()
         assert len(mock_view.mock_calls) == 0
 
         # Reset the view mock
@@ -1251,7 +1251,7 @@ class TestModelPresenter:
         assert not presenter.model.current_model.grouped_rendering
 
         # Call phasing
-        presenter.phasing()
+        presenter.toggle_grouped_rendering()
 
         # The grouped_rendering flag should now be true
         assert presenter.model.current_model.grouped_rendering
@@ -1261,9 +1261,9 @@ class TestModelPresenter:
         mock_view.update_littlecanvas.assert_called_with(presenter.model.current_model.stratigraphic_image)
         assert mock_view.bind_littlecanvas_callback.call_count == 2
 
-        # Calling phasing once again currently does not disable grouped rendering currently (see https://github.com/bryonymoody/PolyChron/issues/135), so grouped_rendering should still be true
-        presenter.phasing()
-        assert presenter.model.current_model.grouped_rendering
+        # Calling phasing once again should then disable grouped rendering.
+        presenter.toggle_grouped_rendering()
+        assert not presenter.model.current_model.grouped_rendering
 
     def test_on_data_button(self):
         """Test on_data_button, which should toggle the visibilty of a small canvas in the view"""

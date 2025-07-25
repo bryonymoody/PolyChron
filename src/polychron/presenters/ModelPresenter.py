@@ -91,7 +91,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         )
         self.view.build_view_menu(
             [
-                ("Display Stratigraphic diagram in phases", lambda: self.phasing()),
+                ("Display Stratigraphic diagram in phases", lambda: self.toggle_grouped_rendering()),
             ]
         )
         self.view.build_tool_menu(
@@ -484,20 +484,22 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         """Close polychron gracefully via File > Exit"""
         self.mediator.close_window("exit")
 
-    def phasing(self) -> None:
-        """Callback function for View > Display Stratigraphic diagram in phases (groups)
+    def toggle_grouped_rendering(self) -> None:
+        """Callback function for `View > Display Stratigraphic diagram in phases (groups)`
 
-        Runs image render function with phases on seperate levels
+        Toggles if graphs are rendered in grouped (phased) mode or not, and re-renders the graph accordingly.
+
+        Runs image render function with phases on separate levels
 
         Formerly `StartPage.phasing`
         """
 
-        # Render the strat graph in pahse mode, if there is one to render, updating the model and view
         model_model = self.model.current_model
         if model_model is not None:
-            # Store a flag marking this as being enabled. Should this be model data?
-            model_model.grouped_rendering = True
+            # Toggle if grouped/phased rendering is in use or not.
+            model_model.grouped_rendering = not model_model.grouped_rendering
 
+            # If there is a stratigraphic graph, render it again with the updated grouped/phased setting and update UI elements.
             if model_model.stratigraphic_dag is not None:
                 model_model.render_strat_graph()
                 # Update the rendered image in the canvas
