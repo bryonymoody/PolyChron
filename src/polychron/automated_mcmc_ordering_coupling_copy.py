@@ -291,7 +291,7 @@ def dict_seek_ordered(A, P, i_seek, key, site_dict, THETAS, CONTEXT_NO, RCD_ERR,
         temp_vec = np.array(likeli(RCD_EST[ref], RCD_ERR[ref], float(int(site_dict[key]["dates"][i_seek][0])), CALIBRATION))
     date = site_dict[key]["dates"][i_seek][0]
     date_ref = int((date - A + 0.05)*10)
-    if date_ref >= len(like1): #checking we haven't sampled outside the realms of the likelihood
+    if (date_ref >= len(like1) or phase_len == 0 or temp_vec_2.sum() == 0): #checking we haven't sampled outside the realms of the likelihood
         x_temp = 0
         x_len = 0
     else:
@@ -825,8 +825,10 @@ def step_3_squeeze(A, P, i, backup_b_test, prob_2_test, S, ACCEPT, POST_S, PHIS_
     return b_test, prob_3_test, ACCEPT, POST_S, PHIS_VEC, SITE_DICT_TEST_4, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, ALL_SAMPS_CONT, ALL_SAMPS_PHI
 
 def step_4_squeeze(A, P, i, b_test, prob_3_test, ACCEPT, POST_S, R, PHIS_VEC, SITE_DICT_TEST_5, THETAS, POST_THETAS, POST_PHIS, PHI_ACCEPT, POST_PHASE, PHI_REF, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION, ALL_SAMPS_CONT, ALL_SAMPS_PHI):
-    rho = np.random.uniform(2/3, 1)
-    constant = (rho-1)*mean(np.concatenate([PHIS_VEC, THETAS])).item()
+    m = mean(np.concatenate([PHIS_VEC, THETAS])).item()
+    scale_limit = m/(m-min(PHIS_VEC))
+    rho = np.random.uniform(2/3, scale_limit)
+    constant = (rho-1)*m
     THETAS = [x*rho - constant for x in THETAS]
     PHIS_VEC = [x*rho - constant for x in PHIS_VEC]
     for s_4, a_4 in enumerate(THETAS):

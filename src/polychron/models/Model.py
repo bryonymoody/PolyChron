@@ -1031,18 +1031,18 @@ class Model:
             raise RuntimeError("Model is not MCMC ready, the stratigraphic and chronographic dag are not valid")
 
         context_no = [x for x in list(self.context_no_unordered) if x not in self.removed_nodes_tracker]
-        for i,j in enumerate(self.prev_group):
+        for i, j in enumerate(self.prev_group):
             if j == "overlap":
-                self.chronological_dag.add_edge("a_" + str(self.phi_ref[i]), "a_" + str(self.phi_ref[i-1]))
-                self.chronological_dag.add_edge("b_" + str(self.phi_ref[i]), "b_" + str(self.phi_ref[i-1]))      
+                self.chronological_dag.add_edge("a_" + str(self.phi_ref[i]), "a_" + str(self.phi_ref[i - 1]))
+                self.chronological_dag.add_edge("b_" + str(self.phi_ref[i]), "b_" + str(self.phi_ref[i - 1]))
         topo = list(nx.topological_sort(self.chronological_dag))
-        for i,j in enumerate(self.prev_group):
+        for i, j in enumerate(self.prev_group):
             if j == "overlap":
-                self.chronological_dag.remove_edge("a_" + str(self.phi_ref[i]), "a_" + str(self.phi_ref[i-1]))
-                self.chronological_dag.remove_edge("b_" + str(self.phi_ref[i]), "b_" + str(self.phi_ref[i-1]))
+                self.chronological_dag.remove_edge("a_" + str(self.phi_ref[i]), "a_" + str(self.phi_ref[i - 1]))
+                self.chronological_dag.remove_edge("b_" + str(self.phi_ref[i]), "b_" + str(self.phi_ref[i - 1]))
         topo_sort = [x for x in topo if (x not in self.removed_nodes_tracker) and (x in context_no)]
         topo_sort.reverse()
-        context_no = topo_sort        
+        context_no = topo_sort
         # Get a list containing the group per context (in reverse topological order)
         key_ref = [list(self.group_df["Group"])[list(self.group_df["context"]).index(i)] for i in context_no]
         self.context_types = [self.context_types[list(self.context_no_unordered).index(i)] for i in topo_sort]
