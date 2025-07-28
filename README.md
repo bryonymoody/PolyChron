@@ -8,10 +8,25 @@
 [![Format](https://github.com/bryonymoody/PolyChron/actions/workflows/format.yml/badge.svg)](https://github.com/bryonymoody/PolyChron/actions/workflows/format.yml)
 
 
-PolyChron is prototype software required to be installed locally on a user’s machine, allowing users to produce multiple chronological models.
+PolyChron is prototype software required to be installed locally on a user’s machine. It is designed to facilitate the analysis and archiving of archaeological dating evidence. It allows the user to manage relative and absolute digital dating evidence and produce multiple chronological models within a Bayesian modelling framework.
 
-In addition, it allows the user to obtain graph theoretic representations
-of their stratigraphic sequences and prior knowledge within a given hierarchical Bayesian chronological model and save the raw digital data (as collected on-site) along with graph theoretic representations of their models, resulting outputs and supplementary notes produced during such modelling on their machine, thus facilitating future archiving of a complete site archive.
+The software supports the management of both relative and absolute dating evidence, enabling users to build multiple chronological models within a Bayesian modelling framework.
+
+Key features include:
+
+- Graph-theoretic representations of stratigraphic sequences, which users can explore and edit via an intuitive point-and-click interface.
+
+- The ability to input prior knowledge, such as:
+
+    - Groupings of archaeological contexts
+
+    - Identification of residual or intrusive samples
+
+    - Relationships between different groups
+
+Using this information, PolyChron constructs a hierarchical Bayesian model and uses an MCMC algorithm estimate the posterior calendar ages of samples.
+
+All outputs, including raw digital data (as input by the user), model representations, results, and supplementary notes are saved locally. This ensures the full site archive is preserved for future use and long-term archiving with the Archeology Data Service..
 
 ## Documentation
 
