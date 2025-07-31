@@ -111,9 +111,6 @@ class ManageGroupRelationshipsView(PopupView):
         # Set the minimum window geometry, so the popup can be scaled up to make more room, but cannot be shrunk
         self.wm_minsize(popup_width, popup_height)
 
-        # prevent this window being resized, as the boxes do not handle being resized (yet?)
-        # self.resizable(False, False)
-
         self.group_label_dict = {}
         """Dictionary of group boxes/tkinter label elements"""
 
@@ -125,6 +122,9 @@ class ManageGroupRelationshipsView(PopupView):
 
         self.__group_box_mouse_release_callback: Callable[[], Any] = lambda event: None
         """Callback method for mouse release events on group box"""
+
+        self.__group_box_mouse_cursor = ""
+        """The mouse cursor to display on group boxes when they are movable"""
 
         self.__confirm_callback: Callable[[], Any] = lambda: None
         """Callback method for when the confirm button is pressed. 
@@ -312,6 +312,8 @@ class ManageGroupRelationshipsView(PopupView):
             label.bind("<ButtonPress-1>", lambda event: self.__group_box_mouse_press_callback(event))
             label.bind("<B1-Motion>", lambda event: self.__group_box_mouse_move_callback(event))
             label.bind("<ButtonRelease-1>", lambda event: self.__group_box_mouse_release_callback(event))
+            label.bind("<Enter>", lambda event: event.widget.config(cursor=self.__group_box_mouse_cursor))
+            label.bind("<Leave>", lambda event: event.widget.config(cursor=""))
             label.place(x=x, y=y, width=w, height=h)
             self.group_label_dict[group_label] = label
 
@@ -377,11 +379,21 @@ class ManageGroupRelationshipsView(PopupView):
             self.relationships_table.insert("", tk.END, text=index, values=row)
 
     def bind_group_box_mouse_events(
-        self, on_press: Callable[[], Any], on_move: Callable[[], Any], on_release: Callable[[], Any]
+        self,
+        on_press: Callable[[], Any] | None,
+        on_move: Callable[[], Any] | None,
+        on_release: Callable[[], Any] | None,
+        cursor: Literal["", "fleur"] | None,
     ) -> None:
         """Bind the callback for mouse events to move group boxes.
 
         This is set on a (private) view class members, to avoid having to call this method again if the group boxes are ever re-generated.
+
+        Parameters:
+            on_press: Callback function for mouse press events on the group box labels
+            on_move: Callback function for mouse move events on the group box labels
+            on_release: Callback function for mouse release events on the group box labels
+            cursor: The tkinter cursor string to use when the mouse is over the group box labels. Use 'fluer' when the boxes can be dragged.
         """
         if on_press is not None:
             self.__group_box_mouse_press_callback = on_press
@@ -389,6 +401,9 @@ class ManageGroupRelationshipsView(PopupView):
             self.__group_box_mouse_move_callback = on_move
         if on_release is not None:
             self.__group_box_mouse_release_callback = on_release
+
+        # Also set the cursor to use for the group boxes
+        self.__group_box_mouse_cursor = cursor
 
     def bind_confirm_button(self, callback: Callable[[], Any]) -> None:
         """Bind the callback for when the confirm_button is pressed"""

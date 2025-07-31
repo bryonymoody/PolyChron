@@ -140,7 +140,7 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
 
         # Bind canvas events for dragging boxes around
         self.view.bind_group_box_mouse_events(
-            self.on_box_mouse_press, self.on_box_mouse_move, self.on_box_mouse_release
+            self.on_box_mouse_press, self.on_box_mouse_move, self.on_box_mouse_release, "fleur"
         )
 
         self.__group_box_drag_x: float | None = None
@@ -272,6 +272,9 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
         Formerly popupWindow3.back_func"""
         self.view.layout_step_one()
         self.view.update_relationships_table(self.model.group_relationships_dict())
+        self.view.bind_group_box_mouse_events(
+            self.on_box_mouse_press, self.on_box_mouse_move, self.on_box_mouse_release, "fleur"
+        )
 
     def get_coords(self) -> None:
         """Triggered when confirming the provided layout of phase relationships.
@@ -343,6 +346,9 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
 
             # Update the box coordinates
             self.view.update_box_coords(new_xy)
+
+        # Disable mouse-interaction with boxes
+        self.view.bind_group_box_mouse_events(lambda _: None, lambda _: None, lambda _: None, "")
 
         # Update the view
         self.view.layout_step_two()

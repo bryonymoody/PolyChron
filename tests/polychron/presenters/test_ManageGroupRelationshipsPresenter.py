@@ -79,10 +79,11 @@ class TestManageGroupRelationshipsPresenter:
         assert callable(mock_view.bind_change_button.call_args.args[0])
 
         mock_view.bind_group_box_mouse_events.assert_called()
-        assert len(mock_view.bind_group_box_mouse_events.call_args.args) == 3
+        assert len(mock_view.bind_group_box_mouse_events.call_args.args) == 4
         assert callable(mock_view.bind_group_box_mouse_events.call_args.args[0])
         assert callable(mock_view.bind_group_box_mouse_events.call_args.args[1])
         assert callable(mock_view.bind_group_box_mouse_events.call_args.args[2])
+        assert mock_view.bind_group_box_mouse_events.call_args.args[3] in ["", "fleur"]
 
     def test_update_view(self, test_data_model_demo: Model):
         """Test update_view behaves as intended with the Demo model"""
