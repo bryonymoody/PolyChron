@@ -34,6 +34,7 @@ classifiers = [
     "Topic :: Sociology :: History",
     "Intended Audience :: Science/Research",
 ]
+description = "Analysis and archiving of archaeological dating evidence"
 keywords = [
     "statistics",
     "chronology",
