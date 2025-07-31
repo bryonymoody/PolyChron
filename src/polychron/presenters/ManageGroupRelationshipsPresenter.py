@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 import networkx as nx
 import numpy as np
+import pandas as pd
 
 from ..interfaces import Mediator
 from ..models.Model import Model
@@ -434,6 +435,12 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
 
         # Store the chronological dag
         self.model.chronological_dag = self.dag
+
+        # Update the dataframe of group relationships to match the version from chrono rendering rather than the version from disk
+        self.model.group_relationship_df = pd.DataFrame(
+            [[above, below, relationship] for (above, below), relationship in self.group_relationship_dict.items()],
+            columns=["above", "below", "relationship"],
+        )
 
         # Update other model properties
         self.model.context_types = self.context_types
