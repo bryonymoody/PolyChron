@@ -105,7 +105,11 @@ class ManageGroupRelationshipsView(PopupView):
         except Exception:
             pass
         popup_width = int(geometry.split("x")[0])
+        popup_height = int(geometry.split("x")[1])
+        # Set the window geometry
         self.geometry(geometry)
+        # Set the minimum window geometry, so the popup can be scaled up to make more room, but cannot be shrunk
+        self.wm_minsize(popup_width, popup_height)
 
         # prevent this window being resized, as the boxes do not handle being resized (yet?)
         # self.resizable(False, False)
