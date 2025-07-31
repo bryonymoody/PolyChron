@@ -994,6 +994,15 @@ class Model:
         """
         self.deleted_edges.append((context_a, context_b, reason))
 
+    def is_ready_for_mcmc(self) -> bool:
+        """Indicate if the model is ready for mcmc calibration or not.
+
+        Returns:
+            bool indicating if the model is ready for calibration
+        """
+
+        return self.stratigraphic_dag is not None and self.chronological_dag is not None
+
     def MCMC_func(
         self,
     ) -> Tuple[
@@ -1018,7 +1027,7 @@ class Model:
         Formerly `StartPage.MCMC_func`
         """
 
-        if self.stratigraphic_dag is None or self.chronological_dag is None:
+        if not self.is_ready_for_mcmc():
             raise RuntimeError("Model is not MCMC ready, the stratigraphic and chronographic dag are not valid")
 
         context_no = [x for x in list(self.context_no_unordered) if x not in self.removed_nodes_tracker]

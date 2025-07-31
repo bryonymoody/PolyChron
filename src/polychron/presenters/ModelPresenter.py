@@ -184,6 +184,15 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         model_model = self.model.current_model
         if model_model is None:
             return
+
+        # If the model is not ready for calibration present an error popup.
+        if not model_model.is_ready_for_mcmc():
+            self.view.messagebox_error(
+                "Error",
+                "The Model is not ready for calibration.\nPlease ensure the stratigraphic data has been provided and the chronological graph has been rendered",
+            )
+            return
+
         # Create the popup presenter and view
         popup_presenter = MCMCProgressPresenter(self.mediator, MCMCProgressView(self.view), model_model)
         # Ensure it is visible and on top

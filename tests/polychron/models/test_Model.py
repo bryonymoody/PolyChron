@@ -996,6 +996,25 @@ class TestModel:
         assert len(m.deleted_edges) == 4
         assert m.deleted_edges[3] == ("bar", "baz", "duplicate")
 
+    def test_is_ready_for_mcmc(self, tmp_path: pathlib.Path, test_data_path: pathlib.Path):
+        """Test the check for when a model is ready for calibration
+
+        Todo:
+            - Ensure that a model with a chronograph but no dating/groups would not be rendered. For typical usage this is covered due to the chronograph requirement, but the method being tested could be made more robust
+        """
+        m = Model("foo", tmp_path / "foo")
+        assert not m.is_ready_for_mcmc()
+
+        # Add a chronological DAG, it should still not be ready.
+        strat_df = pd.read_csv(test_data_path / "strat-csv" / "simple.csv", dtype=str)
+        m.set_stratigraphic_df(strat_df)
+        assert not m.is_ready_for_mcmc()
+
+        # Render the chronological dag, it should now be ready.
+        # This is not a true render, just enough to pass the test...
+        m.chronological_dag = nx.DiGraph()
+        assert m.is_ready_for_mcmc()
+
     @pytest.mark.skip("test_MCMC_func not implemented")
     def test_MCMC_func(self, tmp_path: pathlib.Path):
         """Test MCMC_func behaves as expected for a range of inputs / Models"""

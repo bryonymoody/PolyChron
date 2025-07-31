@@ -277,7 +277,7 @@ class TestModelPresenter:
 
     @patch("polychron.presenters.ModelPresenter.MCMCProgressPresenter")
     @patch("polychron.presenters.ModelPresenter.MCMCProgressView")
-    def test_popup_calibrate_model(self, MockMCMCProgressView, MockMCMCProgressPresenter):
+    def test_popup_calibrate_model(self, MockMCMCProgressView, MockMCMCProgressPresenter, test_data_path: pathlib.Path):
         """Test that popup_calibrate_model opens the correct (mocked) popup and switches to the DatingResults presenter (if there is a current model)"""
 
         # Setup the mock mediator, mock view and fixture-provided ProjectSelection
@@ -302,8 +302,19 @@ class TestModelPresenter:
         MockMCMCProgressView.assert_not_called()
         mock_mediator.switch_presenter.assert_not_called()
 
-        # Set a valid current model, and try again. This should create the popup and call several methods on the popup and the mediator.
+        # Switch to a valid but empty model, and try again. This should present an error message
         presenter.model.switch_to("foo", "bar")
+        presenter.popup_calibrate_model()
+        MockMCMCProgressPresenter.assert_not_called()
+        MockMCMCProgressView.assert_not_called()
+        mock_view.messagebox_error.assert_called_once()
+
+        # Use a model which is ready for calibration (enough to pass the test)
+        presenter.model.switch_to("foo", "bar")
+        strat_df = pd.read_csv(test_data_path / "strat-csv" / "simple.csv", dtype=str)
+        presenter.model.current_model.set_stratigraphic_df(strat_df)
+        presenter.model.current_model.chronological_dag = nx.DiGraph()  # Not truly ready, but close enough
+
         presenter.popup_calibrate_model()
         MockMCMCProgressPresenter.assert_called_once()
         MockMCMCProgressView.assert_called_once()
