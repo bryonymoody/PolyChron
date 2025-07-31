@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 from polychron.models.GroupRelationshipType import GroupRelationshipType
@@ -43,6 +45,30 @@ class TestGroupRelationshipType:
         obj = GroupRelationshipType(value)
         str_obj = str(obj)
         assert str_obj == value
+
+    @pytest.mark.parametrize(
+        ("a", "b", "expected"),
+        [
+            # Check ABUTTING matches or does not match in both directions
+            (GroupRelationshipType.ABUTTING, GroupRelationshipType.ABUTTING, True),
+            (GroupRelationshipType.ABUTTING, "abutting", True),
+            (GroupRelationshipType.ABUTTING, GroupRelationshipType.GAP, False),
+            (GroupRelationshipType.ABUTTING, "gap", False),
+            ("abutting", GroupRelationshipType.ABUTTING, True),
+            (GroupRelationshipType.GAP, GroupRelationshipType.ABUTTING, False),
+            ("gap", GroupRelationshipType.ABUTTING, False),
+            # Check gap matches against obj and str versions in one direction
+            (GroupRelationshipType.GAP, GroupRelationshipType.GAP, True),
+            (GroupRelationshipType.GAP, "gap", True),
+            # Check overlap matches against obj and str versions in one direction
+            (GroupRelationshipType.OVERLAP, GroupRelationshipType.OVERLAP, True),
+            (GroupRelationshipType.OVERLAP, "overlap", True),
+        ],
+    )
+    def test_eq(self, a: GroupRelationshipType | str | Any, b: GroupRelationshipType | str | Any, expected: bool):
+        """Test comparison to objects behaves as expected"""
+        result = a == b
+        assert expected == result
 
     @pytest.mark.parametrize(
         ("value", "expected"),

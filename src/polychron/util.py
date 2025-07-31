@@ -17,6 +17,8 @@ from lxml import etree
 from networkx.drawing.nx_pydot import read_dot
 from PIL import Image, ImageChops
 
+from .models.GroupRelationshipType import GroupRelationshipType
+
 """Utility methods
 """
 
@@ -568,7 +570,7 @@ def alp_beta_node_add(group: str, graph: nx.DiGraph) -> None:
 
 def phase_labels(
     phi_ref: list[str],
-    post_group: list[Literal["abutting", "gap", "overlap", "end"]],
+    post_group: list[Literal["abutting", "gap", "overlap", "end"] | GroupRelationshipType],
     phi_accept: list[list[float]],
     all_samps_phi: list[list[float]],
 ) -> tuple[list[str], dict[str, list[float]], dict[str, list[float]]]:
@@ -593,7 +595,7 @@ def phase_labels(
     all_results_dict = {labels[0]: all_samps_phi[i]}
     for idx, post_type in enumerate(post_group):
         i = i + 1
-        if post_type == "abutting":
+        if post_type == GroupRelationshipType.ABUTTING:
             labels.append(f"b_{phi_ref[idx]} = a_{phi_ref[idx + 1]}")
             results_dict[f"a_{phi_ref[idx + 1]} = b_{phi_ref[idx]}"] = phi_accept[i]
             all_results_dict[f"a_{phi_ref[idx + 1]} = b_{phi_ref[idx]}"] = all_samps_phi[i]
@@ -602,7 +604,7 @@ def phase_labels(
             labels.append(f"b_{phi_ref[-1]}")
             results_dict[f"b_{phi_ref[idx]}"] = phi_accept[i]
             all_results_dict[f"b_{phi_ref[idx]}"] = all_samps_phi[i]
-        elif post_type == "gap":
+        elif post_type == GroupRelationshipType.GAP:
             labels.append(f"b_{phi_ref[idx]}")
             labels.append(f"a_{phi_ref[idx + 1]}")
             results_dict[f"b_{phi_ref[idx]}"] = phi_accept[i]
@@ -610,7 +612,7 @@ def phase_labels(
             i = i + 1
             results_dict[f"a_{phi_ref[idx + 1]}"] = phi_accept[i]
             all_results_dict[f"a_{phi_ref[idx + 1]}"] = all_samps_phi[i]
-        else:  # post_type == "overlap"
+        else:  # post_type == GroupRelationshipType.OVERLAP
             labels.append(f"a_{phi_ref[idx + 1]}")
             labels.append(f"b_{phi_ref[idx]}")
             results_dict[f"a_{phi_ref[idx + 1]}"] = phi_accept[i]
@@ -710,7 +712,7 @@ def group_rels_delete_empty(
     [file_graph.add_edge(f"a_{i[0]}", f"b_{i[1]}", arrowhead="none") for i in new_group_rels]
     for p in p_list:
         relation = phasedict[p]
-        if relation == "gap":
+        if relation == GroupRelationshipType.GAP:
             if p[0] not in graph_data[1][2]:
                 phasedict.pop[p]
                 null_phases.append(p)
@@ -718,14 +720,14 @@ def group_rels_delete_empty(
                 null_phases.append(p)
             else:
                 file_graph.add_edge(f"a_{p[0]}", f"b_{p[1]}", arrowhead="none")
-        if relation == "overlap":
+        if relation == GroupRelationshipType.OVERLAP:
             if p[0] not in graph_data[1][2]:
                 null_phases.append(p)
             elif p[1] not in graph_data[1][2]:
                 null_phases.append(p)
             else:
                 file_graph.add_edge(f"b_{p[1]}", f"a_{p[0]}", arrowhead="none")
-        if relation == "abutting":
+        if relation == GroupRelationshipType.ABUTTING:
             if p[0] not in graph_data[1][2]:
                 null_phases.append(p)
             elif p[1] not in graph_data[1][2]:
@@ -749,8 +751,8 @@ def chrono_edge_add(
     xs_ys,
     phasedict: dict[tuple[str, str], str],
     phase_trck: list[tuple[str, str]],
-    post_dict: dict[str, Literal["abutting", "gap", "overlap"]],
-    prev_dict: dict[str, Literal["abutting", "gap", "overlap"]],
+    post_dict: dict[str, Literal["abutting", "gap", "overlap"] | GroupRelationshipType],
+    prev_dict: dict[str, Literal["abutting", "gap", "overlap"] | GroupRelationshipType],
 ) -> Tuple[nx.DiGraph, List[Any], List[str]]:
     """chrono_edge_add"""
     xs = xs_ys[0]
@@ -797,8 +799,8 @@ def chrono_edge_add(
 
     # replace phase rels with gap for phases adjoined due to missing phases
     for i in new_group_rels:
-        post_dict[i[1]] = "gap"
-        prev_dict[i[0]] = "gap"
+        post_dict[i[1]] = GroupRelationshipType.GAP
+        prev_dict[i[0]] = GroupRelationshipType.GAP
     nx.set_node_attributes(file_graph, label_dict, "label")
     return (file_graph, phi_ref, null_phases)
 
