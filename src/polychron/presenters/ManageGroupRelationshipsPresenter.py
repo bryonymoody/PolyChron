@@ -270,8 +270,8 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
         """Callback for when the back button is pressed (when it exists), which updates the view to show the first phase
 
         Formerly popupWindow3.back_func"""
+        self.view.update_relationships_table(self.group_relationship_dict)
         self.view.layout_step_one()
-        self.view.update_relationships_table(self.model.group_relationships_dict())
         self.view.bind_group_box_mouse_events(
             self.on_box_mouse_press, self.on_box_mouse_move, self.on_box_mouse_release, "fleur"
         )
@@ -350,9 +350,12 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
         # Disable mouse-interaction with boxes
         self.view.bind_group_box_mouse_events(lambda _: None, lambda _: None, lambda _: None, "")
 
+        # Reverse the order of the group relationship dictionary, so the 0th row of the table matches the top-most relationship
+        self.group_relationship_dict = dict(reversed(self.group_relationship_dict.items()))
+
         # Update the view
-        self.view.layout_step_two()
         self.view.update_relationships_table(self.group_relationship_dict)
+        self.view.layout_step_two()
 
     def full_chronograph_func(self) -> None:
         """renders the chronological graph and forms the prev_phase and past_phase vectors
