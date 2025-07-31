@@ -443,7 +443,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         Formerly StartPage.open_file5
         """
-        from ..models.GroupRelationshipType import GroupRelationshipType
+        from ..models.GroupRelationship import GroupRelationship
 
         file = self.view.askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
         if file is not None:
@@ -455,7 +455,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 if "below" not in df.columns:
                     raise ValueError("'below' is a required column for group relationship files")
                 if "relationship" in df.columns:
-                    relationship_type_strings = [str(t) for t in GroupRelationshipType]
+                    relationship_type_strings = [str(t) for t in GroupRelationship]
                     for value in df["relationship"]:
                         if value != "" and value not in relationship_type_strings:
                             string_options = ", ".join([f"'{r}'" for r in relationship_type_strings])

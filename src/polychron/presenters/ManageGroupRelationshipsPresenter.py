@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from ..interfaces import Mediator
-from ..models.GroupRelationshipType import GroupRelationshipType
+from ..models.GroupRelationship import GroupRelationship
 from ..models.Model import Model
 from ..util import chrono_edge_add, chrono_edge_remov, node_del_fixed
 from ..views.ManageGroupRelationshipsView import ManageGroupRelationshipsView
@@ -210,11 +210,11 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
             older_right_edge = older_x + older_w
             # Calculate the box placement for the current group based on the placement of the the older box and the type of relationship (if known).
             # This will not handle having relationships with multiple groups well.
-            if relationship == GroupRelationshipType.OVERLAP:
+            if relationship == GroupRelationship.OVERLAP:
                 x = older_right_edge - (self._overlap_factor * older_w)
-            elif relationship == GroupRelationshipType.GAP:
+            elif relationship == GroupRelationship.GAP:
                 x = older_right_edge + (self._overlap_factor * older_w)
-            elif relationship == GroupRelationshipType.ABUTTING:
+            elif relationship == GroupRelationship.ABUTTING:
                 x = older_right_edge
             else:  # None / unknown
                 # When relationships are not known, leave enough room for the rendered gap amount (_overlap_factor)
@@ -322,21 +322,21 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
                 # If the difference in x less than the negative threshold, it is an overlap
                 if x_delta < -self.ABUTTING_THRESHOLD:
                     # Compute the new x position for the next node
-                    rel = GroupRelationshipType.OVERLAP
+                    rel = GroupRelationship.OVERLAP
                     new_x = new_prev_right - (self._overlap_factor * prev_w)
                     self.prev_dict[curr_group] = rel
                     self.post_dict[prev_group] = rel
                     self.group_relationship_dict[(curr_group, prev_group)] = rel
                 # Otherwise, if the difference is greater than the positive threshold, it's a gap
                 elif x_delta > +self.ABUTTING_THRESHOLD:
-                    rel = GroupRelationshipType.GAP
+                    rel = GroupRelationship.GAP
                     new_x = new_prev_right + (self._overlap_factor * prev_w)
                     self.prev_dict[curr_group] = rel
                     self.post_dict[prev_group] = rel
                     self.group_relationship_dict[(curr_group, prev_group)] = rel
                 # Otherwise, it's abutting
                 else:
-                    rel = GroupRelationshipType.ABUTTING
+                    rel = GroupRelationship.ABUTTING
                     new_x = new_prev_right
                     self.prev_dict[curr_group] = rel
                     self.post_dict[prev_group] = rel
@@ -397,8 +397,8 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
             del phi_ref[index]
         # change to new phase rels
         for i in ref_list:
-            prev_group[i] = GroupRelationshipType.GAP
-            post_group[i] = GroupRelationshipType.GAP
+            prev_group[i] = GroupRelationship.GAP
+            post_group[i] = GroupRelationship.GAP
         self.dag.graph["graph"] = {"splines": "ortho"}
         atribs = nx.get_node_attributes(self.dag, "Group")
         nodes = self.dag.nodes()
