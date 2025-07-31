@@ -467,7 +467,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                     df[["above", "below", "relationship"]] if "relationship" in df.columns else df[["above", "below"]]
                 )
                 # Adjust column labels for the preview
-                preview_df.rename(columns={"above": "above (younger)", "below": "below (older)"}, inplace=True)
+                preview_df = preview_df.rename(columns={"above": "above (younger)", "below": "below (older)"})
                 # Show the file preview
                 load_it = self.file_popup(preview_df)
                 if load_it == "load":
