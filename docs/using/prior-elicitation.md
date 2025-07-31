@@ -76,9 +76,9 @@ The CSV file must include 3 columns:
 
 | Column    | Type    | Description                   |
 |-----------|---------|-------------------------------|
-| `context` | `str`   | the context label for the row |
-| `date`    | `float` | the radiocarbon date in BP    |
-| `error`   | `float` | the laboratory error for radiocarbon estimate |
+| `context` | `str`   | The context label for the row |
+| `date`    | `float` | The radiocarbon date in BP    |
+| `error`   | `float` | The laboratory error for radiocarbon estimate |
 
 For the example model from [*(Moody, 2023)*](https://etheses.whiterose.ac.uk/id/eprint/33387/):
 
@@ -126,15 +126,16 @@ context,Group
 
 ### Input group orderings
 
-Like contexts, groups have relative relationships to one another in PolyChron.
+Like contexts, groups have relative relationships between one another in PolyChron.
 These are loaded from a CSV file, by selecting `File > Load group relationship file (.csv)`
 
 The CSV file must have with 2 columns, and each row provides the relationship between two groups:
 
-| Column  | Type  | Description       |
-|---------|-------|-------------------|
-| `above` | `str` | the younger group |
-| `below` | `str` | the older group   |
+| Column         | Type  | Description       |
+|----------------|-------|-------------------|
+| `above`        | `str` | The younger group |
+| `below`        | `str` | The older group   |
+| `relationship` | Optional: `abutting`, `gap`, `overlap` | Optional column containing the type of relationship. |  
 
 For example, using the 2-group model included in [*(Moody, 2023)*](https://etheses.whiterose.ac.uk/id/eprint/33387/):
 
@@ -142,6 +143,20 @@ For example, using the 2-group model included in [*(Moody, 2023)*](https://ethes
 above,below
 2,1
 ```
+
+Or including the optional third `relationship` column specifying the relationship between `2` and `1` is `abutting`: 
+
+```csv
+above,below,relationship
+2,1,abutting
+```
+
+Each group must:
+
+- Be the `above` group in `0` or `1` relationships
+- Be the `below` group in `0` or `1` relationships
+- Be included in `1` or `2` relationships 
+    - i.e. every defined group must be included in at least one row
 
 ## Saving the Model
 
@@ -271,10 +286,10 @@ When all residual or intrusive contexts have been identified, a second popup win
 
 - Residual:
     - Exclude from modelling
-    - Treat as TPQ (terminus post quem)
+    - Treat as TPQ (*terminus post quem*)
 - Intrusive:
     - Exclude from modelling
-    - Treat as TAQ (terminus ante quem)
+    - Treat as TAQ (*terminus ante quem*)
 
 During conversion from stratigraphic to chronological DAG, edges will be removed depending on how the residual and intrusive contexts have been identified.
 
@@ -300,6 +315,8 @@ Other groups must then be placed relative to one another, implying one of three 
 - `abutting` relationships must place the left and right hand edges next to one another (`±15` pixels)
 - `gap` relationships have a gap of at least `15` pixels between horizontal edges of the boxes
 - `overlap` relationships have a horizontal overlap of at least `15` pixels.
+
+Boxes will be initially placed in the correct order based on the provided group before-after relationships, and if the relationship type was also provided the correct initial `abutting`/`gap`/`overlap` relationship.
 
 When the user is happy with their placement of boxes, they can click `Confirm Groups`.
 PolyChron will detect the classified relationships and show the user the detected relationship types, both in the table and by re-positioning boxes to the canonical positions for the types of relationships identified.
