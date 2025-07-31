@@ -3,9 +3,8 @@
 <!-- Logo path must be inside docs/, but logo is used in both.  -->
 ![PolyChron Logo](assets/img/logo.png)
 
-PolyChron is prototype software required to be installed locally on a user’s machine. It is designed to facilitate the analysis and archiving of archaeological dating evidence. It allows the user to manage relative and absolute digital dating evidence and produce multiple chronological models within a Bayesian modelling framework.
-
-The software supports the management of both relative and absolute dating evidence, enabling users to build multiple chronological models within a Bayesian modelling framework.
+PolyChron is a GUI application designed to facilitate the analysis and archiving of archaeological dating evidence. 
+It supports the management of both relative and absolute dating evidence, enabling users to build multiple chronological models within a Bayesian modelling framework.
 
 Key features include:
 
@@ -19,9 +18,10 @@ Key features include:
 
     - Relationships between different groups
 
-Using this information, PolyChron constructs a hierarchical Bayesian model and uses an MCMC algorithm estimate the posterior calendar ages of samples.
+Using this information, PolyChron constructs a hierarchical Bayesian model and uses an MCMC (Markov Chain Monte Carlo) algorithm to estimate the posterior calendar ages of samples.
 
-All outputs, including raw digital data (as input by the user), model representations, results, and supplementary notes are saved locally. This ensures the full site archive is preserved for future use and long-term archiving with the Archeology Data Service..
+All outputs, including raw digital data (as input by the user), model representations, results, and supplementary notes are saved locally.
+This ensures the full site archive is preserved for future use and long-term archiving with the Archaeology Data Service.
 
 PolyChron is available from [github.com/bryonymoody/PolyChron](https://github.com/bryonymoody/PolyChron)
 
