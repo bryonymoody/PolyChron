@@ -47,11 +47,14 @@ class SplashView(FrameView):
 
         # Load the image from the package resources, and add it to the current frame
         package_name = __name__.split(".")[0]
-        image1 = None
+        self.original_logo_image = None
         with importlib.resources.files(package_name).joinpath("resources/logo.png").open("rb") as f:
-            image1 = Image.open(io.BytesIO(f.read()))
-        # Convert the image which has been read from disk into an ImageTK, as a class memebr to avoid it going out of scope
-        self.logo_image = ImageTk.PhotoImage(image1)
+            self.original_logo_image = Image.open(io.BytesIO(f.read()))
+        # Create a copy of the image which will be resized if needed
+        self.logo_image = self.original_logo_image.copy()
+
+        # Convert the image which has been read from disk into an ImageTK, as a class member to avoid it going out of scope
+        self.logo_image_tk = ImageTk.PhotoImage(self.original_logo_image)
 
         # Because the frame & parent frame have not yet been packed in the parent, the width and height have not yet been computed correctly for self or self.frame.
         # Instead, use the parent's width / height, and scale the window height as the canvas is 97% tall
@@ -59,15 +62,36 @@ class SplashView(FrameView):
         canvas_center_x = self.parent.winfo_width() / 2
         canvas_center_y = (0.97 * self.parent.winfo_height()) / 2
         self.canvas_img_id = self.canvas.create_image(
-            canvas_center_x, canvas_center_y, image=self.logo_image, anchor=tk.CENTER
+            canvas_center_x, canvas_center_y, image=self.logo_image_tk, anchor=tk.CENTER
         )
         # When the window is resized, ensure the image is still centered within the window
-        self.canvas.bind("<Configure>", lambda event: self.recenter_image(event))
+        self.canvas.bind("<Configure>", lambda event: self.recentre_image(event))
 
-    def recenter_image(self, event) -> None:
-        """Callback for when the window is resized to re-center the image"""
-        canvas_center_x = self.parent.winfo_width() / 2
-        canvas_center_y = (0.97 * self.parent.winfo_height()) / 2
+    def recentre_image(self, event) -> None:
+        """Callback for when the window is resized to re-size and re-center the image"""
+
+        canvas_width = self.canvas.winfo_width()
+        canvas_height = self.canvas.winfo_height()
+
+        if canvas_width == 0 or canvas_height == 0:
+            return
+
+        # Calculate if the image needs to be scaled or not, if the canvas is smaller than the source image
+        original_width, original_height = self.original_logo_image.size
+        width_sf = canvas_width / original_width
+        height_sf = canvas_width / original_height
+        scale_factor = min(1.0, width_sf, height_sf)
+        new_width = int(original_width * scale_factor)
+        new_height = int(original_height * scale_factor)
+        # If the size doesn't match, change it.
+        if new_width != self.logo_image.width or new_height != self.logo_image.height:
+            self.logo_image = self.original_logo_image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            self.logo_image_tk = ImageTk.PhotoImage(self.logo_image)
+            self.canvas.itemconfig(self.canvas_img_id, image=self.logo_image_tk)
+
+        # Place in the new centre
+        canvas_center_x = canvas_width / 2
+        canvas_center_y = canvas_height / 2
         self.canvas.coords(self.canvas_img_id, canvas_center_x, canvas_center_y)
 
     def build_file_menu(self, items: List[Tuple[str, Callable[[], Any]] | None]) -> None:
