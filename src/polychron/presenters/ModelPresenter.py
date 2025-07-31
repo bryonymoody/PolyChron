@@ -391,7 +391,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 else:
                     pass
             except ValueError:
-                self.view.messagebox_error("showerror", "Data not loaded, please try again")
+                self.view.messagebox_error("Error", "Data not loaded, please try again")
 
     def open_scientific_dating_file(self) -> None:
         """Callback function when File > Load scientific dating file (.csv) is selected, opening a scientific dating file
@@ -414,7 +414,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 else:
                     pass
             except ValueError:
-                self.view.messagebox_error("showerror", "Data not loaded, please try again")
+                self.view.messagebox_error("Error", "Data not loaded, please try again")
 
     def open_context_grouping_file(self) -> None:
         """Callback function when File > Load context grouping file (.csv) is selected, opening context grouping / phase file
@@ -436,7 +436,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 else:
                     pass
             except ValueError:
-                self.view.messagebox_error("showerror", "Data not loaded, please try again")
+                self.view.messagebox_error("Error", "Data not loaded, please try again")
 
     def open_group_relationship_file(self) -> None:
         """Callback function when File > Load group relationship file (.csv) is selected, opening a group relationship / phase relationship file
@@ -478,7 +478,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 else:
                     pass
             except ValueError as e:
-                self.view.messagebox_error("showerror", f"Data not loaded, please try again:\n\n{e}")
+                self.view.messagebox_error("Error", f"Data not loaded, please try again:\n\n{e}")
 
     def open_context_equalities_file(self) -> None:
         """Callback function when File > Load context equalities file (.csv) is selected, opening a file providing context equalities (in time)
@@ -503,7 +503,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 self.view.bind_littlecanvas_callback(get_right_click_binding(), self.pre_click)
                 self.view.messagebox_info("Success", "Equal contexts data loaded")
             except ValueError:
-                self.view.messagebox_error("showerror", "Data not loaded, please try again")
+                self.view.messagebox_error("Error", "Data not loaded, please try again")
 
     def close_application(self) -> None:
         """Close polychron gracefully via File > Exit"""
