@@ -184,6 +184,15 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         model_model = self.model.current_model
         if model_model is None:
             return
+
+        # If the model is not ready for calibration present an error popup.
+        if not model_model.is_ready_for_mcmc():
+            self.view.messagebox_error(
+                "Error",
+                "The Model is not ready for calibration.\nPlease ensure the stratigraphic data has been provided and the chronological graph has been rendered",
+            )
+            return
+
         # Create the popup presenter and view
         popup_presenter = MCMCProgressPresenter(self.mediator, MCMCProgressView(self.view), model_model)
         # Ensure it is visible and on top
@@ -213,7 +222,8 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             return
 
         if (
-            model_model.group_relationships is None
+            model_model.stratigraphic_df is None
+            or model_model.group_relationship_df is None
             or model_model.group_df is None
             or model_model.radiocarbon_df is None
         ):
@@ -228,18 +238,15 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 self.save_as_new_model()
                 model_model.load_check = False
                 self.view.clear_littlecanvas2()
-                model_model.chronological_dag = self.chronograph_render()
+                self.chronograph_render()
             else:
                 pass
         else:
             self.view.clear_littlecanvas2()
-            model_model.chronological_dag = self.chronograph_render()
+            self.chronograph_render()
 
-    def chronograph_render(self) -> nx.DiGraph | None:
-        """initiates residual checking function then renders the graph when thats done
-
-        Returns a copy of the produced chronological graph (if requirements met and no error occurs?).
-        """
+    def chronograph_render(self) -> None:
+        """Initiates residual checking function and group ordering; then renders the chronological graph if the user chose to proceed (not close the window)"""
 
         model_model = self.model.current_model
         if model_model is None:
@@ -247,25 +254,23 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         # If the chronograph has not already been rendered/loaded for the current state of the model, render it.
         if not model_model.load_check:
-            model_model.load_check = True
             # Check for residuals & update model state when approved
             self.resid_check()
-            # Render the chronological graph, mutating the model
-            model_model.render_chrono_graph()
-            # If the render succeeded
-            if model_model.chronological_image is not None:
-                # Try and update the view
-                try:
-                    # Update the view including rebinding events which may have been removed
-                    self.view.update_littlecanvas2(model_model.chronological_image)
-                    self.view.bind_littlecanvas2_callback("<Configure>", self.on_resize_2)
-                    self.view.show_image2()
-                except (RuntimeError, TypeError, NameError):
-                    # If any error enountered, make sure to mark the graph as not actually rendered.
-                    model_model.load_check = False
-            else:
-                pass
-        return model_model.chronological_dag  # superfluous?
+            # If load_check is true, and the chronological dag is not None, the user successfully completed residual and group selection
+            if model_model.load_check and model_model.chronological_dag is not None:
+                # Render the chronological graph to an image
+                model_model.render_chrono_graph()
+                # If the render succeeded
+                if model_model.chronological_image is not None:
+                    # Try and update the view
+                    try:
+                        # Update the view including rebinding events which may have been removed
+                        self.view.update_littlecanvas2(model_model.chronological_image)
+                        self.view.bind_littlecanvas2_callback("<Configure>", self.on_resize_2)
+                        self.view.show_image2()
+                    except (RuntimeError, TypeError, NameError):
+                        # If any error encountered, make sure to mark the graph as not actually rendered.
+                        model_model.load_check = False
 
     def resid_check(self) -> None:
         """Loads a text box to check if the user thinks any samples are residual
@@ -386,7 +391,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 else:
                     pass
             except ValueError:
-                self.view.messagebox_error("showerror", "Data not loaded, please try again")
+                self.view.messagebox_error("Error", "Data not loaded, please try again")
 
     def open_scientific_dating_file(self) -> None:
         """Callback function when File > Load scientific dating file (.csv) is selected, opening a scientific dating file
@@ -409,7 +414,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 else:
                     pass
             except ValueError:
-                self.view.messagebox_error("showerror", "Data not loaded, please try again")
+                self.view.messagebox_error("Error", "Data not loaded, please try again")
 
     def open_context_grouping_file(self) -> None:
         """Callback function when File > Load context grouping file (.csv) is selected, opening context grouping / phase file
@@ -431,29 +436,49 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 else:
                     pass
             except ValueError:
-                self.view.messagebox_error("showerror", "Data not loaded, please try again")
+                self.view.messagebox_error("Error", "Data not loaded, please try again")
 
     def open_group_relationship_file(self) -> None:
         """Callback function when File > Load group relationship file (.csv) is selected, opening a group relationship / phase relationship file
 
         Formerly StartPage.open_file5
         """
+        from ..models.GroupRelationship import GroupRelationship
+
         file = self.view.askopenfile(mode="r", filetypes=[("CSV Files", "*.csv")])
         if file is not None:
             try:
                 model_model = self.model.current_model
-                df = pd.read_csv(file)
-                group_rels = [(str(df["above"][i]), str(df["below"][i])) for i in range(len(df))]
-                load_it = self.file_popup(pd.DataFrame(group_rels, columns=["Younger group", "Older group"]))
+                df = pd.read_csv(file, dtype=str)
+                if "above" not in df.columns:
+                    raise ValueError("'above' is a required column for group relationship files")
+                if "below" not in df.columns:
+                    raise ValueError("'below' is a required column for group relationship files")
+                if "relationship" in df.columns:
+                    relationship_type_strings = [str(t) for t in GroupRelationship]
+                    for value in df["relationship"]:
+                        if value != "" and value not in relationship_type_strings:
+                            string_options = ", ".join([f"'{r}'" for r in relationship_type_strings])
+                            raise ValueError(
+                                f"'{value}' is not a valid relationship. It must be one of: {string_options} or be empty"
+                            )
+                # Select a subset of columns to preview
+                preview_df = (
+                    df[["above", "below", "relationship"]] if "relationship" in df.columns else df[["above", "below"]]
+                )
+                # Adjust column labels for the preview
+                preview_df = preview_df.rename(columns={"above": "above (younger)", "below": "below (older)"})
+                # Show the file preview
+                load_it = self.file_popup(preview_df)
                 if load_it == "load":
-                    model_model.set_group_relationship_df(df, group_rels)
+                    model_model.set_group_relationship_df(df)
                     self.phase_rel_check = True
                     self.check_list_gen()
                     self.view.messagebox_info("Success", "Group relationships data loaded")
                 else:
                     pass
-            except ValueError:
-                self.view.messagebox_error("showerror", "Data not loaded, please try again")
+            except ValueError as e:
+                self.view.messagebox_error("Error", f"Data not loaded, please try again:\n\n{e}")
 
     def open_context_equalities_file(self) -> None:
         """Callback function when File > Load context equalities file (.csv) is selected, opening a file providing context equalities (in time)
@@ -478,7 +503,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 self.view.bind_littlecanvas_callback(get_right_click_binding(), self.pre_click)
                 self.view.messagebox_info("Success", "Equal contexts data loaded")
             except ValueError:
-                self.view.messagebox_error("showerror", "Data not loaded, please try again")
+                self.view.messagebox_error("Error", "Data not loaded, please try again")
 
     def close_application(self) -> None:
         """Close polychron gracefully via File > Exit"""
@@ -609,7 +634,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             if answer == "yes":
                 self.save_as_new_model()
             # self.littlecanvas2.delete("all")
-            model_model.load_check = "not_loaded"
+            model_model.load_check = False
 
         addContextModel = AddContextModel()
         popup_presenter = AddContextPresenter(self.mediator, AddContextView(self.view), addContextModel)

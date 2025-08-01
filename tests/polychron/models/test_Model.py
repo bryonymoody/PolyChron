@@ -37,7 +37,6 @@ class TestModel:
         assert m.context_no_unordered is None
         assert m.group_df is None
         assert m.group_relationship_df is None
-        assert m.group_relationships is None
         assert m.context_equality_df is None
         assert not m.load_check
         assert m.chronological_dag is None
@@ -510,12 +509,14 @@ class TestModel:
                 m.set_group_df(input_df)
 
     @pytest.mark.parametrize(
-        ("data_or_path", "input_relationships", "exception_t"),
+        ("data_or_path", "expect_relationships", "exception_t"),
         [
             # Empty dataframe, this silently passes
             ({}, [], None),
             # Valid dataframe, with changes
             ("group-relationships-csv/simple.csv", [("1", "2"), ("2", "3")], None),
+            # df with relationships
+            ("group-relationships-csv/with-relationship.csv", [("1", "2"), ("2", "3")], None),
             # Dataframe with partial information
             ({"above": ["1"], "below": ["2"]}, [("1", "2")], None),
             # Dataframe with unknown group
@@ -532,7 +533,7 @@ class TestModel:
     def test_set_group_relationship_df(
         self,
         data_or_path: dict[str, list] | str,
-        input_relationships: list[tuple[str, str]],
+        expect_relationships: list[tuple[str, str]],
         exception_t: Type[Exception] | None,
         tmp_path: pathlib.Path,
         test_data_path: pathlib.Path,
@@ -559,18 +560,168 @@ class TestModel:
         else:
             input_df = pd.DataFrame(data_or_path, dtype=str)
 
-        input_relationships = []
-
         # call set_group_relationship_df potentially expecting an exception
         if exception_t is None:
-            m.set_group_relationship_df(input_df, input_relationships)
+            m.set_group_relationship_df(input_df)
             # Assert the stored dataframe matches the provided frame
             pd.testing.assert_frame_equal(m.group_relationship_df, input_df)
             # Assert that the stored list is as expected
-            assert m.group_relationships == input_relationships
+            assert m.group_relationships_list() == expect_relationships
         else:
             with pytest.raises(exception_t, match=None):
-                m.set_group_relationship_df(input_df, input_relationships)
+                m.set_group_relationship_df(input_df)
+
+    @pytest.mark.parametrize(
+        ("data_or_path", "expect_relationships"),
+        [
+            # Empty dataframe, returns no relationships
+            ({}, []),
+            # Valid dataframe
+            ("group-relationships-csv/simple.csv", [("1", "2"), ("2", "3")]),
+            # df with relationships
+            ("group-relationships-csv/with-relationship.csv", [("1", "2"), ("2", "3")]),
+            # Dataframe with partial information
+            ({"above": ["1"], "below": ["2"]}, [("1", "2")]),
+            # Dataframe with unknown group
+            (
+                {
+                    "above": ["1", "2", "3"],
+                    "below": ["2", "3", "4"],
+                },
+                [("1", "2"), ("2", "3"), ("3", "4")],
+            ),
+        ],
+    )
+    def test_group_relationships_list(
+        self,
+        data_or_path: dict[str, list] | str,
+        expect_relationships: list[tuple[str, str]],
+        tmp_path: pathlib.Path,
+        test_data_path: pathlib.Path,
+    ):
+        """Test `group_relationships_list` returns the expected list of tuples for a range of inputs"""
+        # Construct the model instance
+        m = Model("foo", tmp_path / "foo")
+
+        # Add a simple stratigraphic graph to the model
+        strat_df = pd.read_csv(test_data_path / "strat-csv" / "simple.csv", dtype=str)
+        m.set_stratigraphic_df(strat_df)
+
+        # Build the parametrised dataframe
+        if isinstance(data_or_path, str):
+            input_df = pd.read_csv(test_data_path / data_or_path, dtype=str)
+        else:
+            input_df = pd.DataFrame(data_or_path, dtype=str)
+
+        # Set the group relationships dataframe
+        m.set_group_relationship_df(input_df)
+
+        # Extract the group relationships
+        group_relationships_list = m.group_relationships_list()
+
+        # Check it's correct
+        assert group_relationships_list == expect_relationships
+
+    @pytest.mark.parametrize(
+        ("data_or_path", "expect_relationships"),
+        [
+            # Empty dataframe, returns no relationships
+            ({}, {}),
+            # Valid dataframe
+            ("group-relationships-csv/simple.csv", {("1", "2"): None, ("2", "3"): None}),
+            # df with relationships
+            ("group-relationships-csv/with-relationship.csv", {("1", "2"): "gap", ("2", "3"): "overlap"}),
+            # Dataframe with partial information
+            ({"above": ["1"], "below": ["2"]}, {("1", "2"): None}),
+            # Dataframe with unknown group
+            (
+                {
+                    "above": ["1", "2", "3"],
+                    "below": ["2", "3", "4"],
+                },
+                {("1", "2"): None, ("2", "3"): None, ("3", "4"): None},
+            ),
+        ],
+    )
+    def test_group_relationships_dict(
+        self,
+        data_or_path: dict[str, list] | str,
+        expect_relationships: dict[tuple[str, str], str | None],
+        tmp_path: pathlib.Path,
+        test_data_path: pathlib.Path,
+    ):
+        """Test `group_relationships_list` returns the expected list of tuples for a range of inputs"""
+        # Construct the model instance
+        m = Model("foo", tmp_path / "foo")
+
+        # Add a simple stratigraphic graph to the model
+        strat_df = pd.read_csv(test_data_path / "strat-csv" / "simple.csv", dtype=str)
+        m.set_stratigraphic_df(strat_df)
+
+        # Build the parametrised dataframe
+        if isinstance(data_or_path, str):
+            input_df = pd.read_csv(test_data_path / data_or_path, dtype=str)
+        else:
+            input_df = pd.DataFrame(data_or_path, dtype=str)
+
+        # Set the group relationships dataframe
+        m.set_group_relationship_df(input_df)
+
+        # Extract the group relationships
+        group_relationships_dict = m.group_relationships_dict()
+
+        # Check it's correct
+        assert group_relationships_dict == expect_relationships
+
+    @pytest.mark.parametrize(
+        ("data_or_path", "expected_groups"),
+        [
+            # Empty dataframe, empty list
+            ({}, []),
+            # Valid dataframe, with changes
+            ("group-relationships-csv/simple.csv", ["1", "2", "3"]),
+            # Valid dataframe, with relationships
+            ("group-relationships-csv/with-relationship.csv", ["1", "2", "3"]),
+            # Dataframe with partial information
+            ({"above": ["1"], "below": ["2"]}, ["1", "2"]),
+            # Dataframe with unknown group
+            (
+                {
+                    "above": ["1", "2", "3"],
+                    "below": ["2", "3", "4"],
+                },
+                ["1", "2", "3", "4"],
+            ),
+        ],
+    )
+    def test_get_unique_groups(
+        self,
+        data_or_path: dict[str, list] | str,
+        expected_groups: list[str],
+        tmp_path: pathlib.Path,
+        test_data_path: pathlib.Path,
+    ):
+        """Test getting a deterministically ordered list of unique group labels for a range of inputs"""
+        # Construct the model instance
+        m = Model("foo", tmp_path / "foo")
+
+        # Add a simple stratigraphic graph to the model
+        strat_df = pd.read_csv(test_data_path / "strat-csv" / "simple.csv", dtype=str)
+        m.set_stratigraphic_df(strat_df)
+
+        # Build the parametrised dataframe
+        if isinstance(data_or_path, str):
+            input_df = pd.read_csv(test_data_path / data_or_path, dtype=str)
+        else:
+            input_df = pd.DataFrame(data_or_path, dtype=str)
+
+        # set the group relationships on the model
+        m.set_group_relationship_df(input_df)
+
+        # get the list of unique group labels
+        group_labels = m.get_unique_groups()
+
+        assert group_labels == expected_groups
 
     @pytest.mark.parametrize(
         ("data_or_path", "expect_num_nodes", "exception_t"),
@@ -844,6 +995,25 @@ class TestModel:
         m.record_deleted_edge("bar", "baz", "duplicate")
         assert len(m.deleted_edges) == 4
         assert m.deleted_edges[3] == ("bar", "baz", "duplicate")
+
+    def test_is_ready_for_mcmc(self, tmp_path: pathlib.Path, test_data_path: pathlib.Path):
+        """Test the check for when a model is ready for calibration
+
+        Todo:
+            - Ensure that a model with a chronograph but no dating/groups would not be rendered. For typical usage this is covered due to the chronograph requirement, but the method being tested could be made more robust
+        """
+        m = Model("foo", tmp_path / "foo")
+        assert not m.is_ready_for_mcmc()
+
+        # Add a chronological DAG, it should still not be ready.
+        strat_df = pd.read_csv(test_data_path / "strat-csv" / "simple.csv", dtype=str)
+        m.set_stratigraphic_df(strat_df)
+        assert not m.is_ready_for_mcmc()
+
+        # Render the chronological dag, it should now be ready.
+        # This is not a true render, just enough to pass the test...
+        m.chronological_dag = nx.DiGraph()
+        assert m.is_ready_for_mcmc()
 
     @pytest.mark.skip("test_MCMC_func not implemented")
     def test_MCMC_func(self, tmp_path: pathlib.Path):

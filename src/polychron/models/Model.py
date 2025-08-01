@@ -96,15 +96,9 @@ class Model:
     group_relationship_df: Optional[pd.DataFrame] = field(default=None)
     """Dataframe containing group relationship information loaded from disk
     
-    Expected columns ["above", "below"], although order of columns is used not the column names
+    Required columns ["above", "below"], optional columns ["relationship"]
 
     Formerly `phase_rel_df` in `StartPage.open_file5`
-    """
-
-    group_relationships: Optional[List[Tuple[str, str]]] = field(default=None)
-    """A list of the relative relationships between groups, stored as Tuples of (above, below))
-
-    Formerly `StartPage.phase_rels`
     """
 
     context_equality_df: Optional[pd.DataFrame] = field(default=None)
@@ -539,6 +533,14 @@ class Model:
             for k in keys_to_remove:
                 del model_data[k]
 
+            # Fixup the types of dataframes which may not have been saved in the correct types. I.e. all context and group labels must be strings.
+            if "stratigraphic_df" in model_data and model_data["stratigraphic_df"] is not None:
+                model_data["stratigraphic_df"] = model_data["stratigraphic_df"].astype(str)
+            if "group_df" in model_data and model_data["group_df"] is not None:
+                model_data["group_df"] = model_data["group_df"].astype(str)
+            if "group_relationship_df" in model_data and model_data["group_relationship_df"] is not None:
+                model_data["group_relationship_df"] = model_data["group_relationship_df"].astype(str)
+
             # Overwrite certain elements, i.e the path (in case the model fields have been copied), but the path was included in the save file
             if "name" not in model_data:
                 model_data["name"] = str(path.name)
@@ -704,12 +706,68 @@ class Model:
             for i, j in enumerate(self.group_df["context"]):
                 self.stratigraphic_dag.nodes()[str(j)].update({"Group": self.group_df["Group"][i]})
 
-    def set_group_relationship_df(self, df: pd.DataFrame, group_relationships: List[Tuple[str, str]]) -> None:
-        """Provided a dataframe for group relationships information, set the values locally and post-process"""
+    def set_group_relationship_df(self, df: pd.DataFrame) -> None:
+        """Provided a dataframe for group relationships information, set the values locally and post-process
+
+        Parameters:
+            df: The dataframe containing group relationship information, with required columns ["above", "below"] and optional column "relationship".
+        """
         # Store a copy of the dataframe
         self.group_relationship_df = df.copy()
-        # Store a copy of the list of tuples extracted from the dataframe
-        self.group_relationships = group_relationships.copy()
+
+    def group_relationships_list(self) -> list[tuple[str, str]]:
+        """Get a list of group relationships for the model, based on the group_relationship_df.
+
+        Returns:
+            A list of the group relationships, as tuples of `(above, below)`
+        """
+        if (
+            self.group_relationship_df is None
+            or "above" not in self.group_relationship_df
+            or "below" not in self.group_relationship_df
+        ):
+            return []
+
+        return [tup for tup in self.group_relationship_df[["above", "below"]].itertuples(index=False, name=None)]
+
+    def group_relationships_dict(self) -> dict[tuple[str, str], Optional[str]]:
+        """Get a dict of group relationships for the model including the type of relationship if known, based on the group_relationship_df.
+
+        Returns:
+            A list of the group relationships, as tuples of `(above, below)`
+        """
+        if (
+            self.group_relationship_df is None
+            or "above" not in self.group_relationship_df
+            or "below" not in self.group_relationship_df
+        ):
+            return {}
+
+        if "relationship" in self.group_relationship_df:
+            return {
+                (tup.above, tup.below): tup.relationship
+                for tup in self.group_relationship_df[["above", "below", "relationship"]].itertuples(index=False)
+            }
+        else:
+            return dict.fromkeys(self.group_relationships_list(), None)
+
+    def get_unique_groups(self) -> list[str]:
+        """Get a list of unique group labels
+
+        Returns:
+            List of group labels in a stable order."""
+
+        # If there are no group relationships, return an empty list
+        if self.group_relationship_df is None or len(self.group_relationship_df) == 0:
+            return []
+
+        # Use a dictionary for insertion order preserving unique group label selection
+        labels = list(
+            dict.fromkeys(
+                [item for tup in self.group_relationship_df[["above", "below"]].itertuples(index=False) for item in tup]
+            ).keys()
+        )
+        return labels
 
     def set_context_equality_df(self, df: pd.DataFrame) -> None:
         """Provided a dataframe for context equality information, set the values locally and post-process
@@ -861,20 +919,28 @@ class Model:
         workdir = self.get_working_directory()
         workdir.mkdir(parents=True, exist_ok=True)
 
-        fi_new_chrono = workdir / "fi_new_chrono"
-        if self.load_check and fi_new_chrono.is_file():
-            render("dot", "png", fi_new_chrono)
-            svg_path = render("dot", "svg", fi_new_chrono)
-            inp = Image.open(workdir / "fi_new_chrono.png")
-            inp_final = trim(inp)
-            # scale_factor = min(canv_width/inp.size[0], canv_height/inp.size[1])
-            # inp_final = inp.resize((int(inp.size[0]*scale_factor), int(inp.size[1]*scale_factor)), Image.ANTIALIAS)
-            inp_final.save(workdir / "testdag_chrono.png")
-            self.chronological_image = Image.open(workdir / "testdag_chrono.png")
-            self.chronological_node_coords = node_coords_from_svg(svg_path)
+        # If the chronological graph has been set and is currnet
+        if self.load_check and self.chronological_dag is not None:
+            # Ensure the graph is compatible with networkx < 3.4 nx_pydot
+            self.chronological_dag = remove_invalid_attributes_networkx_lt_3_4(self.chronological_dag)
+            # create the dot representation on disk
+            fi_new_chrono = workdir / "fi_new_chrono"
+            write_dot(self.chronological_dag, fi_new_chrono)
 
+            # If writing to disk succeeded, render the png and svg
+            if fi_new_chrono.is_file():
+                render("dot", "png", fi_new_chrono)
+                svg_path = render("dot", "svg", fi_new_chrono)
+                # Open the png and trim it for use in the GUI
+                inp = Image.open(workdir / "fi_new_chrono.png")
+                inp_final = trim(inp)
+                inp_final.save(workdir / "testdag_chrono.png")
+                self.chronological_image = Image.open(workdir / "testdag_chrono.png")
+                # Get node coordinates from the svg, storing them for right-click interaction in the dating results view
+                self.chronological_node_coords = node_coords_from_svg(svg_path)
         else:
             self.chronological_image = None
+            self.chronological_node_coords = None
 
     def reopen_stratigraphic_image(self) -> None:
         """Re-open the stratigraphic image from disk
@@ -928,6 +994,15 @@ class Model:
         """
         self.deleted_edges.append((context_a, context_b, reason))
 
+    def is_ready_for_mcmc(self) -> bool:
+        """Indicate if the model is ready for mcmc calibration or not.
+
+        Returns:
+            bool indicating if the model is ready for calibration
+        """
+
+        return self.stratigraphic_dag is not None and self.chronological_dag is not None
+
     def MCMC_func(
         self,
     ) -> Tuple[
@@ -952,7 +1027,7 @@ class Model:
         Formerly `StartPage.MCMC_func`
         """
 
-        if self.stratigraphic_dag is None or self.chronological_dag is None:
+        if not self.is_ready_for_mcmc():
             raise RuntimeError("Model is not MCMC ready, the stratigraphic and chronographic dag are not valid")
 
         context_no = [x for x in list(self.context_no_unordered) if x not in self.removed_nodes_tracker]
