@@ -88,7 +88,7 @@ class Model:
     group_df: Optional[pd.DataFrame] = field(default=None)
     """Dataframe of context grouping information loaded from disk. 
 
-    Expected columns ["context", "Group"]
+    Expected columns ["context", "group"]
     
     Formerly `StartPage.phasefile`
     """
@@ -541,6 +541,12 @@ class Model:
             if "group_relationship_df" in model_data and model_data["group_relationship_df"] is not None:
                 model_data["group_relationship_df"] = model_data["group_relationship_df"].astype(str)
 
+            # Fixup column names, for dataframes which have had their column names changed compared to older PolyChron versions.
+            if "group_df" in model_data and model_data["group_df"] is not None:
+                df = model_data["group_df"]
+                if "group" not in df and "Group" in df:
+                    model_data["group_df"] = df.rename(columns={"Group": "group"})
+
             # Overwrite certain elements, i.e the path (in case the model fields have been copied), but the path was included in the save file
             if "name" not in model_data:
                 model_data["name"] = str(path.name)
@@ -704,7 +710,7 @@ class Model:
         # Post processing of the dataframe
         if self.stratigraphic_dag:
             for i, j in enumerate(self.group_df["context"]):
-                self.stratigraphic_dag.nodes()[str(j)].update({"Group": self.group_df["Group"][i]})
+                self.stratigraphic_dag.nodes()[str(j)].update({"Group": self.group_df["group"][i]})
 
     def set_group_relationship_df(self, df: pd.DataFrame) -> None:
         """Provided a dataframe for group relationships information, set the values locally and post-process
@@ -1036,7 +1042,7 @@ class Model:
         topo_sort.reverse()
         context_no = topo_sort
         # Get a list containing the group per context (in reverse topological order)
-        key_ref = [list(self.group_df["Group"])[list(self.group_df["context"]).index(i)] for i in context_no]
+        key_ref = [list(self.group_df["group"])[list(self.group_df["context"]).index(i)] for i in context_no]
         self.context_types = [self.context_types[list(self.context_no_unordered).index(i)] for i in topo_sort]
         strat_vec = []
         resids = [j for i, j in enumerate(context_no) if self.context_types[i] == "residual"]
