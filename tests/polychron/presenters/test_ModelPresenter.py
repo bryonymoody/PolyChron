@@ -737,16 +737,8 @@ class TestModelPresenter:
             ("strat-csv/simple.csv", "context-grouping-csv/empty.csv", "load", False, True, 0),
             # A csv file with no rows. This is currently accepted but should not be.
             ("strat-csv/simple.csv", "context-grouping-csv/header-only.csv", "load", True, False, 0),
-            # A csv with the incorrect column names. This currently raises an uncaught exception
-            pytest.param(
-                "strat-csv/simple.csv",
-                "context-grouping-csv/bad-column-names.csv",
-                "load",
-                False,
-                True,
-                0,
-                marks=pytest.mark.xfail(reason="bad column names are not handled gracefully in set_group_df"),
-            ),
+            # A csv with the incorrect column names.
+            ("strat-csv/simple.csv", "context-grouping-csv/bad-column-names.csv", "load", False, True, 0),
             # A csv with extra columns, which are not used
             ("strat-csv/simple.csv", "context-grouping-csv/extra-columns.csv", "load", True, False, 4),
         ],
