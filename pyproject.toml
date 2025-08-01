@@ -9,6 +9,7 @@ requires-python = ">= 3.9"
 authors = [
     {name = "Bryony Moody", email = "bryony.moody@sheffield.ac.uk"},
     {name = "Peter Heywood", email = "p.heywood@sheffield.ac.uk"},
+    {name = "Shreyan Ghosh", email = "shreyanghosh27@gmail.com"},
 ]
 maintainers = [
     {name = "Bryony Moody", email = "bryony.moody@sheffield.ac.uk"},
@@ -17,15 +18,26 @@ readme = "README.md"
 license = "GPL-3.0-only"
 license-files = ["LICENSE"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    # Ensure this package does not get uploaded to pypi until it is ready.
-    "Private :: Do Not Upload",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Scientific/Engineering :: Mathematics",
+    "Topic :: Sociology :: History",
+    "Intended Audience :: Science/Research",
+]
+description = "Analysis and archiving of archaeological dating evidence"
+keywords = [
+    "statistics",
+    "chronology",
 ]
 dependencies = [
     "graphviz",
