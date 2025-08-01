@@ -14,8 +14,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-# CALIBRATION = pd.read_csv('linear_interpolation.txt')
-
 
 def HPD_interval(x_temp, lim=0.95, probs=[]):
     if len(probs) == 0:
@@ -253,7 +251,6 @@ def strat_rel(site_dict, key, i_index, THETAS, CONTEXT_NO):
     return [stratlow, stratup]
 
 
-# %%
 def dict_seek_ordered_new(A, P, i_seek, key, site_dict, THETAS, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION):
     """calc probability in a dictionary"""
     llhood = site_dict[key]["dates"][i_seek][1]
@@ -264,12 +261,11 @@ def dict_seek_ordered_new(A, P, i_seek, key, site_dict, THETAS, CONTEXT_NO, RCD_
     beta = site_dict[key]["boundaries"][0]
     # residual/intrisive ref EDIT
     # MUST add A and P to this func
-
-    # temp_vec = llhood[1:][0][(like1 <= alpha) &
-    #                           (like1 >= A)]
-    #     temp_vec_2 = llhood[1:][0][(like1 <= min(strat_rel(site_dict, key, i_seek, THETAS, CONTEXT_NO)[0], alpha)) &
-    #                            (like1 >= A)]
-    #    elif cont_type = 'normal':
+    # temp_vec = llhood[1:][0][(like1 <= alpha) & (like1 >= A)]
+    # temp_vec_2 = llhood[1:][0][
+    #     (like1 <= min(strat_rel(site_dict, key, i_seek, THETAS, CONTEXT_NO)[0], alpha)) & (like1 >= A)
+    # ]
+    # elif cont_type = 'normal':
     temp_vec = llhood[1:][0][(like1 <= alpha) & (like1 >= beta)]
 
     temp_vec_2 = llhood[1:][0][
@@ -298,15 +294,14 @@ def dict_seek_ordered_new(A, P, i_seek, key, site_dict, THETAS, CONTEXT_NO, RCD_
 def dict_seek_ordered(A, P, i_seek, key, site_dict, THETAS, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION):
     """calc probability in a dictionary"""
     llhood = site_dict[key]["dates"][i_seek][1]  # array of likelihood data for the context
-    #    phase_len = site_dict[key]["boundaries"][1] - site_dict[key]["boundaries"][0] #phase length
+    # phase_len = site_dict[key]["boundaries"][1] - site_dict[key]["boundaries"][0] #phase length
     like1 = llhood[0:][0]  # array of thetas
     like2 = llhood[1:][0]  # likehood for each theta
     cont = site_dict[key]["dates"][i_seek][2]  # context number
     alpha = site_dict[key]["boundaries"][1]  # alpha for the phase this context is in
     beta = site_dict[key]["boundaries"][0]  # beta for the phase that this context is in
-    strat_up, strat_low = strat_rel(
-        site_dict, key, i_seek, THETAS, CONTEXT_NO
-    )  # get dates of contexts that are stratigraphically linked to the context in question
+    # get dates of contexts that are stratigraphically linked to the context in question
+    strat_up, strat_low = strat_rel(site_dict, key, i_seek, THETAS, CONTEXT_NO)
     cont_type = site_dict[key]["dates"][i_seek][4]
     if cont_type == "residual":
         up = int((alpha - A + 0.05) * 10) + 1  # faster version on np.where
@@ -353,9 +348,6 @@ def dict_seek_ordered(A, P, i_seek, key, site_dict, THETAS, CONTEXT_NO, RCD_ERR,
         x_len = 0
 
     return x_temp, x_len
-
-
-# %%
 
 
 def post_h(A, P, site_dict, THETAS, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION):
@@ -483,7 +475,6 @@ def theta_init_func_n(KEY_REF1, PHI_REF1, RESULT_VEC1, STRAT_VEC, P, CONTEXT_NO,
                 out_vec[a] = np.random.choice(SAMPLE_VEC, p=SAMPLE_VEC_PROB / sum(SAMPLE_VEC_PROB))
         prev_min = min([d for d in out_vec if d != 0])
     return out_vec
-    # %%
 
 
 # sampling functions
@@ -732,7 +723,6 @@ def overlap_samp_2(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_
     return limits
 
 
-# %%
 def initialise(CALIBRATION, RCD_EST, RCD_ERR):
     #  method  = 'squeeze'
     CALIBRATION_DATA = CALIBRATION.to_dict()
@@ -745,8 +735,7 @@ def initialise(CALIBRATION, RCD_EST, RCD_ERR):
     l = min(range(len(a)), key=lambda i: abs(a[i] - x_max))
     A = max(p - 20 * s, 0)
     P = min(l + 20 * s, 50000)
-    ##############################################
-    ##initiating  likelihoods
+    # initiating  likelihoods
     RCD_S = [list(x) for x in zip(RCD_EST, RCD_ERR)]
     RESULT_VEC = [likelihood_func(date[0], date[1], A, P, CALIBRATION_DATA) for date in RCD_S]
     return A, P, RESULT_VEC
@@ -844,7 +833,6 @@ def get_hpd_intervals(CONTEXT_NO, ACCEPT, PHI_ACCEPT):
     hpd_df.to_csv("resid_hpd_intervals_phis_correct", index=False)
 
 
-# %%
 def gibbs_code(
     iter_num,
     RESULT_VEC,
@@ -905,7 +893,6 @@ def gibbs_code(
     return PHI_ACCEPT, ACCEPT, POST_S
 
 
-# %%
 def step_1_squeeze(
     A,
     P,
@@ -1445,16 +1432,15 @@ def squeeze_model(
                     ALL_SAMPS_PHI,
                 )
                 i = i + 3
-        #          CHECK_ACCEPT = accept_prob(ACCEPT, PHI_ACCEPT, i)
-        #         acept_prob = len(CHECK_ACCEPT[(CHECK_ACCEPT <= 0.01) | (CHECK_ACCEPT >= 0.7)])
-        #        if acept_prob > 0:
-        #           break
+                # CHECK_ACCEPT = accept_prob(ACCEPT, PHI_ACCEPT, i)
+                # acept_prob = len(CHECK_ACCEPT[(CHECK_ACCEPT <= 0.01) | (CHECK_ACCEPT >= 0.7)])
+                # if acept_prob > 0:
+                #     break
         # plot code
         #  CHECK_ACCEPT = accept_prob(ACCEPT, PHI_ACCEPT, i)
         return PHI_ACCEPT, ACCEPT, POST_S, ALL_SAMPS_CONT, ALL_SAMPS_PHI
 
 
-# %%
 def run_MCMC(
     CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_REF, PREV_PHASE, POST_PHASE, TOPO_SORT, CONT_TYPE
 ):
