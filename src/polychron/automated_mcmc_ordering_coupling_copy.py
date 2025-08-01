@@ -1,9 +1,7 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Thu Sep  2 13:46:35 2021
+Module for performing MCMC algorithm needed to obtain calibrated age estimates for the parameters within a chronological model.
 
-@author: bryony
+`run_MCMC` is the primary method which should be used to invoke the MCMC algorithm.
 """
 
 import math
@@ -16,6 +14,7 @@ import pandas as pd
 
 
 def HPD_interval(x_temp, lim=0.95, probs=[]):
+    """Get HPD interval for an array of phase/group lengths"""
     if len(probs) == 0:
         x_temp = np.array(x_temp)
         n = math.ceil((x_temp.max() - x_temp.min()))
@@ -47,7 +46,7 @@ def HPD_interval(x_temp, lim=0.95, probs=[]):
 def theta_samp_func(
     GIBBS_THETAS, GIBBS_PHIS, KEY_REF, PHI_REF, RESULT_VEC, STRAT_VEC, CONTEXT_NO, TOPO_SORT, iter_num, GIBBS_DICT_1
 ):  # , PREV_IT):
-    """GIVES A LIST OF INITAL THETA VALUES FOR MCMCM"""
+    """Gives a list of initial theta values for MCMC"""
     out_vec = [0] * len(KEY_REF)
     for date in range(0, len(PHI_REF)):
         ref_vec = np.where(np.array(KEY_REF) == PHI_REF[date])[0].tolist()
@@ -109,7 +108,7 @@ def GR_conv_check(chain1, chain2):
 
 
 def phase_samp_func(key_reff, phi_reff, theta_vals, prev_phases, A, P, iter_num):
-    """GIVES A LIST OF INITAL PHASE BOUNDARY VALUES FOR MCMCM"""
+    """Gives a list of initial phase boundary values for mcmc"""
     PHASE_INITS = []
     KEY_REF_1 = np.array(key_reff)
     PHASE_INITS.append(
@@ -144,7 +143,7 @@ def phase_samp_func(key_reff, phi_reff, theta_vals, prev_phases, A, P, iter_num)
 
 
 def sampling_vec(post_phase_vec, prev_phase_vec):
-    """gives vectors to sample between"""
+    """Gives vectors to sample between"""
     track_phase = []
     track_vec = []
     for i_samp, j_samp in enumerate(post_phase_vec):
@@ -186,7 +185,7 @@ def gibbs_phis_gen(prev_phase, phi_ref):
 
 
 def phase_limits(phases, POST_PHASE):
-    "provides phase limits for a phase"
+    "Provides phase limits for a phase"
     upper = []
     lower = []
     i_phase = 0
@@ -211,7 +210,7 @@ def accept_prob(accept_vec, phi_accept_vec, i):
 
 
 def likeli(x_val, s_err, theta, CALIBRATION_DATA):
-    """calculates likelihood for a single value"""
+    """Calculates likelihood for a single value"""
     value_theta = math.exp(
         -((x_val - CALIBRATION_DATA["Carbon_year"][theta]) ** 2)
         / (2 * (s_err**2 + CALIBRATION_DATA["Carbon_error"][theta] ** 2))
@@ -221,7 +220,7 @@ def likeli(x_val, s_err, theta, CALIBRATION_DATA):
 
 
 def likelihood_func(x_val, s_err, a_val, p_val, CALIBRATION_DATA):
-    """likelihood over a range"""
+    """Likelihood over a range"""
     likelihood_vec = []
     for theta in range(a_val, p_val):
         value = likeli(x_val, s_err, theta, CALIBRATION_DATA)
@@ -235,7 +234,7 @@ def likelihood_func(x_val, s_err, a_val, p_val, CALIBRATION_DATA):
 
 
 def strat_rel(site_dict, key, i_index, THETAS, CONTEXT_NO):
-    """gives nodes above and below a date"""
+    """Gives nodes above and below a date"""
     upstrat = site_dict[key]["dates"][i_index][3][0]
     lowstrat = site_dict[key]["dates"][i_index][3][1]
     a_strat = [CONTEXT_NO.index(i) for i in upstrat]
@@ -252,7 +251,7 @@ def strat_rel(site_dict, key, i_index, THETAS, CONTEXT_NO):
 
 
 def dict_seek_ordered_new(A, P, i_seek, key, site_dict, THETAS, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION):
-    """calc probability in a dictionary"""
+    """Calc probability in a dictionary (new version)"""
     llhood = site_dict[key]["dates"][i_seek][1]
     phase_len = site_dict[key]["boundaries"][1] - site_dict[key]["boundaries"][0]  # phase length
     like1 = llhood[0:][0]
@@ -292,7 +291,7 @@ def dict_seek_ordered_new(A, P, i_seek, key, site_dict, THETAS, CONTEXT_NO, RCD_
 
 
 def dict_seek_ordered(A, P, i_seek, key, site_dict, THETAS, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION):
-    """calc probability in a dictionary"""
+    """Calc probability in a dictionary"""
     llhood = site_dict[key]["dates"][i_seek][1]  # array of likelihood data for the context
     # phase_len = site_dict[key]["boundaries"][1] - site_dict[key]["boundaries"][0] #phase length
     like1 = llhood[0:][0]  # array of thetas
@@ -351,7 +350,7 @@ def dict_seek_ordered(A, P, i_seek, key, site_dict, THETAS, CONTEXT_NO, RCD_ERR,
 
 
 def post_h(A, P, site_dict, THETAS, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION):
-    """calculates acceptance probability"""
+    """Calculates acceptance probability"""
     h_vec = [
         dict_seek_ordered(A, P, j[0], i, site_dict, THETAS, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION)
         for i in site_dict.keys()
@@ -363,7 +362,7 @@ def post_h(A, P, site_dict, THETAS, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION):
 
 
 def dict_seek_4(i_dict, key, site_dict):
-    """finds probabilities for all paramters in sample"""
+    """Finds probabilities for all paramters in sample"""
     phase_len = site_dict[key]["boundaries"][0] - site_dict[key]["boundaries"][1]
     theta = site_dict[key]["dates"][i_dict][0]
     llhood = site_dict[key]["dates"][i_dict][1]
@@ -377,7 +376,7 @@ def dict_seek_4(i_dict, key, site_dict):
 
 
 def post_h_theta_phi_4(site_dict):
-    """calculates posterior prob for step 4"""
+    """Calculates posterior prob for step 4"""
     h_vec = [dict_seek_4(j[0], i, site_dict) for i in site_dict.keys() for j in enumerate(site_dict[i]["dates"])]
     hj_1 = [i[0] for i in h_vec]
     hj_2 = [i[1] for i in h_vec]
@@ -385,7 +384,7 @@ def post_h_theta_phi_4(site_dict):
 
 
 def dict_update(test_dict_2, post_t, post_p, inter, inter2, POST_PHASE, PHI_REF):
-    """updates site dictionary"""
+    """Updates the site dictionary"""
     count = 0
     count_1 = 0
     b_lst = phase_limits([phi[inter2] for phi in post_p], POST_PHASE)
@@ -400,7 +399,7 @@ def dict_update(test_dict_2, post_t, post_p, inter, inter2, POST_PHASE, PHI_REF)
 
 
 def phase_bd_init_func(key_reff, phi_reff, theta_initt, prev_phases, A, P):
-    """GIVES A LIST OF INITAL PHASE BOUNDARY VALUES FOR MCMCM"""
+    """Gives a list of inital phase boundary values for MCMC"""
     PHASE_INITS = []
     KEY_REF_1 = np.array(key_reff)
     PHASE_INITS.append(
@@ -433,7 +432,7 @@ def phase_bd_init_func(key_reff, phi_reff, theta_initt, prev_phases, A, P):
 
 
 def theta_init_func(KEY_REF1, PHI_REF1, RESULT_VEC1):
-    """GIVES A LIST OF INITAL THETA VALUES FOR MCMCM"""
+    """Gives a list of inital theta values for MCMC"""
     out_vec = [0] * len(KEY_REF1)
     uplimref = np.where(np.array(KEY_REF1) == PHI_REF1[0])[0].tolist()
     up_lim_vec = [np.random.choice(RESULT_VEC1[date][0], p=RESULT_VEC1[date][1]).item() for date in uplimref]
@@ -454,7 +453,7 @@ def theta_init_func(KEY_REF1, PHI_REF1, RESULT_VEC1):
 
 
 def theta_init_func_n(KEY_REF1, PHI_REF1, RESULT_VEC1, STRAT_VEC, P, CONTEXT_NO, TOPO_SORT):
-    """GIVES A LIST OF INITAL THETA VALUES FOR MCMCM"""
+    """Gives a list of inital theta values for MCMC"""
     out_vec = [0] * len(KEY_REF1)
     prev_min = P
     for date in range(0, len(PHI_REF1)):
@@ -479,7 +478,7 @@ def theta_init_func_n(KEY_REF1, PHI_REF1, RESULT_VEC1, STRAT_VEC, P, CONTEXT_NO,
 
 # sampling functions
 def upp_samp_1(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """upper sample 1 - oldest phase and next phase abutting or gap"""
+    """Upper sample 1 - oldest phase and next phase abutting or gap"""
     limits = [
         max(
             [
@@ -496,7 +495,7 @@ def upp_samp_1(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF,
 
 
 def upp_samp_2(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """upper sample 2 - oldest phase and next phase is overlapping"""
+    """Upper sample 2 - oldest phase and next phase is overlapping"""
     in_phase_dates = [
         theta_samp[i] for i, j in enumerate(KEY_REF) if j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == "normal"
     ]
@@ -507,7 +506,7 @@ def upp_samp_2(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF,
 
 
 def upp_samp_3(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """upper sample 3 - phase with prev phase abbuting and next phase abbuting or gap"""
+    """Upper sample 3 - phase with prev phase abbuting and next phase abbuting or gap"""
     limits = [
         max(
             [
@@ -531,7 +530,7 @@ def upp_samp_3(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF,
 
 
 def upp_samp_4(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """upper sample 4 - phase with prev phase abbuting and next phase overlap"""
+    """Upper sample 4 - phase with prev phase abbuting and next phase overlap"""
     in_phase_dates = [
         theta_samp[i] for i, j in enumerate(KEY_REF) if j == PHI_REF[SAMP_VEC_TRACK[m - 1]] and CONT_TYPE[i] == "normal"
     ]
@@ -551,7 +550,7 @@ def upp_samp_4(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF,
 
 
 def upp_samp_5(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """upper sample 5 - phase with prev phase overlap, next phase can be any relationship"""
+    """Upper sample 5 - phase with prev phase overlap, next phase can be any relationship"""
     in_phase_dates = [
         theta_samp[i] for i, j in enumerate(KEY_REF) if j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == "normal"
     ]
@@ -561,7 +560,7 @@ def upp_samp_5(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF,
 
 
 def upp_samp_6(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """upper sample 6 - phase with prev phase gap next phase abbuting or gap"""
+    """Upper sample 6 - phase with prev phase gap next phase abbuting or gap"""
     limits = [
         max(
             [
@@ -577,7 +576,7 @@ def upp_samp_6(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF,
 
 
 def upp_samp_7(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """upper sample 7 - phase with previous phase gap and next phase overlap"""
+    """Upper sample 7 - phase with previous phase gap and next phase overlap"""
     in_phase_dates = [
         theta_samp[i] for i, j in enumerate(KEY_REF) if j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == "normal"
     ]
@@ -587,7 +586,7 @@ def upp_samp_7(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF,
 
 
 def upp_samp_8(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """upper sample 8 - phase with previous 2 overlapping, same as overlap samp_2, should delete"""
+    """Upper sample 8 - phase with previous 2 overlapping, same as overlap samp_2, should delete"""
     in_phase_dates = [
         theta_samp[i] for i, j in enumerate(KEY_REF) if j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == "normal"
     ]
@@ -597,7 +596,7 @@ def upp_samp_8(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF,
 
 
 def low_samp_1(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """lower sample 1 prev phase start, abbuting or gap and next phase abbuting"""
+    """Lower sample 1 prev phase start, abbuting or gap and next phase abbuting"""
     limits = [
         max(
             [
@@ -621,7 +620,7 @@ def low_samp_1(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF,
 
 
 def low_samp_2(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """lower sample 2 next phase abbuting and prev phase overlapping"""
+    """Lower sample 2 next phase abbuting and prev phase overlapping"""
     in_phase_dates = [
         theta_samp[i] for i, j in enumerate(KEY_REF) if j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == "normal"
     ]
@@ -641,7 +640,7 @@ def low_samp_2(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF,
 
 
 def low_samp_3(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """lower sample 3: next phase overlapping and prev phase can be any relationship"""
+    """Lower sample 3: next phase overlapping and prev phase can be any relationship"""
     in_phase_dates = [
         theta_samp[i] for i, j in enumerate(KEY_REF) if j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == "normal"
     ]
@@ -651,7 +650,7 @@ def low_samp_3(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF,
 
 
 def low_samp_4(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """lower sample 4 next phase gap and prev phase can be any relationship except overlap"""
+    """Lower sample 4 next phase gap and prev phase can be any relationship except overlap"""
     limits = [
         phis_samp[m + 1],
         min(
@@ -667,7 +666,7 @@ def low_samp_4(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF,
 
 
 def low_samp_5(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """lower sample 5"""
+    """Lower sample 5"""
     in_phase_dates = [
         theta_samp[i] for i, j in enumerate(KEY_REF) if j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == "normal"
     ]
@@ -677,7 +676,7 @@ def low_samp_5(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF,
 
 
 def low_samp_6(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """lower sample 6"""
+    """Lower sample 6"""
     limits = [
         A,
         min(
@@ -694,7 +693,7 @@ def low_samp_6(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF,
 
 
 def low_samp_7(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """lower sample 7"""
+    """Lower sample 7"""
     in_phase_dates = [
         theta_samp[i] for i, j in enumerate(KEY_REF) if j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == "normal"
     ]
@@ -704,7 +703,7 @@ def low_samp_7(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF,
 
 
 def overlap_samp_1(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """overlap sample 1 - if previous two samples are overlapping and next phase can be any relationship"""
+    """Overlap sample 1 - if previous two samples are overlapping and next phase can be any relationship"""
     in_phase_dates = [
         theta_samp[i] for i, j in enumerate(KEY_REF) if j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == "normal"
     ]
@@ -714,7 +713,7 @@ def overlap_samp_1(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_
 
 
 def overlap_samp_2(theta_samp, phis_samp, m, A, P, SAMP_VEC_TRACK, KEY_REF, PHI_REF, CONT_TYPE):
-    """overlap sample 2"""
+    """Overlap sample 2"""
     in_phase_dates = [
         theta_samp[i] for i, j in enumerate(KEY_REF) if j == PHI_REF[SAMP_VEC_TRACK[m]] and CONT_TYPE[i] == "normal"
     ]
@@ -753,7 +752,7 @@ def dict_form_func(
     KEY_REF,
     CONT_TYPE,
 ):
-    """initiating the inital dict"""
+    """Initiating the inital dict"""
     NEW_LST = [list(x) for x in zip(THETA_INITS, RESULT_VEC, CONTEXT_NO, STRAT_VEC, CONT_TYPE)]
     CV_B = phase_limits(PHASE_BOUNDARY_INITS, POST_PHASE)
     PHIS_VEC = PHASE_BOUNDARY_INITS
@@ -1444,6 +1443,7 @@ def squeeze_model(
 def run_MCMC(
     CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_REF, PREV_PHASE, POST_PHASE, TOPO_SORT, CONT_TYPE
 ):
+    """Run the MCMC algorithm for a set of input data from a Model, returning the tuple of results"""
     #  t0 = time.perf_counter()
     PHI_SAMP_DICT = {
         "upper": {
