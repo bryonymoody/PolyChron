@@ -21,7 +21,7 @@ from packaging.version import Version
 from PIL import Image, UnidentifiedImageError
 
 from .. import __version__
-from ..automated_mcmc_ordering_coupling_copy import run_MCMC
+from ..mcmc import run_MCMC
 from ..Config import get_config
 from ..models.MCMCData import MCMCData
 from ..util import (

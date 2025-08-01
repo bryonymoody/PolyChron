@@ -105,10 +105,6 @@ markers = [
 [tool.ruff]
 line-length = 120
 indent-width = 4
-# Exclude pre-existing files until they have intentionally been linted
-extend-exclude = [
-    "src/polychron/automated_mcmc_ordering_coupling_copy.py",
-]
 
 [tool.ruff.lint]
 # Select which ruff rules to apply when linting.
