@@ -4,6 +4,8 @@ Module for performing MCMC algorithm needed to obtain calibrated age estimates f
 `run_MCMC` is the primary method which should be used to invoke the MCMC algorithm.
 """
 
+from __future__ import annotations
+
 import math
 import random
 from statistics import mean
@@ -11,6 +13,8 @@ from statistics import mean
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
+from .interfaces import Writable
 
 
 def HPD_interval(x_temp, lim=0.95, probs=[]):
@@ -846,6 +850,7 @@ def gibbs_code(
     POST_PHASE,
     PHI_SAMP_DICT,
     CONT_TYPE,
+    PROGRESS_IO: Writable | None = None,
 ):
     THETA_INITS = theta_init_func_n(KEY_REF, PHI_REF, RESULT_VEC, STRAT_VEC, P, CONTEXT_NO, TOPO_SORT)
     PHASE_BOUNDARY_INITS = phase_bd_init_func(KEY_REF, PHI_REF, THETA_INITS, PREV_PHASE, A, P)
@@ -1240,6 +1245,7 @@ def squeeze_model(
     RCD_EST,
     CALIBRATION,
     CONT_TYPE,
+    PROGRESS_IO: Writable | None = None,
 ):
     acept_prob = 1
     while acept_prob > 0:
@@ -1276,7 +1282,8 @@ def squeeze_model(
         i = 0
         ###START OF MCMC ALGORITHM###############
         while min([len(i) for i in ACCEPT]) < 60000:
-            print(int((min([len(i) for i in ACCEPT]) / 60000) * 100))
+            progress_percent = int((min([len(i) for i in ACCEPT]) / 60000) * 100)
+            print(progress_percent, file=PROGRESS_IO)
             for l in np.linspace(0, 10002, 3335):
                 SITE_DICT_TEST_1 = dict_update(SITE_DICT_TEST_1, POST_THETAS, POST_PHIS, i, i, POST_PHASE, PHI_REF)
                 # step 1
@@ -1441,7 +1448,18 @@ def squeeze_model(
 
 
 def run_MCMC(
-    CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_REF, PREV_PHASE, POST_PHASE, TOPO_SORT, CONT_TYPE
+    CALIBRATION,
+    STRAT_VEC,
+    RCD_EST,
+    RCD_ERR,
+    KEY_REF,
+    CONTEXT_NO,
+    PHI_REF,
+    PREV_PHASE,
+    POST_PHASE,
+    TOPO_SORT,
+    CONT_TYPE,
+    PROGRESS_IO: Writable | None = None,
 ):
     """Run the MCMC algorithm for a set of input data from a Model, returning the tuple of results"""
     #  t0 = time.perf_counter()
@@ -1541,6 +1559,7 @@ def run_MCMC(
             RCD_EST,
             CALIBRATION,
             CONT_TYPE,
+            PROGRESS_IO,
         )
         _, ACCEPT_test_1, _, _, _ = squeeze_model(
             PHI_SAMP_DICT,
@@ -1558,6 +1577,7 @@ def run_MCMC(
             RCD_EST,
             CALIBRATION,
             CONT_TYPE,
+            PROGRESS_IO,
         )
         # checks = [GR_conv_check(np.array(j), np.array(ACCEPT_test_1[i])) for i,j in enumerate(ACCEPT)]
         # print(min(checks))
@@ -1577,6 +1597,7 @@ def run_MCMC(
             POST_PHASE,
             PHI_SAMP_DICT,
             CONT_TYPE,
+            PROGRESS_IO,
         )
 
     return CONTEXT_NO, ACCEPT, PHI_ACCEPT, PHI_REF, A, P, ALL_SAMPS_CONT, ALL_SAMPS_PHI

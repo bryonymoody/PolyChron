@@ -8,8 +8,8 @@ import networkx as nx
 import numpy as np
 from matplotlib.figure import Figure
 
-from ..mcmc import HPD_interval
 from ..interfaces import Mediator
+from ..mcmc import HPD_interval
 from ..models.ProjectSelection import ProjectSelection
 from ..util import node_coords_check, phase_length_finder
 from ..views.DatingResultsView import DatingResultsView

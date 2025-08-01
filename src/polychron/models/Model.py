@@ -21,8 +21,9 @@ from packaging.version import Version
 from PIL import Image, UnidentifiedImageError
 
 from .. import __version__
-from ..mcmc import run_MCMC
 from ..Config import get_config
+from ..interfaces import Writable
+from ..mcmc import run_MCMC
 from ..models.MCMCData import MCMCData
 from ..util import (
     MonotonicTimer,
@@ -1004,7 +1005,7 @@ class Model:
         return self.stratigraphic_dag is not None and self.chronological_dag is not None
 
     def MCMC_func(
-        self,
+        self, progress_io: Optional[Writable]
     ) -> Tuple[
         List[str],
         List[List[float]],
@@ -1020,6 +1021,9 @@ class Model:
         """run the mcmc calibration on the current model, returning output values without (significantly) mutating state
 
         gathers all the inputs for the mcmc module and then runs it and returns resuslts dictionaries
+
+        Parameters:
+            progress_io: An object which implements write(str) for the progress percentage. Could be stdout, MCMCProgressView or similar.
 
         Returns:
             a tuple of calibration results
@@ -1102,6 +1106,7 @@ class Model:
             self.post_group,
             topo_sort,
             self.context_types,
+            progress_io,
         )
         _, accept_group_limits, all_group_limits = phase_labels(phi_ref, self.post_group, phi_accept, all_samples_phi)
         for i, j in enumerate(context_no):

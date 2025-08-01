@@ -1,33 +1,8 @@
-import re
-import sys
-import tkinter as tk
-from tkinter import ttk
-
 from ..Config import get_config
 from ..interfaces import Mediator
 from ..models.Model import Model
 from ..views.MCMCProgressView import MCMCProgressView
 from .PopupPresenter import PopupPresenter
-
-
-class StdoutRedirector(object):
-    def __init__(self, text_area: tk.Label, pb1: ttk.Progressbar) -> None:
-        """allows us to rimedirect
-        output to the app canvases"""
-        self.text_area = text_area
-        self.pb1 = pb1
-
-    def write(self, text: str) -> None:
-        """writes to canvas"""
-        self.pb1.update_idletasks()
-        str1 = re.findall(r"\d+", text)
-        if len(str1) != 0:
-            self.text_area["text"] = f"{str1[0]}% complete"
-            self.pb1["value"] = f"{str1[0]}"
-            self.text_area.update_idletasks()
-
-    def flush(self) -> None:
-        pass
 
 
 class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
@@ -50,9 +25,8 @@ class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
         """Runs model calibration for the current model"""
         # Set progress to none
         self.view.update_progress(0)
-        # Setup stdout redirection
-        old_stdout = sys.stdout
-        sys.stdout = StdoutRedirector(self.view.output_label, self.view.progress_bar)
+        # Use the view as the writable object for progress updates
+        progress_io = self.view
         # Run the MCMC calibration
         self.model.mcmc_data.accept_samples_context = [[]]
         while min([len(i) for i in self.model.mcmc_data.accept_samples_context]) < 50000:
@@ -67,10 +41,7 @@ class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
                 self.model.mcmc_data.all_samples_phi,
                 self.model.mcmc_data.accept_group_limits,
                 self.model.mcmc_data.all_group_limits,
-            ) = self.model.MCMC_func()
-
-        # Restore the original stdout
-        sys.stdout = old_stdout
+            ) = self.model.MCMC_func(progress_io)
 
         # Update the model state to show it as having been calibrated
         self.model.mcmc_check = True
