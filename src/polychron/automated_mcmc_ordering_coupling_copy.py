@@ -6,13 +6,13 @@ Created on Thu Sep  2 13:46:35 2021
 @author: bryony
 """
 
-import random
 import math
+import random
 from statistics import mean
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 #CALIBRATION = pd.read_csv('linear_interpolation.txt')
 
@@ -215,7 +215,7 @@ def strat_rel(site_dict, key, i_index, THETAS, CONTEXT_NO):
         stratlow = site_dict[key]["boundaries"][1]
     return [stratlow, stratup]
 #%%
-def dict_seek_ordered_new(i_seek, key, site_dict, THETAS, CONTEXT_NO, RCD_ERR, RCD_EST, A, P):
+def dict_seek_ordered_new(A, P, i_seek, key, site_dict, THETAS, CONTEXT_NO, RCD_ERR, RCD_EST, CALIBRATION):
     """ calc probability in a dictionary"""
     llhood = site_dict[key]["dates"][i_seek][1]
     phase_len = site_dict[key]["boundaries"][1] - site_dict[key]["boundaries"][0] #phase length
@@ -1061,9 +1061,9 @@ def run_MCMC(CALIBRATION, STRAT_VEC, RCD_EST, RCD_ERR, KEY_REF, CONTEXT_NO, PHI_
     if method == "squeeze":
         PHI_ACCEPT, ACCEPT, POST_S, ALL_SAMPS_CONT, ALL_SAMPS_PHI = squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_REF, RCD_EST, CALIBRATION, CONT_TYPE)
         _, ACCEPT_test_1, _, _, _ = squeeze_model(PHI_SAMP_DICT, RESULT_VEC, A, P, RCD_ERR, KEY_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_REF, RCD_EST, CALIBRATION, CONT_TYPE)
-        checks = [GR_conv_check(np.array(j), np.array(ACCEPT_test_1[i])) for i,j in enumerate(ACCEPT)]
-    #    print(min(checks))
-   #     print(max(checks)) 
+        # checks = [GR_conv_check(np.array(j), np.array(ACCEPT_test_1[i])) for i,j in enumerate(ACCEPT)]
+        # print(min(checks))
+        # print(max(checks)) 
     elif method == 'gibbs':
         PHI_ACCEPT, ACCEPT, POST_S, ALL_SAMPS_CONT, ALL_SAMPS_PHI = gibbs_code(5000, RESULT_VEC, A, P, KEY_REF, PHI_REF, STRAT_VEC, CONTEXT_NO, TOPO_SORT, PREV_PHASE, POST_PHASE, PHI_SAMP_DICT, CONT_TYPE)
 
