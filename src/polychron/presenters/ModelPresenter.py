@@ -425,18 +425,19 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         if file is not None:
             try:
                 model_model = self.model.current_model
-                df = pd.read_csv(file)
-                df = df.astype(str)
+                df = pd.read_csv(file, dtype=str)
+                if "context" not in df.columns:
+                    raise ValueError("'context' is a required column for group relationship files")
+                if "group" not in df.columns:
+                    raise ValueError("'group' is a required column for group relationship files")
                 load_it = self.file_popup(df)
                 if load_it == "load":
                     model_model.set_group_df(df)
                     self.phase_check = True
                     self.check_list_gen()
                     self.view.messagebox_info("Success", "Grouping data loaded")
-                else:
-                    pass
-            except ValueError:
-                self.view.messagebox_error("Error", "Data not loaded, please try again")
+            except ValueError as e:
+                self.view.messagebox_error("Error", f"Data not loaded, please try again:\n\n{e}")
 
     def open_group_relationship_file(self) -> None:
         """Callback function when File > Load group relationship file (.csv) is selected, opening a group relationship / phase relationship file
