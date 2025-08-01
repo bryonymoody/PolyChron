@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, Union
+from typing import TYPE_CHECKING, Any, Protocol, Union
 
 # Avoid circular dependencies but provide type hints
 if TYPE_CHECKING:
@@ -38,3 +38,10 @@ class Mediator(Protocol):
             reason (str): A string to pass to the presenter, enabling follow on actions.
         """
         ...
+
+
+class Writable(Protocol):
+    """
+    A protocol for objects which implement write(str)"""
+
+    def write(self, s: str) -> Any: ...

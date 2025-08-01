@@ -145,9 +145,6 @@ If you would like to contribute towards PolyChron, please see the [contributing 
 
 Linting is handled using [`ruff`](https://github.com/astral-sh/ruff) which can be installed as part of the `dev` extras.
 
-> [!NOTE]
-> `automated_mcmc_ordering_coupling.py` is currently excluded from linting
-
 Ruff can then be invoked using:
 
 ```bash
@@ -159,9 +156,6 @@ ruff check
 ### Formatting
 
 Automatic code formatting is handled using [`ruff`](https://github.com/astral-sh/ruff) which can be installed as part of the `dev` extras.
-
-> [!NOTE]
-> `automated_mcmc_ordering_coupling.py` is currently excluded from formatting
 
 Ruff can then be invoked using:
 

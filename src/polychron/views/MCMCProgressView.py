@@ -1,3 +1,4 @@
+import re
 import tkinter as tk
 from tkinter import ttk
 
@@ -39,3 +40,24 @@ class MCMCProgressView(PopupView):
         """
         self.output_label["text"] = f"{percent}% complete"
         self.progress_bar["value"] = percent
+        # Ensure the progress bar gets updated
+        self.output_label.update_idletasks()
+        self.progress_bar.update_idletasks()
+
+    def write(self, text: str) -> None:
+        """Ensure that MCMCProgressView duck-types as Writable - i.e. implement write(str) so it can be used as the `file` argument to `print` to update the progress bar (full TextIO is not required)
+
+        Parameters:
+            text: The str to be 'printed'.
+        """
+        # Do nothing if no input, empty string, or just a newline character is provided
+        if text is None or len(text) == 0 or text == "\n":
+            return
+        # Extract an integer value from the string if it is included and update the view
+        matches = re.findall(r"\d+", text)
+        if len(matches) == 1:
+            int_percent = int(matches[0])
+            self.update_progress(int_percent)
+        else:
+            # If there was more than one match, instead print to console.
+            print(f"{text}")
