@@ -1,4 +1,3 @@
-import sys
 import tkinter as tk
 import tkinter.ttk as ttk
 from unittest.mock import MagicMock, patch
@@ -7,77 +6,8 @@ import pytest
 
 from polychron.interfaces import Mediator
 from polychron.models.Model import Model
-from polychron.presenters.MCMCProgressPresenter import MCMCProgressPresenter, StdoutRedirector
+from polychron.presenters.MCMCProgressPresenter import MCMCProgressPresenter
 from polychron.views.MCMCProgressView import MCMCProgressView
-
-
-class TestStdoutRedirector:
-    """Tests for the StdoutRedirector class"""
-
-    def test_init(self):
-        """Test construction behaves as expected, using mocked versions of tk.Label and ttk.ProgressBar. This will be deleted eventually"""
-        mock_label = MagicMock(spec=tk.Label)
-        mock_progress_bar = MagicMock(spec=ttk.Progressbar)
-        redirector = StdoutRedirector(mock_label, mock_progress_bar)
-        assert redirector.text_area == mock_label
-        assert redirector.pb1 == mock_progress_bar
-
-    def test_write(self):
-        """Test write calls the appropriate members"""
-        mock_label = MagicMock(spec=tk.Label)
-        mock_progress_bar = MagicMock(spec=ttk.Progressbar)
-        redirector = StdoutRedirector(mock_label, mock_progress_bar)
-
-        # Test a non-numeric value
-        test_str = "foo"
-        redirector.write(test_str)
-        mock_progress_bar.update_idletasks.assert_called()
-        # Assert that no "text" or "value" were set.
-        mock_label.__setitem__.assert_not_called()
-        mock_progress_bar.__setitem__.assert_not_called()
-
-        # Test a numeric value
-        test_str = "12"
-        redirector.write(test_str)
-        mock_progress_bar.update_idletasks.assert_called()
-        # Assert that no "text" or "value" were set.
-        mock_label.__setitem__.assert_called_with("text", f"{test_str}% complete")
-        mock_progress_bar.__setitem__.assert_called_with("value", f"{test_str}")
-        mock_label.update_idletasks.assert_called()
-
-    def test_flush(self):
-        """Test flush is implemented"""
-        mock_label = MagicMock(spec=tk.Label)
-        mock_progress_bar = MagicMock(spec=ttk.Progressbar)
-        redirector = StdoutRedirector(mock_label, mock_progress_bar)
-        # This should not throw
-        redirector.flush()
-
-    def test_capture(self, capsys: pytest.CaptureFixture):
-        """Test that it can be used to redirect stdout"""
-        mock_label = MagicMock(spec=tk.Label)
-        mock_progress_bar = MagicMock(spec=ttk.Progressbar)
-
-        # Check that printing is output to stdout currently
-        capsys.readouterr()
-        print("test")
-        assert capsys.readouterr().out == "test\n"
-
-        # Re-assign sys.stdout
-        old_stdout = sys.stdout
-        sys.stdout = StdoutRedirector(mock_label, mock_progress_bar)
-        # Print, ensuring it was not output to stdout
-        capsys.readouterr()
-        print("12")
-        assert len(capsys.readouterr().out) == 0
-        # And check that the progress bar was updated
-        mock_progress_bar.__setitem__.assert_called_with("value", "12")
-
-        # And check it can be resumed
-        sys.stdout = old_stdout
-        capsys.readouterr()
-        print("test")
-        assert capsys.readouterr().out == "test\n"
 
 
 class TestMCMCProgressPresenter:
@@ -159,10 +89,13 @@ class TestMCMCProgressPresenter:
             patch("polychron.models.MCMCData.MCMCData.save") as mock_mcmcdata_save,
         ):
             # Define a fake mcmc func which prints several times before returning some fake data of the correct type and assign it as the MagicMock side_effect
-            def fake_mcmc_func():
-                print(12)
-                print(50)
-                print(100)
+            def fake_mcmc_func(writable=None):
+                print(12, file=writable)
+                print(50, file=writable)
+                print(100, file=writable)
+                print(12, file=writable)
+                print(50, file=writable)
+                print(100, file=writable)
                 return tuple([[], [[i for i in range(50000)]], [], [], 12, 12, [], [], {}, {}])
 
             mock_model_mcmc_func.side_effect = fake_mcmc_func

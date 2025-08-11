@@ -21,8 +21,9 @@ from packaging.version import Version
 from PIL import Image, UnidentifiedImageError
 
 from .. import __version__
-from ..automated_mcmc_ordering_coupling_copy import run_MCMC
 from ..Config import get_config
+from ..interfaces import Writable
+from ..mcmc import run_MCMC
 from ..models.MCMCData import MCMCData
 from ..util import (
     MonotonicTimer,
@@ -1004,7 +1005,7 @@ class Model:
         return self.stratigraphic_dag is not None and self.chronological_dag is not None
 
     def MCMC_func(
-        self,
+        self, progress_io: Optional[Writable]
     ) -> Tuple[
         List[str],
         List[List[float]],
@@ -1021,6 +1022,9 @@ class Model:
 
         gathers all the inputs for the mcmc module and then runs it and returns resuslts dictionaries
 
+        Parameters:
+            progress_io: An object which implements write(str) for the progress percentage. Could be stdout, MCMCProgressView or similar.
+
         Returns:
             a tuple of calibration results
 
@@ -1031,7 +1035,15 @@ class Model:
             raise RuntimeError("Model is not MCMC ready, the stratigraphic and chronographic dag are not valid")
 
         context_no = [x for x in list(self.context_no_unordered) if x not in self.removed_nodes_tracker]
+        for i, j in enumerate(self.prev_group):
+            if j == "overlap":
+                self.chronological_dag.add_edge("a_" + str(self.phi_ref[i]), "a_" + str(self.phi_ref[i - 1]))
+                self.chronological_dag.add_edge("b_" + str(self.phi_ref[i]), "b_" + str(self.phi_ref[i - 1]))
         topo = list(nx.topological_sort(self.chronological_dag))
+        for i, j in enumerate(self.prev_group):
+            if j == "overlap":
+                self.chronological_dag.remove_edge("a_" + str(self.phi_ref[i]), "a_" + str(self.phi_ref[i - 1]))
+                self.chronological_dag.remove_edge("b_" + str(self.phi_ref[i]), "b_" + str(self.phi_ref[i - 1]))
         topo_sort = [x for x in topo if (x not in self.removed_nodes_tracker) and (x in context_no)]
         topo_sort.reverse()
         context_no = topo_sort
@@ -1094,6 +1106,7 @@ class Model:
             self.post_group,
             topo_sort,
             self.context_types,
+            progress_io,
         )
         _, accept_group_limits, all_group_limits = phase_labels(phi_ref, self.post_group, phi_accept, all_samples_phi)
         for i, j in enumerate(context_no):
