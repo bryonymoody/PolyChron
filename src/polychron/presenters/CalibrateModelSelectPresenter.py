@@ -55,10 +55,8 @@ class CalibrateModelSelectPresenter(PopupPresenter[CalibrateModelSelectView, Pro
                         curve_obj = src_model.get_calibration_curve()
                     except Exception:
                         curve_obj = None
-                if curve_obj is not None and hasattr(curve_obj, "curve_name"):
-                    curve_name = curve_obj.curve_name
-                else:
-                    curve_name = getattr(src_model, "calibration_curve_name", None)
+                    if curve_obj is not None and hasattr(curve_obj, "curve_name"):
+                        curve_name = curve_obj.curve_name
 
                 if not curve_name:
                     curve_name = "intcal20_interpolated"

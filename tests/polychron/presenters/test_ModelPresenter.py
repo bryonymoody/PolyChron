@@ -127,7 +127,7 @@ class TestModelPresenter:
         assert len(mock_view.build_tool_menu.call_args.args) == 1
         menu_items = mock_view.build_tool_menu.call_args.args[0]
         assert isinstance(menu_items, list)
-        assert len(menu_items) == 3
+        assert len(menu_items) == 4
         for entry in menu_items:
             assert entry is None or (isinstance(entry, tuple) and len(entry) == 2 and callable(entry[1]))
 
