@@ -32,10 +32,14 @@ class SelectCalibrationCurvePresenter(PopupPresenter[SelectCalibrationCurveView,
     def on_ok(self) -> None:
         """Apply the selected curve to the main model"""
         selected_curve = self.view.get_selection()
-        self.selected_curve_name = selected_curve
-
         selected_curve_object = self.curves[selected_curve]
-        self.model.set_calibration_curve(selected_curve_object)
+
+        target_model = getattr(self.model, "current_model", self.model)
+
+        # Store on the model so all presenters can read it later
+        if hasattr(target_model, "set_calibration_curve"):
+            target_model.set_calibration_curve(selected_curve_object)
+            target_model.calibration_curve_name = selected_curve_object.curve_name
 
         self.close_view()
 

@@ -40,16 +40,3 @@ class InterpolatedRCDCalibrationCurve:
         if self.__dataframe is None:
             self.load()
         return self.__dataframe.copy()
-
-    @classmethod
-    def load_from_csv(cls, csv_path: str | pathlib.Path) -> InterpolatedRCDCalibrationCurve:
-        """
-        Create an InterpolatedRCDCalibrationCurve instance directly from a CSV file path.
-
-        This bypasses the internal name-to-path resolution and lets you load arbitrary CSVs.
-        """
-        csv_path = pathlib.Path(csv_path)
-        curve_name = csv_path.stem  # file name without extension
-        instance = cls(curve_name)
-        instance.__dataframe = pd.read_csv(csv_path)
-        return instance

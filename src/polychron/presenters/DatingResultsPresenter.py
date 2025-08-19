@@ -79,17 +79,15 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         name = None
         # If presenter has a Model directly:
         try:
-            curve_obj = getattr(self.model, "get_calibration_curve", lambda: None)()
+            curve_obj = self.model.current_model.get_calibration_curve()
+            name = curve_obj.curve_name
         except Exception:
             curve_obj = None
-        if curve_obj is not None and hasattr(curve_obj, "curve_name"):
-            name = curve_obj.curve_name
-        else:
-            name = getattr(self.model, "calibration_curve_name", None)
         if not name:
             name = "intcal20_interpolated"
         if name.endswith("_interpolated"):
             name = name[: -len("_interpolated")]
+            print(name)
         return name
 
     def update_view(self) -> None:
