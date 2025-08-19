@@ -75,9 +75,29 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         # Update the view to reflect the current staet of the model
         self.update_view()
 
+    def _get_display_curve_name(self) -> str:
+        name = None
+        # If presenter has a Model directly:
+        try:
+            curve_obj = getattr(self.model, "get_calibration_curve", lambda: None)()
+        except Exception:
+            curve_obj = None
+        if curve_obj is not None and hasattr(curve_obj, "curve_name"):
+            name = curve_obj.curve_name
+        else:
+            name = getattr(self.model, "calibration_curve_name", None)
+        if not name:
+            name = "intcal20_interpolated"
+        if name.endswith("_interpolated"):
+            name = name[: -len("_interpolated")]
+        return name
+
     def update_view(self) -> None:
         # Ensure content is correct when switching tab
         self.chronograph_render_post()
+
+        if hasattr(self.view, "set_curve_name"):
+            self.view.set_curve_name(self._get_display_curve_name())
 
     def get_window_title_suffix(self) -> str | None:
         if self.model.current_project_name and self.model.current_model_name:

@@ -24,9 +24,13 @@ class MCMCProgressView(PopupView):
         self.backcanvas.place(relx=0, rely=0, relwidth=1, relheight=1)
 
         self.title_label = tk.Label(
-            self.backcanvas, text="MCMC in progress", font=("helvetica 14 bold"), fg="#2F4858", bg="#AEC7D6"
+            self.backcanvas,
+            text="MCMC in progress - Calibration curve: ",
+            font=("helvetica 14 bold"),
+            fg="#2F4858",
+            bg="#AEC7D6",
         )
-        self.title_label.place(relx=0.35, rely=0.26)
+        self.title_label.place(relx=0.30, rely=0.26)
         self.output_label = tk.Label(self.backcanvas, font=("helvetica 14 bold"), fg="#2F4858", bg="#AEC7D6")
         self.output_label.place(relx=0.4, rely=0.4)
         self.progress_bar = ttk.Progressbar(self.backcanvas, orient=tk.HORIZONTAL, length=400, mode="indeterminate")
@@ -61,3 +65,7 @@ class MCMCProgressView(PopupView):
         else:
             # If there was more than one match, instead print to console.
             print(f"{text}")
+
+    def set_curve_name(self, curve_name: str) -> None:
+        """Update the title label with the selected calibration curve."""
+        self.title_label.config(text=f"MCMC in progress - Calibration curve: {curve_name}")

@@ -24,7 +24,7 @@ class CalibrateModelSelectView(PopupView):
 
         # Add instruction text
         self.label = tk.Label(
-            self, text="Which model/s would you like calibrate?", bg="white", font="helvetica 12", fg="#2f4858"
+            self, text="Which model/s would you like to calibrate?", bg="white", font="helvetica 12", fg="#2f4858"
         )
         self.label.place(relx=0.3, rely=0.1)
 
@@ -64,3 +64,7 @@ class CalibrateModelSelectView(PopupView):
     def get_selected_models(self) -> List[str]:
         """Get a list of selected model names from the listbox"""
         return [self.list_box.get(i) for i in self.list_box.curselection()]
+
+    def set_curve_name(self, curve_name: str) -> None:
+        """Show the chosen calibration curve in the prompt."""
+        self.label.config(text=f"Which model/s would you like to calibrate?  (Curve: {curve_name})")
