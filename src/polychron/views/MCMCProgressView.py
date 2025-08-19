@@ -68,4 +68,6 @@ class MCMCProgressView(PopupView):
 
     def set_curve_name(self, curve_name: str) -> None:
         """Update the title label with the selected calibration curve."""
-        self.title_label.config(text=f"MCMC in progress - Calibration curve: {curve_name}")
+        title = f"MCMC in progress - Calibration curve: {curve_name}"
+        self.title(title)
+        self.title_label.config(text=title)
