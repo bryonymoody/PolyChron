@@ -87,7 +87,6 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
             name = "intcal20_interpolated"
         if name.endswith("_interpolated"):
             name = name[: -len("_interpolated")]
-            print(name)
         return name
 
     def update_view(self) -> None:
