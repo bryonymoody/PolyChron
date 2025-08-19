@@ -15,7 +15,6 @@ class SelectCalibrationCurvePresenter(PopupPresenter[SelectCalibrationCurveView,
             "intcal20": InterpolatedRCDCalibrationCurve("intcal20_interpolated"),
             "marine20": InterpolatedRCDCalibrationCurve("marine20_interpolated"),
             "shcal20": InterpolatedRCDCalibrationCurve("shcal20_interpolated"),
-            "linearinterpolation": InterpolatedRCDCalibrationCurve("linear_interpolation"),
         }
         self.selected_curve_name = None
 
