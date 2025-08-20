@@ -70,6 +70,16 @@ class TestGroupRelationship:
         result = a == b
         assert expected == result
 
+    def test_hash(self):
+        """Test that the Group Relationship enum can be hashed, by using as a dictionary key"""
+        d = {}
+        d[GroupRelationship.ABUTTING] = "abutting"
+        assert GroupRelationship.ABUTTING in d
+        d[GroupRelationship.GAP] = "gap"
+        assert GroupRelationship.GAP in d
+        d[GroupRelationship.OVERLAP] = "overlap"
+        assert GroupRelationship.OVERLAP in d
+
     @pytest.mark.parametrize(
         ("value", "expected"),
         [

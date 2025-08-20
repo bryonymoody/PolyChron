@@ -445,8 +445,8 @@ class ManageGroupRelationshipsPresenter(PopupPresenter[ManageGroupRelationshipsV
 
         # Update other model properties
         self.model.context_types = self.context_types
-        self.model.prev_group = prev_group
-        self.model.post_group = post_group
+        self.model.prev_group = [str(x) for x in prev_group]
+        self.model.post_group = [str(x) for x in post_group]
         self.model.phi_ref = phi_ref
         self.model.context_no_unordered = self.context_no_unordered
         self.model.removed_nodes_tracker = self.removed_nodes_tracker
