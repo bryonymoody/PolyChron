@@ -35,6 +35,13 @@ class GroupRelationship(Enum):
         # Otherwise fall back to the other object
         return NotImplemented
 
+    def __hash__(self) -> int:
+        """Custom hash implementation, which must be overridden when __eq__ is overridden.
+
+        Returns: default hash implementation of the underlying string value
+        """
+        return hash(self.value)
+
     @classmethod
     def from_string(cls, value: str) -> "GroupRelationship":
         """Converts a string into a GroupRelationship enum
