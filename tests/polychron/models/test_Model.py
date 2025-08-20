@@ -457,12 +457,12 @@ class TestModel:
             # Valid dataframe, with changes
             ("context-grouping-csv/simple.csv", 4, None),
             # Dataframe with partial information
-            ({"context": ["a", "b"], "Group": [1, 2]}, 2, None),
+            ({"context": ["a", "b"], "group": [1, 2]}, 2, None),
             # Dataframe with unknown context
             pytest.param(
                 {
                     "context": ["a", "b", "c", "d", "e"],
-                    "Group": [1, 2, 1, 2, 1],
+                    "group": [1, 2, 1, 2, 1],
                 },
                 4,
                 None,

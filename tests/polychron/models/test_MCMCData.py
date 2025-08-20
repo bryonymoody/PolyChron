@@ -220,7 +220,7 @@ class TestMCMCData:
         obj.all_group_limits = all_group_limits
 
         # Prepare method input data
-        group_df = pd.DataFrame({"context": contexts, "Group": ["1", "2", "1"]})
+        group_df = pd.DataFrame({"context": contexts, "group": ["1", "2", "1"]})
 
         # Call save_results_dataframes
         obj.save_results_dataframes(tmp_path, group_df)
@@ -379,7 +379,7 @@ class TestMCMCData:
             accept_group_limits=accept_group_limits,
             all_group_limits=all_group_limits,
         )
-        group_df = pd.DataFrame({"context": contexts, "Group": ["1", "2", "1"]})
+        group_df = pd.DataFrame({"context": contexts, "group": ["1", "2", "1"]})
 
         # Save the instance
         obj.save(tmp_path, group_df)

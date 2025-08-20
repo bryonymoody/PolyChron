@@ -99,7 +99,7 @@ class MCMCData:
         df.to_csv(full_results_df_path, index=False)
 
         # List containing the the group for each context, in order of topologically sorted contexts.
-        key_ref = [list(group_df["Group"])[list(group_df["context"]).index(i)] for i in self.contexts]
+        key_ref = [list(group_df["group"])[list(group_df["context"]).index(i)] for i in self.contexts]
         df1 = pd.DataFrame(key_ref)
         df1.to_csv(path / "key_ref.csv", index=False)
 
