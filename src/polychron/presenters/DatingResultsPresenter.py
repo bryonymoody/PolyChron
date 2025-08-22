@@ -76,15 +76,13 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         self.update_view()
 
     def _get_display_curve_name(self) -> str:
-        name = None
-        # If presenter has a Model directly:
-        try:
-            curve_obj = self.model.current_model.get_calibration_curve()
-            name = curve_obj.curve_name
-        except Exception:
-            curve_obj = None
-        if not name:
-            name = "intcal20_interpolated"
+        model_model = self.model.current_model
+        if model_model is None:
+            return ""
+
+        # Get the curve name from the MCMCData object for the current model
+        name = model_model.mcmc_data.calibration_curve_name
+
         if name.endswith("_interpolated"):
             name = name[: -len("_interpolated")]
         return name

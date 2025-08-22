@@ -78,6 +78,9 @@ class MCMCData:
     Formerly `StartPage.all_results_dict`
     """
 
+    calibration_curve_name: str = "intcal20_interpolated"
+    """Name of the calibration curve which was used to generate this `MCMCData`. This enables the correct curve to be displayed on the dating results tab when the curve has been changed, but the model has not been re-calibrated."""
+
     def save_results_dataframes(self, path: pathlib.Path, group_df: pd.DataFrame) -> None:
         """Save some MCMC data to disk, separately from the serialised version of this class
 

@@ -80,6 +80,8 @@ class CalibrateModelSelectPresenter(PopupPresenter[CalibrateModelSelectView, Pro
                             ) = model.MCMC_func()
                             # Update the model state to show it as having been calibrated
                             model.mcmc_check = True
+                            # Update the calibration curve used for the MCMCdata
+                            model.mcmc_data.calibration_curve_name = model.calibration_curve_name
                             # Save the mcmc data to disk
                             model.mcmc_data.save(model.get_working_directory(), model.group_df, get_config().verbose)
                             model.save()
