@@ -259,14 +259,6 @@ class Model:
     Formerly (part of) `global node_df`
     """
 
-    chronological_node_coords: Optional[tuple[dict[str, list[float]], list[FloatingPointError]]] = field(default=None)
-    """A tuple containing node coordinates and  within the svg representation of the chronological graph, and the dimensions of the svg.
-
-    This is updated when the chronological_dag is re-rendered.
-    
-    Formerly (part of) `global node_df`
-    """
-
     resid_or_intru_node_coords: Optional[Tuple[pd.DataFrame, List[float]]] = field(default=None)
     """A tuple containing node coordinates and  within the svg representation of the resid_or_intru graph, and the dimensions of the svg.
 
@@ -274,6 +266,9 @@ class Model:
     
     Formerly (part of) `global node_df`
     """
+
+    calibration_curve_name: str = "intcal20_interpolated"
+    """Name of the calibration curve to use for MCMC runs. Defaults to IntCal20 interpolated curve."""
 
     __calibration: Optional[InterpolatedRCDCalibrationCurve] = field(default=None, init=False, repr=False)
     """Interpolated RCD calibration curve object, which is stored in a member variable so it is loaded once and only once"""
@@ -1004,6 +999,15 @@ class Model:
 
         return self.stratigraphic_dag is not None and self.chronological_dag is not None
 
+    def set_calibration_curve(self, curve: InterpolatedRCDCalibrationCurve) -> None:
+        """Set the currently selected calibration curve for this model."""
+        self.__calibration = curve
+        self.calibration_curve_name = curve.curve_name
+
+    def get_calibration_curve(self) -> Optional[InterpolatedRCDCalibrationCurve]:
+        """Get the currently selected calibration curve (if any)."""
+        return self.__calibration
+
     def MCMC_func(
         self, progress_io: Optional[Writable]
     ) -> Tuple[
@@ -1092,7 +1096,10 @@ class Model:
         f.close()
 
         # Load calibration data.
-        self.__calibration: InterpolatedRCDCalibrationCurve = InterpolatedRCDCalibrationCurve()
+        if not hasattr(self, "_Model__calibration") or self.__calibration is None:
+            self.__calibration = InterpolatedRCDCalibrationCurve(self.calibration_curve_name)
+
+        self.__calibration.load()
 
         context_no, accept, phi_accept, phi_ref, A, P, all_samples_context, all_samples_phi = run_MCMC(
             self.__calibration.df,

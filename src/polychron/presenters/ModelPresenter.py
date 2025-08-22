@@ -18,6 +18,7 @@ from ..presenters.MCMCProgressPresenter import MCMCProgressPresenter
 from ..presenters.RemoveContextPresenter import RemoveContextPresenter
 from ..presenters.RemoveStratigraphicRelationshipPresenter import RemoveStratigraphicRelationshipPresenter
 from ..presenters.ResidualOrIntrusivePresenter import ResidualOrIntrusivePresenter
+from ..presenters.SelectCalibrationCurvePresenter import SelectCalibrationCurvePresenter
 from ..util import edge_label, get_right_click_binding, imagefunc, node_coords_check, node_del_fixed
 from ..views.AddContextView import AddContextView
 from ..views.CalibrateModelSelectView import CalibrateModelSelectView
@@ -29,6 +30,7 @@ from ..views.ProjectSelectProcessPopupView import ProjectSelectProcessPopupView
 from ..views.RemoveContextView import RemoveContextView
 from ..views.RemoveStratigraphicRelationshipView import RemoveStratigraphicRelationshipView
 from ..views.ResidualOrIntrusiveView import ResidualOrIntrusiveView
+from ..views.SelectCalibrationCurveView import SelectCalibrationCurveView
 from .FramePresenter import FramePresenter
 from .ManageGroupRelationshipsPresenter import ManageGroupRelationshipsPresenter
 from .ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresenter
@@ -97,6 +99,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         self.view.build_tool_menu(
             [
                 ("Render chronological graph", lambda: self.chronograph_render_wrap()),
+                ("Select calibration curve", lambda: self.open_calibration_curve_selector()),
                 ("Calibrate model", lambda: self.popup_calibrate_model()),
                 ("Calibrate multiple models from project", lambda: self.popup_calibrate_multiple()),
                 # ("Calibrate node delete variations (alpha)",  lambda: self.calibrate_node_delete_variations()), # see https://github.com/bryonymoody/PolyChron/issues/71
@@ -317,6 +320,11 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         self.view.parent.wait_window(popup_presenter.view)
         self.view.canvas["state"] = "normal"
         return datafile_model.result
+
+    def open_calibration_curve_selector(self) -> None:
+        """Open the calibration-curve selection popup."""
+        popup = SelectCalibrationCurveView(self.view)
+        SelectCalibrationCurvePresenter(self.mediator, popup, self.model.current_model)
 
     def open_strat_dot_file(self) -> None:
         """Callback function when File > Load stratigraphic diagram file (.dot) (.csv) is selected, opening a .dot / graphviz file representing the stratigraphic relationships

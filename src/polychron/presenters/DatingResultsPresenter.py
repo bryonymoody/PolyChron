@@ -75,9 +75,24 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         # Update the view to reflect the current staet of the model
         self.update_view()
 
+    def _get_display_curve_name(self) -> str:
+        model_model = self.model.current_model
+        if model_model is None:
+            return ""
+
+        # Get the curve name from the MCMCData object for the current model
+        name = model_model.mcmc_data.calibration_curve_name
+
+        if name.endswith("_interpolated"):
+            name = name[: -len("_interpolated")]
+        return name
+
     def update_view(self) -> None:
         # Ensure content is correct when switching tab
         self.chronograph_render_post()
+
+        if hasattr(self.view, "set_curve_name"):
+            self.view.set_curve_name(self._get_display_curve_name())
 
     def get_window_title_suffix(self) -> str | None:
         if self.model.current_project_name and self.model.current_model_name:

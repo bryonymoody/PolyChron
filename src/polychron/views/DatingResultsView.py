@@ -112,10 +112,13 @@ class DatingResultsView(FrameView):
         self.littlecanvas_label = tk.Canvas(
             self.canvas, bd=0, bg="#CC5F00", selectborderwidth=0, highlightthickness=0, insertwidth=0
         )
-        self.littlecanvas_label.place(relx=0.6, rely=0.011, relwidth=0.18, relheight=0.027)
+        self.littlecanvas_label.place(relx=0.6, rely=0.011, relwidth=0.23, relheight=0.027)
         self.littlecanvas_label_id = self.littlecanvas_label.create_text(10, 5, anchor="nw", fill="white")
         self.littlecanvas_label.itemconfig(
             self.littlecanvas_label_id, text="Posterior densities", font="helvetica 12 bold"
+        )
+        self.curve_badge_id = self.littlecanvas_label.create_text(
+            300, 5, anchor="ne", fill="white", font="helvetica 12 bold"
         )
 
         self.littlecanvas_a_label = tk.Canvas(
@@ -582,3 +585,9 @@ class DatingResultsView(FrameView):
         self.toolbar.pack(side=tk.BOTTOM, fill=tk.X)
         # Pack the canvas plot tk widget into the littlecanvas, filling in both directions. expand=true could be used instead if the plots being reshaped to fill the space is desirable
         self.canvas_plt.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH)
+
+    def set_curve_name(self, curve_name: str) -> None:
+        # strip the suffix if present
+        if curve_name.endswith("_interpolated"):
+            curve_name = curve_name[: -len("_interpolated")]
+        self.littlecanvas_label.itemconfig(self.curve_badge_id, text=f"Curve: {curve_name}")

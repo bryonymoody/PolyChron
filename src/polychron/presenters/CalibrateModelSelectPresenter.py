@@ -22,6 +22,9 @@ class CalibrateModelSelectPresenter(PopupPresenter[CalibrateModelSelectView, Pro
         # Update view information to reflect the current state of the model
         self.update_view()
 
+        if hasattr(self.view, "set_curve_name"):
+            self.view.set_curve_name(self._get_display_curve_name())
+
     def update_view(self) -> None:
         # For each model in the project which has required input files, add an entry to the list to choose from
         model_list = []
@@ -44,6 +47,20 @@ class CalibrateModelSelectPresenter(PopupPresenter[CalibrateModelSelectView, Pro
             project = self.model.current_project
             if project is not None:
                 selected_models = self.view.get_selected_models()
+
+                curve_name = None
+                src_model = self.model.current_model
+                if src_model is not None:
+                    try:
+                        curve_obj = src_model.get_calibration_curve()
+                    except Exception:
+                        curve_obj = None
+                    if curve_obj is not None and hasattr(curve_obj, "curve_name"):
+                        curve_name = curve_obj.curve_name
+
+                if not curve_name:
+                    curve_name = "intcal20_interpolated"
+
                 # For each selected model, calibrate and save
                 for model_name in selected_models:
                     if project.has_model(model_name):
@@ -63,6 +80,8 @@ class CalibrateModelSelectPresenter(PopupPresenter[CalibrateModelSelectView, Pro
                             ) = model.MCMC_func()
                             # Update the model state to show it as having been calibrated
                             model.mcmc_check = True
+                            # Update the calibration curve used for the MCMCdata
+                            model.mcmc_data.calibration_curve_name = model.calibration_curve_name
                             # Save the mcmc data to disk
                             model.mcmc_data.save(model.get_working_directory(), model.group_df, get_config().verbose)
                             model.save()
@@ -72,3 +91,28 @@ class CalibrateModelSelectPresenter(PopupPresenter[CalibrateModelSelectView, Pro
     def on_select_all(self) -> None:
         """When the OK button is pressed, select all rows in the list"""
         self.view.select_all_models()
+
+    def _get_display_curve_name(self) -> str:
+        """Return a user-friendly calibration curve name (no '_interpolated')."""
+        name = None
+        src_model = getattr(self.model, "current_model", None)
+
+        if src_model is not None:
+            # Prefer the actual curve object if present
+            curve_obj = None
+            try:
+                curve_obj = src_model.get_calibration_curve()
+            except Exception:
+                pass
+
+            if curve_obj is not None and hasattr(curve_obj, "curve_name"):
+                name = curve_obj.curve_name
+            else:
+                name = getattr(src_model, "calibration_curve_name", None)
+
+        if not name:
+            name = "intcal20_interpolated"
+
+        if name.endswith("_interpolated"):
+            name = name[: -len("_interpolated")]
+        return name

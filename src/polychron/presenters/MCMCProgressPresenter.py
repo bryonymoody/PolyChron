@@ -18,6 +18,8 @@ class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
         # Update view information to reflect the current state of the model
         self.update_view()
 
+        self.view.set_curve_name(self._get_display_curve_name())
+
     def update_view(self) -> None:
         pass
 
@@ -45,5 +47,21 @@ class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
 
         # Update the model state to show it as having been calibrated
         self.model.mcmc_check = True
+        # Update the calibration curve used for the MCMCdata
+        self.model.mcmc_data.calibration_curve_name = self.model.calibration_curve_name
         # Save the mcmc data to disk
         self.model.mcmc_data.save(self.model.get_working_directory(), self.model.group_df, get_config().verbose)
+
+    def _get_display_curve_name(self) -> str:
+        """Return a user-friendly calibration curve name (no '_interpolated')."""
+        # Prefer the actual curve object if it’s been set
+        curve_obj = getattr(self.model, "get_calibration_curve", lambda: None)()
+        if curve_obj is not None and hasattr(curve_obj, "curve_name"):
+            name = curve_obj.curve_name
+        else:
+            # Fallback to the model’s stored name (set when user picks a curve)
+            name = getattr(self.model, "calibration_curve_name", "intcal20_interpolated")
+
+        if name.endswith("_interpolated"):
+            name = name[: -len("_interpolated")]
+        return name
