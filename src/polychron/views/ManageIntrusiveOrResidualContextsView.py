@@ -31,7 +31,7 @@ class ManageIntrusiveOrResidualContextsView(PopupView):
         """Dict of dropdown tkinter widgets for residual nodes"""
 
         self.configure(bg="#AEC7D6")
-        self.geometry("1000x400")
+        self.centered_geometry(1000, 400)
         self.title("Managing intrusive and residual contexts")
 
         self.back_button = tk.Button(self, text="Go back", bg="#2F4858", font=("Helvetica 12 bold"), fg="#eff3f6")

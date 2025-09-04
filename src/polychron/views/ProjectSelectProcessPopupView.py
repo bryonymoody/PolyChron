@@ -14,14 +14,7 @@ class ProjectSelectProcessPopupView(PopupView):
         # Set the popup title
         self.title("PolyChron loading page")
         # Set the geometry, which naturally is centered within the parent window
-        self.geometry("1000x400")
-
-        # orignal placement code
-        # root_x = master.winfo_rootx()
-        # root_y = master.winfo_rooty()
-        # win_x = root_x + 500
-        # win_y = root_y + 200
-        # self.top.geometry(f'1000x400+{win_x}+{win_y}')
+        self.centered_geometry(1000, 400)
 
         # Declare 2 canvas, splitting the UI into 2 columns
         # Subsequent views are placed into one of these canvas elements and switched between by the presenter
