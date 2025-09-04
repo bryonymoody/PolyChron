@@ -20,7 +20,6 @@ class RemoveStratigraphicRelationshipView(PopupView):
         self.configure(bg="white")
         self.geometry("1000x400")
         self.title("Removal of stratigraphic relationship")
-        self.attributes("-topmost", "true")
 
         # Add a label, without the text value set by update_label to avoid duplication
         self.label = tk.Label(

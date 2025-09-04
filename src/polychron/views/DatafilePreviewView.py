@@ -19,7 +19,6 @@ class DatafilePreviewView(PopupView):
         super().__init__(parent)
 
         self.title("Data preview")
-        self.attributes("-topmost", "true")
 
         self.canvas = tk.Canvas(self, bg="white")
         self.canvas.pack()

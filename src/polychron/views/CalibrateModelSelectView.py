@@ -20,7 +20,6 @@ class CalibrateModelSelectView(PopupView):
         self.configure(bg="white")
         self.title("Model calibration")
         self.geometry("1000x400")
-        self.attributes("-topmost", "true")
 
         # Add instruction text
         self.label = tk.Label(
