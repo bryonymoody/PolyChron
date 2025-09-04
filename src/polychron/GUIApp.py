@@ -20,6 +20,7 @@ from .presenters.FramePresenter import FramePresenter
 from .presenters.ModelPresenter import ModelPresenter
 from .presenters.ProjectSelectProcessPopupPresenter import ProjectSelectProcessPopupPresenter
 from .presenters.SplashPresenter import SplashPresenter
+from .util import check_graphviz_usable
 from .views.DatingResultsView import DatingResultsView
 from .views.ModelView import ModelView
 from .views.ProjectSelectProcessPopupView import ProjectSelectProcessPopupView
@@ -198,51 +199,68 @@ class GUIApp(Mediator):
         self.switch_presenter("Splash")
         splash_presenter = self.get_presenter("Splash")
 
+        # Check if graphviz is available
+        graphviz_usable = check_graphviz_usable()
+
         # Lazily load the projects directory, so (potential) existing models and projects are known.
         self.project_selector_obj.projects_directory.lazy_load()
 
-        # Instantiate the child presenter and view, which otherwise would be done by SplashPresenter.on_select_project. This does not start hidden
-        popup_presenter = ProjectSelectProcessPopupPresenter(
-            self, ProjectSelectProcessPopupView(splash_presenter.view), self.project_selector_obj
-        )
+        if graphviz_usable:
+            # Instantiate the child presenter and view, which otherwise would be done by SplashPresenter.on_select_project. This does not start hidden
+            popup_presenter = ProjectSelectProcessPopupPresenter(
+                self, ProjectSelectProcessPopupView(splash_presenter.view), self.project_selector_obj
+            )
 
-        # Handle the --project and --model cli-provided arguments.
-        have_project_name = project_name is not None and len(project_name) > 0
-        have_model_name = model_name is not None and len(model_name) > 0
+            # Handle the --project and --model cli-provided arguments.
+            have_project_name = project_name is not None and len(project_name) > 0
+            have_model_name = model_name is not None and len(model_name) > 0
 
-        # If we have a project name
-        if have_project_name:
-            # update the project selection model with it.
-            self.project_selector_obj.next_project_name = project_name
+            # If we have a project name
+            if have_project_name:
+                # update the project selection model with it.
+                self.project_selector_obj.next_project_name = project_name
 
-            # If we do not have a model name
-            if not have_model_name:
-                # If the project does not exist, or contains 0 (potential) models
-                if (project := self.project_selector_obj.next_project) is None or len(project.models) == 0:
-                    # switch to the new model popup
-                    popup_presenter.switch_presenter("model_create")
+                # If we do not have a model name
+                if not have_model_name:
+                    # If the project does not exist, or contains 0 (potential) models
+                    if (project := self.project_selector_obj.next_project) is None or len(project.models) == 0:
+                        # switch to the new model popup
+                        popup_presenter.switch_presenter("model_create")
+                    else:
+                        # Otherwise switch to the new model select popup
+                        popup_presenter.switch_presenter("model_select")
                 else:
-                    # Otherwise switch to the new model select popup
-                    popup_presenter.switch_presenter("model_select")
-            else:
-                # If we also have a model name, store it in the project selection model
-                self.project_selector_obj.next_model_name = model_name
+                    # If we also have a model name, store it in the project selection model
+                    self.project_selector_obj.next_model_name = model_name
 
-                # Get the reason that the presenter is being closed.
-                reason = "load_model" if self.project_selector_obj.next_model is not None else "new_model"
+                    # Get the reason that the presenter is being closed.
+                    reason = "load_model" if self.project_selector_obj.next_model is not None else "new_model"
 
-                try:
-                    # Try to update the model to the "next" project & model.
-                    self.project_selector_obj.switch_to_next_project_model(load_ok=True, create_ok=True)
-                except RuntimeError as e:
-                    # Invalid project/model names should raise an exception, for which the message should be presented to the user.
-                    print(f"{e}", file=sys.stderr)
-                    # Clear the project selector next state
-                    self.project_selector_obj.next_project_name = None
-                    self.project_selector_obj.next_model_name = None
-                else:
-                    # Close the popup window with the appropriate reason (load or new model)
-                    popup_presenter.close_window(reason)
+                    try:
+                        # Try to update the model to the "next" project & model.
+                        self.project_selector_obj.switch_to_next_project_model(load_ok=True, create_ok=True)
+                    except RuntimeError as e:
+                        # Invalid project/model names should raise an exception, for which the message should be presented to the user.
+                        print(f"{e}", file=sys.stderr)
+                        # Clear the project selector next state
+                        self.project_selector_obj.next_project_name = None
+                        self.project_selector_obj.next_model_name = None
+                    else:
+                        # Close the popup window with the appropriate reason (load or new model)
+                        popup_presenter.close_window(reason)
+        else:
+
+            def show_graphviz_missing_error(app):
+                # Show the error message
+                app.get_presenter(app.current_presenter_key).view.messagebox_error(
+                    "Error: Graphviz required",
+                    "Graphviz must be installed and available on your PATH.\n\nSee the PolyChron Documentation for more information.\n\nhttps://bryonymoody.github.io/PolyChron/getting-started/#graphviz",
+                )
+                # When the error message is dismissed, close polychron
+                app.close_window()
+
+            # Create an error box, scheduled to appear after the render loop starts (with a short delay to ensure error box placement is over the parent window)
+            self.root.after(200, lambda: show_graphviz_missing_error(self))
 
         # Start the render loop
         self.root.mainloop()

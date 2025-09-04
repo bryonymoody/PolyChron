@@ -6,6 +6,7 @@ import pathlib
 import platform
 import re
 import sys
+import tempfile
 import time
 from typing import IO, Any, Dict, Iterable, List, Literal, Tuple
 
@@ -13,8 +14,9 @@ import networkx as nx
 import numpy as np
 import packaging.version
 import pydot
+from graphviz import ExecutableNotFound, render
 from lxml import etree
-from networkx.drawing.nx_pydot import read_dot
+from networkx.drawing.nx_pydot import read_dot, write_dot
 from PIL import Image, ImageChops
 
 from .models.GroupRelationship import GroupRelationship
@@ -1027,3 +1029,34 @@ def contrast_ratio(a: float, b: float) -> float:
     """
     a, b = max(a, b), min(a, b)
     return (a + 0.05) / (b + 0.05)
+
+
+def check_graphviz_usable() -> bool:
+    """Checks if graphviz is installed and on the path, so that a user-friendly error message can be presetned on application launch
+
+
+    This uses the same commands as rendering the actual strat/chrono DAGs rather than just checking for the presence of a command named 'dot' on the users path.
+
+    Returns:
+        boolean indicating if graphviz is usable or not.
+    """
+    result = True
+    # Create the temp .dot/.gv file to render
+    temp_dir = pathlib.Path(tempfile.gettempdir())
+    dot_path = temp_dir / "polychron" / "graphviz-check.gv"
+    dot_path.parent.mkdir(exist_ok=True, parents=True)
+    g = nx.DiGraph()
+    write_dot(g, dot_path)
+    # Try and render, setting the failure variable if ExecutableNotFound was raised
+    try:
+        png_path = pathlib.Path(render("dot", "png", dot_path))
+    except ExecutableNotFound:
+        result = False
+    # Try to tidy up, but don't error if this fails.
+    try:
+        png_path.unlink()
+        dot_path.unlink()
+        dot_path.parent.unlink()
+    except Exception:
+        pass
+    return result
