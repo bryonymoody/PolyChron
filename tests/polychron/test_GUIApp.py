@@ -332,6 +332,39 @@ class TestGUIApp:
                 mock_root_geometry.assert_not_called()
 
     @pytest.mark.parametrize(
+        ("graphviz_usable", "root_after_method"),
+        [
+            (True, "polychron.GUIApp.GUIApp._launch_project_selection"),
+            (False, "polychron.GUIApp.GUIApp._show_graphviz_missing_error"),
+        ],
+    )
+    def test_launch(self, graphviz_usable: bool, root_after_method: str):
+        """Test launch behaves as expected, scheduling a call to the project selection method and starting the render loop
+
+        Todo:
+
+            - Assert tha called lambda was the expected method
+        """
+        app = GUIApp()
+
+        with (
+            patch("polychron.GUIApp.ThemedTk.mainloop") as mock_root_mainloop,
+            patch("polychron.GUIApp.ThemedTk.after") as mock_root_after,
+            patch(root_after_method),
+        ):
+            app.launch()
+
+            # Assert that root.after was called once
+            mock_root_after.assert_called_once()
+
+            # Check the scheduled function is as expected
+            lambda_func = mock_root_after.call_args.args[1]
+            assert callable(lambda_func)
+
+            # Assert the render loop should have been started
+            mock_root_mainloop.assert_called_once()
+
+    @pytest.mark.parametrize(
         (
             "project_name",
             "model_name",
@@ -352,7 +385,7 @@ class TestGUIApp:
     )
     @patch("polychron.GUIApp.ProjectSelectProcessPopupPresenter")
     @patch("polychron.GUIApp.ProjectSelectProcessPopupView")
-    def test_launch(
+    def test__launch_project_selection(
         self,
         MockProjectSelectProcessPopupView,
         MockProjectSelectProcessPopupPresenter,
@@ -379,10 +412,10 @@ class TestGUIApp:
         MockProjectSelectProcessPopupPresenter.return_value = mock_child_presenter_instance
 
         # Mock out root.mainloop()
-        with patch("polychron.GUIApp.ThemedTk.mainloop") as mock_root_mainloop:
+        with patch("polychron.GUIApp.ThemedTk.update_idletasks") as mock_root_update_idletasks:
             capsys.readouterr()
             # Call launch
-            app.launch(project_name, model_name)
+            app._launch_project_selection(project_name, model_name)
 
             # Check if stderr was printed to or not
             captured = capsys.readouterr()
@@ -391,7 +424,8 @@ class TestGUIApp:
             else:
                 assert len(captured.err) == 0
 
-            # Todo: Assert that the lazy_load method was called
+            # Assert that the mocked out update_idletasks was called
+            mock_root_update_idletasks.assert_called()
 
             # Assert the child presenter was instantiated
             MockProjectSelectProcessPopupView.assert_called_once()
@@ -429,6 +463,3 @@ class TestGUIApp:
                 assert app.project_selector_obj.current_model_name == model_name
                 assert app.project_selector_obj.next_project_name is None
                 assert app.project_selector_obj.next_model_name is None
-
-            # Assert the render loop should have been started
-            mock_root_mainloop.assert_called_once()

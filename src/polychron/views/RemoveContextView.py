@@ -18,7 +18,7 @@ class RemoveContextView(PopupView):
         super().__init__(parent)
 
         self.configure(bg="white")
-        self.geometry("1000x400")
+        self.centered_geometry(1000, 400)
         self.title("Removal of context")
 
         # Add a label, without the text value set by update_label to avoid duplication
