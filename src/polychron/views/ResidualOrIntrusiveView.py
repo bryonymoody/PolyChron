@@ -34,7 +34,6 @@ class ResidualOrIntrusiveView(PopupView):
         self.title("Identify Residual or Intrusive Contexts")
         self.configure(bg="#AEC7D6")
         self.geometry("2000x1000")
-        self.attributes("-topmost", "true")
 
         self.canvas = tk.Canvas(self, bd=0, highlightthickness=0)
         self.canvas.place(relx=0, rely=0, relwidth=1, relheight=1)

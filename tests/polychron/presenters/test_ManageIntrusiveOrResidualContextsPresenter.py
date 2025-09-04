@@ -139,11 +139,8 @@ class TestManageIntrusiveOrResidualContextsPresenter:
             MockManageGroupRelationshipsView.assert_called_once()
             MockManageGroupRelationshipsPresenter.assert_called_once()
 
-            # Assert that the mocked child view was lifted (made visible and on top)
-            mock_child_presenter_instance.view.lift.assert_called_once()
-
-            # Assert that the parent view was made to wait
-            mock_view.wait_window.assert_called_with(mock_child_presenter_instance.view)
+            # Assert that the mocked child view was lifted (made visible and on top) and a wait was triggered
+            mock_child_presenter_instance.display_view.assert_called_with(wait=True)
 
             # Assert that close_view was called.
             mock_close_view.assert_called_once()

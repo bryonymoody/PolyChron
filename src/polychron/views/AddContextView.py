@@ -22,7 +22,6 @@ class AddContextView(PopupView):
 
         self.configure(bg="#AEC7D6")
         self.geometry("1000x400")
-        self.attributes("-topmost", "true")
 
         # Label
         self.label = ttk.Label(self, text="Context Number")

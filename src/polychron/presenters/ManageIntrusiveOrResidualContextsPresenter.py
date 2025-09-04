@@ -46,8 +46,8 @@ class ManageIntrusiveOrResidualContextsPresenter(PopupPresenter[ManageIntrusiveO
         popup_presenter = ManageGroupRelationshipsPresenter(
             self.mediator, ManageGroupRelationshipsView(self.view), self.model
         )
-        popup_presenter.view.lift()
-        self.view.wait_window(popup_presenter.view)
+        # Ensure the popup is visible and block execution until it is closed
+        popup_presenter.display_view(wait=True)
 
         # Close the popup
         self.close_view()

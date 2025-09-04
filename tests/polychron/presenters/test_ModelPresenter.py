@@ -318,8 +318,7 @@ class TestModelPresenter:
         presenter.popup_calibrate_model()
         MockMCMCProgressPresenter.assert_called_once()
         MockMCMCProgressView.assert_called_once()
-        mock_child_presenter_instance.view.lift.assert_called_once()
-        mock_child_presenter_instance.run.assert_called_once()
+        mock_child_presenter_instance.display_view.assert_called_with(wait=False)
         mock_child_presenter_instance.close_view.assert_called_once()
         mock_mediator.switch_presenter.assert_called_with("DatingResults")
 
@@ -423,12 +422,11 @@ class TestModelPresenter:
         MockDatafilePreviewView.assert_called_once()
         # Assert the df was provided in the temp_model.
         pd.testing.assert_frame_equal(MockDatafilePreviewPresenter.call_args.args[2].df, df)
-        # Assert the child view had expected methods called
-        mock_child_presenter_instance.view.lift.assert_called_once()
         # Assert the ModelView had expected calls made
         mock_view.canvas.__setitem__.assert_called()
         assert mock_view.canvas.__setitem__.call_count == 2
-        mock_view.parent.wait_window.assert_called()
+        # Assert that the mocked child view was lifted (made visible and on top) and a wait was triggered
+        mock_child_presenter_instance.display_view.assert_called_with(wait=True)
         # As we have mocked out the popup, the result should still be cancel.
         assert result == "cancel"
 
@@ -447,13 +445,13 @@ class TestModelPresenter:
         MockDatafilePreviewView.assert_called_once()
         # Assert the df was provided in the temp_model.
         pd.testing.assert_frame_equal(MockDatafilePreviewPresenter.call_args.args[2].df, df)
-        # Assert the child view had expected methods called
-        mock_child_presenter_instance.view.lift.assert_called_once()
         # Assert the ModelView had expected calls made
         mock_view.canvas.__setitem__.assert_called()
         assert mock_view.canvas.__setitem__.call_count == 2
-        mock_view.parent.wait_window.assert_called()
-        # As we have mocked out the popup, the result should still be cancel.
+        # Assert that the mocked child view was lifted (made visible and on top) and a wait was triggered
+        mock_child_presenter_instance.display_view.assert_called_with(
+            wait=True
+        )  # As we have mocked out the popup, the result should still be cancel.
         assert result == "cancel"
 
     @pytest.mark.xfail(
@@ -1729,8 +1727,8 @@ class TestModelPresenter:
             MockProjectSelectProcessPopupPresenter.assert_called_once()
             MockProjectSelectProcessPopupView.assert_called_once()
             assert MockProjectSelectProcessPopupPresenter.call_args.args[2] == presenter.model
-            mock_child_presenter_instance.view.lift.assert_called_once()
-            mock_child_presenter_instance.view.wait_window.assert_called()
+            # Assert that the mocked child view was lifted (made visible and on top) and a wait was triggered
+            mock_child_presenter_instance.display_view.assert_called_with(wait=True)
             mock_update_view.assert_called_once()
 
     @patch("polychron.presenters.ModelPresenter.ProjectSelectProcessPopupPresenter")
@@ -1765,8 +1763,8 @@ class TestModelPresenter:
             MockProjectSelectProcessPopupPresenter.assert_called_once()
             MockProjectSelectProcessPopupView.assert_called_once()
             assert MockProjectSelectProcessPopupPresenter.call_args.args[2] == presenter.model
-            mock_child_presenter_instance.view.lift.assert_called_once()
-            mock_child_presenter_instance.view.wait_window.assert_called()
+            # Assert that the mocked child view was lifted (made visible and on top) and a wait was triggered
+            mock_child_presenter_instance.display_view.assert_called_with(wait=True)
             mock_child_presenter_instance.switch_presenter.assert_called_with("model_select")
             mock_update_view.assert_called_once()
             # As the popup was mocked, we can check that the model's next project was specified, but not cleared by actually switching to the next project.
@@ -1818,8 +1816,8 @@ class TestModelPresenter:
             MockProjectSelectProcessPopupPresenter.assert_called_once()
             MockProjectSelectProcessPopupView.assert_called_once()
             assert MockProjectSelectProcessPopupPresenter.call_args.args[2] == presenter.model
-            mock_child_presenter_instance.view.lift.assert_called_once()
-            mock_view.wait_window.assert_called()
+            # Assert that the mocked child view was lifted (made visible and on top) and a wait was triggered
+            mock_child_presenter_instance.display_view.assert_called_with(wait=True)
             # Assert the popup was switched to the model_create presenter
             mock_child_presenter_instance.switch_presenter.assert_called_with("model_create")
 
@@ -2130,8 +2128,8 @@ class TestModelPresenter:
         # Assert that the popup was created, lifted, and waited for
         MockRemoveContextPresenter.assert_called_once()
         MockRemoveContextView.assert_called_once()
-        mock_child_presenter_instance.view.lift.assert_called_once()
-        mock_view.wait_window.assert_called()
+        # Assert that the mocked child view was lifted (made visible and on top) and a wait was triggered
+        mock_child_presenter_instance.display_view.assert_called_with(wait=True)
         mock_view.canvas.__setitem__.assert_called()
         assert mock_view.canvas.__setitem__.call_count == 2
         # As we have mocked out the popup, the result should still be None.
@@ -2174,8 +2172,8 @@ class TestModelPresenter:
         # Assert that the popup was created, lifted, and waited for
         MockRemoveStratigraphicRelationshipPresenter.assert_called_once()
         MockRemoveStratigraphicRelationshipView.assert_called_once()
-        mock_child_presenter_instance.view.lift.assert_called_once()
-        mock_view.wait_window.assert_called()
+        # Assert that the mocked child view was lifted (made visible and on top) and a wait was triggered
+        mock_child_presenter_instance.display_view.assert_called_with(wait=True)
         mock_view.canvas.__setitem__.assert_called()
         assert mock_view.canvas.__setitem__.call_count == 2
         # As we have mocked out the popup, the result should still be None.
