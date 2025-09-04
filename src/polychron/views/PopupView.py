@@ -15,6 +15,11 @@ class PopupView(tk.Toplevel):
         self.parent = parent
         """A reference to the parent frame"""
 
+        # Ensure the popup window is displayed on top of the parent window
+        self.transient(self.parent)
+        # Prevent the user from interacting with the parent window while the popup is open
+        self.grab_set()
+
     def register_keybinds(self, bindings: Dict[str, Callable[[], Any]]) -> None:
         """Register window-wide key bindings"""
         for sequence, callback in bindings.items():

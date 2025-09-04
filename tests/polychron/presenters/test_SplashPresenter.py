@@ -111,4 +111,4 @@ class TestSplashPresenter:
         MockProjectSelectProcessPopupView.assert_called_once()
 
         # Assert that the mocked view was lifted (made visible and on top)
-        mock_child_presenter_instance.view.lift.assert_called_once()
+        mock_child_presenter_instance.display_view.assert_called_with(wait=True)

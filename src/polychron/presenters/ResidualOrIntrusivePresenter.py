@@ -108,8 +108,8 @@ class ResidualOrIntrusivePresenter(PopupPresenter[ResidualOrIntrusiveView, Model
         popup_presenter = ManageIntrusiveOrResidualContextsPresenter(
             self.mediator, ManageIntrusiveOrResidualContextsView(self.view), self.model
         )
-        popup_presenter.view.lift()
-        self.view.wait_window(popup_presenter.view)
+        # Ensure the popup is visible and block execution until it is closed
+        popup_presenter.display_view(wait=True)
 
     def move_from2(self, event: Any) -> None:
         """Remembers previous coordinates for scrolling with the mouse

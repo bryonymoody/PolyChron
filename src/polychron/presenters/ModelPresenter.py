@@ -218,7 +218,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         popup_presenter.view.set_seed(model_model.current_seed)
         # Ensure it is visible and on top
-        popup_presenter.view.lift()
+        popup_presenter.display_view(wait=False)
         # Run the calibration
         popup_presenter.run()
         # Close the popup (formerly .cleanup)
@@ -237,7 +237,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         """
         popup_presenter = CalibrateModelSelectPresenter(self.mediator, CalibrateModelSelectView(self.view), self.model)
         # Ensure it is visible and on top
-        popup_presenter.view.lift()
+        popup_presenter.display_view(wait=True)
 
     def chronograph_render_wrap(self) -> None:
         """wraps chronograph render so we can assign a variable when running the func using a button"""
@@ -312,16 +312,15 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
                 popup_presenter = ResidualOrIntrusivePresenter(
                     self.mediator, ResidualOrIntrusiveView(self.view), self.model.current_model
                 )
-                popup_presenter.view.lift()
-                # Wait for the popup to be closed
-                self.view.wait_window(popup_presenter.view)
+                # Ensure the popup is visible and block execution until it is closed
+                popup_presenter.display_view(wait=True)
             else:
                 # If not, show the group relation ship management view/presenter, formerly popupWindow3
                 popup_presenter = ManageGroupRelationshipsPresenter(
                     self.mediator, ManageGroupRelationshipsView(self.view), self.model.current_model
                 )
-                popup_presenter.view.lift()
-                self.view.wait_window(popup_presenter.view)
+                # Ensure the popup is visible and block execution until it is closed
+                popup_presenter.display_view(wait=True)
 
     def file_popup(self, df: pd.DataFrame) -> str:
         """For a gien dataframe, preview the data to the user. Returns the users decision
@@ -334,11 +333,11 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         """
         datafile_model = DatafilePreviewModel(df)
         popup_presenter = DatafilePreviewPresenter(self.mediator, DatafilePreviewView(self.view), datafile_model)
-        popup_presenter.view.lift()
 
         # Prevent the view's canvas element from being interacted with?
         self.view.canvas["state"] = "disabled"
-        self.view.parent.wait_window(popup_presenter.view)
+        # Ensure the popup is visible and block execution until it is closed
+        popup_presenter.display_view(wait=True)
         self.view.canvas["state"] = "normal"
         return datafile_model.result
 
@@ -668,8 +667,8 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         addContextModel = AddContextModel()
         popup_presenter = AddContextPresenter(self.mediator, AddContextView(self.view), addContextModel)
-        popup_presenter.view.lift()
-        self.view.wait_window(popup_presenter.view)
+        # Ensure the popup is visible and block execution until it is closed
+        popup_presenter.display_view(wait=True)
         self.node = addContextModel.label
         if addContextModel.label is not None:
             model_model.stratigraphic_dag.add_node(
@@ -926,11 +925,8 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         popup_presenter = ProjectSelectProcessPopupPresenter(
             self.mediator, ProjectSelectProcessPopupView(self.view), self.model
         )
-        # Ensure it is visible and on top
-        popup_presenter.view.lift()
-
-        # Wait for the popup to be closed
-        popup_presenter.view.wait_window()
+        # Ensure the popup is visible and block execution until it is closed
+        popup_presenter.display_view(wait=True)
         # Update the view once the presenter is closed
         self.update_view()
 
@@ -947,10 +943,8 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         self.model.next_project_name = self.model.current_project_name
         # Switch to the model select page
         popup_presenter.switch_presenter("model_select")
-        # Ensure it is visible and on top
-        popup_presenter.view.lift()
-        # Wait for the popup to be closed
-        popup_presenter.view.wait_window()
+        # Ensure the popup is visible and block execution until it is closed
+        popup_presenter.display_view(wait=True)
         # Update the view once the presenter is closed
         self.update_view()
 
@@ -993,11 +987,8 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         # Switch to the model select page
         popup_presenter.switch_presenter("model_create")
-        # Ensure it is visible and on top
-        popup_presenter.view.lift()
-
-        # Wait for the popup window to be closed before saving the new model
-        self.view.wait_window(popup_presenter.view)
+        # Ensure the popup is visible and block execution until it is closed
+        popup_presenter.display_view(wait=True)
 
         # Get the new model
         model_model = self.model.current_model
@@ -1190,8 +1181,8 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         # Create the popup window, formerly popupWindow5
         popup_presenter = RemoveContextPresenter(self.mediator, RemoveContextView(self.view), data)
         self.view.canvas["state"] = "disabled"
-        popup_presenter.view.lift()
-        self.view.wait_window(popup_presenter.view)
+        # Ensure the popup is visible and block execution until it is closed
+        popup_presenter.display_view(wait=True)
         self.view.canvas["state"] = "normal"
         return data.reason
 
@@ -1217,7 +1208,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             self.mediator, RemoveStratigraphicRelationshipView(self.view), data
         )
         self.view.canvas["state"] = "disabled"
-        popup_presenter.view.lift()
-        self.view.wait_window(popup_presenter.view)
+        # Ensure the popup is visible and block execution until it is closed
+        popup_presenter.display_view(wait=True)
         self.view.canvas["state"] = "normal"
         return data.reason

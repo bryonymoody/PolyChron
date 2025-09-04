@@ -43,10 +43,16 @@ class PopupPresenter(ABC, Generic[ViewT, ModelT]):
         """Update view data for the current state of the model"""
         pass
 
-    def display_view(self) -> None:
-        """Make the view visible (and not minimised)"""
+    def display_view(self, wait: bool = False) -> None:
+        """Make the view visible (and not minimised)
+
+        Parameters:
+            wait: if this should block until the popup view is closed.
+        """
         self.view.deiconify()
         self.view.lift()
+        if wait:
+            self.view.wait_window()
 
     def minimise_view(self) -> None:
         """Minimise the view"""

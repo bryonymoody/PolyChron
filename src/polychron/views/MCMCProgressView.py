@@ -18,7 +18,6 @@ class MCMCProgressView(PopupView):
 
         self.geometry("700x200")
         self.title("MCMC in progress")
-        self.attributes("-topmost", "true")
 
         self.backcanvas = tk.Canvas(self, bg="#AEC7D6")
         self.backcanvas.place(relx=0, rely=0, relwidth=1, relheight=1)

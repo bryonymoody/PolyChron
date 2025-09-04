@@ -260,11 +260,8 @@ class TestResidualOrIntrusivePresenter:
         MockManageIntrusiveOrResidualContextsView.assert_called_once()
         MockManageIntrusiveOrResidualContextsPresenter.assert_called_once()
 
-        # Assert that the mocked child view was lifted (made visible and on top)
-        mock_child_presenter_instance.view.lift.assert_called_once()
-
-        # Assert that the parent view was made to wait
-        mock_view.wait_window.assert_called_with(mock_child_presenter_instance.view)
+        # Assert that the mocked child view was lifted (made visible and on top) and a wait was triggered
+        mock_child_presenter_instance.display_view.assert_called_with(wait=True)
 
     @pytest.mark.skip(reason="test_move_from2 not implemented due to tkinter leak")
     @patch(__name__ + ".ResidualOrIntrusivePresenter.load_graph")  # todo remove this temporary patch
