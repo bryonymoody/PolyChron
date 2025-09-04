@@ -19,7 +19,7 @@ class CalibrateModelSelectView(PopupView):
 
         self.configure(bg="white")
         self.title("Model calibration")
-        self.geometry("1000x400")
+        self.centered_geometry(1000, 400)
 
         # Add instruction text
         self.label = tk.Label(

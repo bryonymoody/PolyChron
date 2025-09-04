@@ -16,7 +16,7 @@ class MCMCProgressView(PopupView):
         # Call the parent class constructor
         super().__init__(parent)
 
-        self.geometry("700x200")
+        self.centered_geometry(700, 200)
         self.title("MCMC in progress")
 
         self.backcanvas = tk.Canvas(self, bg="#AEC7D6")

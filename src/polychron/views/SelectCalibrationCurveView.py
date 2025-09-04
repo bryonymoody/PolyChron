@@ -16,6 +16,10 @@ class SelectCalibrationCurveView(PopupView):
     def __init__(self, parent: tk.Frame) -> None:
         super().__init__(parent)
 
+        # Set a window title and size
+        self.title("Model calibration")
+        self.centered_geometry(400, 300)
+
         # Label
         self.label = ttk.Label(self, text="Select Calibration Curve")
         self.label.pack(pady=(10, 5))
