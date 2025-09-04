@@ -1160,3 +1160,18 @@ class TestUtil:
         """
         with patch("polychron.util.platform.system", return_value=platform_name):
             assert util.get_right_click_binding(double) == expected
+
+    def test_check_graphviz_usable(self):
+        """Test that checking for graphviz should work as expected, by patching graphviz.render to raise or not raise an ExecutableNotFound error"""
+        # Assert the real version can be called and returns a bool
+        assert isinstance(util.check_graphviz_usable(), bool)
+
+        # Assert that if graphviz.render does not raise an exception, true would be returned
+        with patch("polychron.util.render"):
+            assert util.check_graphviz_usable()
+
+        # Assert that if graphviz.render does raise an ExecutableNotFound exception, false would be returned
+        from graphviz import ExecutableNotFound
+
+        with patch("polychron.util.render", side_effect=ExecutableNotFound("dot")):
+            assert not util.check_graphviz_usable()
