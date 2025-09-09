@@ -1,6 +1,6 @@
 # PolyChron
 
-![PolyChron Logo](./src/polychron/resources/logo.png)
+![PolyChron Logo](https://raw.githubusercontent.com/bryonymoody/PolyChron/refs/heads/main/src/polychron/resources/logo.png)
 
 [![Tests](https://github.com/bryonymoody/PolyChron/actions/workflows/tests.yml/badge.svg)](https://github.com/bryonymoody/PolyChron/actions/workflows/tests.yml)
 [![Docs](https://github.com/bryonymoody/PolyChron/actions/workflows/docs.yml/badge.svg)](https://github.com/bryonymoody/PolyChron/actions/workflows/docs.yml)
