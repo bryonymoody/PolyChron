@@ -42,7 +42,7 @@ To create a new PolyChron release:
 
 1. Ensure that the `HEAD` of `main` is in a good working state, ready for wider release. This should include making sure that package metadata in `pyproject.toml` is correct and all CI checks pass.
     - PolyChron is following [Semantic Versioning](https://semver.org/) and as the version number should comply with [PEP 440](https://peps.python.org/pep-0440/)
-2. Tag the commit which is intended for release, using the version included in `pyproject.toml` prefixed with `v` (e.g. `v0.2.0`, `v1.2.3rc1`).
+2. Tag the commit which is intended for release, using the version included in `pyproject.toml` prefixed with `v` (e.g. `v0.2.1`, `v1.2.3rc1`).
 3. [Create a Release](https://github.com/bryonymoody/PolyChron/releases/new) in GitHub, using the newly pushed tag, providing some Release Notes.
   - On tag push, starting with `v`, `.github/workflows/publish.yml` should upload the new version to [PyPI](https://pypi.org/)
 

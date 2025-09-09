@@ -102,8 +102,8 @@ source .venv/bin/activate
 ```bash
 # Install the current development version
 python3 -m pip install git+https://github.com/bryonymoody/PolyChron.git
-# Install a tagged release or branch, in this case v0.2.0
-python3 -m pip install git+https://github.com/bryonymoody/PolyChron.git@v0.2.0
+# Install a tagged release or branch, in this case v0.2.1
+python3 -m pip install git+https://github.com/bryonymoody/PolyChron.git@v0.2.1
 ```
 
 Or by cloning the `git` repository from [GitHub](https://github.com/bryonymoody/PolyChron) and installing into the current python environment.
