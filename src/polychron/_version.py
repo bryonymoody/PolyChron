@@ -21,7 +21,7 @@ def is_editable_install() -> bool:
         direct_url = json.loads(distribution.read_text("direct_url.json"))
         is_editable = direct_url.get("dir_info", {}).get("editable", False)
         return is_editable
-    except importlib.metadata.PackageNotFoundError:
+    except Exception:
         return False
 
 
@@ -66,7 +66,7 @@ def get_local_install_git_hash() -> str | None:
 
         return git_hash
 
-    except subprocess.CalledProcessError:
+    except Exception:
         return None
 
 
