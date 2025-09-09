@@ -88,10 +88,10 @@ python3 -m pip install polychron
     python3 -m pip install git+https://github.com/bryonymoody/PolyChron.git
     ```
 
-=== "v0.2.0"
+=== "v0.2.1"
 
     ```bash
-    python3 -m pip install git+https://github.com/bryonymoody/PolyChron.git@v0.2.0
+    python3 -m pip install git+https://github.com/bryonymoody/PolyChron.git@v0.2.1
     ```
 
 Or by cloning the `git` repository from [GitHub](https://github.com/bryonymoody/PolyChron) and installing into the current python environment.
