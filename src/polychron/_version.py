@@ -6,7 +6,7 @@ import subprocess
 from pathlib import Path
 
 # Define the public version string
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 
 def is_editable_install() -> bool:

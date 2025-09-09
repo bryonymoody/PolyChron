@@ -213,7 +213,7 @@ class MCMCData:
 
             # Any polychron-version specific handling of data
             polychron_version = data["polychron_version"]
-            if polychron_version == "0.2.0":
+            if polychron_version == "0.2.1":
                 pass
 
             # Convert certain values back based on the hint for the data type.
