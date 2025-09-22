@@ -6,6 +6,8 @@
 [![Docs](https://github.com/bryonymoody/PolyChron/actions/workflows/docs.yml/badge.svg)](https://github.com/bryonymoody/PolyChron/actions/workflows/docs.yml)
 [![Lint](https://github.com/bryonymoody/PolyChron/actions/workflows/lint.yml/badge.svg)](https://github.com/bryonymoody/PolyChron/actions/workflows/lint.yml)
 [![Format](https://github.com/bryonymoody/PolyChron/actions/workflows/format.yml/badge.svg)](https://github.com/bryonymoody/PolyChron/actions/workflows/format.yml)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17092267.svg)](https://doi.org/10.5281/zenodo.17092267)
+[![PyPI - Version](https://img.shields.io/pypi/v/polychron)](https://pypi.org/project/polychron)
 
 PolyChron is a GUI application designed to facilitate the analysis and archiving of archaeological dating evidence. 
 It supports the management of both relative and absolute dating evidence, enabling users to build multiple chronological models within a Bayesian modelling framework.

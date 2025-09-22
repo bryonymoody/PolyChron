@@ -18,7 +18,7 @@ authors:
     email: "shreyanghosh27@gmail.com"
     affiliation: The University of Sheffield
 repository-code: "https://github.com/bryonymoody/PolyChron"
-# doi:
+doi: 10.5281/zenodo.17092267
 license: GPL-3.0
 references:
   - type: "thesis"
