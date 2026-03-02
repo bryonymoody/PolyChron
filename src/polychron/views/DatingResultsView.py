@@ -591,3 +591,6 @@ class DatingResultsView(FrameView):
         if curve_name.endswith("_interpolated"):
             curve_name = curve_name[: -len("_interpolated")]
         self.littlecanvas_label.itemconfig(self.curve_badge_id, text=f"Curve: {curve_name}")
+
+    def set_seed(self, seed: int) -> None:
+        self.littlecanvas_label.itemconfig(self.seed_badge_id, text=f"Seed: {seed}")

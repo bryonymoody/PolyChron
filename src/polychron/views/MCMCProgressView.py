@@ -36,6 +36,9 @@ class MCMCProgressView(PopupView):
         self.progress_bar = ttk.Progressbar(self.backcanvas, orient=tk.HORIZONTAL, length=400, mode="indeterminate")
         self.progress_bar.place(relx=0.2, rely=0.56)
 
+        self.curve_name = ""
+        self.seed = None
+
     def update_progress(self, percent: int) -> None:
         """Update the progress bar and text label with current progress
 
@@ -66,8 +69,26 @@ class MCMCProgressView(PopupView):
             # If there was more than one match, instead print to console.
             print(f"{text}")
 
-    def set_curve_name(self, curve_name: str) -> None:
-        """Update the title label with the selected calibration curve."""
-        title = f"MCMC in progress - Calibration curve: {curve_name}"
+    def update_title(self) -> None:
+        parts = ["MCMC in progress"]
+
+        if self.curve_name:
+            parts.append(f"Calibration curve: {self.curve_name}")
+
+        if self.seed is not None:
+            parts.append(f"Seed: {self.seed}")
+
+        title = " - ".join(parts)
+
         self.title(title)
         self.title_label.config(text=title)
+
+    def set_curve_name(self, curve_name: str) -> None:
+        """Update the calibration curve used."""
+        self.curve_name = curve_name
+        self.update_title()
+
+    def set_seed(self, seed: int) -> None:
+        """Update the seed used for the MCMC run."""
+        self.seed = seed
+        self.update_title()

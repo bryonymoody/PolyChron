@@ -23,7 +23,7 @@ class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
     def update_view(self) -> None:
         pass
 
-    def run(self) -> None:
+    def run(self, seed=None) -> None:
         """Runs model calibration for the current model"""
         # Set progress to none
         self.view.update_progress(0)
@@ -65,3 +65,15 @@ class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
         if name.endswith("_interpolated"):
             name = name[: -len("_interpolated")]
         return name
+
+    def get_display_seed(self) -> str:
+        model_model = self.model.current_model
+        if model_model is None:
+            return ""
+
+        seed = getattr(model_model, "current_seed", None)
+
+        if seed is None:
+            return "Seed: random"
+
+        return f"Seed: {seed}"
