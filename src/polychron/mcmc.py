@@ -1460,8 +1460,13 @@ def run_MCMC(
     TOPO_SORT,
     CONT_TYPE,
     PROGRESS_IO: Writable | None = None,
+    seed=None,
 ):
     """Run the MCMC algorithm for a set of input data from a Model, returning the tuple of results"""
+
+    if seed is not None:
+        np.random.seed(seed)
+
     #  t0 = time.perf_counter()
     PHI_SAMP_DICT = {
         "upper": {
