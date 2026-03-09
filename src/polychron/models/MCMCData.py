@@ -1,7 +1,7 @@
 import json
 import pathlib
 from dataclasses import dataclass, field
-from typing import Dict, List, get_type_hints
+from typing import Dict, List, Optional, get_type_hints
 
 import pandas as pd
 from packaging.version import Version
@@ -80,6 +80,9 @@ class MCMCData:
 
     calibration_curve_name: str = "intcal20_interpolated"
     """Name of the calibration curve which was used to generate this `MCMCData`. This enables the correct curve to be displayed on the dating results tab when the curve has been changed, but the model has not been re-calibrated."""
+
+    seed: Optional[int] = None
+    """Seed used for the current MCMC run. None indicates a random seed will be generated."""
 
     def save_results_dataframes(self, path: pathlib.Path, group_df: pd.DataFrame) -> None:
         """Save some MCMC data to disk, separately from the serialised version of this class

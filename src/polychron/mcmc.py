@@ -1459,8 +1459,8 @@ def run_MCMC(
     POST_PHASE,
     TOPO_SORT,
     CONT_TYPE,
+    seed,
     PROGRESS_IO: Writable | None = None,
-    seed=None,
 ):
     """Run the MCMC algorithm for a set of input data from a Model, returning the tuple of results"""
 
