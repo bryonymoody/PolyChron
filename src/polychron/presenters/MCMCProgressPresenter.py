@@ -19,6 +19,7 @@ class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
         self.update_view()
 
         self.view.set_curve_name(self._get_display_curve_name())
+        self.view.set_seed(self.get_display_seed())
 
     def update_view(self) -> None:
         pass
