@@ -202,16 +202,9 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         if seed == "cancel":
             return
 
-        # Store seed so you can track/display it later
-        model_model.current_seed = seed
-
         if seed is None:
             # Generate and record a random seed
             seed = np.random.randint(0, 2**32 - 1)
-
-        # Store and apply seed
-        model_model.current_seed = seed
-        np.random.seed(seed)
 
         # Create the popup presenter and view
         popup_presenter = MCMCProgressPresenter(self.mediator, MCMCProgressView(self.view), model_model)
@@ -220,13 +213,11 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         # Ensure it is visible and on top
         popup_presenter.display_view(wait=False)
         # Run the calibration
-        popup_presenter.run()
+        popup_presenter.run(seed = seed)
         # Close the popup (formerly .cleanup)
         popup_presenter.close_view()
         # Change to the DatingResults tab
         self.mediator.switch_presenter("DatingResults")
-
-        popup_presenter.run(seed=seed)
 
     def popup_calibrate_multiple(self) -> None:
         """Callback function for when Tools -> Calibrate multiple models from project is selected

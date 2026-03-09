@@ -1466,6 +1466,7 @@ def run_MCMC(
 
     if seed is not None:
         np.random.seed(seed)
+        random.seed(seed)
 
     #  t0 = time.perf_counter()
     PHI_SAMP_DICT = {
