@@ -26,6 +26,9 @@ class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
 
     def run(self, seed=None) -> None:
         """Runs model calibration for the current model"""
+
+        self.model.mcmc_data.seed = seed
+
         # Set progress to none
         self.view.update_progress(0)
         # Use the view as the writable object for progress updates
@@ -68,11 +71,8 @@ class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
         return name
 
     def get_display_seed(self) -> str:
-        model_model = self.model.current_model
-        if model_model is None:
-            return ""
-
-        seed = getattr(model_model, "current_seed", None)
+        """Return a user-friendly display string for the seed used in this run."""
+        seed = getattr(self.model.mcmc_data, "seed", None)
 
         if seed is None:
             return "Seed: random"
