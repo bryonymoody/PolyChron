@@ -213,7 +213,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         # Ensure it is visible and on top
         popup_presenter.display_view(wait=False)
         # Run the calibration
-        popup_presenter.run(seed = seed)
+        popup_presenter.run(seed=seed)
         # Close the popup (formerly .cleanup)
         popup_presenter.close_view()
         # Change to the DatingResults tab
