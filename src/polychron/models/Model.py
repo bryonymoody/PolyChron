@@ -273,7 +273,7 @@ class Model:
     __calibration: Optional[InterpolatedRCDCalibrationCurve] = field(default=None, init=False, repr=False)
     """Interpolated RCD calibration curve object, which is stored in a member variable so it is loaded once and only once"""
 
-    current_seed: Optional[int] = None
+    seed: Optional[int] = None
     """Seed used for the current MCMC run. None indicates a random seed will be generated."""
 
     def get_working_directory(self) -> pathlib.Path:

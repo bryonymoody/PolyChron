@@ -208,8 +208,8 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         # Create the popup presenter and view
         popup_presenter = MCMCProgressPresenter(self.mediator, MCMCProgressView(self.view), model_model)
-
-        popup_presenter.view.set_seed(model_model.current_seed)
+        model_model.mcmc_data.seed = seed
+        popup_presenter.view.set_seed(seed)
         # Ensure it is visible and on top
         popup_presenter.display_view(wait=False)
         # Run the calibration
