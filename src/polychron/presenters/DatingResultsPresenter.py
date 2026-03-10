@@ -92,7 +92,7 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         if model_model is None:
             return ""
 
-        seed = getattr(model_model, "current_seed", None)
+        seed = getattr(model_model, "seed", None)
 
         if seed is None:
             return "Seed: random"
