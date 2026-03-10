@@ -12,6 +12,7 @@ from inspect import signature
 from typing import Dict, List, Literal, Optional, Tuple, get_type_hints
 
 import networkx as nx
+import numpy as np
 import packaging.version
 import pandas as pd
 import pydot
@@ -1017,6 +1018,14 @@ class Model:
         """Get the currently selected calibration curve (if any)."""
         return self.__calibration
 
+    def set_seed(self, seed: Optional[int]) -> None:
+        """Set the seed used for the current MCMC run."""
+        self.seed = seed
+
+    def get_seed(self) -> Optional[int]:
+        """Get the seed used for the current MCMC run."""
+        return self.seed
+
     def MCMC_func(
         self, progress_io: Optional[Writable]
     ) -> Tuple[
@@ -1043,6 +1052,12 @@ class Model:
 
         Formerly `StartPage.MCMC_func`
         """
+
+        seed = self.seed
+        if seed is None:
+            seed = np.random.randint(0, 2**32 - 1)
+            self.seed = seed
+            self.view.set_seedlabel(seed)
 
         if not self.is_ready_for_mcmc():
             raise RuntimeError("Model is not MCMC ready, the stratigraphic and chronographic dag are not valid")
@@ -1122,6 +1137,7 @@ class Model:
             self.post_group,
             topo_sort,
             self.context_types,
+            seed,
             progress_io,
         )
         _, accept_group_limits, all_group_limits = phase_labels(phi_ref, self.post_group, phi_accept, all_samples_phi)

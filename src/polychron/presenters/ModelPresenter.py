@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Any, List
 
 import networkx as nx
-import numpy as np
 import pandas as pd
 
 from ..interfaces import Mediator
@@ -202,9 +201,7 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         if seed == "cancel":
             return
 
-        if seed is None:
-            # Generate and record a random seed
-            seed = np.random.randint(0, 2**32 - 1)
+        model_model.mcmc_data.seed = seed
 
         # Create the popup presenter and view
         popup_presenter = MCMCProgressPresenter(self.mediator, MCMCProgressView(self.view), model_model)
