@@ -112,7 +112,7 @@ class DatingResultsView(FrameView):
         self.littlecanvas_label = tk.Canvas(
             self.canvas, bd=0, bg="#CC5F00", selectborderwidth=0, highlightthickness=0, insertwidth=0
         )
-        self.littlecanvas_label.place(relx=0.6, rely=0.011, relwidth=0.30, relheight=0.027)
+        self.littlecanvas_label.place(relx=0.6, rely=0.011, relwidth=0.32, relheight=0.027)
         self.littlecanvas_label_id = self.littlecanvas_label.create_text(10, 5, anchor="nw", fill="white")
         self.littlecanvas_label.itemconfig(
             self.littlecanvas_label_id, text="Posterior densities", font="helvetica 12 bold"
@@ -122,7 +122,7 @@ class DatingResultsView(FrameView):
         )
 
         self.seed_badge_id = self.littlecanvas_label.create_text(
-            390, 5, anchor="ne", fill="white", font="helvetica 12 bold"
+            415, 5, anchor="ne", fill="white", font="helvetica 12 bold"
         )
 
         self.littlecanvas_a_label = tk.Canvas(
