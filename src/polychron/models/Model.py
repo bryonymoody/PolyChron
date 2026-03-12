@@ -1018,14 +1018,6 @@ class Model:
         """Get the currently selected calibration curve (if any)."""
         return self.__calibration
 
-    def set_seed(self, seed: Optional[int]) -> None:
-        """Set the seed used for the current MCMC run."""
-        self.seed = seed
-
-    def get_seed(self) -> Optional[int]:
-        """Get the seed used for the current MCMC run."""
-        return self.seed
-
     def MCMC_func(
         self, progress_io: Optional[Writable]
     ) -> Tuple[
@@ -1057,7 +1049,6 @@ class Model:
         if seed is None:
             seed = np.random.randint(0, 2**32 - 1)
             self.seed = seed
-            self.view.set_seedlabel(seed)
 
         if not self.is_ready_for_mcmc():
             raise RuntimeError("Model is not MCMC ready, the stratigraphic and chronographic dag are not valid")
