@@ -1152,7 +1152,7 @@ class Model:
             # reset random state
             np.random.seed(None)
             # generate a fresh random seed
-            seed = np.random.randint(0, 2**32 - 1)
+            seed = np.random.randint(0, 2**31 - 1)
 
         # seed numpy
         np.random.seed(seed)
