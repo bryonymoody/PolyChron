@@ -27,6 +27,7 @@ class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
     def run(self, seed=None) -> None:
         """Runs model calibration for the current model"""
 
+        self.model.apply_seed(seed)
         # Set progress to none
         self.view.update_progress(0)
         # Use the view as the writable object for progress updates

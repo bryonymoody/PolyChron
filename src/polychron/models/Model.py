@@ -5,6 +5,7 @@ import filecmp
 import json
 import os
 import pathlib
+import random
 import shutil
 import sys
 from dataclasses import dataclass, field
@@ -1019,7 +1020,7 @@ class Model:
         return self.__calibration
 
     def MCMC_func(
-        self, progress_io: Optional[Writable]
+        self, progress_io: Optional[Writable] = None
     ) -> Tuple[
         List[str],
         List[List[float]],
@@ -1044,11 +1045,6 @@ class Model:
 
         Formerly `StartPage.MCMC_func`
         """
-
-        seed = self.seed
-        if seed is None:
-            seed = np.random.randint(0, 2**32 - 1)
-            self.seed = seed
 
         if not self.is_ready_for_mcmc():
             raise RuntimeError("Model is not MCMC ready, the stratigraphic and chronographic dag are not valid")
@@ -1128,7 +1124,6 @@ class Model:
             self.post_group,
             topo_sort,
             self.context_types,
-            seed,
             progress_io,
         )
         _, accept_group_limits, all_group_limits = phase_labels(phi_ref, self.post_group, phi_accept, all_samples_phi)
@@ -1149,3 +1144,19 @@ class Model:
             accept_group_limits,
             all_group_limits,
         )
+
+    def apply_seed(self, seed: Optional[int]):
+        """Seed the RNGs used during MCMC.
+        If seed is None, a new random seed is generated and stored as self.model.seed."""
+        if seed is None:
+            # reset random state
+            np.random.seed(None)
+            # generate a fresh random seed
+            seed = np.random.randint(0, 2**32 - 1)
+
+        # seed numpy
+        np.random.seed(seed)
+        # seed ranomd with a slightly diff seed
+        random.seed(seed + 1)
+        # store the seed
+        self.seed = seed

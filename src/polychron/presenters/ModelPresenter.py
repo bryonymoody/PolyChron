@@ -201,8 +201,6 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
         if seed == "cancel":
             return
 
-        model_model.mcmc_data.seed = seed
-
         # Create the popup presenter and view
         popup_presenter = MCMCProgressPresenter(self.mediator, MCMCProgressView(self.view), model_model)
         model_model.mcmc_data.seed = seed
@@ -223,7 +221,14 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         Formerly `popupWindow8`
         """
-        popup_presenter = CalibrateModelSelectPresenter(self.mediator, CalibrateModelSelectView(self.view), self.model)
+        seed = self.view.ask_for_seed()
+
+        if seed == "cancel":
+            return
+
+        popup_presenter = CalibrateModelSelectPresenter(
+            self.mediator, CalibrateModelSelectView(self.view), self.model, seed
+        )
         # Ensure it is visible and on top
         popup_presenter.display_view(wait=True)
 
