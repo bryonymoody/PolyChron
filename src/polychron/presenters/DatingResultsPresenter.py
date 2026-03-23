@@ -87,18 +87,6 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
             name = name[: -len("_interpolated")]
         return name
 
-    def get_display_seed(self) -> str:
-        model_model = self.model.current_model
-        if model_model is None:
-            return ""
-
-        seed = getattr(model_model, "seed", None)
-
-        if seed is None:
-            return "Seed: random"
-
-        return f"Seed: {seed}"
-
     def update_view(self) -> None:
         # Ensure content is correct when switching tab
         self.chronograph_render_post()
