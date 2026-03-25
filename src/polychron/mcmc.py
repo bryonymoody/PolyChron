@@ -1462,6 +1462,7 @@ def run_MCMC(
     PROGRESS_IO: Writable | None = None,
 ):
     """Run the MCMC algorithm for a set of input data from a Model, returning the tuple of results"""
+
     #  t0 = time.perf_counter()
     PHI_SAMP_DICT = {
         "upper": {

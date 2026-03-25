@@ -52,7 +52,7 @@ class TestCalibrateModelSelectPresenter:
         model = self.project_selection
 
         # Instantiate the Presenter
-        presenter = CalibrateModelSelectPresenter(mock_mediator, mock_view, model)
+        presenter = CalibrateModelSelectPresenter(mock_mediator, mock_view, model, None)
 
         # Assert that presenter attributes are set as intended
         assert presenter.mediator == mock_mediator
@@ -82,7 +82,7 @@ class TestCalibrateModelSelectPresenter:
         model = self.project_selection
 
         # Instantiate the Presenter
-        presenter = CalibrateModelSelectPresenter(mock_mediator, mock_view, model)
+        presenter = CalibrateModelSelectPresenter(mock_mediator, mock_view, model, None)
 
         # Call the method to be tested, and Assert that view.update_model_list was most recently called with an empty list, as the mock projects directory does not have an active project
         presenter.update_view()
@@ -113,7 +113,7 @@ class TestCalibrateModelSelectPresenter:
         model = self.project_selection
 
         # Instantiate the Presenter
-        presenter = CalibrateModelSelectPresenter(mock_mediator, mock_view, model)
+        presenter = CalibrateModelSelectPresenter(mock_mediator, mock_view, model, None)
 
         # Call on_ok_button when the current project is not valid, which should just call the parents close view (which has been mocked out)
         with patch(
@@ -177,7 +177,7 @@ class TestCalibrateModelSelectPresenter:
         model = self.project_selection
 
         # Instantiate the Presenter
-        presenter = CalibrateModelSelectPresenter(mock_mediator, mock_view, model)
+        presenter = CalibrateModelSelectPresenter(mock_mediator, mock_view, model, None)
 
         # Call the method
         presenter.on_select_all()

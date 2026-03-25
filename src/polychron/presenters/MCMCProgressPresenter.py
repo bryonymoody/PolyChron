@@ -19,12 +19,15 @@ class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
         self.update_view()
 
         self.view.set_curve_name(self._get_display_curve_name())
+        self.view.set_seed(self.get_display_seed())
 
     def update_view(self) -> None:
         pass
 
-    def run(self) -> None:
+    def run(self, seed=None) -> None:
         """Runs model calibration for the current model"""
+
+        self.model.apply_seed(seed)
         # Set progress to none
         self.view.update_progress(0)
         # Use the view as the writable object for progress updates
@@ -49,6 +52,8 @@ class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
         self.model.mcmc_check = True
         # Update the calibration curve used for the MCMCdata
         self.model.mcmc_data.calibration_curve_name = self.model.calibration_curve_name
+
+        self.model.mcmc_data.seed = self.model.seed
         # Save the mcmc data to disk
         self.model.mcmc_data.save(self.model.get_working_directory(), self.model.group_df, get_config().verbose)
 
@@ -65,3 +70,12 @@ class MCMCProgressPresenter(PopupPresenter[MCMCProgressView, Model]):
         if name.endswith("_interpolated"):
             name = name[: -len("_interpolated")]
         return name
+
+    def get_display_seed(self) -> str:
+        """Return a user-friendly display string for the seed used in this run."""
+        seed = getattr(self.model.mcmc_data, "seed", None)
+
+        if seed is None:
+            return "Seed: random"
+
+        return f"Seed: {seed}"

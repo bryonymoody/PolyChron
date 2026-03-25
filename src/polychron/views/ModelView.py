@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import simpledialog, ttk
 from typing import Any, Callable, List, Tuple
 
 import pandas as pd
@@ -190,6 +190,23 @@ class ModelView(FrameView):
         )
         self.datalittlecanvas.place(relx=0.015, rely=0.015, relwidth=0.97, relheight=0.97)
         tk.Misc.lift(self.littlecanvas)
+
+    def ask_for_seed(self):
+        """Return seed (int), None for random, or 'cancel'."""
+
+        fix_seed = self.messagebox_askyesno(
+            title="MCMC Seed", message="Do you want to fix the random seed for this run?"
+        )
+
+        if fix_seed:
+            seed = simpledialog.askinteger("Enter Seed", "Enter an integer seed value:", parent=self.parent)
+
+            if seed is None:
+                return "cancel"
+
+            return seed
+
+        return None
 
     def get_testmenu_selection(self) -> str:
         """Return the most recent value for the testmenu"""

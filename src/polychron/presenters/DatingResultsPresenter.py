@@ -91,8 +91,14 @@ class DatingResultsPresenter(FramePresenter[DatingResultsView, ProjectSelection]
         # Ensure content is correct when switching tab
         self.chronograph_render_post()
 
-        if hasattr(self.view, "set_curve_name"):
-            self.view.set_curve_name(self._get_display_curve_name())
+        model_model = self.model.current_model
+        if model_model is None:
+            return
+
+        self.view.set_curve_name(self._get_display_curve_name())
+
+        seed = model_model.mcmc_data.seed
+        self.view.set_seedlabel(seed)
 
     def get_window_title_suffix(self) -> str | None:
         if self.model.current_project_name and self.model.current_model_name:

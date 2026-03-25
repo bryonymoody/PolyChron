@@ -5,6 +5,7 @@ import filecmp
 import json
 import os
 import pathlib
+import random
 import shutil
 import sys
 from dataclasses import dataclass, field
@@ -12,6 +13,7 @@ from inspect import signature
 from typing import Dict, List, Literal, Optional, Tuple, get_type_hints
 
 import networkx as nx
+import numpy as np
 import packaging.version
 import pandas as pd
 import pydot
@@ -272,6 +274,9 @@ class Model:
 
     __calibration: Optional[InterpolatedRCDCalibrationCurve] = field(default=None, init=False, repr=False)
     """Interpolated RCD calibration curve object, which is stored in a member variable so it is loaded once and only once"""
+
+    seed: Optional[int] = None
+    """Seed used for the current MCMC run. None indicates a random seed will be generated."""
 
     def get_working_directory(self) -> pathlib.Path:
         """Get the working directory to be used for dynamically created files
@@ -1015,7 +1020,7 @@ class Model:
         return self.__calibration
 
     def MCMC_func(
-        self, progress_io: Optional[Writable]
+        self, progress_io: Optional[Writable] = None
     ) -> Tuple[
         List[str],
         List[List[float]],
@@ -1139,3 +1144,19 @@ class Model:
             accept_group_limits,
             all_group_limits,
         )
+
+    def apply_seed(self, seed: Optional[int]):
+        """Seed the RNGs used during MCMC.
+        If seed is None, a new random seed is generated and stored as self.model.seed."""
+        if seed is None:
+            # reset random state
+            np.random.seed(None)
+            # generate a fresh random seed
+            seed = np.random.randint(0, 2**31 - 1)
+
+        # seed numpy
+        np.random.seed(seed)
+        # seed ranomd with a slightly diff seed
+        random.seed(seed + 1)
+        # store the seed
+        self.seed = seed

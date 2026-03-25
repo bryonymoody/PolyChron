@@ -1,3 +1,5 @@
+from typing import Optional
+
 from ..Config import get_config
 from ..interfaces import Mediator
 from ..models.ProjectSelection import ProjectSelection
@@ -11,9 +13,13 @@ class CalibrateModelSelectPresenter(PopupPresenter[CalibrateModelSelectView, Pro
     Formerly `popupWindow8`, used from "tool > Calibrate multiple models from project"
     """
 
-    def __init__(self, mediator: Mediator, view: CalibrateModelSelectView, model: ProjectSelection) -> None:
+    def __init__(
+        self, mediator: Mediator, view: CalibrateModelSelectView, model: ProjectSelection, seed: Optional[int]
+    ) -> None:
         # Call the parent class' constructor
         super().__init__(mediator, view, model)
+
+        self.seed = seed
 
         # Bind buttons
         self.view.bind_ok_button(self.on_ok_button)
@@ -66,6 +72,7 @@ class CalibrateModelSelectPresenter(PopupPresenter[CalibrateModelSelectView, Pro
                     if project.has_model(model_name):
                         model = project.get_model(model_name)
                         if model is not None and model.load_check:
+                            model.apply_seed(self.seed)
                             (
                                 model.mcmc_data.contexts,
                                 model.mcmc_data.accept_samples_context,

@@ -196,12 +196,19 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
             )
             return
 
+        seed = self.view.ask_for_seed()
+
+        if seed == "cancel":
+            return
+
         # Create the popup presenter and view
         popup_presenter = MCMCProgressPresenter(self.mediator, MCMCProgressView(self.view), model_model)
+        model_model.mcmc_data.seed = seed
+        popup_presenter.view.set_seed(seed)
         # Ensure it is visible and on top
         popup_presenter.display_view(wait=False)
         # Run the calibration
-        popup_presenter.run()
+        popup_presenter.run(seed=seed)
         # Close the popup (formerly .cleanup)
         popup_presenter.close_view()
         # Change to the DatingResults tab
@@ -214,7 +221,14 @@ class ModelPresenter(FramePresenter[ModelView, ProjectSelection]):
 
         Formerly `popupWindow8`
         """
-        popup_presenter = CalibrateModelSelectPresenter(self.mediator, CalibrateModelSelectView(self.view), self.model)
+        seed = self.view.ask_for_seed()
+
+        if seed == "cancel":
+            return
+
+        popup_presenter = CalibrateModelSelectPresenter(
+            self.mediator, CalibrateModelSelectView(self.view), self.model, seed
+        )
         # Ensure it is visible and on top
         popup_presenter.display_view(wait=True)
 
