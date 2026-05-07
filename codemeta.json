@@ -1,0 +1,136 @@
+{
+    "@context": "https://w3id.org/codemeta/3.0",
+    "applicationCategory": "Archaeology",
+    "author": [
+        {
+            "affiliation": {
+                "name": "University of Sheffield",
+                "@type": "Organization"
+            },
+            "email": "bryony.moody@sheffield.ac.uk",
+            "familyName": "Moody",
+            "givenName": "Bryony",
+            "@id": "https://orcid.org/0009-0005-8601-3164",
+            "@type": "Person"
+        },
+        {
+            "affiliation": {
+                "name": "Department of Computer Science, University of Sheffield",
+                "@type": "Organization"
+            },
+            "email": "p.heywood@sheffield.ac.uk",
+            "familyName": "Heywood",
+            "givenName": "Peter",
+            "@id": "https://orcid.org/0000-0001-9277-8394",
+            "@type": "Person"
+        },
+        {
+            "affiliation": {
+                "name": "University of Sheffield",
+                "@type": "Organization"
+            },
+            "email": "shreyanghosh27@gmail.com",
+            "familyName": "Ghosh",
+            "givenName": "Shreyan",
+            "@type": "Person"
+        }
+    ],
+    "codeRepository": "https://github.com/bryonymoody/PolyChron",
+    "dateCreated": "2020-03-20",
+    "dateModified": "2025-10-07",
+    "datePublished": "2025-09-10",
+    "description": "Analysis and archiving of archaeological dating evidence",
+    "downloadUrl": "https://github.com/bryonymoody/PolyChron/releases",
+    "identifier": "10.5281/zenodo.17092267",
+    "keywords": [
+        "statistics",
+        "archaeology",
+        "archaeological dating"
+    ],
+    "license": "https://spdx.org/licenses/GPL-3.0",
+    "isAccessibleForFree": true,
+    "readme": "https://github.com/bryonymoody/PolyChron/blob/main/README.md",
+    "softwareHelp": {
+        "@type": "WebSite",
+        "url": "https://bryonymoody.github.io/PolyChron/",
+        "description": "PolyChron Documentation"
+    },
+    "name": "PolyChron",
+    "programmingLanguage": "Python",
+    "referencePublication": [
+        {
+            "author": [
+                {
+                    "affiliation": {
+                        "name": "University of Sheffield",
+                        "@type": "Organization"
+                    },
+                    "email": "bryony.moody@sheffield.ac.uk",
+                    "familyName": "Moody",
+                    "givenName": "Bryony",
+                    "@id": "https://orcid.org/0009-0005-8601-3164",
+                    "@type": "Person"
+                },
+                {
+                    "affiliation": {
+                        "name": "Department of Computer Science, University of Sheffield",
+                        "@type": "Organization"
+                    },
+                    "email": "p.heywood@sheffield.ac.uk",
+                    "familyName": "Heywood",
+                    "givenName": "Peter",
+                    "@id": "https://orcid.org/0000-0001-9277-8394",
+                    "@type": "Person"
+                },
+                {
+                    "affiliation": {
+                        "name": "University of Sheffield",
+                        "@type": "Organization"
+                    },
+                    "email": "shreyanghosh27@gmail.com",
+                    "familyName": "Ghosh",
+                    "givenName": "Shreyan",
+                    "@type": "Person"
+                }
+            ],
+            "datePublished": "2023",
+            "identifier": "10.5281/zenodo.17092267",
+            "name": "PolyChron",
+            "url": "https://doi.org/10.5281/zenodo.17092267",
+            "@type": "ScholarlyArticle"
+        }
+    ],
+    "relatedLink": "https://bryonymoody.github.io/PolyChron",
+    "releaseNotes": "# PolyChron v0.2.1\n\nPolyChron `v0.2.1` is the first release of PolyChron available via [PyPI](https://pypi.org/project/polychron/0.2.1/).\n\n---\n\nPolyChron is a GUI application designed to facilitate the analysis and archiving of archaeological dating evidence. \nIt supports the management of both relative and absolute dating evidence, enabling users to build multiple chronological models within a Bayesian modelling framework.\n\nKey features include:\n\n- Graph-theoretic representations of stratigraphic sequences, which users can explore and edit via an intuitive point-and-click interface.\n\n- The ability to input prior knowledge, such as:\n\n    - Groupings of archaeological contexts\n\n    - Identification of residual or intrusive samples\n\n    - Relationships between different groups\n\nUsing this information, PolyChron constructs a hierarchical Bayesian model and uses an MCMC (Markov Chain Monte Carlo) algorithm to estimate the posterior calendar ages of samples.\n\nAll outputs, including raw digital data (as input by the user), model representations, results, and supplementary notes are saved locally.\nThis ensures the full site archive is preserved for future use and long-term archiving with the Archaeology Data Service.\n\n## Documentation and Support\n\n- [Getting Started](https://bryonymoody.github.io/PolyChron/getting-started/)\n- [Online userguide and developer reference](https://bryonymoody.github.io/PolyChron).\n- [GitHub Issues](https://github.com/bryonymoody/PolyChron/issues)\n\n## Installing PolyChron\n\n`polychron` is a [Python package](https://pypi.org/project/polychron/) which uses [Graphviz](https://graphviz.org/) for graph rendering.\n\nBefore you install `polychron`, you should ensure a compatible version of python is available (with `pip`, `tkinter` and ideally `venv`) and should install `graphviz`.\n\n- [Python](https://www.python.org/)\n    - `3.9` - `3.13`\n\n- [Graphviz](https://www.graphviz.org/)\n    - which you can [install manually](https://graphviz.org/download/)) or through your system package manager:\n        - Linux\n            ```sh\n            # debian, ubuntu, etc.\n            sudo apt install graphviz\n            # fedora, RHEL, Rocky, etc.\n            sudo dnf install graphviz\n            ```\n        - macOS\n            ```sh\n            # using brew (if installed)\n            brew install graphviz\n            ```\n        - Windows\n            ```pwsh\n            # using chocolatey (if installed)\n            choco install graphviz --no-progress -y\n            ```\n\n- [tkinter](https://docs.python.org/3/library/tkinter.html)\n    - Although `tkinter` is part of the Python3 standard library, it is not included in all pre-compiled python distributions. If you encounter errors related to importing `tkinter`, you may need to install it.\n    - linux\n        ```bash\n        # e.g. for Ubuntu/Debian\n        apt-get install python3-tk\n        ```\n    - macOS\n        ```sh\n        # using brew (if python was installed with brew)\n        brew install python-tk\n        ```\n\n### Installing `polychron` from PyPI\n\n`polychron` is a [Python package](https://pypi.org/project/polychron/) and released versions of `polychron` can be installed from PyPI using `pip`, ideally in a [virtual environment](https://packaging.python.org/en/latest/guides/installing-using-pip-and-virtual-environments/).\n\n```bash\npython3 -m pip install polychron==v0.2.1\n```\n\n### Installing `polychron` from source\n\nIf you wish to install PolyChron from source, please see the [Readme](https://github.com/bryonymoody/polychron/tree/v0.2.1?tab=readme-ov-file#installing-polychron-from-source).\n\n\n## Known Issues\n\nFor a full list of known issues, please see the [GitHub Issues](https://github.com/bryonymoody/PolyChron/issues).\n\nNotably, `uv` managed installations of python are not currently usable with `polychron`. See [bryonymoody/PolyChron#104](https://github.com/bryonymoody/PolyChron/issues/104) for more information.\n",
+    "runtimePlatform": "Python3",
+    "softwareRequirements": [
+        {
+            "name": "lxml",
+            "version": ">=6"
+        },
+        {
+            "name": "numpy",
+            "version": ">=2"
+        },
+        "matplotlib",
+        {
+            "name": "networkx",
+            "version": ">=3.4 if python_version >= '3.10'; else >=2 if python_version < '3.10'"
+        },
+        "packaging",
+        {
+            "name": "pandas",
+            "version": ">=2"
+        },
+        {
+            "name": "pydot",
+            "version": "<4"
+        },
+        "pyyaml",
+        "ttkthemes",
+        "hatchling"
+    ],
+    "version": "v0.2.1",
+    "issueTracker": "https://github.com/bryonymoody/PolyChron/issues",
+    "@type": "SoftwareSourceCode"
+}
