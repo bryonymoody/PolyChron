@@ -3,13 +3,13 @@ Created on Thu Sep  2 13:46:35 2021
 
 @author: bryony
 """
-import random
 import math
+import random
 from statistics import mean
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 #CALIBRATION = pd.read_csv('linear_interpolation.txt')
 print("loaded")
